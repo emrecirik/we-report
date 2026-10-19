@@ -216,6 +216,19 @@ export class PropertyPanelComponent {
   }
 
   /** Detail columns; one column removes the setting. */
+  protected readonly fieldExpressions = computed(() => new Set(this.fields().map((f) => f.expression)));
+
+  /** The detail's first sort key; further keys (set in the file) are kept. */
+  protected setSort(expression: string, descending: boolean): void {
+    const band = this.band();
+    if (!band) return;
+    this.state.updateBand(band.id, (b) => {
+      const rest = b.sortBy?.slice(1) ?? [];
+      const keys = expression ? [{ expression, descending: descending || undefined }, ...rest] : rest;
+      b.sortBy = keys.length ? keys : undefined;
+    });
+  }
+
   protected setColumns(key: 'count' | 'gap', value: string): void {
     const band = this.band();
     if (!band) return;

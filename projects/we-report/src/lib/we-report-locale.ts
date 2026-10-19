@@ -284,6 +284,8 @@ export interface WeReportLocale {
   wizardTotals: string;
   automatic: string;
   createReport: string;
+  sortRows: string;
+  dataOrder: string;
   addTextHere: string;
   fitBandToContent: string;
   thumbnails: string;
@@ -649,6 +651,8 @@ export const weReportLocaleEn: WeReportLocale = {
   wizardTotals: 'Totals of number columns',
   automatic: 'Automatic',
   createReport: 'Create report',
+  sortRows: 'Sort rows by',
+  dataOrder: 'Data order',
   addTextHere: 'Add text here',
   fitBandToContent: 'Fit section to its content',
   thumbnails: 'Page thumbnails',
@@ -1046,6 +1050,8 @@ export const weReportLocaleTr: WeReportLocale = {
   wizardTotals: 'Sayı sütunlarının toplamı',
   automatic: 'Otomatik',
   createReport: 'Raporu oluştur',
+  sortRows: 'Satırları sırala',
+  dataOrder: 'Veri sırası',
   addTextHere: 'Buraya metin ekle',
   fitBandToContent: 'Bölümü içeriğine sığdır',
   thumbnails: 'Sayfa küçük resimleri',

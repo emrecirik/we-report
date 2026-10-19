@@ -105,6 +105,19 @@ describe('layout engine', () => {
     expect(texts(doc.pages[0])).toEqual(['Title', 'Drinks', 'Tea', 'Coffee', 'Sum: 30', 'Fruit', 'Apple', 'Sum: 3', '1 / 1']);
   });
 
+  it('sorts detail rows inside their group', () => {
+    const report = listReport([
+      { Name: 'Tea', Cat: 'Drinks', Price: 10 },
+      { Name: 'Apple', Cat: 'Fruit', Price: 3 },
+      { Name: 'Coffee', Cat: 'Drinks', Price: 20 },
+      { Name: 'Water', Cat: 'Drinks', Price: 1 },
+    ]);
+    report.bands.splice(1, 0, { id: 'gh', kind: 'groupHeader', height: 8, groupBy: { expression: '[Cat]' }, controls: [] });
+    report.bands.find((b) => b.kind === 'detail')!.sortBy = [{ expression: '[Price]', descending: true }];
+    const doc = layoutReport(report, { fonts, now: NOW });
+    expect(texts(doc.pages[0])).toEqual(['Title', 'Coffee', 'Tea', 'Water', 'Apple', '1 / 1']);
+  });
+
   it('keeps a group together and repeats its header on following pages', () => {
     const rows = [
       ...Array.from({ length: 25 }, (_, i) => ({ Name: `A${i}`, G: 'A' })),

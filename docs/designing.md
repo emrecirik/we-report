@@ -11,7 +11,7 @@ reports in code. Lengths are millimetres, font sizes points.
 | Report header / footer | once, at the start / end |
 | Page header / footer | on every page |
 | Group header / footer | around every group of rows (`groupBy`, nested groups allowed) |
-| Detail | once for every row |
+| Detail | once for every row, in data order or sorted (`sortBy`, inside each group) |
 | Inner list header / inner list / inner list footer | for a list *inside* every row — see below |
 
 ### Inner lists (master–detail)

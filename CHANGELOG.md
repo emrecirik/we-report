@@ -13,6 +13,8 @@
 - Viewer: page thumbnails, first/previous/next/last page, a page-number box that follows scrolling, zoom presets
   (50–200 %, fit width, whole page), find in report (Ctrl+F) with highlighted matches and
   next/previous, PageUp/PageDown/Home/End and Ctrl+P. New theme token `--we-report-search-highlight`.
+- Sorting: the detail section can sort its rows (`sortBy: [{ expression, descending }]`, inside
+  each group); the designer has "Sort rows by" on the detail section.
 - Report wizard: "Design from data" now asks which columns to show, what to group by, whether to
   print totals and which paper orientation to use, then builds the list (`generateListReport`
   takes `GenerateOptions { groupBy, totals, orientation }`).

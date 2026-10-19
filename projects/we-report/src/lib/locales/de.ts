@@ -298,6 +298,8 @@ export const weReportLocaleDe: WeReportLocale = {
   wizardTotals: 'Summen der Zahlenspalten',
   automatic: 'Automatisch',
   createReport: 'Bericht erstellen',
+  sortRows: 'Zeilen sortieren nach',
+  dataOrder: 'Reihenfolge der Daten',
   addTextHere: 'Hier Text einfügen',
   fitBandToContent: 'Bereich an Inhalt anpassen',
   thumbnails: 'Seitenminiaturen',

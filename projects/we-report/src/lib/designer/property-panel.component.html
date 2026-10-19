@@ -142,6 +142,25 @@
   }
   @if (b.kind === 'detail') {
     <section class="pp__section">
+      <h3>{{ s.sortRows }}</h3>
+      @let key = b.sortBy?.[0];
+      <div class="pp__grid">
+        <select (change)="setSort($any($event.target).value, !!key?.descending)" [attr.aria-label]="s.sortRows">
+          <option value="" [selected]="!key">{{ s.dataOrder }}</option>
+          @for (f of fields(); track f.expression) {
+            <option [value]="f.expression" [selected]="f.expression === key?.expression">{{ f.label }}</option>
+          }
+          @if (key && !fieldExpressions().has(key.expression)) {
+            <option [value]="key.expression" selected>{{ key.expression }}</option>
+          }
+        </select>
+        <select [disabled]="!key" (change)="setSort(key?.expression ?? '', $any($event.target).value === 'desc')" [attr.aria-label]="s.sortRows">
+          <option value="asc" [selected]="!key?.descending">{{ s.sortAsc }}</option>
+          <option value="desc" [selected]="!!key?.descending">{{ s.sortDesc }}</option>
+        </select>
+      </div>
+    </section>
+    <section class="pp__section">
       <h3>{{ s.labelSheet }}</h3>
       <select (change)="applyLabelSheet($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="s.labelSheet">
         <option value="" selected>{{ s.labelSheetChoose }}</option>

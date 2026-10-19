@@ -116,8 +116,19 @@ class LayoutRun {
       if (detail) entries.push({ type: 'band', rendered: this.renderBand(detail, { row: undefined, rows: [] }) });
     } else {
       const keys = new Map<unknown, unknown[]>();
-      for (const row of rows) keys.set(row, groupHeaders.map((h) => this.groupKey(h, row)));
-      const sorted = this.sortRows(rows, groupHeaders, keys);
+      // Group keys first (one per level), then the detail's own sort keys.
+      const sortBy = detail?.sortBy?.filter((k) => k.expression.trim()) ?? [];
+      for (const row of rows) {
+        keys.set(row, [
+          ...groupHeaders.map((h) => this.groupKey(h, row)),
+          ...sortBy.map((k) => this.sortKey(k.expression, row, detail!.id)),
+        ]);
+      }
+      const orders = [
+        ...groupHeaders.map((h) => (h.groupBy ? (h.sort ?? 'asc') : 'none')),
+        ...sortBy.map((k) => (k.descending ? 'desc' : 'asc') as 'asc' | 'desc'),
+      ];
+      const sorted = this.sortRows(rows, orders, keys);
       this.emitGroups(entries, 0, sorted, groupHeaders, keys, detail);
     }
 
@@ -138,7 +149,12 @@ class LayoutRun {
     return v instanceof Date ? v.getTime() : v;
   }
 
-  private sortRows(rows: unknown[], headers: Band[], keys: Map<unknown, unknown[]>): unknown[] {
+  private sortKey(expression: string, row: unknown, bandId: string): unknown {
+    const v = this.eval(expression, { row, rows: [] }, bandId);
+    return v instanceof Date ? v.getTime() : v;
+  }
+
+  private sortRows(rows: unknown[], orders: ('asc' | 'desc' | 'none')[], keys: Map<unknown, unknown[]>): unknown[] {
     const collator = new Intl.Collator(this.locale, { numeric: true });
     const cmp = (a: unknown, b: unknown): number => {
       if (a === b) return 0;
@@ -147,11 +163,11 @@ class LayoutRun {
       if (typeof a === 'number' && typeof b === 'number') return a - b;
       return collator.compare(String(a), String(b));
     };
-    if (!headers.some((h) => h.groupBy && h.sort !== 'none')) return rows;
+    if (!orders.some((o) => o !== 'none')) return rows;
     // Array.prototype.sort is stable, so rows keep their order inside a group.
     return [...rows].sort((ra, rb) => {
-      for (let i = 0; i < headers.length; i++) {
-        const order = headers[i].sort ?? 'asc';
+      for (let i = 0; i < orders.length; i++) {
+        const order = orders[i];
         if (order === 'none') continue;
         const c = cmp(keys.get(ra)![i], keys.get(rb)![i]);
         if (c) return order === 'desc' ? -c : c;
