@@ -5,7 +5,6 @@
 - Designer: *Fit size to text* (right-click) sizes texts to what they show, measured with the
   report's fonts.
 - Designer: zoom, grid size and *Show data* are remembered in the browser, like the panel widths.
-- Designer: the format list shows a sample of each format in the report's language and currency.
 - Designer: fold a section away (double-click its label, or right-click) to make room while
   working on others; only the designer view changes.
 - Designer: right-click a value in the detail section → *Add a total of this column* puts its sum
