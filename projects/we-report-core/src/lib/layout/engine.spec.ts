@@ -1,11 +1,12 @@
 import { PDFDocument } from 'pdf-lib';
 import { loadTestFonts } from '../../testing/test-fonts';
 import { createBlankReport } from '../definition/blank-report';
-import { Band, ReportDefinition } from '../definition/report-definition';
+import { Band, ChartControl, ReportDefinition } from '../definition/report-definition';
 import { FontRegistry } from '../fonts/font-registry';
 import { renderPdf } from '../render/pdf';
 import { layoutReport } from './engine';
-import { LayoutPage, TextItem } from './layout-types';
+import { LayoutPage, PathItem, RectItem, TextItem } from './layout-types';
+import { niceScale } from './chart';
 import { wrapText } from './text-wrap';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
@@ -167,5 +168,47 @@ describe('layout engine', () => {
     expect(loaded.getPageCount()).toBe(doc.pages.length);
     expect(loaded.getTitle()).toBe('Test');
     expect(bytes.length).toBeLessThan(120_000);
+  });
+
+  it('applies conditional formatting only to the rows whose rule is true', () => {
+    const report = listReport([{ Name: 'a', Amount: 5 }, { Name: 'b', Amount: -3 }]);
+    report.bands[1].controls[0].formatting = [{ when: '[Amount] < 0', style: { color: '#dc2626', bold: true } }];
+    const doc = layoutReport(report, { fonts, now: NOW });
+    const rows = doc.pages[0].items.filter((i): i is TextItem => i.kind === 'text' && (i.lines[0]?.text === 'a' || i.lines[0]?.text === 'b'));
+    expect(rows.map((r) => [r.lines[0].text, r.color, r.bold])).toEqual([
+      ['a', '#1f2328', false],
+      ['b', '#dc2626', true],
+    ]);
+  });
+
+  it('groups chart rows by category and aggregates the values', () => {
+    const report = listReport([
+      { Name: 'x', City: 'Ankara', Amount: 10 },
+      { Name: 'y', City: 'İzmir', Amount: 5 },
+      { Name: 'z', City: 'Ankara', Amount: 20 },
+    ]);
+    report.bands[0].height = 60;
+    report.bands[0].controls.push({
+      id: 'chart', type: 'chart', chartType: 'column', x: 0, y: 10, width: 120, height: 50,
+      category: { expression: '[City]' }, value: { expression: '[Amount]' }, showValues: true,
+    });
+    report.bands.splice(1, 0, { id: 'rh', kind: 'reportHeader', height: 60, controls: [report.bands[0].controls.pop()!] });
+    const items = layoutReport(report, { fonts, now: NOW }).pages[0].items;
+    const bars = items.filter((i): i is RectItem => i.kind === 'rect' && !!i.fill);
+    expect(bars.length).toBe(2);
+    // Ankara (10 + 20) is six times İzmir (5) — same baseline, so heights compare directly.
+    expect(bars[0].height / bars[1].height).toBeCloseTo(6, 5);
+    const labels = items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0]?.text);
+    expect(labels).toEqual(jasmine.arrayContaining(['Ankara', 'İzmir', '30', '5']));
+
+    (report.bands[1].controls[0] as ChartControl).chartType = 'pie';
+    const pie = layoutReport(report, { fonts, now: NOW }).pages[0].items.find((i): i is PathItem => i.kind === 'path')!;
+    expect(pie.paths.length).toBe(2);
+  });
+
+  it('picks round chart axes that include zero', () => {
+    expect(niceScale(3, 97)).toEqual({ min: 0, max: 100, step: 20 });
+    expect(niceScale(-12, 40)).toEqual({ min: -20, max: 40, step: 20 });
+    expect(niceScale(0, 0).max).toBeGreaterThan(0);
   });
 });

@@ -237,6 +237,32 @@ export interface WeReportLocale {
   issueOverlap: string;
   fixIt: string;
   noProblems: string;
+  chartType: string;
+  chartColumn: string;
+  chartBar: string;
+  chartLine: string;
+  chartPie: string;
+  chartDoughnut: string;
+  chartCategory: string;
+  chartValue: string;
+  chartAggregate: string;
+  aggSum: string;
+  aggCount: string;
+  aggAvg: string;
+  aggMin: string;
+  aggMax: string;
+  chartTitle: string;
+  showValues: string;
+  showLegend: string;
+  chartHint: string;
+  conditionalFormatting: string;
+  conditionalHint: string;
+  addRule: string;
+  ruleWhen: string;
+  ruleThen: string;
+  removeRule: string;
+  opContains: string;
+  ruleValue: string;
 }
 
 export const weReportLocaleEn: WeReportLocale = {
@@ -258,6 +284,7 @@ export const weReportLocaleEn: WeReportLocale = {
     barcode: 'Barcode',
     pageInfo: 'Page number / date',
     checkbox: 'Checkbox',
+    chart: 'Chart',
   },
 
   zoomIn: 'Zoom in',
@@ -484,6 +511,32 @@ export const weReportLocaleEn: WeReportLocale = {
   issueOverlap: 'overlaps {0}',
   fixIt: 'Fix',
   noProblems: 'No problems found.',
+  chartType: 'Chart type',
+  chartColumn: 'Columns',
+  chartBar: 'Bars',
+  chartLine: 'Line',
+  chartPie: 'Pie',
+  chartDoughnut: 'Doughnut',
+  chartCategory: 'Group by',
+  chartValue: 'Value',
+  chartAggregate: 'Calculation',
+  aggSum: 'Total',
+  aggCount: 'Count',
+  aggAvg: 'Average',
+  aggMin: 'Smallest',
+  aggMax: 'Largest',
+  chartTitle: 'Title',
+  showValues: 'Show values',
+  showLegend: 'Show legend',
+  chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
+  conditionalFormatting: 'Conditional formatting',
+  conditionalHint: 'Change the look when a condition is true, e.g. negative amounts in red.',
+  addRule: 'Add rule',
+  ruleWhen: 'When',
+  ruleThen: 'Then',
+  removeRule: 'Remove rule',
+  opContains: 'contains',
+  ruleValue: 'Value',
 };
 
 export const weReportLocaleTr: WeReportLocale = {
@@ -505,6 +558,7 @@ export const weReportLocaleTr: WeReportLocale = {
     barcode: 'Barkod',
     pageInfo: 'Sayfa no / tarih',
     checkbox: 'Onay kutusu',
+    chart: 'Grafik',
   },
 
   zoomIn: 'Yakınlaştır',
@@ -731,6 +785,32 @@ export const weReportLocaleTr: WeReportLocale = {
   issueOverlap: '{0} ile üst üste biniyor',
   fixIt: 'Düzelt',
   noProblems: 'Sorun bulunamadı.',
+  chartType: 'Grafik türü',
+  chartColumn: 'Sütun',
+  chartBar: 'Çubuk',
+  chartLine: 'Çizgi',
+  chartPie: 'Pasta',
+  chartDoughnut: 'Halka',
+  chartCategory: 'Gruplama alanı',
+  chartValue: 'Değer',
+  chartAggregate: 'Hesaplama',
+  aggSum: 'Toplam',
+  aggCount: 'Adet',
+  aggAvg: 'Ortalama',
+  aggMin: 'En küçük',
+  aggMax: 'En büyük',
+  chartTitle: 'Başlık',
+  showValues: 'Değerleri göster',
+  showLegend: 'Açıklamayı göster',
+  chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
+  conditionalFormatting: 'Koşullu biçim',
+  conditionalHint: 'Bir koşul doğru olduğunda görünümü değiştirin; örneğin eksi tutarlar kırmızı olsun.',
+  addRule: 'Kural ekle',
+  ruleWhen: 'Şu durumda',
+  ruleThen: 'O zaman',
+  removeRule: 'Kuralı kaldır',
+  opContains: 'içeriyorsa',
+  ruleValue: 'Değer',
 };
 
 export const WE_REPORT_LOCALE = new InjectionToken<WeReportLocale>('WE_REPORT_LOCALE', {

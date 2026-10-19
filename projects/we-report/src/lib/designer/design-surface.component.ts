@@ -133,6 +133,12 @@ interface DragOp {
                       <small>{{ barcodeLabel(c) }}</small>
                     </div>
                   }
+                  @case ('chart') {
+                    <div class="ds__placeholder ds__chart">
+                      <span [innerHTML]="'chart' | weReportIcon"></span>
+                      <small>{{ chartLabel(c) }}</small>
+                    </div>
+                  }
                   @case ('checkbox') {
                     <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
                   }
@@ -769,11 +775,29 @@ export class DesignSurfaceComponent implements OnDestroy {
     this.dropAt(data, band, x, y);
   }
 
+  protected chartLabel(c: ReportControl): string {
+    if (c.type !== 'chart') return '';
+    const s = this.strings();
+    const type = { column: s.chartColumn, bar: s.chartBar, line: s.chartLine, pie: s.chartPie, doughnut: s.chartDoughnut }[c.chartType];
+    return c.category.expression ? `${type}: ${c.value.expression} / ${c.category.expression}` : type;
+  }
+
   /** Creates controls for a drop at (x, y) mm inside `band`. */
   dropAt(data: DesignerDragData, band: Band, x: number, y: number): void {
     const width = this.geometry().contentWidth;
     if (data.kind === 'control') {
       const control = createControl(data.type, this.state.newId(data.type), x, y, this.strings().newText, data.variant);
+      if (control.type === 'chart') {
+        // Start bound to the data: the first text field per the first number field.
+        const row = this.sample()?.row;
+        const entries = row && typeof row === 'object' ? Object.entries(row as Record<string, unknown>) : [];
+        const text = entries.find(([, v]) => typeof v === 'string')?.[0];
+        const number = entries.find(([, v]) => typeof v === 'number')?.[0];
+        if (text && number) {
+          control.category = { expression: `[${text}]` };
+          control.value = { expression: `[${number}]` };
+        }
+      }
       control.x = round(Math.max(0, Math.min(x, width - control.width)));
       control.y = round(Math.max(0, y));
       this.growBand(band, [control]);

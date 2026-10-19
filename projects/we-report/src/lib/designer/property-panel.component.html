@@ -284,6 +284,72 @@
           }
         </section>
       }
+      @case ('chart') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <small class="pp__hint">{{ s.chartHint }}</small>
+          <div class="pp__segmented" role="radiogroup" [attr.aria-label]="s.chartType">
+            @for (t of chartTypes; track t.type) {
+              <button type="button" role="radio" [attr.aria-checked]="c.chartType === t.type" [class.pp__on]="c.chartType === t.type" (click)="set('chartType', t.type)">{{ s[t.label] }}</button>
+            }
+          </div>
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.chartCategory }}</span>
+            <select (change)="setExpression('category', $any($event.target).value)">
+              <option value="" [selected]="!c.category.expression">—</option>
+              @for (f of fields(); track f.expression) {
+                <option [value]="f.expression" [selected]="f.expression === c.category.expression">{{ f.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.chartValue }}</span>
+            <select (change)="setExpression('value', $any($event.target).value)">
+              <option value="" [selected]="!c.value.expression">—</option>
+              @for (f of fields(); track f.expression) {
+                <option [value]="f.expression" [selected]="f.expression === c.value.expression">{{ f.label }}</option>
+              }
+            </select>
+          </label>
+          @if (advanced()) {
+            <label class="pp__row pp__row--stack">
+              <span>{{ s.expression }}</span>
+              <input class="pp__mono" [value]="c.category.expression" (input)="setExpression('category', $any($event.target).value)" spellcheck="false" />
+              <input class="pp__mono" [value]="c.value.expression" (input)="setExpression('value', $any($event.target).value)" spellcheck="false" />
+            </label>
+          }
+          <label class="pp__row">
+            <span>{{ s.chartAggregate }}</span>
+            <select (change)="set('aggregate', $any($event.target).value)">
+              @for (a of aggregates; track a.value) {
+                <option [value]="a.value" [selected]="(c.aggregate ?? 'sum') === a.value">{{ s[a.label] }}</option>
+              }
+            </select>
+          </label>
+          <label class="pp__row">
+            <span>{{ s.format }}</span>
+            <select (change)="set('format', $any($event.target).value)">
+              @for (f of formats; track f.value) {
+                <option [value]="f.value" [selected]="(c.format ?? '') === f.value">{{ s[f.key] }}</option>
+              }
+            </select>
+          </label>
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.chartTitle }}</span>
+            <input [value]="c.title ?? ''" (input)="set('title', $any($event.target).value)" />
+          </label>
+          <label class="pp__check">
+            <input type="checkbox" [checked]="!!c.showValues" (change)="set('showValues', $any($event.target).checked || undefined)" />
+            <span>{{ s.showValues }}</span>
+          </label>
+          @if (c.chartType === 'pie' || c.chartType === 'doughnut') {
+            <label class="pp__check">
+              <input type="checkbox" [checked]="c.showLegend !== false" (change)="set('showLegend', $any($event.target).checked ? undefined : false)" />
+              <span>{{ s.showLegend }}</span>
+            </label>
+          }
+        </section>
+      }
       @case ('checkbox') {
         <section class="pp__section">
           <h3>{{ s.groupContent }}</h3>
@@ -292,6 +358,47 @@
         </section>
       }
     }
+
+    <section class="pp__section">
+      <h3>{{ s.conditionalFormatting }}</h3>
+      @for (rule of c.formatting ?? []; track $index; let i = $index) {
+        @let cond = condition(rule.when);
+        <div class="pp__rule">
+          <div class="pp__rule-head">
+            <span>{{ s.ruleWhen }}</span>
+            <button type="button" class="pp__link" (click)="removeRule(i)" [title]="s.removeRule" [attr.aria-label]="s.removeRule">✕</button>
+          </div>
+          @if (cond) {
+            <div class="pp__rule-when">
+              <select (change)="setCondition(i, cond, 'field', $any($event.target).value)" [attr.aria-label]="s.ruleWhen">
+                <option value="" [selected]="!cond.field">—</option>
+                @for (f of fields(); track f.expression) {
+                  <option [value]="f.expression" [selected]="f.expression === cond.field">{{ f.label }}</option>
+                }
+              </select>
+              <select (change)="setCondition(i, cond, 'op', $any($event.target).value)">
+                @for (o of conditionOps; track o.op) {
+                  <option [value]="o.op" [selected]="o.op === cond.op">{{ o.op === 'contains' ? s.opContains : o.label }}</option>
+                }
+              </select>
+              <input [value]="cond.value" (input)="setCondition(i, cond, 'value', $any($event.target).value)" [placeholder]="s.ruleValue" [attr.aria-label]="s.ruleValue" />
+            </div>
+          }
+          @if (advanced() || !cond) {
+            <input class="pp__mono" [value]="rule.when" (input)="setRule(i, { when: $any($event.target).value })" spellcheck="false" />
+          }
+          <div class="pp__rule-then">
+            <span>{{ s.ruleThen }}</span>
+            <input type="color" [value]="rule.style.color ?? '#000000'" (input)="setRuleStyle(i, 'color', $any($event.target).value)" [title]="s.textColor" [attr.aria-label]="s.textColor" />
+            <input type="color" [value]="rule.style.backgroundColor ?? '#ffffff'" (input)="setRuleStyle(i, 'backgroundColor', $any($event.target).value)" [title]="s.backgroundColor" [attr.aria-label]="s.backgroundColor" />
+            <button type="button" class="pp__chip" [class.pp__on]="rule.style.bold" (click)="setRuleStyle(i, 'bold', rule.style.bold ? undefined : true)">{{ s.bold }}</button>
+          </div>
+        </div>
+      } @empty {
+        <small class="pp__hint">{{ s.conditionalHint }}</small>
+      }
+      <button type="button" class="pp__link" (click)="addRule()">+ {{ s.addRule }}</button>
+    </section>
 
     <section class="pp__section">
       <h3>{{ s.groupLayout }}</h3>

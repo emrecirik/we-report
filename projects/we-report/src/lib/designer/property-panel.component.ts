@@ -4,6 +4,9 @@ import {
   BARCODE_SYMBOLOGIES,
   Bindable,
   BorderStyle,
+  ChartAggregate,
+  ChartType,
+  FormattingRule,
   isExpression,
   PAPER_SIZES,
   ReportControl,
@@ -16,6 +19,7 @@ import { WeReportLocale } from '../we-report-locale';
 import { BindableInputComponent } from './bindable-input.component';
 import { DesignerField } from './designer-fields';
 import { AlignEdge, DesignerState } from './designer-state';
+import { buildCondition, CONDITION_OPS, parseCondition, SimpleCondition } from './formatting-rule';
 
 const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
   { value: '', key: 'formatNone' },
@@ -25,6 +29,22 @@ const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
   { value: 'p0', key: 'formatPercent' },
   { value: 'dd.MM.yyyy', key: 'formatDate' },
   { value: 'dd.MM.yyyy HH:mm', key: 'formatDateTime' },
+];
+
+const CHART_TYPES: { type: ChartType; label: keyof WeReportLocale }[] = [
+  { type: 'column', label: 'chartColumn' },
+  { type: 'bar', label: 'chartBar' },
+  { type: 'line', label: 'chartLine' },
+  { type: 'pie', label: 'chartPie' },
+  { type: 'doughnut', label: 'chartDoughnut' },
+];
+
+const AGGREGATES: { value: ChartAggregate; label: keyof WeReportLocale }[] = [
+  { value: 'sum', label: 'aggSum' },
+  { value: 'count', label: 'aggCount' },
+  { value: 'avg', label: 'aggAvg' },
+  { value: 'min', label: 'aggMin' },
+  { value: 'max', label: 'aggMax' },
 ];
 
 const ALIGN_ACTIONS: { edge: AlignEdge; icon: keyof WeReportIcons; label: keyof WeReportLocale & `arrange${string}` }[] = [
@@ -56,6 +76,9 @@ export class PropertyPanelComponent {
   protected readonly symbologies = BARCODE_SYMBOLOGIES;
   protected readonly formats = FORMATS;
   protected readonly alignActions = ALIGN_ACTIONS;
+  protected readonly chartTypes = CHART_TYPES;
+  protected readonly aggregates = AGGREGATES;
+  protected readonly conditionOps = CONDITION_OPS;
 
   protected readonly controls = computed(() => this.state.selectedControls());
   protected readonly control = computed<ReportControl | null>(() => (this.controls().length === 1 ? this.controls()[0] : null));
@@ -164,6 +187,49 @@ export class PropertyPanelComponent {
     this.state.updateControls(this.ids(), (c) => {
       c.visible = isExpression(value) && value.expression.trim() ? value : undefined;
     }, 'bind-visible');
+  }
+
+  protected setExpression(key: 'category' | 'value', expression: string): void {
+    this.set(key, { expression }, `chart-${key}`);
+  }
+
+  // ── Conditional formatting ──────────────────────────────────────────────────
+
+  protected condition(when: string): SimpleCondition | null {
+    return parseCondition(when);
+  }
+
+  private updateRules(mutate: (rules: FormattingRule[]) => void, coalesce?: string): void {
+    this.state.updateControls(this.ids(), (c) => {
+      const rules = structuredClone(c.formatting ?? []);
+      mutate(rules);
+      c.formatting = rules.length ? rules : undefined;
+    }, coalesce);
+  }
+
+  protected addRule(): void {
+    this.updateRules((rules) => rules.push({ when: '', style: { bold: true } }));
+  }
+
+  protected removeRule(index: number): void {
+    this.updateRules((rules) => rules.splice(index, 1));
+  }
+
+  protected setRule(index: number, patch: Partial<FormattingRule>): void {
+    this.updateRules((rules) => rules[index] && Object.assign(rules[index], patch), `rule-${index}`);
+  }
+
+  protected setCondition(index: number, current: SimpleCondition, key: keyof SimpleCondition, value: string): void {
+    this.setRule(index, { when: buildCondition({ ...current, [key]: value }) });
+  }
+
+  protected setRuleStyle<K extends keyof ReportStyle>(index: number, key: K, value: ReportStyle[K] | undefined): void {
+    this.updateRules((rules) => {
+      const style = rules[index]?.style;
+      if (!style) return;
+      if (value === undefined) delete style[key];
+      else style[key] = value;
+    }, `rule-style-${index}-${key}`);
   }
 
   protected checkedValue(c: ReportControl): Bindable<string> {

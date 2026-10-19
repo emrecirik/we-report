@@ -34,6 +34,7 @@ function fieldsOf(node: ExpressionNode, out: string[][]): void {
 
 function bindings(c: ReportControl): Bindable<unknown>[] {
   const list: Bindable<unknown>[] = c.visible !== undefined ? [c.visible] : [];
+  for (const rule of c.formatting ?? []) if (rule.when.trim()) list.push({ expression: rule.when });
   switch (c.type) {
     case 'text':
       return [...list, c.text];
@@ -43,6 +44,8 @@ function bindings(c: ReportControl): Bindable<unknown>[] {
       return [...list, c.source];
     case 'checkbox':
       return [...list, c.checked];
+    case 'chart':
+      return [...list, ...[c.category, c.value].filter((e) => e.expression.trim())];
     default:
       return list;
   }

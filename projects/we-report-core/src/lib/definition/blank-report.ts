@@ -13,6 +13,10 @@ export const DEFAULT_STYLE: Required<Omit<ReportStyle, 'border' | 'backgroundCol
   padding: 0.5,
 };
 
+/** Default chart series colours and grid colour; a chart's `colors` overrides the palette. */
+export const DEFAULT_CHART_PALETTE = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#ea580c', '#475569'];
+export const DEFAULT_CHART_GRID_COLOR = '#d0d7de';
+
 export function createBlankReport(name = 'Report'): ReportDefinition {
   return {
     version: CURRENT_DEFINITION_VERSION,

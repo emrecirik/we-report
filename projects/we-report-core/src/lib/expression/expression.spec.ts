@@ -1,3 +1,4 @@
+import { amountInWords, numberToWords } from './words';
 import { evaluate } from './evaluate';
 import { ExpressionError, parseExpression } from './parser';
 
@@ -100,5 +101,17 @@ describe('expression language', () => {
     expect(fail('1 2').position).toBe(2);
     expect(fail('Round(1,').message).toMatch(/end of expression/);
     expect(() => evaluate('Round(1, 2, 3)')).toThrowError(ExpressionError, /1-2 argument/);
+  });
+});
+
+describe('amounts in words', () => {
+  it('writes Turkish and English amounts with their currency', () => {
+    expect(numberToWords(1234, 'tr-TR')).toBe('Bin İki Yüz Otuz Dört');
+    expect(numberToWords(2001100, 'tr-TR')).toBe('İki Milyon Bin Yüz');
+    expect(numberToWords(0, 'tr-TR')).toBe('Sıfır');
+    expect(amountInWords(1250.5, 'tr-TR', 'TRY')).toBe('Bin İki Yüz Elli Türk Lirası Elli Kuruş');
+    expect(numberToWords(1234, 'en-US')).toBe('one thousand two hundred thirty-four');
+    expect(amountInWords(-12.05, 'en-US', 'USD')).toBe('minus twelve dollars and five cents');
+    expect(evaluate('AmountInWords([x])', { row: { x: 100 }, locale: 'tr-TR', currency: 'TRY' })).toBe('Yüz Türk Lirası');
   });
 });

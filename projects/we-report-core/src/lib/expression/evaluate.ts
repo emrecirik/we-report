@@ -1,5 +1,6 @@
 import { formatValue, toDate } from '../format';
 import { ExpressionError, ExpressionNode, parseExpression } from './parser';
+import { amountInWords, numberToWords } from './words';
 
 export interface EvaluationContext {
   /** The current data row; fields resolve against it. */
@@ -43,6 +44,12 @@ const now = (ctx: EvaluationContext) => {
 const FUNCTIONS: Record<string, FunctionDef> = {
   isnull: { min: 2, max: 2, fn: ([v, fallback]) => (v === null || v === undefined ? fallback : v) },
   concat: { min: 1, max: 99, fn: (args) => args.map(str).join('') },
+  numbertowords: { min: 1, max: 1, fn: ([v], ctx) => numberToWords(num(v, 'NumberToWords'), ctx.locale) },
+  amountinwords: {
+    min: 1,
+    max: 2,
+    fn: ([v, currency], ctx) => amountInWords(num(v, 'AmountInWords'), ctx.locale, currency === undefined ? (ctx.currency ?? 'TRY') : str(currency)),
+  },
   len: { min: 1, max: 1, fn: ([v]) => str(v).length },
   upper: { min: 1, max: 1, fn: ([v], ctx) => str(v).toLocaleUpperCase(ctx.locale) },
   lower: { min: 1, max: 1, fn: ([v], ctx) => str(v).toLocaleLowerCase(ctx.locale) },
@@ -108,7 +115,7 @@ const AGGREGATES = new Set(['sum', 'count', 'avg', 'min', 'max']);
 
 /** Names the designer's expression editor can offer (aggregates and Iif included). */
 export const EXPRESSION_FUNCTION_NAMES: readonly string[] = [
-  'Iif', 'IsNull', 'Concat', 'Len', 'Upper', 'Lower', 'Trim', 'Substring', 'Replace', 'Contains',
+  'Iif', 'IsNull', 'Concat', 'NumberToWords', 'AmountInWords', 'Len', 'Upper', 'Lower', 'Trim', 'Substring', 'Replace', 'Contains',
   'StartsWith', 'EndsWith', 'Round', 'Abs', 'Floor', 'Ceiling', 'ToNumber', 'ToString', 'Format',
   'Today', 'Now', 'Year', 'Month', 'Day', 'AddDays', 'Sum', 'Count', 'Avg', 'Min', 'Max',
 ];

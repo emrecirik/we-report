@@ -1,3 +1,4 @@
+import { buildCondition, parseCondition } from './formatting-rule';
 import { createBlankReport } from 'we-report-core';
 import { captionFor } from './control-factory';
 import { designerFields } from './designer-fields';
@@ -137,4 +138,18 @@ describe('designer helpers', () => {
     expect(parent.map((f) => f.expression)).toEqual(['[^.number]', '[^.customer]', '[^.customer.name]']);
   });
 
+});
+
+describe('formatting rule conditions', () => {
+  it('builds formulas without the user typing one and reads them back', () => {
+    expect(buildCondition({ field: '[Amount]', op: '<', value: '0' })).toBe('[Amount] < 0');
+    expect(buildCondition({ field: '[City]', op: '=', value: "Kuşadası'nın" })).toBe("[City] = 'Kuşadası''nın'");
+    expect(buildCondition({ field: '[Name]', op: 'contains', value: 'Ltd' })).toBe("Contains([Name], 'Ltd')");
+    expect(parseCondition("[City] = 'Kuşadası''nın'")).toEqual({ field: '[City]', op: '=', value: "Kuşadası'nın" });
+    expect(parseCondition("Contains([Name], 'Ltd')")).toEqual({ field: '[Name]', op: 'contains', value: 'Ltd' });
+    expect(parseCondition('[a] <> 3')).toEqual({ field: '[a]', op: '!=', value: '3' });
+    expect(parseCondition('[a] + [b] > 3')).toBeNull();
+    expect(parseCondition('Iif([a], 1, 2)')).toBeNull();
+    expect(parseCondition('[a] = 3 and [b]')).toBeNull();
+  });
 });

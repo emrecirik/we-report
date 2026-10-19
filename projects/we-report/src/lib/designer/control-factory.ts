@@ -12,6 +12,7 @@ export const TOOLBOX_ITEMS: { type: ReportControlType; icon: string; variant?: s
   { type: 'barcode', icon: 'qrcode', variant: 'qrcode' },
   { type: 'pageInfo', icon: 'pageInfo' },
   { type: 'checkbox', icon: 'checkbox' },
+  { type: 'chart', icon: 'chart' },
 ];
 
 /** A new control with sensible defaults, top-left corner at (x, y) mm. */
@@ -34,6 +35,8 @@ export function createControl(type: ReportControlType, id: string, x: number, y:
       return { ...base, type, width: 40, height: 6, info: 'pageNofM' };
     case 'checkbox':
       return { ...base, type, width: 5, height: 5, checked: true };
+    case 'chart':
+      return { ...base, type, width: 120, height: 60, chartType: 'column', category: { expression: '' }, value: { expression: '' }, showValues: true };
   }
 }
 

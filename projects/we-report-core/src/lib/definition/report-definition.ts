@@ -74,6 +74,15 @@ interface ControlBase {
   style?: string;
   styleOverrides?: ReportStyle;
   visible?: Bindable<boolean>;
+  /** Applied in order; every rule whose formula is true merges its style over the control's. */
+  formatting?: FormattingRule[];
+}
+
+/** Conditional formatting: "when `[Amount] < 0`, use red text". */
+export interface FormattingRule {
+  /** A formula; the rule applies when it is true. */
+  when: string;
+  style: ReportStyle;
 }
 
 export interface TextControl extends ControlBase {
@@ -124,6 +133,30 @@ export interface CheckboxControl extends ControlBase {
   checked: Bindable<boolean>;
 }
 
+export type ChartType = 'column' | 'bar' | 'line' | 'pie' | 'doughnut';
+export type ChartAggregate = 'sum' | 'count' | 'avg' | 'min' | 'max';
+
+/**
+ * A chart of the band's rows (all rows in a report header/footer, the group's rows in a group
+ * footer): rows are grouped by `category` and `value` is aggregated per group.
+ */
+export interface ChartControl extends ControlBase {
+  type: 'chart';
+  chartType: ChartType;
+  category: Expression;
+  value: Expression;
+  /** Default `sum`. */
+  aggregate?: ChartAggregate;
+  title?: string;
+  showValues?: boolean;
+  /** Pie and doughnut only; default true. */
+  showLegend?: boolean;
+  /** Format of the value labels and axis, e.g. `n0`, `c2`. */
+  format?: string;
+  /** Series colours; the report's chart palette when omitted. */
+  colors?: string[];
+}
+
 export type ReportControl =
   | TextControl
   | LineControl
@@ -131,7 +164,8 @@ export type ReportControl =
   | ImageControl
   | BarcodeControl
   | PageInfoControl
-  | CheckboxControl;
+  | CheckboxControl
+  | ChartControl;
 
 export type ReportControlType = ReportControl['type'];
 

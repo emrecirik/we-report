@@ -4,6 +4,7 @@ import { PageGeometry, resolvePageGeometry } from '../definition/page';
 import {
   Band,
   Bindable,
+  ChartControl,
   isExpression,
   ReportControl,
   ReportDefinition,
@@ -13,6 +14,7 @@ import { evaluate, EvaluationContext } from '../expression/evaluate';
 import { FontRegistry } from '../fonts/font-registry';
 import { formatValue } from '../format';
 import { barcodeItem } from './barcode';
+import { aggregate, ChartPoint, chartItems } from './chart';
 import { readImage } from './images';
 import { LayoutDocument, LayoutItem, LayoutPage, LayoutProblem, TextItem } from './layout-types';
 import { resolveStyle, ResolvedStyle } from './style';
@@ -302,7 +304,7 @@ class LayoutRun {
     c: ReportControl,
     scope: Scope,
   ): { items: LayoutItem[]; height: number; deferred?: (page: PageInfo) => LayoutItem[] } {
-    const style = resolveStyle(this.def, c.style, c.styleOverrides);
+    const style = resolveStyle(this.def, c.style, this.overridesFor(c, scope));
     const box = { x: c.x, y: c.y, width: c.width, height: c.height };
     switch (c.type) {
       case 'text': {
@@ -362,6 +364,19 @@ class LayoutRun {
         }
         return { items, height: c.height };
       }
+      case 'chart': {
+        const items = this.decorations(style, box);
+        const options = { locale: this.locale, currency: this.currency };
+        items.push(
+          ...chartItems(c, this.chartPoints(c, scope), style, {
+            text: (text, st, b) => this.textBox(text, st, b),
+            lineHeight: (st) => this.options.fonts.resolve(st.fontFamily, st.bold, st.italic).lineHeight(st.fontSize),
+            textWidth: (text, st) => this.options.fonts.resolve(st.fontFamily, st.bold, st.italic).widthOf(text, st.fontSize),
+            format: (v) => formatValue(v, c.format || 'n0', options),
+          }),
+        );
+        return { items, height: c.height };
+      }
       case 'checkbox': {
         const checked = this.truthy(this.bind(c.checked, scope, c.id));
         const size = Math.min(c.width, c.height) * 0.8;
@@ -379,6 +394,33 @@ class LayoutRun {
         return { items, height: c.height };
       }
     }
+  }
+
+  /** The control's own overrides plus every formatting rule whose formula is true for this row. */
+  private overridesFor(c: ReportControl, scope: Scope): ReportControl['styleOverrides'] {
+    if (!c.formatting?.length) return c.styleOverrides;
+    let merged = { ...c.styleOverrides };
+    for (const rule of c.formatting) {
+      if (rule.when.trim() && this.truthy(this.eval(rule.when, scope, c.id))) merged = { ...merged, ...rule.style };
+    }
+    return merged;
+  }
+
+  /** The band's rows grouped by the chart's category, in order of first appearance. */
+  private chartPoints(c: ChartControl, scope: Scope): ChartPoint[] {
+    if (!c.category.expression.trim() || !c.value.expression.trim()) return [];
+    const groups = new Map<string, number[]>();
+    const options = { locale: this.locale, currency: this.currency };
+    for (const row of scope.rows) {
+      const rowScope = { row, rows: scope.rows };
+      const category = this.eval(c.category.expression, rowScope, c.id);
+      const label = category instanceof Date ? formatValue(category, 'dd.MM.yyyy', options) : String(category ?? '');
+      const value = Number(this.eval(c.value.expression, rowScope, c.id));
+      if (!groups.has(label)) groups.set(label, []);
+      // Count counts rows, whatever the value formula returns.
+      if (Number.isFinite(value) || c.aggregate === 'count') groups.get(label)!.push(Number.isFinite(value) ? value : 0);
+    }
+    return [...groups].map(([label, values]) => ({ label, value: aggregate(c.aggregate ?? 'sum', values) }));
   }
 
   private textOf(c: TextControl, scope: Scope): string {
