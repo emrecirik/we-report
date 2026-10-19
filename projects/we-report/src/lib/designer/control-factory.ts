@@ -46,7 +46,7 @@ export function createControl(type: ReportControlType, id: string, x: number, y:
         columns: [40, 40, 40],
         styleOverrides: { border: { width: 0.25, color: DEFAULT_TABLE_BORDER_COLOR, sides: { top: true, right: true, bottom: true, left: true } } },
         rows: [
-          { height: 7, cells: [1, 2, 3].map((n) => ({ text: `${text} ${n}`, styleOverrides: { bold: true } })) },
+          { height: 7, cells: [1, 2, 3].map((n) => ({ text: text.includes('{0}') ? text.replace('{0}', String(n)) : `${text} ${n}`, styleOverrides: { bold: true } })) },
           { height: 7, cells: [{ text: '' }, { text: '' }, { text: '' }] },
         ],
       };

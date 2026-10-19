@@ -923,7 +923,8 @@ export class DesignSurfaceComponent implements OnDestroy {
   dropAt(data: DesignerDragData, band: Band, x: number, y: number): void {
     const width = this.geometry().contentWidth;
     if (data.kind === 'control') {
-      const control = createControl(data.type, this.state.newId(data.type), x, y, this.strings().newText, data.variant);
+      const s = this.strings();
+      const control = createControl(data.type, this.state.newId(data.type), x, y, data.type === 'table' ? s.columnN : s.newText, data.variant);
       if (control.type === 'chart') {
         // Start bound to the data: the first text field per the first number field.
         const row = this.sample()?.row;
