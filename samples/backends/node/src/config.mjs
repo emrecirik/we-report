@@ -53,6 +53,8 @@ export function loadConfig(env = process.env) {
     webServiceFetch: !demo && env.WE_REPORT_FETCH !== '0',
     fetchAllowHosts: new Set(list(env.WE_REPORT_FETCH_ALLOW_HOSTS).map((h) => h.toLowerCase())),
     rateLimitPerMinute: int(env.WE_REPORT_RATE_LIMIT, demo ? 60 : 600),
+    // Saved grid layouts and sheets (protocol 1.1) — one JSON file per key; off in demo mode
+    layoutsDir: env.WE_REPORT_LAYOUTS_DIR || join(tmpdir(), 'we-report-layouts'),
     connections,
   };
 }
