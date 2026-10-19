@@ -1,24 +1,46 @@
-# WeReport
+# we-report-angular
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.0.
+**Free, native Angular report designer and viewer.** Drag-and-drop banded reports, live data in the
+design, paper sizes from A4 to 80 mm receipt rolls, barcodes and QR codes, parameters, print, PDF and
+Excel — MIT licensed, no backend required. Angular 18 – 22.
 
-## Code scaffolding
+**Try it:** [we-report Studio](https://emrecirik.github.io/we-report/) ·
+**Docs:** [github.com/emrecirik/we-report](https://github.com/emrecirik/we-report#documentation)
 
-Run `ng generate component component-name --project we-report` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project we-report`.
-> Note: Don't forget to add `--project we-report` or else it will be added to the default project in your `angular.json` file. 
+```bash
+npm install we-report-angular we-report-core
+```
 
-## Build
+Serve the bundled fonts (`angular.json` → assets) and include the theme:
 
-Run `ng build we-report` to build the project. The build artifacts will be stored in the `dist/` directory.
+```json
+{ "glob": "*.ttf", "input": "node_modules/we-report-core/fonts", "output": "assets/we-report/fonts" }
+```
 
-## Publishing
+```scss
+@use 'we-report-angular/styles/we-report-theme';
+```
 
-After building your library with `ng build we-report`, go to the dist folder `cd dist/we-report` and run `npm publish`.
+```ts
+// app.config.ts
+providers: [provideWeReport({ locale: 'tr-TR', currency: 'TRY' }, weReportLocaleTr)]
+```
 
-## Running unit tests
+```html
+<!-- let users design -->
+<we-report-designer [(report)]="report" [data]="orders" />
 
-Run `ng test we-report` to execute the unit tests via [Karma](https://karma-runner.github.io).
+<!-- show, print, export -->
+<we-report-viewer [report]="report" [data]="orders" />
+```
 
-## Further help
+The report is plain JSON (`*.wrpt.json`) — store it anywhere. The preview, the printout and the PDF
+are laid out by the same engine with the same font, so they break pages in the same places.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Data: JSON from your app, pasted Excel/CSV, web services, live databases through a
+  [small backend](https://github.com/emrecirik/we-report/blob/main/docs/backend.md) in any language
+  (.NET, Spring Boot, Node.js and Python samples included)
+- Formulas: `[Price] * [Qty]`, `Sum(...)`, `Iif(...)`, report parameters — no `eval`
+- Your fonts (embedded in PDFs), your colours, English and Turkish UI
+
+MIT © Emre CIRIK

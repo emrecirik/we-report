@@ -1,7 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-10-19
 
+First public release.
+
+- Look and feel follows Apple's Human Interface Guidelines: system type, translucent toolbars,
+  segmented controls, borderless toolbar buttons, a filled-field inspector with round colour wells,
+  Keynote-style selection handles, section labels beside the page instead of over it, sheet-style
+  dialogs and soft layered shadows; light and dark; animations honour `prefers-reduced-motion`.
 - Workspace: `we-report-core` (framework-free engine), `we-report-angular` (designer/viewer), `studio` app.
 - Core: report definition format v1 (`*.wrpt.json`) with migration entry point, paper sizes (ISO A/B,
   North American, envelopes, thermal rolls, business card), unit conversion, page geometry.

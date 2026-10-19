@@ -1,6 +1,6 @@
 {
   "name": "we-report-core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Framework-free report engine for we-report: report definition model, expression language, layout/pagination and PDF/Excel/HTML rendering. Runs in the browser and Node.",
   "license": "MIT",
   "author": "Emre CIRIK",
@@ -13,9 +13,20 @@
   "bugs": {
     "url": "https://github.com/emrecirik/we-report/issues"
   },
-  "keywords": ["report", "reporting", "report-engine", "pdf", "barcode", "banded-report", "expression"],
+  "keywords": [
+    "report",
+    "reporting",
+    "report-engine",
+    "pdf",
+    "barcode",
+    "banded-report",
+    "expression"
+  ],
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "pdf-lib": "^1.17.1",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "bwip-js": "^4.11.4"
   },
   "sideEffects": false
 }

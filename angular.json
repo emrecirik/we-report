@@ -125,6 +125,7 @@
             "outputPath": "dist/studio",
             "index": "projects/studio/src/index.html",
             "browser": "projects/studio/src/main.ts",
+            "allowedCommonJsDependencies": ["pako"],
             "polyfills": [
               "zone.js"
             ],

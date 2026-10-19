@@ -31,6 +31,13 @@ and the theme to your global styles:
 @use 'we-report-angular/styles/we-report-theme';
 ```
 
+The font reader pulls in `pako`, which ships as CommonJS. To silence the build warning about it,
+add it to `allowedCommonJsDependencies` in the build options of `angular.json`:
+
+```json
+"allowedCommonJsDependencies": ["pako"]
+```
+
 ## Configure
 
 ```ts

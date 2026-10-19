@@ -44,45 +44,59 @@ import { DesignerField } from './designer-fields';
     }
     .bi__mode {
       display: flex;
-      border: 1px solid var(--we-report-band-border, #d5dae1);
-      border-radius: 6px;
-      overflow: hidden;
+      padding: 2px;
+      gap: 2px;
+      border-radius: 8px;
+      background: var(--we-report-segment-bg, rgba(118, 118, 128, 0.12));
     }
     .bi__mode button {
       flex: 1;
       border: 0;
+      border-radius: 6px;
       padding: 4px 6px;
       font: inherit;
-      background: var(--we-report-input-bg, #fff);
+      font-size: 12px;
+      background: transparent;
       color: inherit;
       cursor: pointer;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
     }
     .bi__mode button.bi__on {
-      background: var(--we-report-accent, #2563eb);
-      color: var(--we-report-page-bg, #fff);
+      background: var(--we-report-segment-on-bg, #fff);
+      box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+    .bi__mode button:focus-visible,
+    .bi__input:focus {
+      outline: none;
+      box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
     }
     .bi__input {
       width: 100%;
       box-sizing: border-box;
       font: inherit;
-      padding: 4px 6px;
-      border: 1px solid var(--we-report-band-border, #d5dae1);
-      border-radius: 6px;
-      background: var(--we-report-input-bg, #fff);
+      padding: 5px 8px;
+      border: 0;
+      border-radius: var(--we-report-control-radius, 7px);
+      background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
       color: inherit;
     }
+    @media (prefers-reduced-motion: reduce) {
+      .bi__mode button {
+        transition: none;
+      }
+    }
     .bi__mono {
-      font-family: ui-monospace, Consolas, monospace;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     }
     .bi__formula {
       display: flex;
       flex-direction: column;
       gap: 2px;
       font-size: 11px;
-      color: var(--we-report-muted-fg, #57606a);
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
     .bi__hint {
-      color: var(--we-report-muted-fg, #57606a);
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
       font-size: 11px;
     }
   `,

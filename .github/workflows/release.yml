@@ -1,0 +1,86 @@
+name: Release
+
+# Publishes we-report-core and we-report-angular to npm and cuts the GitHub release when a v* tag
+# is pushed. Authentication is npm Trusted Publishing (OIDC): configure it on npmjs.com for BOTH
+# packages (Settings → Trusted Publisher → GitHub Actions, repository emrecirik/we-report,
+# workflow release.yml). Idempotent: an already published version or existing release is skipped.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # required to create the GitHub release
+      id-token: write # required for OIDC trusted publishing
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted publishing needs npm 11.5.1+; npm 12 requires Node 22, so stay on 11.x.
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - run: npm ci
+      - run: npm run build:libs
+      - run: npm test
+
+      - name: Resolve the version to publish
+        id: version
+        run: |
+          CORE=$(node -p "require('./dist/we-report-core/package.json').version")
+          LIB=$(node -p "require('./dist/we-report/package.json').version")
+          test "$CORE" = "$LIB" || { echo "::error::we-report-core $CORE and we-report-angular $LIB must have the same version"; exit 1; }
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            test "${GITHUB_REF_NAME#v}" = "$CORE" || { echo "::error::Tag $GITHUB_REF_NAME does not match package version $CORE"; exit 1; }
+          fi
+          echo "value=$CORE" >> "$GITHUB_OUTPUT"
+
+      # Core first: the Angular package depends on it.
+      - name: Publish we-report-core
+        working-directory: dist/we-report-core
+        run: |
+          if npm view "we-report-core@${{ steps.version.outputs.value }}" version > /dev/null 2>&1; then
+            echo "::notice::we-report-core@${{ steps.version.outputs.value }} is already published — skipping."
+          else
+            npm publish --provenance --access public
+          fi
+
+      - name: Publish we-report-angular
+        working-directory: dist/we-report
+        run: |
+          if npm view "we-report-angular@${{ steps.version.outputs.value }}" version > /dev/null 2>&1; then
+            echo "::notice::we-report-angular@${{ steps.version.outputs.value }} is already published — skipping."
+          else
+            npm publish --provenance --access public
+          fi
+
+      - name: Build the release notes from the changelog
+        if: github.ref_type == 'tag'
+        run: |
+          node .github/scripts/changelog-section.mjs "${{ steps.version.outputs.value }}" > "$RUNNER_TEMP/notes.md"
+          cat >> "$RUNNER_TEMP/notes.md" <<'FOOTER'
+
+          ---
+
+          **Install:** `npm install we-report-angular we-report-core` · **Try it:** https://emrecirik.github.io/we-report/
+          FOOTER
+
+      - name: Create the GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            echo "::notice::A GitHub release for $GITHUB_REF_NAME already exists — skipping."
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag

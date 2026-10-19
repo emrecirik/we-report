@@ -90,53 +90,71 @@ import { WeReportPageComponent } from './we-report-page.component';
       flex-direction: column;
       min-height: 0;
       font-family: var(--we-report-font-family, system-ui, sans-serif);
-      color: var(--we-report-fg, #1f2328);
-      background: var(--we-report-workspace-bg, #eef0f3);
+      font-size: 13px;
+      letter-spacing: -0.003em;
+      color: var(--we-report-fg, #1d1d1f);
+      background: var(--we-report-workspace-bg, #f2f2f7);
+      -webkit-font-smoothing: antialiased;
     }
-    .we-report-viewer__toolbar {
+    .we-report-viewer__toolbar,
+    .we-report-viewer__params {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      background: var(--we-report-toolbar-bg, #fff);
-      border-bottom: 1px solid var(--we-report-band-border, #d5dae1);
-      font-size: 13px;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 8px 14px;
+      background: var(--we-report-toolbar-bg, rgba(250, 250, 252, 0.82));
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.5px solid var(--we-report-separator, rgba(60, 60, 67, 0.14));
     }
     .we-report-viewer__btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       min-width: 30px;
       height: 30px;
-      justify-content: center;
-      border: 1px solid var(--we-report-band-border, #d5dae1);
-      border-radius: 6px;
-      background: var(--we-report-toolbar-bg, #fff);
+      border: 0;
+      border-radius: var(--we-report-control-radius, 7px);
+      background: transparent;
       color: inherit;
       font: inherit;
+      font-weight: 500;
       cursor: pointer;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
     }
     .we-report-viewer__btn--text {
       padding: 0 10px;
     }
     .we-report-viewer__btn:hover:not(:disabled) {
-      border-color: var(--we-report-accent, #2563eb);
+      background: var(--we-report-hover-bg, rgba(118, 118, 128, 0.12));
+    }
+    .we-report-viewer__btn:focus-visible,
+    .we-report-viewer__params input:focus {
+      outline: none;
+      box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
     }
     .we-report-viewer__btn:disabled {
-      opacity: 0.5;
+      opacity: 0.3;
       cursor: default;
     }
     .we-report-viewer__btn :is(svg) {
-      width: 16px;
-      height: 16px;
+      width: 17px;
+      height: 17px;
     }
     .we-report-viewer__zoom {
       min-width: 44px;
       text-align: center;
+      font-variant-numeric: tabular-nums;
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
     .we-report-viewer__pages {
       margin-left: 8px;
-      color: var(--we-report-muted-fg, #57606a);
+      font-variant-numeric: tabular-nums;
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
     .we-report-viewer__spacer {
       flex: 1;
@@ -144,50 +162,71 @@ import { WeReportPageComponent } from './we-report-page.component';
     .we-report-viewer__scroll {
       flex: 1;
       overflow: auto;
-      padding: 24px;
+      padding: 32px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 32px;
+    }
+    .we-report-viewer__page {
+      border-radius: 2px;
     }
     .we-report-viewer__params {
-      display: flex;
-      flex-wrap: wrap;
       align-items: flex-end;
-      gap: 10px;
-      padding: 8px 10px;
-      background: var(--we-report-toolbar-bg, #fff);
-      border-bottom: 1px solid var(--we-report-band-border, #d5dae1);
+      gap: 12px;
       font-size: 12px;
     }
     .we-report-viewer__params label {
       display: flex;
       flex-direction: column;
       gap: 3px;
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
     .we-report-viewer__params input:not([type='checkbox']) {
       font: inherit;
+      font-size: 13px;
       padding: 5px 8px;
-      border: 1px solid var(--we-report-band-border, #d5dae1);
-      border-radius: 6px;
-      background: var(--we-report-input-bg, #fff);
-      color: inherit;
+      border: 0;
+      border-radius: var(--we-report-control-radius, 7px);
+      background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
+      color: var(--we-report-fg, #1d1d1f);
+    }
+    .we-report-viewer__params input[type='checkbox'] {
+      accent-color: var(--we-report-accent, #007aff);
+    }
+    .we-report-viewer__params button[type='submit'] {
+      background: var(--we-report-accent, #007aff);
+      color: var(--we-report-accent-fg, #fff);
+      padding: 0 14px;
+    }
+    .we-report-viewer__params button[type='submit']:hover {
+      background: var(--we-report-accent, #007aff);
+      filter: brightness(1.08);
     }
     .we-report-viewer__error,
     .we-report-viewer__problems {
-      margin: 8px 10px 0;
-      padding: 8px 12px;
-      border-radius: 6px;
+      margin: 10px 14px 0;
+      padding: 10px 14px;
+      border-radius: 10px;
       font-size: 13px;
-      background: var(--we-report-warning-bg, #fff8e6);
-      color: var(--we-report-warning-fg, #7a4b00);
+      background: var(--we-report-warning-bg, rgba(255, 149, 0, 0.12));
+      color: var(--we-report-warning-fg, #b25000);
+    }
+    .we-report-viewer__problems summary {
+      cursor: pointer;
+      font-weight: 500;
     }
     .we-report-viewer__problems ul {
       margin: 6px 0 0;
       padding-left: 18px;
     }
     .we-report-viewer__loading {
-      color: var(--we-report-muted-fg, #57606a);
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .we-report-viewer__btn {
+        transition: none;
+      }
     }
     @media print {
       .we-report-viewer__toolbar {

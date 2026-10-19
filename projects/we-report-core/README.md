@@ -1,24 +1,32 @@
-# WeReportCore
+# we-report-core
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.0.
+The framework-free engine of [we-report](https://github.com/emrecirik/we-report): the report format,
+formulas, data loading, the layout/pagination engine, and PDF and Excel output. Runs in browsers and
+Node. The Angular designer and viewer live in
+[`we-report-angular`](https://www.npmjs.com/package/we-report-angular).
 
-## Code scaffolding
+```bash
+npm install we-report-core
+```
 
-Run `ng generate component component-name --project we-report-core` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project we-report-core`.
-> Note: Don't forget to add `--project we-report-core` or else it will be added to the default project in your `angular.json` file. 
+```ts
+import { FontRegistry, layoutReport, migrateDefinition, renderPdf, reportTable, writeXlsx } from 'we-report-core';
 
-## Build
+const fonts = await FontRegistry.create();
+fonts.register('Noto Sans', { regular: regularBytes, bold: boldBytes }); // bundled in ./fonts
 
-Run `ng build we-report-core` to build the project. The build artifacts will be stored in the `dist/` directory.
+const report = migrateDefinition(JSON.parse(wrptJson));
+const doc = layoutReport(report, { fonts, data, now: new Date(), locale: 'tr-TR', currency: 'TRY' });
+const pdf = await renderPdf(doc, fonts, { title: report.name });            // Uint8Array
+const xlsx = writeXlsx(reportTable(report, { data, now: new Date() }));      // Uint8Array
+```
 
-## Publishing
+- Bands, nested groups, keep-together, repeated headers, can-grow text, page X of Y, receipt rolls
+- Text is measured with the embedded font: the same pages on screen and in the PDF
+- Barcodes/QR (bwip-js) as vectors; PNG/JPEG images; subset font embedding (pdf-lib)
+- Formulas with their own interpreter (no `eval`); data from JSON, CSV, web services and the
+  [we-report data protocol](https://github.com/emrecirik/we-report/blob/main/protocol/openapi.yaml)
 
-After building your library with `ng build we-report-core`, go to the dist folder `cd dist/we-report-core` and run `npm publish`.
+Fonts in `fonts/` are Noto Sans under the SIL Open Font License (`fonts/OFL.txt`).
 
-## Running unit tests
-
-Run `ng test we-report-core` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+MIT © Emre CIRIK

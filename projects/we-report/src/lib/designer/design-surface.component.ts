@@ -64,10 +64,10 @@ interface DragOp {
   // Focusable so keyboard shortcuts (undo, delete, arrows) reach the designer after a click.
   host: { tabindex: '0' },
   template: `
-    <div class="ds__page" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()">
+    <div class="ds__page" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()" [style.--ds-margin-right.mm]="state.report().page.margins.right * zoom()">
       @for (band of state.report().bands; track band.id) {
         <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)">
-          <button type="button" class="ds__band-label" (click)="selectBand(band.id)">
+          <button type="button" class="ds__band-label" [title]="bandLabel(band)" (click)="selectBand(band.id)">
             {{ bandLabel(band) }}
           </button>
           <div
@@ -146,7 +146,7 @@ interface DragOp {
   styles: `
     :host {
       display: block;
-      padding: 24px;
+      padding: 32px 136px 32px 24px;
       outline: none;
     }
     .ds__page {
@@ -154,32 +154,52 @@ interface DragOp {
       margin: 0 auto;
       background: var(--we-report-page-bg, #fff);
       box-shadow: var(--we-report-page-shadow, 0 1px 3px rgba(0, 0, 0, 0.2));
-      outline: 1px dashed var(--we-report-margin-guide, #c4cad4);
-      outline-offset: -1px;
+      border-radius: 2px;
     }
     .ds__band {
       position: relative;
     }
+    .ds__band + .ds__band {
+      border-top: 1px dashed var(--we-report-margin-guide, rgba(0, 122, 255, 0.18));
+    }
+    /* The section name hangs beside the page, so it never covers the design and the page keeps
+       its real size. */
     .ds__band-label {
-      display: block;
-      width: 100%;
-      text-align: left;
+      position: absolute;
+      top: 0;
+      left: calc(100% + var(--ds-margin-right, 0mm) + 10px);
+      z-index: 5;
+      max-width: 116px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       border: 0;
-      font: 11px var(--we-report-font-family, system-ui, sans-serif);
-      padding: 2px 6px;
-      background: var(--we-report-band-label-bg, #f4f6f8);
-      color: var(--we-report-band-label-fg, #57606a);
+      border-radius: 999px;
+      padding: 2px 9px;
+      font: 500 11px var(--we-report-font-family, system-ui, sans-serif);
+      background: var(--we-report-band-label-bg, rgba(118, 118, 128, 0.1));
+      color: var(--we-report-band-label-fg, rgba(60, 60, 67, 0.7));
       cursor: pointer;
       user-select: none;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .ds__band:hover .ds__band-label {
+      color: var(--we-report-fg, #1d1d1f);
     }
     .ds__band--selected .ds__band-label {
-      background: var(--we-report-selection, #2563eb);
-      color: var(--we-report-page-bg, #fff);
+      background: var(--we-report-accent, #007aff);
+      color: var(--we-report-accent-fg, #fff);
+    }
+    .ds__band--selected .ds__band-body {
+      box-shadow: inset 0 0 0 1.5px var(--we-report-selection, #007aff);
+    }
+    .ds__band-label:focus-visible {
+      outline: none;
+      box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
     }
     .ds__band-body {
       position: relative;
-      background-image: radial-gradient(circle, var(--we-report-margin-guide, #c4cad4) 0.6px, transparent 0.6px);
-      outline: 1px solid var(--we-report-band-border, #d5dae1);
+      background-image: radial-gradient(circle, var(--we-report-margin-guide, rgba(0, 122, 255, 0.18)) 0.7px, transparent 0.7px);
     }
     .ds__band-resize {
       position: absolute;
@@ -193,13 +213,21 @@ interface DragOp {
     .ds__control {
       position: absolute;
       box-sizing: border-box;
-      outline: 1px dotted var(--we-report-control-outline, #9aa4b2);
-      cursor: move;
+      outline: 1px dashed var(--we-report-control-outline, rgba(60, 60, 67, 0.22));
+      outline-offset: -1px;
+      border-radius: 2px;
+      cursor: default;
       touch-action: none;
+      transition: outline-color 0.12s ease, background-color 0.12s ease;
+    }
+    .ds__control:hover {
+      outline: 1px solid var(--we-report-selection, #007aff);
     }
     .ds__control--selected {
-      outline: 1.5px solid var(--we-report-selection, #2563eb);
-      background: var(--we-report-selection-fill, rgba(37, 99, 235, 0.08));
+      outline: 1.5px solid var(--we-report-selection, #007aff);
+      outline-offset: 0;
+      background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.07));
+      cursor: move;
       z-index: 1;
     }
     .ds__fill {
@@ -221,8 +249,9 @@ interface DragOp {
       align-items: center;
       justify-content: center;
       gap: 2px;
-      color: var(--we-report-muted-fg, #57606a);
+      color: var(--we-report-accent, #007aff);
       font: 10px var(--we-report-font-family, system-ui, sans-serif);
+      opacity: 0.8;
       overflow: hidden;
       pointer-events: none;
     }
@@ -239,17 +268,20 @@ interface DragOp {
       pointer-events: none;
     }
     .ds__text--bound {
-      text-decoration: underline dotted var(--we-report-accent, #2563eb);
+      text-decoration: underline dotted var(--we-report-accent, #007aff);
+      text-underline-offset: 2px;
     }
+    /* Keynote-style handles: white dots with an accent ring and a soft shadow. */
     .ds__handle {
       position: absolute;
-      width: 8px;
-      height: 8px;
-      margin: -4px 0 0 -4px;
+      width: 9px;
+      height: 9px;
+      margin: -4.5px 0 0 -4.5px;
       box-sizing: border-box;
       background: var(--we-report-page-bg, #fff);
-      border: 1.5px solid var(--we-report-selection, #2563eb);
-      border-radius: 2px;
+      border: 1.5px solid var(--we-report-selection, #007aff);
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
       z-index: 3;
     }
     .ds__handle[data-handle='nw'] { left: 0; top: 0; cursor: nwse-resize; }
@@ -265,7 +297,7 @@ interface DragOp {
       left: 0;
       right: 0;
       height: 0;
-      border-top: 1px dashed var(--we-report-guide, #ec4899);
+      border-top: 1px solid var(--we-report-guide, #ff375f);
       pointer-events: none;
       z-index: 4;
     }
@@ -276,7 +308,13 @@ interface DragOp {
       width: 0;
       height: auto;
       border-top: 0;
-      border-left: 1px dashed var(--we-report-guide, #ec4899);
+      border-left: 1px solid var(--we-report-guide, #ff375f);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ds__band-label,
+      .ds__control {
+        transition: none;
+      }
     }
   `,
 })

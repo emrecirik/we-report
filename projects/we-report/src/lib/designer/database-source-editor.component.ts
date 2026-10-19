@@ -198,47 +198,61 @@ const OPERATORS: QueryCondition['op'][] = ['=', '!=', '<', '<=', '>', '>=', 'lik
       box-sizing: border-box;
       font: inherit;
       padding: 5px 8px;
-      border: 1px solid var(--we-report-band-border, #d5dae1);
-      border-radius: 6px;
-      background: var(--we-report-input-bg, #fff);
+      border: 0;
+      border-radius: var(--we-report-control-radius, 7px);
+      background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
       color: inherit;
       min-width: 0;
     }
+    input:focus,
+    select:focus,
+    textarea:focus,
+    button:focus-visible {
+      outline: none;
+      box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
+    }
+    input[type='checkbox'] {
+      accent-color: var(--we-report-accent, #007aff);
+    }
     textarea {
-      font-family: ui-monospace, Consolas, monospace;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     }
     button {
       cursor: pointer;
+      font-weight: 500;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
     }
     .dbe__primary {
-      border: 0;
-      background: var(--we-report-accent, #2563eb);
-      color: var(--we-report-page-bg, #fff);
+      padding: 6px 14px;
+      background: var(--we-report-accent, #007aff);
+      color: var(--we-report-accent-fg, #fff);
     }
     .dbe__link {
-      border: 0;
       padding: 0;
       background: none;
-      color: var(--we-report-accent, #2563eb);
+      color: var(--we-report-accent, #007aff);
     }
     .dbe__hint {
       font-size: 11px;
-      color: var(--we-report-muted-fg, #57606a);
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
     .dbe__ok,
     .dbe__error {
       margin: 0;
-      padding: 6px 10px;
-      border-radius: 6px;
+      padding: 8px 12px;
+      border-radius: 10px;
       font-size: 12px;
     }
     .dbe__ok {
-      background: var(--we-report-selection-fill, rgba(37, 99, 235, 0.08));
-      color: var(--we-report-accent, #2563eb);
+      background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.07));
+      color: var(--we-report-accent, #007aff);
     }
     .dbe__error {
-      background: var(--we-report-warning-bg, #fff8e6);
-      color: var(--we-report-warning-fg, #7a4b00);
+      background: var(--we-report-warning-bg, rgba(255, 149, 0, 0.12));
+      color: var(--we-report-warning-fg, #b25000);
     }
   `,
 })
