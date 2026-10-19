@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-10-19
 
 - Inner lists (master–detail): new `subHeader`, `subDetail` (with `rowsPath`) and `subFooter`
   sections print a list inside every detail row — e.g. each customer's orders with their own
