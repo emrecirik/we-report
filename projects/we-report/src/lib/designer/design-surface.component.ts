@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -1083,7 +1083,7 @@ export class DesignSurfaceComponent implements OnDestroy {
   // ── Drop from toolbox / field list ──────────────────────────────────────────
 
   protected onDragOver(e: DragEvent): void {
-    if (e.dataTransfer?.types.includes(DRAG_MIME)) {
+    if (e.dataTransfer?.types.includes(DRAG_MIME) || e.dataTransfer?.types.includes('Files')) {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
     }
@@ -1091,6 +1091,15 @@ export class DesignSurfaceComponent implements OnDestroy {
 
   protected onDrop(e: DragEvent, band: Band): void {
     const raw = e.dataTransfer?.getData(DRAG_MIME);
+    const file = e.dataTransfer?.files?.[0];
+    if (!raw && file && /^image\/(png|jpeg)$/.test(file.type)) {
+      // A picture dragged in from the desktop becomes an image item where it is dropped.
+      e.preventDefault();
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const scale = PX_PER_MM * this.zoom();
+      void this.readFile(file).then((src) => this.addImage(band, (e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale, src));
+      return;
+    }
     if (!raw) return;
     e.preventDefault();
     let data: DesignerDragData;
@@ -1129,6 +1138,41 @@ export class DesignSurfaceComponent implements OnDestroy {
     return c.category.expression ? `${type}: ${c.value.expression} / ${c.category.expression}` : type;
   }
 
+  private readFile(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /** A picture at (x, y) mm, at its natural size up to 80 mm wide (PNG/JPEG data URI). */
+  addImage(band: Band, x: number, y: number, src: string): void {
+    const info = readImage(src);
+    if (!info) return;
+    const pxToMm = 25.4 / 96;
+    const scale = Math.min(1, 80 / (info.width * pxToMm));
+    const width = round(Math.max(5, info.width * pxToMm * scale));
+    const height = round(Math.max(5, info.height * pxToMm * scale));
+    const pageWidth = this.geometry().contentWidth;
+    const control: ReportControl = {
+      id: this.state.newId('image'), type: 'image', fit: 'contain', source: src, width, height,
+      x: round(Math.max(0, Math.min(x, pageWidth - width))), y: round(Math.max(0, y)),
+    };
+    this.growBand(band, [control]);
+  }
+
+  /** Text pasted from elsewhere becomes a text item, tall enough for its lines. */
+  addText(band: Band, x: number, y: number, text: string): void {
+    const lines = text.split(/\r?\n/).length;
+    const control: ReportControl = {
+      id: this.state.newId('text'), type: 'text', text, x: round(Math.max(0, x)), y: round(Math.max(0, y)),
+      width: Math.min(120, this.geometry().contentWidth), height: round(Math.min(60, 5 * lines + 1)), canGrow: lines > 1 || undefined,
+    };
+    this.growBand(band, [control]);
+  }
+
   /** Creates controls for a drop at (x, y) mm inside `band`. */
   dropAt(data: DesignerDragData, band: Band, x: number, y: number): void {
     const width = this.geometry().contentWidth;
@@ -1149,6 +1193,17 @@ export class DesignSurfaceComponent implements OnDestroy {
       control.x = round(Math.max(0, Math.min(x, width - control.width)));
       control.y = round(Math.max(0, y));
       this.growBand(band, [control]);
+      return;
+    }
+    // A field dropped on a text shows that field there instead (desktop designers bind on drop).
+    const text = band.controls.find((c) => c.type === 'text' && x >= c.x && x <= c.x + c.width && y >= c.y && y <= c.y + c.height);
+    if (text) {
+      this.state.updateControls([text.id], (c) => {
+        if (c.type !== 'text') return;
+        c.text = { expression: fieldExpression(data.path, data.parent) };
+        c.format = data.format;
+      });
+      this.state.selection.set({ kind: 'controls', ids: [text.id] });
       return;
     }
     // A field dropped on a table cell fills that cell.

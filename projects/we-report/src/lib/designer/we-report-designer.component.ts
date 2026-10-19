@@ -330,6 +330,47 @@ export class WeReportDesignerComponent {
     action();
   }
 
+  /** Copy and cut also put the items on the system clipboard, so they paste in another tab. */
+  @HostListener('copy', ['$event'])
+  @HostListener('cut', ['$event'])
+  protected onCopy(e: ClipboardEvent): void {
+    if (this.tab() !== 'design' || this.isTyping(e) || !this.state.copySelection()) return;
+    e.preventDefault();
+    e.clipboardData?.setData('text/plain', this.state.clipboardText());
+    if (e.type === 'cut') this.state.deleteSelection();
+  }
+
+  /** Pastes our items, else a picture (screenshot) or text from any other program. */
+  @HostListener('paste', ['$event'])
+  protected onPaste(e: ClipboardEvent): void {
+    if (this.tab() !== 'design' || this.isTyping(e)) return;
+    const data = e.clipboardData;
+    const text = data?.getData('text/plain') ?? '';
+    const image = Array.from(data?.files ?? []).find((f) => /^image\/(png|jpeg)$/.test(f.type));
+    if (this.state.loadClipboard(text) || (!text && !image && this.state.hasClipboard())) {
+      e.preventDefault();
+      this.state.paste();
+      return;
+    }
+    const band = this.targetBand();
+    const surface = this.surface();
+    if (!band || !surface) return;
+    const y = Math.max(0, ...band.controls.map((c) => c.y + c.height));
+    if (image) {
+      e.preventDefault();
+      const reader = new FileReader();
+      reader.onload = () => surface.addImage(band, 0, y, reader.result as string);
+      reader.readAsDataURL(image);
+    } else if (text.trim()) {
+      e.preventDefault();
+      surface.addText(band, 0, y, text.replace(/\s+$/, ''));
+    }
+  }
+
+  private isTyping(e: Event): boolean {
+    return !!(e.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable="true"]');
+  }
+
   @HostListener('document:pointerdown', ['$event'])
   protected closeMenus(e: PointerEvent): void {
     if (!this.contextMenu()) return;
@@ -479,13 +520,7 @@ export class WeReportDesignerComponent {
         this.state.deleteSelection();
       }
     } else if (mod && e.key.toLowerCase() === 'c' && !typing) {
-      if (this.state.copySelection()) e.preventDefault();
-    } else if (mod && e.key.toLowerCase() === 'x' && !typing) {
-      e.preventDefault();
-      this.state.cutSelection();
-    } else if (mod && e.key.toLowerCase() === 'v' && !typing && this.state.hasClipboard()) {
-      e.preventDefault();
-      this.state.paste();
+      // Copy, cut and paste go through the clipboard events below (system clipboard).
     } else if (mod && e.key.toLowerCase() === 'a' && !typing) {
       e.preventDefault();
       this.state.selectAll();

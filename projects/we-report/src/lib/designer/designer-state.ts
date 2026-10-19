@@ -11,6 +11,9 @@ let clipboard: { bandKind: Band['kind']; control: ReportControl }[] = [];
 
 const round = (v: number) => Math.round(v * 100) / 100;
 
+/** Marks designer items on the system clipboard, so they paste into another tab or window. */
+export const CLIPBOARD_MARKER = 'we-report/controls+json:';
+
 const HISTORY_LIMIT = 200;
 const COALESCE_MS = 800;
 
@@ -213,6 +216,24 @@ export class DesignerState {
       }),
     );
     this.selection.set({ kind: 'controls', ids: placed.map((p) => p.control.id) });
+  }
+
+  /** The copied items as text for the system clipboard. */
+  clipboardText(): string {
+    return CLIPBOARD_MARKER + JSON.stringify(clipboard);
+  }
+
+  /** Takes items copied in another designer (another tab or window); false when it is not ours. */
+  loadClipboard(text: string): boolean {
+    if (!text.startsWith(CLIPBOARD_MARKER)) return false;
+    try {
+      const items = JSON.parse(text.slice(CLIPBOARD_MARKER.length)) as typeof clipboard;
+      if (!Array.isArray(items) || !items.every((i) => i && typeof i.control?.id === 'string' && typeof i.control?.type === 'string')) return false;
+      clipboard = items;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   hasClipboard(): boolean {

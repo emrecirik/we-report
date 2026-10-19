@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, signal } from '@angular/core';
 import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT, StudioLanguage } from './studio-text';
@@ -174,11 +174,33 @@ export class AppComponent {
     this.dataDialogOpen.set(false);
   }
 
+  /** A data file dragged onto the window becomes the report data (pictures are the designer's). */
+  @HostListener('window:dragover', ['$event'])
+  protected onWindowDragOver(e: DragEvent): void {
+    if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
+  }
+
+  @HostListener('window:drop', ['$event'])
+  protected async onWindowDrop(e: DragEvent): Promise<void> {
+    const file = e.dataTransfer?.files?.[0];
+    if (e.defaultPrevented || !file) return;
+    e.preventDefault();
+    if (/\.(rdlc?|repx|wrpt\.json)$/i.test(file.name)) {
+      await this.openFile(file);
+    } else if (/\.(json|csv|tsv|txt)$/i.test(file.name) || /json|csv|text/.test(file.type)) {
+      this.dataDraft.set(await file.text());
+      this.applyData();
+    }
+  }
+
   protected async open(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (file) await this.openFile(file);
+  }
+
+  private async openFile(file: File): Promise<void> {
     try {
       const { report, warnings } = importReport(await file.text(), file.name);
       this.report.set(report);
