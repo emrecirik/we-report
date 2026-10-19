@@ -700,7 +700,8 @@ button {
   }
 }
 
-.wd__tool:focus-visible {
+.wd__tool:focus-visible,
+.wd__fields li:focus-visible {
   outline: none;
   box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
 }

@@ -107,7 +107,7 @@
           }
           <ul class="wd__fields">
             @for (f of shownFields().rows; track f.path) {
-              <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+              <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                 <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
               </li>
             }
@@ -116,7 +116,7 @@
             <h3>{{ s.innerFields }}</h3>
             <ul class="wd__fields">
               @for (f of shownFields().inner; track f.path) {
-                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+                <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
                 </li>
               }
@@ -126,7 +126,7 @@
             <h3>{{ s.parentFields }}</h3>
             <ul class="wd__fields">
               @for (f of shownFields().parent; track f.path) {
-                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+                <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
                 </li>
               }
