@@ -797,10 +797,15 @@ export class DesignSurfaceComponent implements OnDestroy {
     // The editor exists after this change is rendered.
     setTimeout(() => {
       const editor = this.host.nativeElement.querySelector<HTMLTextAreaElement>('.ds__editor');
-      editor?.focus();
+      editor?.focus({ preventScroll: true });
       if (seed === undefined) editor?.select();
       else editor?.setSelectionRange(editor.value.length, editor.value.length);
     });
+  }
+
+  /** Keys typed before the editor has focus (fast typists) are not lost. */
+  appendToEdit(key: string): void {
+    if (this.editSeed() !== null) this.editSeed.update((s) => s + key);
   }
 
   /** Enter keeps the text, Shift+Enter starts a new line, Escape leaves it as it was. */

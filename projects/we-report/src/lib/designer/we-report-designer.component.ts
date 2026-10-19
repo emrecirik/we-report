@@ -426,6 +426,12 @@ export class WeReportDesignerComponent {
     const target = e.target as HTMLElement;
     const typing = target.closest('input, textarea, select, [contenteditable="true"]');
     const mod = e.ctrlKey || e.metaKey;
+    // Text is being typed on the page and its editor is about to take focus.
+    if (this.state.editing() && !typing) {
+      e.preventDefault();
+      if (e.key.length === 1 && !mod) this.surface()?.appendToEdit(e.key);
+      return;
+    }
     if (mod && e.key.toLowerCase() === 'z' && !typing) {
       e.preventDefault();
       if (e.shiftKey) this.state.redo();
