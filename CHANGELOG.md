@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Smaller apps: the barcode engine (bwip-js, ~0.9 MB) now loads on demand together with the font
+  engine (`FontRegistry.create()`), so an app's initial bundle shrinks from about 1.5 MB to 0.6 MB
+  and fits Angular's default 1 MB budget. No API change.
+- Security (sample backends): POST bodies must be `application/json` (else 415) and proxied
+  web-service content is served with `Content-Security-Policy: sandbox`. A page on another site
+  could otherwise post a plain form to a local backend's fetch proxy and have its HTML run on the
+  backend's origin. All six samples fixed; the conformance suite checks it. The PHP sample pins
+  curl to the checked address with `CURLOPT_CONNECT_TO`.
+- CI: every supported Angular major (18–22) builds a new app with the packed libraries (`compat.yml`).
 - Import: open Microsoft RDLC/RDL (Visual Studio, SSRS, Report Builder) and DevExpress REPX layouts
   and convert them — paper, bands, text, tables, lines, shapes, images, barcodes, page info,
   groups, detail reports, styles, calculated fields, parameters and expressions — with a plain list

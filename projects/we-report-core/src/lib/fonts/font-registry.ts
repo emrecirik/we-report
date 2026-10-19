@@ -1,4 +1,5 @@
 import type * as Fontkit from '@pdf-lib/fontkit';
+import { loadBarcodeEngine } from '../layout/barcode';
 import { toMm } from '../units';
 
 type FontkitLib = { create(buffer: Uint8Array): Fontkit.Font };
@@ -113,7 +114,8 @@ export class FontRegistry {
 
   /** Loads the font engine (a large module, so it is not in the initial bundle) and returns an empty registry. */
   static async create(): Promise<FontRegistry> {
-    const mod = await import('@pdf-lib/fontkit');
+    // The barcode engine loads alongside: layout needs both, and both are too big to load up front.
+    const [mod] = await Promise.all([import('@pdf-lib/fontkit'), loadBarcodeEngine()]);
     return new FontRegistry((mod as unknown as { default?: FontkitLib }).default ?? (mod as unknown as FontkitLib));
   }
 

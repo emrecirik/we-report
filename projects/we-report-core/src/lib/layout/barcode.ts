@@ -1,5 +1,16 @@
-import { toSVG } from 'bwip-js';
+import type { toSVG as ToSvg } from 'bwip-js';
 import { PathItem } from './layout-types';
+
+// bwip-js is large (~0.9 MB): loaded on demand, like the font engine, so it stays out of an app's
+// initial bundle. `FontRegistry.create()` loads it, and every layout needs a registry first.
+let toSVG: typeof ToSvg | undefined;
+
+/** Loads the barcode engine once; layout can draw barcodes afterwards. */
+export async function loadBarcodeEngine(): Promise<void> {
+  if (toSVG) return;
+  const mod = (await import('bwip-js')) as unknown as { toSVG?: typeof ToSvg; default?: { toSVG: typeof ToSvg } };
+  toSVG = mod.toSVG ?? mod.default?.toSVG;
+}
 
 /** Square symbologies keep their aspect ratio; linear ones stretch to the control. */
 const TWO_D = new Set([
@@ -27,6 +38,7 @@ export function barcodeItem(
   box: { x: number; y: number; width: number; height: number },
   color: string,
 ): PathItem {
+  if (!toSVG) throw new Error('The barcode engine is not loaded yet: create the FontRegistry with FontRegistry.create() first.');
   const svg = toSVG({ bcid: symbology, text: value, includetext: showText, textxalign: 'center', scale: 1 });
   const vb = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(svg);
   if (!vb) throw new Error('Barcode could not be drawn.');

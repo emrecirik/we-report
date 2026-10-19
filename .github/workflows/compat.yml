@@ -43,11 +43,12 @@ jobs:
 
       - name: Create a new Angular ${{ matrix.angular }} app
         working-directory: ${{ runner.temp }}
-        run: npx --yes @angular/cli@${{ matrix.angular }} new compat-app --defaults --skip-git --skip-tests --ssr=false --style=css --routing=false
+        run: npx --yes @angular/cli@${{ matrix.angular }} new compat-app --defaults --skip-git --skip-tests --skip-install --ssr=false --style=css --routing=false
 
       - name: Install the packed libraries and build
         working-directory: ${{ runner.temp }}/compat-app
         run: |
+          npm install
           npm install "$RUNNER_TEMP"/packs/we-report-core-*.tgz "$RUNNER_TEMP"/packs/we-report-angular-*.tgz
           cp "$GITHUB_WORKSPACE/tools/compat/main.ts" src/main.ts
           npx ng version | grep -i "angular cli"
