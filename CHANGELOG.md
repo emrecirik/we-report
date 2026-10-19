@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 — 2026-10-20
+## Unreleased
 
 - Data protocol 1.1 (backward compatible, still `/v1`): query `offset` and `distinct`, the
   case-insensitive `contains` / `startsWith` operators, `count: true` → `total`, and
@@ -8,6 +8,9 @@
   `layouts`; layouts are off in demo mode, keys 1-100 characters, bodies up to 256 KB). All six
   sample backends implement it and pass the extended conformance suite (15 checks) on SQLite and
   PostgreSQL. Used by we-grid-angular 0.11 for server-side paging and server-saved layouts.
+
+## 0.5.0 — 2026-10-20
+
 - Designer, desktop comfort: type on the page (double-click, F2 or just start typing on a selected
   text or table cell), formulas open the formula editor; rubber-band selection; distances to the nearest items while moving; Ctrl+drag copies;
   copy and paste through the system clipboard (also between tabs, and pictures or text from other
