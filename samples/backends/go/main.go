@@ -5,10 +5,12 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"net/netip"
@@ -181,7 +183,7 @@ func (s *server) access(next http.Handler) http.Handler {
 		var allowed bool
 		switch {
 		case s.cfg.authToken != "":
-			allowed = r.Header.Get("Authorization") == "Bearer "+s.cfg.authToken
+			allowed = subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte("Bearer "+s.cfg.authToken)) == 1
 		case s.cfg.demo:
 			allowed = true
 		default:
@@ -196,6 +198,13 @@ func (s *server) access(next http.Handler) http.Handler {
 		if !allowed {
 			writeError(w, fail(401, "Not authorized."))
 			return
+		}
+		// A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot.
+		if r.Method == http.MethodPost {
+			if mt, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || mt != "application/json" {
+				writeError(w, fail(415, "Send the body as application/json."))
+				return
+			}
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, maxBody)
 		next.ServeHTTP(w, r)
@@ -361,6 +370,8 @@ func (s *server) fetch(w http.ResponseWriter, r *http.Request) {
 	}
 	// Passed through as-is; the client parses JSON or CSV exactly as when it calls directly.
 	w.Header().Set("Content-Type", contentType)
+	// Someone else's content: never active on this backend's origin.
+	w.Header().Set("Content-Security-Policy", "sandbox")
 	_, _ = w.Write(data)
 }
 

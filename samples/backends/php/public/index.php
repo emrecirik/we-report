@@ -178,6 +178,10 @@ function handle(array $config): never
     if (!$allowed) {
         throw new ApiError(401, 'Not authorized.');
     }
+    // A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot.
+    if ($method === 'POST' && !preg_match('#^application/json\b#i', $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '')) {
+        throw new ApiError(415, 'Send the body as application/json.');
+    }
 
     $path = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
     if ($method === 'GET' && $path === '/v1/info') {
@@ -236,6 +240,8 @@ function handle(array $config): never
             is_array($body['headers'] ?? null) ? $body['headers'] : [], is_string($body['body'] ?? null) ? $body['body'] : null, $config['fetchAllowHosts']);
         // Passed through as-is; the client parses JSON or CSV exactly as when it calls directly.
         header('Content-Type: ' . $type);
+        // Someone else's content: never active on this backend's origin.
+        header('Content-Security-Policy: sandbox');
         echo $data;
         exit;
     }

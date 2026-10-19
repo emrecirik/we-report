@@ -15,6 +15,9 @@ info:
     - Free SQL is off unless enabled per connection; every query has a timeout and a row limit.
     - `/v1/webservice/fetch` refuses loopback, private, link-local and metadata addresses.
     - The backend binds to 127.0.0.1 unless the integrator configures authentication.
+    - POST bodies must be `application/json` (else 415): a page on another site can send a plain
+      form to a local backend without a CORS preflight, but not JSON. Proxied web-service content
+      is served with `Content-Security-Policy: sandbox`, so it can never run on the backend's origin.
 servers:
   - url: http://127.0.0.1:5480
 paths:
@@ -67,6 +70,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/QueryResult' }
         '400': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
         '504': { $ref: '#/components/responses/Error' }
@@ -85,6 +89,7 @@ paths:
             application/json:
               schema: {}
         '400': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '502': { $ref: '#/components/responses/Error' }
 components:

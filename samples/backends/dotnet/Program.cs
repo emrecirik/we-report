@@ -49,6 +49,12 @@ app.Use(async (ctx, next) =>
         await WriteError(ctx, 401, "Not authorized.");
         return;
     }
+    // A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot.
+    if (HttpMethods.IsPost(ctx.Request.Method) && !ctx.Request.HasJsonContentType())
+    {
+        await WriteError(ctx, 415, "Send the body as application/json.");
+        return;
+    }
     try
     {
         await next();
@@ -134,6 +140,8 @@ app.MapPost("/v1/webservice/fetch", async (HttpRequest request, HttpResponse res
     var (contentType, bytes) = await guard.FetchAsync(url, method, headers, body.TryGetProperty("body", out var b) ? b.GetString() : null, ct);
     // Passed through as-is; the client parses JSON or CSV exactly as when it calls directly.
     response.ContentType = contentType;
+    // Someone else's content: never active on this backend's origin.
+    response.Headers.ContentSecurityPolicy = "sandbox";
     await response.Body.WriteAsync(bytes, ct);
 });
 

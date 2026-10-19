@@ -62,7 +62,7 @@ public class Api {
     return Map.of("tables", database(connection(id)).schema());
   }
 
-  @PostMapping("/connections/{id}/query")
+  @PostMapping(path = "/connections/{id}/query", consumes = MediaType.APPLICATION_JSON_VALUE)
   @SuppressWarnings("unchecked")
   public Map<String, Object> query(@PathVariable String id, @RequestBody Map<String, Object> body) {
     BackendConfig.Connection c = connection(id);
@@ -94,7 +94,7 @@ public class Api {
     return Map.of("columns", columns, "rows", rows, "truncated", truncated);
   }
 
-  @PostMapping("/webservice/fetch")
+  @PostMapping(path = "/webservice/fetch", consumes = MediaType.APPLICATION_JSON_VALUE)
   @SuppressWarnings("unchecked")
   public ResponseEntity<byte[]> fetch(@RequestBody Map<String, Object> body) {
     if (!config.webServiceFetch()) throw new ApiError(403, "Web service fetching is disabled on this backend.");
@@ -103,7 +103,8 @@ public class Api {
     FetchGuard.Result result = guard.fetch(url, "POST".equals(body.get("method")) ? "POST" : "GET", headers,
         body.get("body") instanceof String b ? b : null);
     // Passed through as-is; the client parses JSON or CSV exactly as when it calls directly.
-    return ResponseEntity.ok().contentType(MediaType.parseMediaType(result.contentType())).body(result.body());
+    // Someone else's content: never active on this backend's origin.
+    return ResponseEntity.ok().contentType(MediaType.parseMediaType(result.contentType())).header("Content-Security-Policy", "sandbox").body(result.body());
   }
 
   @ExceptionHandler(ApiError.class)
@@ -118,6 +119,12 @@ public class Api {
       if (t instanceof ApiError api) return apiError(api);
     }
     return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(Map.of("error", "Body must be JSON."));
+  }
+
+  /** A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot. */
+  @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<Map<String, String>> notJson() {
+    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).contentType(MediaType.APPLICATION_JSON).body(Map.of("error", "Send the body as application/json."));
   }
 
   @ExceptionHandler(NoResourceFoundException.class)

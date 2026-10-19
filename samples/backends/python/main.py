@@ -114,6 +114,9 @@ async def access(request: Request, call_next):
         return _error(413, "Request body too large.")
     if not allowed:
         return _error(401, "Not authorized.")
+    # A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot.
+    if request.method == "POST" and not re.match(r"application/json\b", request.headers.get("content-type", ""), re.IGNORECASE):
+        return _error(415, "Send the body as application/json.")
     try:
         response = await call_next(request)
     except ApiError as e:
@@ -219,7 +222,8 @@ async def fetch(request: Request):
     content_type, data = await run_in_threadpool(guarded_fetch, body["url"], "POST" if body.get("method") == "POST" else "GET",
                                        body.get("headers") or [], body.get("body"), config["fetch_allow_hosts"])
     # Passed through as-is; the client parses JSON or CSV exactly as when it calls directly.
-    return Response(content=data, media_type=content_type)
+    # Someone else's content: never active on this backend's origin.
+    return Response(content=data, media_type=content_type, headers={"Content-Security-Policy": "sandbox"})
 
 
 if __name__ == "__main__":

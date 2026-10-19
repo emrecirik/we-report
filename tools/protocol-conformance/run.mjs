@@ -141,6 +141,19 @@ if (connection) {
   }
 }
 
+await check('POST bodies must be application/json (a cross-site form cannot send that)', async () => {
+  for (const path of [connection ? `/v1/connections/${encodeURIComponent(connection.id)}/query` : '/v1/connections/x/query', '/v1/webservice/fetch']) {
+    const res = await fetch(base + path, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ query: { table: 'customers' }, url: 'http://example.com/' }),
+    });
+    const text = await res.text();
+    assert(res.status === 415, `${path} accepted text/plain (${res.status}): ${text.slice(0, 120)}`);
+    assert(typeof JSON.parse(text).error === 'string', 'error responses must be JSON { "error": "..." }');
+  }
+});
+
 await check('unknown connection is 404', async () => {
   expectError(await call('GET', '/v1/connections/does-not-exist/schema'), 404);
 });

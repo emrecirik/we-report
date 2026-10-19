@@ -127,6 +127,10 @@ function guarded_fetch(string $url, string $method, array $headers, ?string $bod
     $origin = null;
     $current = $url;
     for ($i = 0; $i <= MAX_REDIRECTS; $i++) {
+        // URLs that parsers read differently are refused rather than interpreted.
+        if (preg_match('/[\\\\\s]/', $current) || substr_count($current, '@') > 1) {
+            throw new ApiError(400, 'Invalid URL.');
+        }
         $parts = parse_url($current);
         $scheme = strtolower($parts['scheme'] ?? '');
         if (!in_array($scheme, ['http', 'https'], true) || empty($parts['host'])) {
@@ -155,7 +159,9 @@ function guarded_fetch(string $url, string $method, array $headers, ?string $bod
         $tooBig = false;
         $curl = curl_init($current);
         curl_setopt_array($curl, [
-            CURLOPT_RESOLVE => [sprintf('%s:%d:%s', trim($host, '[]'), $port, str_contains($ip, ':') ? "[$ip]" : $ip)],
+            // An empty host and port match whatever curl makes of the URL: it always connects to
+            // the checked address, even where its URL parser and PHP's disagree.
+            CURLOPT_CONNECT_TO => [sprintf('::%s:%d', str_contains($ip, ':') ? "[$ip]" : $ip, $port)],
             CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_PROXY => '',

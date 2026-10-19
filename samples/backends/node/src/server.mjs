@@ -50,6 +50,11 @@ export function createServer(config = loadConfig()) {
 
   const readJson = (req) =>
     new Promise((resolve, reject) => {
+      // A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot.
+      if (!/^application\/json\b/i.test(req.headers['content-type'] ?? '')) {
+        reject(new HttpError(415, 'Send the body as application/json.'));
+        return;
+      }
       let size = 0;
       const chunks = [];
       req.on('data', (c) => {
@@ -111,7 +116,8 @@ export function createServer(config = loadConfig()) {
       const upstream = await guardedFetch(body, { allowHosts: config.fetchAllowHosts });
       if (upstream.status >= 400) throw new HttpError(502, `The web service answered ${upstream.status}.`);
       // Passed through as-is; the client parses JSON or CSV exactly as when it calls directly.
-      res.writeHead(200, { 'Content-Type': upstream.contentType });
+      // Someone else's content: never active on this backend's origin.
+      res.writeHead(200, { 'Content-Type': upstream.contentType, 'Content-Security-Policy': 'sandbox' });
       res.end(upstream.body);
       return undefined;
     }],
