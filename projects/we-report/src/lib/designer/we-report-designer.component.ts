@@ -14,24 +14,26 @@ import { DataSourcesDialogComponent } from './data-sources-dialog.component';
 
 const WIDTH_KEY = 'we-report-designer.panels';
 
-/** Panel widths are a per-browser convenience; storage may be unavailable. */
-function readWidth(side: 'left' | 'right', fallback: number): number {
+/** Panel widths, zoom and grid are a per-browser convenience; storage may be unavailable. */
+function readSaved<T>(key: string, fallback: T, valid: (v: unknown) => boolean): T {
   try {
-    const saved = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}')[side];
-    return typeof saved === 'number' && (saved === 0 || (saved >= 160 && saved <= 480)) ? saved : fallback;
+    const saved = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}')[key];
+    return valid(saved) ? (saved as T) : fallback;
   } catch {
     return fallback;
   }
 }
 
-function writeWidth(side: 'left' | 'right', width: number): void {
+function writeSaved(values: Record<string, unknown>): void {
   try {
     const all = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}');
-    localStorage.setItem(WIDTH_KEY, JSON.stringify({ ...all, [side]: width }));
+    localStorage.setItem(WIDTH_KEY, JSON.stringify({ ...all, ...values }));
   } catch {
     /* not remembered */
   }
 }
+
+const isWidth = (v: unknown) => typeof v === 'number' && (v === 0 || (v >= 160 && v <= 480));
 
 const BAND_ORDER: Record<BandKind, number> = {
   pageHeader: 0,
@@ -83,7 +85,7 @@ export class WeReportDesignerComponent {
   protected readonly toolbox = TOOLBOX_ITEMS;
   protected readonly tab = signal<'design' | 'preview'>('design');
   protected readonly advanced = signal(false);
-  protected readonly zoomLevel = signal(1);
+  protected readonly zoomLevel = signal(readSaved('zoom', 1, (v) => typeof v === 'number' && v >= 0.3 && v <= 3));
   protected readonly fontFamilies = signal<string[]>([]);
   protected readonly bandMenuOpen = signal(false);
   protected readonly dataDialogOpen = signal(false);
@@ -96,8 +98,8 @@ export class WeReportDesignerComponent {
   private readonly surface = viewChild(DesignSurfaceComponent);
   protected readonly shortcutsOpen = signal(false);
   /** Side panel widths in px; 0 hides a panel. Remembered in this browser. */
-  protected readonly leftWidth = signal(readWidth('left', 232));
-  protected readonly rightWidth = signal(readWidth('right', 288));
+  protected readonly leftWidth = signal(readSaved('left', 232, isWidth));
+  protected readonly rightWidth = signal(readSaved('right', 288, isWidth));
   protected readonly fontSizes = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
   protected readonly textAligns: { value: TextAlign; icon: keyof WeReportIcons; label: 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' }[] = [
     { value: 'left', icon: 'textLeft', label: 'alignLeft' },
@@ -182,7 +184,7 @@ export class WeReportDesignerComponent {
     const up = () => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
-      writeWidth(side, target());
+      writeSaved({ [side]: target() });
     };
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
@@ -191,7 +193,7 @@ export class WeReportDesignerComponent {
   protected togglePanel(side: 'left' | 'right'): void {
     const target = side === 'left' ? this.leftWidth : this.rightWidth;
     target.set(target() ? 0 : side === 'left' ? 232 : 288);
-    writeWidth(side, target());
+    writeSaved({ [side]: target() });
   }
 
   protected editSelected(): void {
@@ -237,7 +239,7 @@ export class WeReportDesignerComponent {
     );
   });
   /** Show the first data row inside bound controls instead of their formulas. */
-  protected readonly showData = signal(true);
+  protected readonly showData = signal(readSaved('showData', true, (v) => typeof v === 'boolean'));
   protected readonly sample = computed<DesignSample | null>(() => (this.showData() ? this.state.sample() : null));
 
   protected readonly fields = computed(() => designerFields(this.state.report(), this.data()));
@@ -317,7 +319,8 @@ export class WeReportDesignerComponent {
   protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
   protected readonly gridSteps = [0, 0.5, 1, 2, 5];
   /** Snap grid in mm; 0 turns the grid off. */
-  protected readonly gridSize = signal(1);
+  protected readonly gridSize = signal(readSaved('grid', 1, (v) => typeof v === 'number' && v >= 0 && v <= 10));
+  private readonly rememberView = effect(() => writeSaved({ zoom: this.zoomLevel(), grid: this.gridSize(), showData: this.showData() }));
 
   protected pickZoom(value: string): void {
     if (value === 'width') this.fitWidth();
