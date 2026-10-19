@@ -245,6 +245,9 @@
         <button type="button" role="menuitem" (click)="menu(addTotal.bind(this))"><span [innerHTML]="'sum' | weReportIcon"></span>{{ s.addTotal }}</button>
         <button type="button" role="menuitem" (click)="menu(groupByValue.bind(this))"><span [innerHTML]="'outline' | weReportIcon"></span>{{ s.groupByThis }}</button>
       }
+      @if (hasTextSelected()) {
+        <button type="button" role="menuitem" (click)="menu(fitToText.bind(this))"><span [innerHTML]="'sameWidth' | weReportIcon"></span>{{ s.fitToText }}</button>
+      }
       <button type="button" role="menuitem" (click)="menu(state.duplicateSelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.duplicate }}<kbd>Ctrl+D</kbd></button>
       <hr />
       <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'front'))"><span [innerHTML]="'bringToFront' | weReportIcon"></span>{{ s.bringToFront }}</button>

@@ -408,6 +408,32 @@ export class WeReportDesignerComponent {
     this.state.selection.set({ kind: 'controls', ids });
   }
 
+  protected readonly hasTextSelected = computed(() => this.state.selectedControls().some((c) => c.type === 'text'));
+
+  /**
+   * Sizes the selected texts to what they show on the page (fixed text, or the sample value),
+   * measured with the report's fonts, so it matches the printed size.
+   */
+  protected async fitToText(): Promise<void> {
+    const texts = this.state.selectedControls().filter((c) => c.type === 'text');
+    if (!texts.length) return;
+    const fonts = await this.fontsService.ready();
+    const report = this.state.report();
+    const sizes = new Map<string, { width: number; height: number }>();
+    for (const c of texts) {
+      const shown = this.host.nativeElement.querySelector(`[data-control-id="${CSS.escape(c.id)}"] .ds__text`)?.textContent ?? '';
+      const lines = shown.split('\n');
+      const style = resolveStyle(report, c.style, c.styleOverrides);
+      const font = fonts.resolve(style.fontFamily, style.bold, style.italic);
+      const up = (v: number) => Math.ceil(v * 10) / 10;
+      sizes.set(c.id, {
+        width: up(Math.max(2, ...lines.map((l) => font.widthOf(l, style.fontSize))) + 2 * style.padding + 0.5),
+        height: up(lines.length * font.lineHeight(style.fontSize) + 2 * style.padding),
+      });
+    }
+    this.state.updateControls([...sizes.keys()], (c) => Object.assign(c, sizes.get(c.id)));
+  }
+
   /** Shrinks (or grows) a section to just below its lowest item. */
   protected fitBand(bandId: string | null): void {
     this.state.update((d) => {
