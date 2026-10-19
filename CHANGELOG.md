@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Designer: fold a section away (double-click its label, or right-click) to make room while
+  working on others; only the designer view changes.
 - Designer: right-click a value in the detail section → *Add a total of this column* puts its sum
   under it in every group footer and the report footer (added when missing).
   *Group rows by this value* adds a group with that value as its heading.

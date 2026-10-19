@@ -119,14 +119,15 @@ interface DragOp {
         <div class="ds__watermark" aria-hidden="true" [style.color]="state.report().watermark?.color ?? defaultWatermarkColor" [style.font-size.mm]="geometry().width * zoom() * 0.12" [style.transform]="'translate(-50%, -50%) rotate(' + -(state.report().watermark?.angle ?? 45) + 'deg)'">{{ wm }}</div>
       }
       @for (band of state.report().bands; track band.id) {
-        <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)">
-          <button type="button" class="ds__band-label" [title]="bandLabel(band)" (click)="selectBand(band.id)">
+        @let folded = state.collapsed().has(band.id);
+        <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)" [class.ds__band--collapsed]="folded">
+          <button type="button" class="ds__band-label" [title]="bandLabel(band) + ' — ' + (folded ? strings().expandBand : strings().collapseBand) " [attr.aria-expanded]="!folded" (click)="selectBand(band.id)" (dblclick)="state.toggleCollapsed(band.id)">
             {{ bandLabel(band) }}
           </button>
           <div
             class="ds__band-body"
             [attr.data-band-id]="band.id"
-            [style.height.mm]="band.height * zoom()"
+            [style.height.mm]="folded ? 3 : band.height * zoom()"
             [style.background-color]="band.backgroundColor ?? null"
             [style.background-size.mm]="gridSize() * zoom()"
             [style.background-image]="gridSize() ? null : 'none'"
@@ -250,7 +251,7 @@ interface DragOp {
               }
             }
           </div>
-          <div class="ds__band-resize" (pointerdown)="onBandResizePointerDown($event, band)" [title]="strings().bandHeight"></div>
+          <div class="ds__band-resize" [hidden]="folded" (pointerdown)="onBandResizePointerDown($event, band)" [title]="strings().bandHeight"></div>
         </div>
       }
     </div>
@@ -351,6 +352,14 @@ interface DragOp {
     .ds__band-label:focus-visible {
       outline: none;
       box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
+    }
+    /* A folded section: a thin hatched strip, its items hidden. */
+    .ds__band--collapsed .ds__band-body {
+      overflow: hidden;
+      background: repeating-linear-gradient(-45deg, var(--we-report-band-label-bg, rgba(118, 118, 128, 0.1)) 0 4px, transparent 4px 8px) !important;
+    }
+    .ds__band--collapsed .ds__band-body > * {
+      display: none;
     }
     .ds__band-body {
       position: relative;

@@ -254,6 +254,9 @@
     } @else {
       <button type="button" role="menuitem" (click)="menu(addTextAt.bind(this, m.bandId, m.at))"><span [innerHTML]="'text' | weReportIcon"></span>{{ s.addTextHere }}</button>
       <button type="button" role="menuitem" (click)="menu(state.selectAll.bind(state))"><span [innerHTML]="'outline' | weReportIcon"></span>{{ s.selectAll }}<kbd>Ctrl+A</kbd></button>
+      @if (m.bandId) {
+        <button type="button" role="menuitem" (click)="menu(state.toggleCollapsed.bind(state, m.bandId))"><span [innerHTML]="'fitHeight' | weReportIcon"></span>{{ state.collapsed().has(m.bandId) ? s.expandBand : s.collapseBand }}</button>
+      }
       <button type="button" role="menuitem" (click)="menu(fitBand.bind(this, m.bandId))"><span [innerHTML]="'fitHeight' | weReportIcon"></span>{{ s.fitBandToContent }}</button>
       @if (state.selectedBand()?.kind !== 'detail') {
         <hr />
