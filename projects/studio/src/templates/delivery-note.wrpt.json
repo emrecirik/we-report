@@ -47,7 +47,7 @@
         { "id": "date", "type": "text", "x": 145, "y": 11, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right" }, "text": { "expression": "[^.date]" }, "format": "dd.MM.yyyy" },
         { "id": "shipLbl", "type": "text", "x": 115, "y": 18, "width": 30, "height": 6, "style": "label", "text": "Sevk tarihi" },
         { "id": "ship", "type": "text", "x": 145, "y": 18, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right" }, "text": { "expression": "AddDays([^.date], 1)" }, "format": "dd.MM.yyyy" },
-        { "id": "qr", "type": "barcode", "x": 160, "y": 25, "width": 20, "height": 20, "symbology": "qrcode", "value": { "expression": "'https://example.com/irsaliye/' + [^.number]" }, "showText": false },
+        { "id": "qr", "type": "barcode", "x": 166, "y": 24.5, "width": 14, "height": 14, "symbology": "qrcode", "value": { "expression": "'https://example.com/irsaliye/' + [^.number]" }, "showText": false },
         { "id": "hNo", "type": "text", "x": 0, "y": 40, "width": 10, "height": 8, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "#" },
         { "id": "hCode", "type": "text", "x": 10, "y": 40, "width": 25, "height": 8, "style": "th", "text": "Kod" },
         { "id": "hProduct", "type": "text", "x": 35, "y": 40, "width": 105, "height": 8, "style": "th", "text": "Ürün" },
