@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Studio: *Share* puts the design and its data into a link (gzip in the address bar, no server);
+  opening the link loads it like an opened file.
 - Designer: *Fit size to text* (right-click) sizes texts to what they show, measured with the
   report's fonts.
 - Designer: zoom, grid size and *Show data* are remembered in the browser, like the panel widths.
