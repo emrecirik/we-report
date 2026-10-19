@@ -26,6 +26,8 @@ type built struct {
 	sql    string
 	values []any
 	limit  int
+	// The same rows without order, offset and limit, counted when the caller asks for `total`.
+	countSQL string
 }
 
 type condition struct {
@@ -41,16 +43,21 @@ type order struct {
 }
 
 type structuredQuery struct {
-	Table   any         `json:"table"`
-	Columns []any       `json:"columns"`
-	Where   []condition `json:"where"`
-	OrderBy []order     `json:"orderBy"`
-	Limit   any         `json:"limit"`
+	Table    any         `json:"table"`
+	Columns  []any       `json:"columns"`
+	Where    []condition `json:"where"`
+	OrderBy  []order     `json:"orderBy"`
+	Limit    any         `json:"limit"`
+	Offset   any         `json:"offset"`
+	Distinct any         `json:"distinct"`
 }
 
 const maxInValues = 1000
 
-var ops = map[string]bool{"=": true, "!=": true, "<": true, "<=": true, ">": true, ">=": true, "like": true, "in": true, "isNull": true, "notNull": true}
+var ops = map[string]bool{"=": true, "!=": true, "<": true, "<=": true, ">": true, ">=": true, "like": true, "contains": true, "startsWith": true, "in": true, "isNull": true, "notNull": true}
+
+// likeLiteral makes LIKE's wildcards and the escape character match themselves.
+var likeLiteral = strings.NewReplacer(`\`, `\\`, "%", `\%`, "_", `\_`)
 
 // driverValue keeps request values to text, numbers and nil; whole numbers stay integers.
 func driverValue(v any) (any, *apiError) {
@@ -105,6 +112,22 @@ func buildSelect(q *structuredQuery, schema []table, d dialect, params map[strin
 		return d.placeholder(len(values)), nil
 	}
 
+	if _, ok := q.Distinct.(bool); q.Distinct != nil && !ok {
+		return nil, fail(400, "distinct must be true or false.")
+	}
+	distinct := q.Distinct == true
+	if distinct && len(q.Columns) == 0 {
+		return nil, fail(400, "distinct needs the columns to return.")
+	}
+	offset := 0
+	if q.Offset != nil {
+		o, ok := q.Offset.(float64)
+		if !ok || o < 0 || o != math.Trunc(o) || o > math.MaxInt32 {
+			return nil, fail(400, "offset must be a whole number of 0 or more.")
+		}
+		offset = int(o)
+	}
+
 	var columns []string
 	if len(q.Columns) > 0 {
 		for _, c := range q.Columns {
@@ -151,6 +174,20 @@ func buildSelect(q *structuredQuery, schema []table, d dialect, params map[strin
 				}
 			}
 			conditions = append(conditions, col+" IN ("+strings.Join(marks, ", ")+")")
+		case "contains", "startsWith":
+			text := ""
+			if value != nil {
+				text = fmt.Sprint(value)
+			}
+			pattern := likeLiteral.Replace(text) + "%"
+			if op == "contains" {
+				pattern = "%" + pattern
+			}
+			mark, err := bind(pattern)
+			if err != nil {
+				return nil, err
+			}
+			conditions = append(conditions, "LOWER("+col+") LIKE LOWER("+mark+") ESCAPE '\\'")
 		default:
 			mark, err := bind(value)
 			if err != nil {
@@ -191,9 +228,17 @@ func buildSelect(q *structuredQuery, schema []table, d dialect, params map[strin
 	if len(orderBy) > 0 {
 		sort = " ORDER BY " + strings.Join(orderBy, ", ")
 	}
+	keyword := "SELECT "
+	if distinct {
+		keyword = "SELECT DISTINCT "
+	}
+	rows := keyword + strings.Join(columns, ", ") + " FROM " + d.quote(t.Name) + where
 	// One extra row tells us whether the result was truncated.
-	sql := fmt.Sprintf("SELECT %s FROM %s%s%s LIMIT %d", strings.Join(columns, ", "), d.quote(t.Name), where, sort, limit+1)
-	return &built{sql, values, limit}, nil
+	sql := fmt.Sprintf("%s%s LIMIT %d", rows, sort, limit+1)
+	if offset > 0 {
+		sql += fmt.Sprintf(" OFFSET %d", offset)
+	}
+	return &built{sql, values, limit, "SELECT COUNT(*) AS total FROM (" + rows + ") AS we_report_c"}, nil
 }
 
 // Standard strings, quoted and [bracketed] identifiers, comments — matched left to right — and
@@ -243,5 +288,6 @@ func buildFreeSQL(sql string, d dialect, params map[string]any, maxRows int) (*b
 		last = m[1]
 	}
 	out.WriteString(body[last:])
-	return &built{fmt.Sprintf("SELECT * FROM (%s) AS we_report_q LIMIT %d", out.String(), maxRows+1), values, maxRows}, nil
+	return &built{fmt.Sprintf("SELECT * FROM (%s) AS we_report_q LIMIT %d", out.String(), maxRows+1), values, maxRows,
+		"SELECT COUNT(*) AS total FROM (" + out.String() + ") AS we_report_c"}, nil
 }

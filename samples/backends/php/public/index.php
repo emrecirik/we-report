@@ -11,6 +11,7 @@ require __DIR__ . '/../src/databases.php';
 require __DIR__ . '/../src/fetch_guard.php';
 
 const MAX_BODY = 1024 * 1024;
+const MAX_LAYOUT_BYTES = 256 * 1024;
 
 function list_env(string $name, string $fallback = ''): array
 {
@@ -58,6 +59,8 @@ function load_config(): array
         // The fetch proxy would be an open proxy on a public demo.
         'webServiceFetch' => !$demo && getenv('WE_REPORT_FETCH') !== '0',
         'fetchAllowHosts' => list_env('WE_REPORT_FETCH_ALLOW_HOSTS'),
+        // Saved grid layouts and sheets (protocol 1.1); off in demo mode
+        'layoutsDir' => getenv('WE_REPORT_LAYOUTS_DIR') ?: sys_get_temp_dir() . '/we-report-layouts',
         'rateLimit' => (int) (getenv('WE_REPORT_RATE_LIMIT') ?: ($demo ? 60 : 600)),
         'connections' => $connections,
     ];
@@ -114,15 +117,20 @@ function over_rate_limit(string $ip, int $limit): bool
 }
 
 /** Reads the body while counting: chunked bodies have no Content-Length to check up front. */
-function json_body(): array
+function read_body(int $max): string
 {
-    $stream = fopen('php://input', 'rb');
-    $raw = stream_get_contents($stream, MAX_BODY + 1);
-    if (strlen((string) $raw) > MAX_BODY) {
+    $raw = (string) stream_get_contents(fopen('php://input', 'rb'), $max + 1);
+    if (strlen($raw) > $max) {
         throw new ApiError(413, 'Request body too large.');
     }
+    return $raw;
+}
+
+function json_body(): array
+{
+    $raw = read_body(MAX_BODY);
     try {
-        $body = json_decode($raw === '' ? '{}' : (string) $raw, true, 64, JSON_THROW_ON_ERROR);
+        $body = json_decode($raw === '' ? '{}' : $raw, true, 64, JSON_THROW_ON_ERROR);
     } catch (JsonException) {
         throw new ApiError(400, 'Body must be JSON.');
     }
@@ -152,7 +160,7 @@ function handle(array $config): never
         header('Vary: Origin');
     }
     if ($method === 'OPTIONS') {
-        header('Access-Control-Allow-Methods: GET, POST');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
         header('Access-Control-Allow-Headers: Content-Type, Authorization');
         header('Access-Control-Max-Age: 600');
         http_response_code(204);
@@ -179,14 +187,64 @@ function handle(array $config): never
         throw new ApiError(401, 'Not authorized.');
     }
     // A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot.
-    if ($method === 'POST' && !preg_match('#^application/json\b#i', $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '')) {
+    if (($method === 'POST' || $method === 'PUT') && !preg_match('#^application/json\b#i', $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '')) {
         throw new ApiError(415, 'Send the body as application/json.');
     }
 
-    $path = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
+    $rawPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    $path = rawurldecode($rawPath);
     if ($method === 'GET' && $path === '/v1/info') {
         respond(200, ['protocol' => 1, 'server' => 'we-report-php',
-            'capabilities' => ['webServiceFetch' => $config['webServiceFetch'], 'demo' => $config['demo']]]);
+            'capabilities' => ['webServiceFetch' => $config['webServiceFetch'], 'demo' => $config['demo'], 'grid' => true, 'layouts' => !$config['demo']]]);
+    }
+    // Saved grid layouts and sheets (protocol 1.1): one JSON file per key, named by the key in hex
+    // so no key can reach outside the directory. Matched before decoding, so %2F stays in the key.
+    if (preg_match('#^/v1/layouts/([^/]+)$#', $rawPath, $m)) {
+        if (!in_array($method, ['GET', 'PUT', 'DELETE'], true)) {
+            throw new ApiError(405, 'Method not allowed.');
+        }
+        $key = rawurldecode($m[1]);
+        if (!preg_match('/^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,99}$/D', $key)) {
+            throw new ApiError(400, 'Layout keys are 1-100 letters, digits and _ . : - characters.');
+        }
+        if ($config['demo']) {
+            throw new ApiError(403, 'Saved layouts are disabled on this backend.');
+        }
+        $file = $config['layoutsDir'] . '/' . bin2hex($key) . '.json';
+        if ($method === 'GET') {
+            $doc = is_file($file) ? file_get_contents($file) : false;
+            if ($doc === false) {
+                throw new ApiError(404, 'No layout saved under this key.');
+            }
+            header('Content-Type: application/json');
+            echo $doc;
+            exit;
+        }
+        if ($method === 'PUT') {
+            $raw = read_body(MAX_LAYOUT_BYTES);
+            try {
+                $doc = json_decode($raw, false, 64, JSON_THROW_ON_ERROR);
+            } catch (JsonException) {
+                throw new ApiError(400, 'Body must be JSON.');
+            }
+            if (!is_object($doc)) {
+                throw new ApiError(400, 'A layout is a JSON object.');
+            }
+            if (!is_dir($config['layoutsDir']) && !@mkdir($config['layoutsDir'], 0700, true) && !is_dir($config['layoutsDir'])) {
+                throw new RuntimeException('Cannot create the layouts directory.');
+            }
+            // Stored as sent (decoding would turn {} into []); written next to the target and renamed,
+            // so a reader never sees half a file.
+            $tmp = $file . '.' . bin2hex(random_bytes(6)) . '.tmp';
+            if (file_put_contents($tmp, $raw) === false || !rename($tmp, $file)) {
+                @unlink($tmp);
+                throw new RuntimeException('Cannot write the layout file.');
+            }
+        } elseif (is_file($file) && !unlink($file)) {
+            throw new RuntimeException('Cannot delete the layout file.');
+        }
+        http_response_code(204);
+        exit;
     }
     if ($method === 'GET' && $path === '/v1/connections') {
         // Never the url: ids, names, dialects and what is allowed.
@@ -226,7 +284,16 @@ function handle(array $config): never
                 default => 'string',
             }];
         }
-        respond(200, ['columns' => $columns, 'rows' => $rows, 'truncated' => $truncated]);
+        $result = ['columns' => $columns, 'rows' => $rows, 'truncated' => $truncated];
+        if (($body['count'] ?? false) === true) {
+            try {
+                $result['total'] = (int) ($db->query($built->count, max(1, intdiv($c['timeoutMs'], 1000)))[0]['total'] ?? 0);
+            } catch (PDOException $e) {
+                error_log(sprintf('Count on "%s" failed: %s', $c['id'], $e->getMessage()));
+                throw new ApiError(400, 'The query failed. The backend log has the details.');
+            }
+        }
+        respond(200, $result);
     }
     if ($method === 'POST' && $path === '/v1/webservice/fetch') {
         if (!$config['webServiceFetch']) {

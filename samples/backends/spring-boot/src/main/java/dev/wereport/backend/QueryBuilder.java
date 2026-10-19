@@ -16,9 +16,10 @@ public final class QueryBuilder {
 
   public record Table(String name, List<Column> columns) {}
 
-  public record Built(String sql, List<Object> values, int limit) {}
+  /** {@code countSql} counts the same rows without order, offset and limit; it takes the same values. */
+  public record Built(String sql, List<Object> values, int limit, String countSql) {}
 
-  private static final Set<String> OPS = Set.of("=", "!=", "<", "<=", ">", ">=", "like", "in", "isNull", "notNull");
+  private static final Set<String> OPS = Set.of("=", "!=", "<", "<=", ">", ">=", "like", "contains", "startsWith", "in", "isNull", "notNull");
   private static final int MAX_IN_VALUES = 1000;
   // Standard strings, quoted and [bracketed] identifiers, comments — matched left to right.
   private static final Pattern LITERALS = Pattern.compile("'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|\\[[^\\]]*\\]|--[^\\n]*|/\\*[\\s\\S]*?\\*/");
@@ -26,6 +27,11 @@ public final class QueryBuilder {
   private static final Pattern LITERALS_OR_PARAMS = Pattern.compile(LITERALS.pattern() + "|(?<![:\\w]):([A-Za-z_]\\w*)");
 
   private QueryBuilder() {}
+
+  /** {@code contains} / {@code startsWith} match the text literally: LIKE's wildcards and the escape character are escaped. */
+  static String likeLiteral(Object v) {
+    return String.valueOf(v == null ? "" : v).replaceAll("([\\\\%_])", "\\\\$1");
+  }
 
   /** JSON values from the request: drivers only ever see text, numbers and null. */
   static Object driverValue(Object v) {
@@ -52,6 +58,15 @@ public final class QueryBuilder {
       return "?";
     };
 
+    if (query.containsKey("distinct") && !(query.get("distinct") instanceof Boolean)) throw new ApiError(400, "distinct must be true or false.");
+    boolean distinct = Boolean.TRUE.equals(query.get("distinct"));
+    if (distinct && !(query.get("columns") instanceof List<?> c && !c.isEmpty())) throw new ApiError(400, "distinct needs the columns to return.");
+    Object offsetValue = query.containsKey("offset") ? query.get("offset") : 0;
+    if (!((offsetValue instanceof Integer || offsetValue instanceof Long) && ((Number) offsetValue).longValue() >= 0)) {
+      throw new ApiError(400, "offset must be a whole number of 0 or more.");
+    }
+    long offset = ((Number) offsetValue).longValue();
+
     List<String> columns = query.get("columns") instanceof List<?> cols && !cols.isEmpty()
         ? cols.stream().map(column).toList()
         : table.columns().stream().map(c -> d.quote(c.name())).toList();
@@ -74,6 +89,8 @@ public final class QueryBuilder {
             conditions.add(col + " IN (" + String.join(", ", list.stream().map(bind).toList()) + ")");
           }
           case "like" -> conditions.add(col + " LIKE " + bind.apply(value));
+          case "contains", "startsWith" -> conditions.add("LOWER(" + col + ") LIKE LOWER("
+              + bind.apply((op.equals("contains") ? "%" : "") + likeLiteral(value) + "%") + ") ESCAPE '\\'");
           default -> conditions.add(col + " " + (op.equals("!=") ? "<>" : op) + " " + bind.apply(value));
         }
       }
@@ -91,12 +108,11 @@ public final class QueryBuilder {
 
     int requested = query.get("limit") instanceof Number n && n.intValue() > 0 ? n.intValue() : maxRows;
     int limit = Math.min(requested, maxRows);
+    String select = "SELECT " + (distinct ? "DISTINCT " : "") + String.join(", ", columns) + " FROM " + d.table(d.quote(table.name()))
+        + (conditions.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditions));
     // One extra row tells us whether the result was truncated.
-    String sql = d.select(String.join(", ", columns), d.quote(table.name()),
-        conditions.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditions),
-        order.isEmpty() ? "" : " ORDER BY " + String.join(", ", order),
-        limit + 1);
-    return new Built(sql, values, limit);
+    String sql = d.page(select, order.isEmpty() ? "" : " ORDER BY " + String.join(", ", order), limit + 1, offset);
+    return new Built(sql, values, limit, "SELECT COUNT(*) AS total FROM (" + select + ") AS we_report_c");
   }
 
   /** Free SQL (only where allowed): one SELECT statement, {@code :name} parameters, row limit. */
@@ -122,6 +138,6 @@ public final class QueryBuilder {
       }
     }
     m.appendTail(text);
-    return new Built(d.wrapLimit(text.toString(), maxRows + 1), values, maxRows);
+    return new Built(d.wrapLimit(text.toString(), maxRows + 1), values, maxRows, "SELECT COUNT(*) AS total FROM (" + text + ") AS we_report_c");
   }
 }

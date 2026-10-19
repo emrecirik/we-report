@@ -9,7 +9,7 @@ import { guardedFetch } from './fetch-guard.mjs';
 import { buildFreeSql, buildSelect, finishRows, HttpError } from './query.mjs';
 
 const MAX_BODY = 1024 * 1024;
-const LAYOUT_KEY = /^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,127}$/;
+const LAYOUT_KEY = /^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,99}$/;
 
 export function createServer(config = loadConfig()) {
   const opened = new Map();
@@ -35,7 +35,7 @@ export function createServer(config = loadConfig()) {
     } catch {
       key = '';
     }
-    if (!LAYOUT_KEY.test(key)) throw new HttpError(400, 'Layout keys are 1-128 letters, digits and _ . : - characters.');
+    if (!LAYOUT_KEY.test(key)) throw new HttpError(400, 'Layout keys are 1-100 letters, digits and _ . : - characters.');
     if (!layouts) throw new HttpError(403, 'Saved layouts are disabled on this backend.');
     return key;
   };

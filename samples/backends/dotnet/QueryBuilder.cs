@@ -11,7 +11,8 @@ public sealed class ApiError(int status, string message) : Exception(message)
 
 public sealed record TableInfo(string Name, List<ColumnInfo> Columns);
 public sealed record ColumnInfo(string Name, string Type);
-public sealed record BuiltQuery(string Sql, List<object?> Values, int Limit);
+/// <summary>A statement, its parameters, the row limit, and the statement counting the same rows (protocol 1.1 <c>count</c>).</summary>
+public sealed record BuiltQuery(string Sql, List<object?> Values, int Limit, string CountSql);
 
 /// <summary>
 /// Turns the protocol's structured query into SQL. Every identifier is checked against the
@@ -19,7 +20,7 @@ public sealed record BuiltQuery(string Sql, List<object?> Values, int Limit);
 /// </summary>
 public static partial class QueryBuilder
 {
-    static readonly HashSet<string> Ops = ["=", "!=", "<", "<=", ">", ">=", "like", "in", "isNull", "notNull"];
+    static readonly HashSet<string> Ops = ["=", "!=", "<", "<=", ">", ">=", "like", "contains", "startsWith", "in", "isNull", "notNull"];
     const int MaxInValues = 1000;
 
     public static object? DriverValue(JsonElement v) => v.ValueKind switch
@@ -31,6 +32,10 @@ public static partial class QueryBuilder
         JsonValueKind.Number => v.TryGetInt64(out var l) ? l : v.GetDouble(),
         _ => throw new ApiError(400, "Query values must be text, numbers, booleans or null."),
     };
+
+    /// <summary><c>contains</c> / <c>startsWith</c> match the text literally: LIKE's wildcards and the escape character are escaped.</summary>
+    static string LikeLiteral(JsonElement v) =>
+        Regex.Replace(Convert.ToString(DriverValue(v), System.Globalization.CultureInfo.InvariantCulture) ?? "", @"[\\%_]", @"\$0");
 
     static JsonElement? Prop(JsonElement e, string name) => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) ? v : null;
 
@@ -54,8 +59,23 @@ public static partial class QueryBuilder
             return d.Placeholder(values.Count);
         }
 
-        var columns = Prop(query, "columns") is { ValueKind: JsonValueKind.Array } cols && cols.GetArrayLength() > 0
-            ? cols.EnumerateArray().Select(c => Column(c)).ToList()
+        var distinct = Prop(query, "distinct") switch
+        {
+            null => false,
+            { ValueKind: JsonValueKind.True } => true,
+            { ValueKind: JsonValueKind.False } => false,
+            _ => throw new ApiError(400, "distinct must be true or false."),
+        };
+        var hasColumns = Prop(query, "columns") is { ValueKind: JsonValueKind.Array } cols && cols.GetArrayLength() > 0;
+        if (distinct && !hasColumns) throw new ApiError(400, "distinct needs the columns to return.");
+        var offset = Prop(query, "offset") switch
+        {
+            null => 0,
+            { ValueKind: JsonValueKind.Number } o when o.TryGetInt32(out var oi) && oi >= 0 => oi,
+            _ => throw new ApiError(400, "offset must be a whole number of 0 or more."),
+        };
+        var columns = hasColumns
+            ? Prop(query, "columns")!.Value.EnumerateArray().Select(c => Column(c)).ToList()
             : table.Columns.Select(c => d.Quote(c.Name)).ToList();
 
         var conditions = new List<string>();
@@ -79,6 +99,9 @@ public static partial class QueryBuilder
                         conditions.Add($"{col} IN ({string.Join(", ", value.EnumerateArray().Select(x => Bind(DriverValue(x))))})");
                         break;
                     case "like": conditions.Add($"{col} LIKE {Bind(DriverValue(value))}"); break;
+                    case "contains" or "startsWith":
+                        conditions.Add($"LOWER({col}) LIKE LOWER({Bind((op == "contains" ? "%" : "") + LikeLiteral(value) + "%")}) ESCAPE '\\'");
+                        break;
                     default: conditions.Add($"{col} {(op == "!=" ? "<>" : op)} {Bind(DriverValue(value))}"); break;
                 }
             }
@@ -97,12 +120,12 @@ public static partial class QueryBuilder
 
         var requested = Prop(query, "limit") is { ValueKind: JsonValueKind.Number } l && l.TryGetInt32(out var li) && li > 0 ? li : maxRows;
         var limit = Math.Min(requested, maxRows);
+        var select = $"SELECT {(distinct ? "DISTINCT " : "")}{string.Join(", ", columns)} FROM {d.Table(table.Name)}" +
+            (conditions.Count > 0 ? " WHERE " + string.Join(" AND ", conditions) : "");
         // One extra row tells us whether the result was truncated.
-        var sql = d.Select(string.Join(", ", columns), d.Quote(table.Name),
-            conditions.Count > 0 ? " WHERE " + string.Join(" AND ", conditions) : "",
-            order.Count > 0 ? " ORDER BY " + string.Join(", ", order) : "",
-            limit + 1);
-        return new BuiltQuery(sql, values, limit);
+        var sql = d.Page(select, order.Count > 0 ? " ORDER BY " + string.Join(", ", order) : "", limit + 1, offset, distinct);
+        // The same rows without order, offset and limit; only parameters from the WHERE clause are bound.
+        return new BuiltQuery(sql, values, limit, $"SELECT COUNT(*) AS total FROM ({select}) AS we_report_c");
     }
 
     // Standard strings, quoted and [bracketed] identifiers, comments — matched left to right.
@@ -132,6 +155,6 @@ public static partial class QueryBuilder
             values.Add(parameters.ValueKind == JsonValueKind.Object && parameters.TryGetProperty(name, out var v) ? DriverValue(v) : null);
             return d.Placeholder(values.Count);
         });
-        return new BuiltQuery(d.WrapLimit(text, maxRows + 1), values, maxRows);
+        return new BuiltQuery(d.WrapLimit(text, maxRows + 1), values, maxRows, $"SELECT COUNT(*) AS total FROM ({text}) AS we_report_c");
     }
 }

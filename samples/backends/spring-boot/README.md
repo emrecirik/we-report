@@ -1,7 +1,8 @@
 # we-report backend — Java (Spring Boot)
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml). SQL Server, PostgreSQL and SQLite with
+[we-report data protocol](../../../protocol/openapi.yaml) 1.1 — including the grid queries (`offset`,
+`distinct`, `count` → `total`, `contains` / `startsWith`) and saved layouts (`/v1/layouts/{key}`). SQL Server, PostgreSQL and SQLite with
 plain JDBC; one controller (`Api.java`) you can drop into an existing Spring Boot application.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)
@@ -47,8 +48,9 @@ Free SQL is off; enable it per connection with `"allowFreeSql": true` for truste
 
 Same environment variables as every we-report sample backend: `WE_REPORT_HOST` (default
 `127.0.0.1`), `WE_REPORT_PORT`, `WE_REPORT_AUTH_TOKEN`, `WE_REPORT_CORS_ORIGINS`,
-`WE_REPORT_FETCH`, `WE_REPORT_FETCH_ALLOW_HOSTS`, `WE_REPORT_RATE_LIMIT`, `WE_REPORT_DEMO` — see
-the [Node sample](../node/README.md#settings) for the table.
+`WE_REPORT_FETCH`, `WE_REPORT_FETCH_ALLOW_HOSTS`, `WE_REPORT_RATE_LIMIT`, `WE_REPORT_DEMO`,
+`WE_REPORT_LAYOUTS_DIR` (where saved grid layouts go, one JSON file per key; default
+`<temp>/we-report-layouts`, off in demo mode) — see the [Node sample](../node/README.md#settings) for the table.
 
 ## Authentication
 
@@ -62,6 +64,8 @@ Spring Security, delete the token check there and secure `/v1/**` like your othe
 - Row limit (`truncated: true`) and query timeout on every query.
 - The web service proxy resolves and checks every hop (redirects are followed by hand) and pins
   the JVM DNS cache so the connection uses the checked address; 5 MB / 10 s caps.
+- Saved layouts: keys are validated and stored under a hex file name (no key can leave the
+  directory), JSON objects only, 256 KB cap, written to a temp file and renamed.
 - Errors never echo internals; unexpected errors are logged on the server only.
 
 ## Prove it

@@ -54,6 +54,7 @@ it still allows one `SELECT`, with `:name` parameters and the row limit.
 | `WE_REPORT_FETCH_ALLOW_HOSTS` | — | Internal hostnames the proxy may reach anyway (comma separated). |
 | `WE_REPORT_RATE_LIMIT` | `600` (`60` in demo) | Requests per minute per IP. |
 | `WE_REPORT_DEMO` | — | `1` = public demo: fixed connections, no free SQL, no proxy, open to anyone. |
+| `WE_REPORT_LAYOUTS_DIR` | `<os temp>/we-report-layouts` | Where `/v1/layouts` keeps saved grid layouts and sheets (protocol 1.1) — one JSON file per key, named by the key in hex. Off in demo mode. |
 
 ## Authentication
 

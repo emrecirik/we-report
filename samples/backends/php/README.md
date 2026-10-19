@@ -1,7 +1,8 @@
 # we-report backend — PHP
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml). Plain PHP 8.2+, no framework, no Composer
+[we-report data protocol](../../../protocol/openapi.yaml) 1.1 (grid paging with `offset` and
+`count` → `total`, `distinct`, `contains` / `startsWith`, saved layouts). Plain PHP 8.2+, no framework, no Composer
 packages: PDO (SQLite, PostgreSQL) and the curl extension. Four files: `public/index.php`
 (settings, access, endpoints), `src/query.php`, `src/databases.php`, `src/fetch_guard.php`.
 
@@ -49,6 +50,10 @@ the temp folder (PHP keeps no memory between requests). The web service proxy re
 once, refuses internal addresses (IPv4/IPv6, IPv4-mapped, NAT64, numeric shorthands like
 `2130706433`) and pins curl to the checked address with `CURLOPT_RESOLVE`; TLS still verifies the
 real hostname. Redirects are re-checked and drop the caller's headers when the origin changes.
+
+Saved grid layouts and sheets (`/v1/layouts/{key}`) are one JSON file per key in
+`WE_REPORT_LAYOUTS_DIR` (default `<temp>/we-report-layouts`), named by the key in hex; bodies are
+capped at 256 KB. They are off in demo mode (`WE_REPORT_DEMO=1`).
 
 ## Docker
 

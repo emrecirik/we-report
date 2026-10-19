@@ -23,7 +23,7 @@ the contract is `protocol/openapi.yaml` + `protocol/schemas/query.json`; the pro
 
 ## Layouts (`/v1/layouts/{key}`)
 
-- Key: URL-decoded, must match `^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,127}$`, else 400.
+- Key: URL-decoded, must match `^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,99}$`, else 400.
 - `GET` → 200 with the stored JSON object as-is, 404 `{error}` when missing.
 - `PUT` → body must be `application/json` (415), at most 256 KB (413 — read the body and still
   answer 413; do not reset the connection), a JSON **object** (400 for arrays/scalars/invalid JSON).

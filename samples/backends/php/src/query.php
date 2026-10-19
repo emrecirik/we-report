@@ -15,13 +15,13 @@ final class ApiError extends Exception
 
 final class Built
 {
-    /** @param list<mixed> $values */
-    public function __construct(public readonly string $sql, public readonly array $values, public readonly int $limit)
+    /** @param list<mixed> $values  $count: the same rows without order/offset/limit, counted for `total` */
+    public function __construct(public readonly string $sql, public readonly array $values, public readonly int $limit, public readonly ?Built $count = null)
     {
     }
 }
 
-const OPS = ['=', '!=', '<', '<=', '>', '>=', 'like', 'in', 'isNull', 'notNull'];
+const OPS = ['=', '!=', '<', '<=', '>', '>=', 'like', 'contains', 'startsWith', 'in', 'isNull', 'notNull'];
 const MAX_IN_VALUES = 1000;
 // Standard strings, quoted and [bracketed] identifiers, comments — matched left to right.
 const LITERALS = "'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|\\[[^\\]]*\\]|--[^\\n]*|/\\*[\\s\\S]*?\\*/";
@@ -69,7 +69,18 @@ function build_select(mixed $query, array $schema, callable $quote, array $param
         return '?';
     };
 
+    $distinct = $query['distinct'] ?? false;
+    if (!is_bool($distinct)) {
+        throw new ApiError(400, 'distinct must be true or false.');
+    }
     $requested = $query['columns'] ?? null;
+    if ($distinct && !(is_array($requested) && $requested)) {
+        throw new ApiError(400, 'distinct needs the columns to return.');
+    }
+    $offset = $query['offset'] ?? 0;
+    if (!is_int($offset) || $offset < 0) {
+        throw new ApiError(400, 'offset must be a whole number of 0 or more.');
+    }
     $columns = is_array($requested) && $requested
         ? array_map($column, $requested)
         : array_map(fn ($c) => $quote($c['name']), $table['columns']);
@@ -89,6 +100,10 @@ function build_select(mixed $query, array $schema, callable $quote, array $param
                 ? "$col IN (" . implode(', ', array_map($bind, $value)) . ')'
                 : throw new ApiError(400, sprintf('"in" needs a list of 1-%d values.', MAX_IN_VALUES)),
             'like' => "$col LIKE " . $bind($value),
+            // Literal and case-insensitive: LIKE's wildcards and the escape character are escaped.
+            'contains', 'startsWith' => "LOWER($col) LIKE LOWER("
+                . $bind(($op === 'contains' ? '%' : '') . addcslashes((string) driver_value($value), '\\%_') . '%')
+                . ") ESCAPE '\\'",
             '!=' => "$col <> " . $bind($value),
             default => "$col $op " . $bind($value),
         };
@@ -104,16 +119,16 @@ function build_select(mixed $query, array $schema, callable $quote, array $param
     }
 
     $limit = is_int($query['limit'] ?? null) && $query['limit'] > 0 ? min($query['limit'], $maxRows) : $maxRows;
-    // One extra row tells us whether the result was truncated.
-    $sql = sprintf(
-        'SELECT %s FROM %s%s%s LIMIT %d',
+    $select = sprintf(
+        'SELECT %s%s FROM %s%s',
+        $distinct ? 'DISTINCT ' : '',
         implode(', ', $columns),
         $quote($table['name']),
         $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '',
-        $order ? ' ORDER BY ' . implode(', ', $order) : '',
-        $limit + 1,
     );
-    return new Built($sql, $values, $limit);
+    // One extra row tells us whether the result was truncated.
+    $sql = sprintf('%s%s LIMIT %d%s', $select, $order ? ' ORDER BY ' . implode(', ', $order) : '', $limit + 1, $offset ? " OFFSET $offset" : '');
+    return new Built($sql, $values, $limit, new Built("SELECT COUNT(*) AS total FROM ($select) AS we_report_c", $values, 1));
 }
 
 /**
@@ -147,5 +162,6 @@ function build_free_sql(mixed $sql, array $params, int $maxRows): Built
         $values[] = driver_value($params[$m[1]] ?? null);
         return '?';
     }, $body);
-    return new Built(sprintf('SELECT * FROM (%s) AS we_report_q LIMIT %d', $replaced, $maxRows + 1), $values, $maxRows);
+    return new Built(sprintf('SELECT * FROM (%s) AS we_report_q LIMIT %d', $replaced, $maxRows + 1), $values, $maxRows,
+        new Built("SELECT COUNT(*) AS total FROM ($replaced) AS we_report_c", $values, 1));
 }

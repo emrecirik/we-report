@@ -20,7 +20,8 @@ public record BackendConfig(
     boolean webServiceFetch,
     Set<String> fetchAllowHosts,
     int rateLimitPerMinute,
-    List<Connection> connections) {
+    List<Connection> connections,
+    Path layoutsDir) {
 
   /** A database the backend may query. The JDBC URL never leaves the server. */
   public record Connection(
@@ -42,7 +43,9 @@ public record BackendConfig(
         !demo && !"0".equals(env.get("WE_REPORT_FETCH")),
         new HashSet<>(list(env.get("WE_REPORT_FETCH_ALLOW_HOSTS")).stream().map(String::toLowerCase).toList()),
         parseInt(env.get("WE_REPORT_RATE_LIMIT"), demo ? 60 : 600),
-        connections(env, demo));
+        connections(env, demo),
+        // Saved grid layouts and sheets (protocol 1.1): one JSON file per key; off in demo mode.
+        blankToNull(env.get("WE_REPORT_LAYOUTS_DIR")) instanceof String dir ? Path.of(dir) : Path.of(System.getProperty("java.io.tmpdir"), "we-report-layouts"));
   }
 
   /**

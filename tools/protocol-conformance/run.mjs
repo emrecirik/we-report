@@ -229,7 +229,7 @@ if (info?.capabilities?.layouts) {
     expectError(await call('GET', `/v1/layouts/${encodeURIComponent(key)}`), 404);
     assert((await call('DELETE', `/v1/layouts/${encodeURIComponent(key)}`)).status === 204, 'deleting a missing key must succeed');
     expectError(await call('GET', '/v1/layouts/.hidden'), 400);
-    expectError(await call('PUT', `/v1/layouts/${'k'.repeat(129)}`, {}), 400);
+    expectError(await call('PUT', `/v1/layouts/${'k'.repeat(101)}`, {}), 400);
     expectError(await call('PUT', `/v1/layouts/${encodeURIComponent(key)}`, [1, 2]), 400);
     expectError(await call('PUT', `/v1/layouts/${encodeURIComponent(key)}`, { big: 'x'.repeat(300 * 1024) }), 413);
     const text = await fetch(`${base}/v1/layouts/${encodeURIComponent(key)}`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'text/plain' }, body: '{}' });
