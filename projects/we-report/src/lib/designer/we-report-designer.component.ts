@@ -241,6 +241,15 @@ export class WeReportDesignerComponent {
   protected readonly sample = computed<DesignSample | null>(() => (this.showData() ? this.state.sample() : null));
 
   protected readonly fields = computed(() => designerFields(this.state.report(), this.data()));
+  protected readonly fieldFilter = signal('');
+  /** The field list narrowed to names containing the filter text. */
+  protected readonly shownFields = computed(() => {
+    const f = this.fields();
+    const q = this.fieldFilter().trim().toLocaleLowerCase();
+    if (!q) return f;
+    const keep = (list: DesignerField[]) => list.filter((x) => x.label.toLocaleLowerCase().includes(q) || x.path.toLocaleLowerCase().includes(q));
+    return { ...f, rows: keep(f.rows), inner: keep(f.inner), parent: keep(f.parent) };
+  });
   protected readonly allFields = computed<DesignerField[]>(() => [...this.fields().rows, ...this.fields().parent, ...this.fields().inner]);
   protected readonly addableBands = computed(() => {
     const kinds = new Set(this.state.report().bands.map((b) => b.kind));

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Designer: a search box over the data fields when there are many.
 - Designer: the report wizard focuses its first field and its Create button is off until a column
   or a grouping is chosen; Ctrl+S while typing on the page keeps the text and reaches the app's save.
 

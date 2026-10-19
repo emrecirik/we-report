@@ -35,7 +35,7 @@
         </div>
       }
     </div>
-    @if (fields().rows.length) {
+    @if (shownFields().rows.length) {
       <button type="button" class="wd__text-btn wd__magic" (click)="autoDesign()" [title]="s.autoDesignHint"><span [innerHTML]="'wand' | weReportIcon"></span>&nbsp;{{ s.autoDesign }}</button>
     }
     <button type="button" class="wd__text-btn" (click)="dataDialogOpen.set(true)">
@@ -102,27 +102,30 @@
         <h2>{{ s.fields }}</h2>
         @if (fields().rows.length || fields().parent.length) {
           <p class="wd__hint">{{ s.fieldsHint }}</p>
+          @if (allFields().length > 8) {
+            <input class="wd__field-filter" type="search" [placeholder]="s.filterFields" [attr.aria-label]="s.filterFields" [value]="fieldFilter()" (input)="fieldFilter.set($any($event.target).value)" />
+          }
           <ul class="wd__fields">
-            @for (f of fields().rows; track f.path) {
+            @for (f of shownFields().rows; track f.path) {
               <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                 <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
               </li>
             }
           </ul>
-          @if (fields().inner.length) {
+          @if (shownFields().inner.length) {
             <h3>{{ s.innerFields }}</h3>
             <ul class="wd__fields">
-              @for (f of fields().inner; track f.path) {
+              @for (f of shownFields().inner; track f.path) {
                 <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
                 </li>
               }
             </ul>
           }
-          @if (fields().parent.length) {
+          @if (shownFields().parent.length) {
             <h3>{{ s.parentFields }}</h3>
             <ul class="wd__fields">
-              @for (f of fields().parent; track f.path) {
+              @for (f of shownFields().parent; track f.path) {
                 <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
                 </li>

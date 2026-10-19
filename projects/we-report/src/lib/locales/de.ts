@@ -298,6 +298,7 @@ export const weReportLocaleDe: WeReportLocale = {
   wizardTotals: 'Summen der Zahlenspalten',
   automatic: 'Automatisch',
   createReport: 'Bericht erstellen',
+  filterFields: 'Feld suchen',
   previousMatch: 'Vorheriger Treffer',
   nextMatch: 'Nächster Treffer',
   zoomLevel: 'Zoom',
