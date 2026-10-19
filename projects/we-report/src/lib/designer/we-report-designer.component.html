@@ -172,8 +172,8 @@
           <option [value]="st.fontFamily" selected>{{ st.fontFamily }}</option>
         }
       </select>
-      <input class="wd__size" type="number" min="4" max="200" step="1" list="wd-font-sizes" [disabled]="!st" [value]="st?.fontSize ?? ''" (change)="format('fontSize', +$any($event.target).value || undefined)" [attr.aria-label]="s.fontSize" [title]="s.fontSize" />
-      <datalist id="wd-font-sizes">
+      <input class="wd__size" type="number" min="4" max="200" step="1" [attr.list]="sizeListId" [disabled]="!st" [value]="st?.fontSize ?? ''" (change)="format('fontSize', +$any($event.target).value || undefined)" [attr.aria-label]="s.fontSize" [title]="s.fontSize" />
+      <datalist [id]="sizeListId">
         @for (n of fontSizes; track n) {
           <option [value]="n"></option>
         }

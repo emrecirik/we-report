@@ -33,6 +33,8 @@ function writeSaved(values: Record<string, unknown>): void {
   }
 }
 
+let designerCount = 0;
+
 const isWidth = (v: unknown) => typeof v === 'number' && (v === 0 || (v >= 160 && v <= 480));
 
 const BAND_ORDER: Record<BandKind, number> = {
@@ -316,6 +318,8 @@ export class WeReportDesignerComponent {
     return sel.kind === 'controls' && sel.ids.includes(id);
   }
 
+  /** Unique per designer, so two designers on one page do not share the size list. */
+  protected readonly sizeListId = `we-report-sizes-${++designerCount}`;
   protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
   protected readonly gridSteps = [0, 0.5, 1, 2, 5];
   /** Snap grid in mm; 0 turns the grid off. */
@@ -426,7 +430,8 @@ export class WeReportDesignerComponent {
   @HostListener('cut', ['$event'])
   protected onCopy(e: ClipboardEvent): void {
     this.pendingClipboardKey = null;
-    if (this.tab() !== 'design' || this.isTyping(e) || !this.state.copySelection()) return;
+    // Text selected on the page (a label, a hint) is copied as text, not as report items.
+    if (this.tab() !== 'design' || this.isTyping(e) || !document.getSelection()?.isCollapsed || !this.state.copySelection()) return;
     e.preventDefault();
     e.clipboardData?.setData('text/plain', this.state.clipboardText());
     if (e.type === 'cut') this.state.deleteSelection();
