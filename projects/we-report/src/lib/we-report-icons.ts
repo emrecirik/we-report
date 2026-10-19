@@ -22,6 +22,23 @@ export interface WeReportIcons {
   preview: string;
   design: string;
   database: string;
+  arrangeLeft: string;
+  arrangeCenter: string;
+  arrangeRight: string;
+  arrangeTop: string;
+  arrangeMiddle: string;
+  arrangeBottom: string;
+  distributeH: string;
+  distributeV: string;
+  sameWidth: string;
+  sameHeight: string;
+  bringToFront: string;
+  sendToBack: string;
+  cut: string;
+  copy: string;
+  paste: string;
+  outline: string;
+  fitWidth: string;
 }
 
 const svg = (body: string) =>
@@ -48,6 +65,23 @@ export const WE_REPORT_DEFAULT_ICONS: WeReportIcons = {
   preview: svg('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
   design: svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'),
   database: svg('<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'),
+  arrangeLeft: svg('<path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="1"/><rect x="7" y="14" width="7" height="4" rx="1"/>'),
+  arrangeCenter: svg('<path d="M12 3v18"/><rect x="5" y="6" width="14" height="4" rx="1"/><rect x="8" y="14" width="8" height="4" rx="1"/>'),
+  arrangeRight: svg('<path d="M20 3v18"/><rect x="5" y="6" width="12" height="4" rx="1"/><rect x="10" y="14" width="7" height="4" rx="1"/>'),
+  arrangeTop: svg('<path d="M3 4h18"/><rect x="6" y="7" width="4" height="12" rx="1"/><rect x="14" y="7" width="4" height="7" rx="1"/>'),
+  arrangeMiddle: svg('<path d="M3 12h18"/><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="8" width="4" height="8" rx="1"/>'),
+  arrangeBottom: svg('<path d="M3 20h18"/><rect x="6" y="5" width="4" height="12" rx="1"/><rect x="14" y="10" width="4" height="7" rx="1"/>'),
+  distributeH: svg('<path d="M3 4v16M21 4v16"/><rect x="9" y="7" width="6" height="10" rx="1"/>'),
+  distributeV: svg('<path d="M4 3h16M4 21h16"/><rect x="7" y="9" width="10" height="6" rx="1"/>'),
+  sameWidth: svg('<path d="M4 8h16M4 5v6M20 5v6"/><rect x="4" y="14" width="16" height="5" rx="1"/>'),
+  sameHeight: svg('<path d="M8 4v16M5 4h6M5 20h6"/><rect x="14" y="4" width="5" height="16" rx="1"/>'),
+  bringToFront: svg('<rect x="3" y="3" width="11" height="11" rx="1" stroke-dasharray="2 2"/><rect x="10" y="10" width="11" height="11" rx="1" fill="currentColor" fill-opacity=".25"/>'),
+  sendToBack: svg('<rect x="3" y="3" width="11" height="11" rx="1" fill="currentColor" fill-opacity=".25"/><rect x="10" y="10" width="11" height="11" rx="1" stroke-dasharray="2 2"/>'),
+  cut: svg('<circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8 16L19 4M16 16L5 4"/>'),
+  copy: svg('<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2h3"/>'),
+  paste: svg('<path d="M9 4h6v3H9z"/><path d="M15 5h2a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h2"/>'),
+  outline: svg('<path d="M4 6h16M8 12h12M8 18h12M4 12h.01M4 18h.01"/>'),
+  fitWidth: svg('<path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4M3 4v16M21 4v16"/>'),
 };
 
 export const WE_REPORT_ICONS = new InjectionToken<WeReportIcons>('WE_REPORT_ICONS', {

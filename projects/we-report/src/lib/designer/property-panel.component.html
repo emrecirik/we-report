@@ -6,7 +6,7 @@
 @if (selectedControl) {
   <div class="pp__subtitle">{{ s.controlNames[selectedControl.type] }} · <code>{{ selectedControl.id }}</code></div>
 } @else if (controls().length > 1) {
-  <div class="pp__subtitle">{{ controls().length }} × </div>
+  <div class="pp__subtitle">{{ s.itemsSelected.replace('{0}', '' + controls().length) }}</div>
 } @else if (selectedBand) {
   <div class="pp__subtitle">{{ s.bandNames[selectedBand.kind] }}</div>
 }
@@ -134,6 +134,26 @@
 
 <!-- ── Control(s) ───────────────────────────────────────────────────────── -->
 @if (controls().length) {
+  @let n = controls().length;
+  <section class="pp__section">
+    <h3>{{ s.arrange }}</h3>
+    <div class="pp__tools" role="toolbar" [attr.aria-label]="s.arrange">
+      @for (a of alignActions; track a.edge) {
+        <button type="button" [disabled]="n < 2" (click)="state.align(a.edge)" [title]="s[a.label]" [attr.aria-label]="s[a.label]" [innerHTML]="a.icon | weReportIcon"></button>
+      }
+    </div>
+    <div class="pp__tools" role="toolbar" [attr.aria-label]="s.arrange">
+      <button type="button" [disabled]="n < 3" (click)="state.distribute('h')" [title]="s.distributeH" [attr.aria-label]="s.distributeH" [innerHTML]="'distributeH' | weReportIcon"></button>
+      <button type="button" [disabled]="n < 3" (click)="state.distribute('v')" [title]="s.distributeV" [attr.aria-label]="s.distributeV" [innerHTML]="'distributeV' | weReportIcon"></button>
+      <button type="button" [disabled]="n < 2" (click)="state.sameSize('width')" [title]="s.sameWidth" [attr.aria-label]="s.sameWidth" [innerHTML]="'sameWidth' | weReportIcon"></button>
+      <button type="button" [disabled]="n < 2" (click)="state.sameSize('height')" [title]="s.sameHeight" [attr.aria-label]="s.sameHeight" [innerHTML]="'sameHeight' | weReportIcon"></button>
+      <button type="button" (click)="state.arrange('front')" [title]="s.bringToFront" [attr.aria-label]="s.bringToFront" [innerHTML]="'bringToFront' | weReportIcon"></button>
+      <button type="button" (click)="state.arrange('back')" [title]="s.sendToBack" [attr.aria-label]="s.sendToBack" [innerHTML]="'sendToBack' | weReportIcon"></button>
+    </div>
+    @if (n < 2) {
+      <small class="pp__hint">{{ s.arrangeHint }}</small>
+    }
+  </section>
   @if (control(); as c) {
     <!-- Content first: it is what people change most. -->
     @switch (c.type) {

@@ -386,3 +386,144 @@ button {
   flex: 1;
   min-height: 0;
 }
+
+// ── Left panel tabs and outline ─────────────────────────────────────────────
+
+.wd__left-tabs {
+  display: flex;
+  padding: 2px;
+  gap: 2px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  background: var(--we-report-segment-bg, rgba(118, 118, 128, 0.12));
+
+  button {
+    flex: 1;
+    border: 0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+}
+
+.wd__left-tab--on {
+  background: var(--we-report-segment-on-bg, #fff) !important;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.04),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.wd__outline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  ul {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0 0 0 10px;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    border: 0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--we-report-hover-bg, rgba(118, 118, 128, 0.12));
+    }
+
+    :is(svg) {
+      flex: none;
+      width: 14px;
+      height: 14px;
+      color: var(--we-report-accent, #007aff);
+    }
+  }
+}
+
+.wd__outline-band {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+}
+
+.wd__outline-item {
+  font-size: 12px;
+}
+
+.wd__outline-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wd__outline--on,
+.wd__outline--on:hover {
+  background: var(--we-report-accent, #007aff) !important;
+  color: var(--we-report-accent-fg, #fff) !important;
+
+  :is(svg) {
+    color: inherit !important;
+  }
+}
+
+.wd__outline-empty {
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+}
+
+// ── Right-click menu ────────────────────────────────────────────────────────
+
+.wd__context {
+  position: fixed;
+  z-index: 200;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    :is(svg) {
+      width: 14px;
+      height: 14px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+      background: transparent !important;
+      color: inherit !important;
+    }
+  }
+
+  kbd {
+    margin-left: auto;
+    padding-left: 16px;
+    font: inherit;
+    font-size: 11px;
+    opacity: 0.55;
+  }
+
+  hr {
+    width: 100%;
+    margin: 4px 0;
+    border: 0;
+    border-top: 0.5px solid var(--we-report-separator, rgba(60, 60, 67, 0.14));
+  }
+}
+
+.wd__danger {
+  color: var(--we-report-warning-fg, #b25000);
+}

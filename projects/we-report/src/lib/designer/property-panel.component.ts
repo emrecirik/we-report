@@ -10,10 +10,12 @@ import {
   ReportStyle,
   resolveStyle,
 } from 'we-report-core';
+import { WeReportIconPipe } from '../we-report-icon.pipe';
+import { WeReportIcons } from '../we-report-icons';
 import { WeReportLocale } from '../we-report-locale';
 import { BindableInputComponent } from './bindable-input.component';
 import { DesignerField } from './designer-fields';
-import { DesignerState } from './designer-state';
+import { AlignEdge, DesignerState } from './designer-state';
 
 const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
   { value: '', key: 'formatNone' },
@@ -25,11 +27,20 @@ const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
   { value: 'dd.MM.yyyy HH:mm', key: 'formatDateTime' },
 ];
 
+const ALIGN_ACTIONS: { edge: AlignEdge; icon: keyof WeReportIcons; label: keyof WeReportLocale & `arrange${string}` }[] = [
+  { edge: 'left', icon: 'arrangeLeft', label: 'arrangeLeft' },
+  { edge: 'center', icon: 'arrangeCenter', label: 'arrangeCenter' },
+  { edge: 'right', icon: 'arrangeRight', label: 'arrangeRight' },
+  { edge: 'top', icon: 'arrangeTop', label: 'arrangeTop' },
+  { edge: 'middle', icon: 'arrangeMiddle', label: 'arrangeMiddle' },
+  { edge: 'bottom', icon: 'arrangeBottom', label: 'arrangeBottom' },
+];
+
 /** Plain-language properties of the selection: a control, a band, or the report itself. */
 @Component({
   selector: 'we-report-property-panel',
   standalone: true,
-  imports: [BindableInputComponent],
+  imports: [BindableInputComponent, WeReportIconPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './property-panel.component.html',
   styleUrl: './property-panel.component.scss',
@@ -44,6 +55,7 @@ export class PropertyPanelComponent {
   protected readonly papers = PAPER_SIZES;
   protected readonly symbologies = BARCODE_SYMBOLOGIES;
   protected readonly formats = FORMATS;
+  protected readonly alignActions = ALIGN_ACTIONS;
 
   protected readonly controls = computed(() => this.state.selectedControls());
   protected readonly control = computed<ReportControl | null>(() => (this.controls().length === 1 ? this.controls()[0] : null));

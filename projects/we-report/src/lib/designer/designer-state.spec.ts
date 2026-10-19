@@ -77,6 +77,49 @@ describe('DesignerState', () => {
     state.select('a', true);
     expect(state.selection()).toEqual({ kind: 'controls', ids: ['b'] });
   });
+
+  const box = (id: string, x: number, y: number, width = 10, height = 5) => ({ id, type: 'text' as const, x, y, width, height, text: id });
+  const ctl = (id: string) => state.report().bands.flatMap((b) => b.controls).find((c) => c.id === id)!;
+
+  it('aligns, distributes and sizes the selection against the first selected control', () => {
+    state.addControls('detail', [box('a', 10, 2, 20, 6), box('b', 50, 9), box('c', 30, 1)]);
+    state.selection.set({ kind: 'controls', ids: ['a', 'b', 'c'] });
+    state.align('right');
+    expect([ctl('a').x, ctl('b').x, ctl('c').x]).toEqual([10, 20, 20]);
+    state.align('middle');
+    expect([ctl('b').y, ctl('c').y]).toEqual([2.5, 2.5]);
+    state.sameSize('width');
+    expect(ctl('b').width).toBe(20);
+    state.updateControls(['a', 'b', 'c'], (c) => (c.width = 10));
+    state.updateControls(['b'], (c) => (c.x = 70));
+    state.updateControls(['c'], (c) => (c.x = 30));
+    state.distribute('h');
+    expect([ctl('a').x, ctl('c').x, ctl('b').x]).toEqual([10, 40, 70]);
+  });
+
+  it('copies, pastes with an offset over the original and arranges the draw order', () => {
+    state.addControls('detail', [box('a', 1, 1), box('b', 5, 1)]);
+    state.selection.set({ kind: 'controls', ids: ['a'] });
+    state.copySelection();
+    state.paste();
+    const pasted = state.selectedControls()[0];
+    expect(pasted.id).not.toBe('a');
+    expect([pasted.x, pasted.y]).toEqual([4, 4]);
+    state.selection.set({ kind: 'controls', ids: ['a'] });
+    state.arrange('front');
+    expect(state.report().bands[1].controls.map((c) => c.id).at(-1)).toBe('a');
+    state.cutSelection();
+    expect(state.report().bands[1].controls.some((c) => c.id === 'a')).toBeFalse();
+    state.paste('pageHeader');
+    expect(state.report().bands[0].controls.map((c) => [c.x, c.y])).toEqual([[1, 1]]);
+  });
+
+  it('selects every control of the band in focus', () => {
+    state.addControls('detail', [box('a', 1, 1), box('b', 5, 1)]);
+    state.selection.set({ kind: 'band', id: 'detail' });
+    state.selectAll();
+    expect(state.selectedControls().map((c) => c.id)).toEqual(['a', 'b']);
+  });
 });
 
 describe('designer helpers', () => {
@@ -93,4 +136,5 @@ describe('designer helpers', () => {
     expect(rows.map((f) => f.expression)).toEqual(['[qty]']);
     expect(parent.map((f) => f.expression)).toEqual(['[^.number]', '[^.customer]', '[^.customer.name]']);
   });
+
 });

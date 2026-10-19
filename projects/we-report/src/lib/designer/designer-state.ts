@@ -3,6 +3,13 @@ import { Band, createBlankReport, ReportControl, ReportDefinition } from 'we-rep
 
 export type Selection = { kind: 'none' } | { kind: 'controls'; ids: string[] } | { kind: 'band'; id: string };
 
+export type AlignEdge = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
+
+/** Module-wide, so copy in one designer and paste in another on the same page works. */
+let clipboard: { bandKind: Band['kind']; control: ReportControl }[] = [];
+
+const round = (v: number) => Math.round(v * 100) / 100;
+
 const HISTORY_LIMIT = 200;
 const COALESCE_MS = 800;
 
@@ -155,6 +162,126 @@ export class DesignerState {
     }
     this.update((d) => copies.forEach(({ bandId, control }) => d.bands.find((b) => b.id === bandId)!.controls.push(control)));
     this.selection.set({ kind: 'controls', ids: copies.map((c) => c.control.id) });
+  }
+
+  /** Copies the selected controls to the designer clipboard (shared by every designer on the page). */
+  copySelection(): boolean {
+    const controls = this.selectedControls();
+    if (!controls.length) return false;
+    clipboard = controls.map((c) => ({ bandKind: this.findBandOf(c.id)!.kind, control: structuredClone(c) }));
+    return true;
+  }
+
+  cutSelection(): void {
+    if (this.copySelection()) this.deleteSelection();
+  }
+
+  /** Pastes into `bandId`, else the selected band, else each control's original kind of band. */
+  paste(bandId?: string): void {
+    if (!clipboard.length) return;
+    const def = this.report();
+    const sel = this.selection();
+    const target = bandId ?? (sel.kind === 'band' ? sel.id : sel.kind === 'controls' ? this.findBandOf(sel.ids[0])?.id : undefined);
+    const used = new Set(def.bands.flatMap((b) => [b.id, ...b.controls.map((c) => c.id)]));
+    const placed: { bandId: string; control: ReportControl }[] = [];
+    for (const item of clipboard) {
+      const band = def.bands.find((b) => b.id === target) ?? def.bands.find((b) => b.kind === item.bandKind) ?? def.bands.find((b) => b.kind === 'detail');
+      if (!band) continue;
+      let n = 1;
+      while (used.has(`${item.control.type}${n}`)) n++;
+      const id = `${item.control.type}${n}`;
+      used.add(id);
+      // Offset only when pasting over the original, so a paste into another band keeps its position.
+      const shift = band.controls.some((c) => c.x === item.control.x && c.y === item.control.y) ? 3 : 0;
+      placed.push({ bandId: band.id, control: { ...structuredClone(item.control), id, x: item.control.x + shift, y: item.control.y + shift } });
+    }
+    if (!placed.length) return;
+    this.update((d) =>
+      placed.forEach(({ bandId: b, control }) => {
+        const band = d.bands.find((x) => x.id === b)!;
+        band.controls.push(control);
+        band.height = Math.max(band.height, control.y + control.height);
+      }),
+    );
+    this.selection.set({ kind: 'controls', ids: placed.map((p) => p.control.id) });
+  }
+
+  hasClipboard(): boolean {
+    return clipboard.length > 0;
+  }
+
+  /** Selects every control of the selected band, or of the whole report. */
+  selectAll(): void {
+    const sel = this.selection();
+    const bandId = sel.kind === 'band' ? sel.id : sel.kind === 'controls' ? this.findBandOf(sel.ids[0])?.id : undefined;
+    const bands = this.report().bands.filter((b) => !bandId || b.id === bandId);
+    const ids = bands.flatMap((b) => b.controls.map((c) => c.id));
+    this.selection.set(ids.length ? { kind: 'controls', ids } : { kind: 'none' });
+  }
+
+  /** Aligns the selection to the first selected control (the one clicked first). */
+  align(edge: AlignEdge): void {
+    const controls = this.selectedControls();
+    const sel = this.selection();
+    if (controls.length < 2 || sel.kind !== 'controls') return;
+    const ref = controls.find((c) => c.id === sel.ids[0])!;
+    this.updateControls(sel.ids, (c) => {
+      if (edge === 'left') c.x = ref.x;
+      else if (edge === 'right') c.x = round(ref.x + ref.width - c.width);
+      else if (edge === 'center') c.x = round(ref.x + (ref.width - c.width) / 2);
+      else if (edge === 'top') c.y = ref.y;
+      else if (edge === 'bottom') c.y = round(ref.y + ref.height - c.height);
+      else c.y = round(ref.y + (ref.height - c.height) / 2);
+      c.x = Math.max(0, c.x);
+      c.y = Math.max(0, c.y);
+    });
+  }
+
+  /** Equal gaps between three or more controls, keeping the outermost two in place. */
+  distribute(axis: 'h' | 'v'): void {
+    const controls = this.selectedControls();
+    if (controls.length < 3) return;
+    const pos = axis === 'h' ? 'x' : 'y';
+    const size = axis === 'h' ? 'width' : 'height';
+    const sorted = [...controls].sort((a, b) => a[pos] - b[pos]);
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const total = sorted.reduce((sum, c) => sum + c[size], 0);
+    const gap = (last[pos] + last[size] - first[pos] - total) / (sorted.length - 1);
+    const target = new Map<string, number>();
+    let at = first[pos];
+    for (const c of sorted) {
+      target.set(c.id, round(at));
+      at += c[size] + gap;
+    }
+    this.updateControls(sorted.map((c) => c.id), (c) => (c[pos] = target.get(c.id)!));
+  }
+
+  /** Gives the selection the width and/or height of the first selected control. */
+  sameSize(dimension: 'width' | 'height' | 'both'): void {
+    const sel = this.selection();
+    const controls = this.selectedControls();
+    if (controls.length < 2 || sel.kind !== 'controls') return;
+    const ref = controls.find((c) => c.id === sel.ids[0])!;
+    this.updateControls(sel.ids, (c, band) => {
+      if (dimension !== 'height') c.width = ref.width;
+      if (dimension !== 'width') c.height = ref.height;
+      band.height = Math.max(band.height, c.y + c.height);
+    });
+  }
+
+  /** Draw order inside a band: later controls paint on top. */
+  arrange(to: 'front' | 'back'): void {
+    const sel = this.selection();
+    if (sel.kind !== 'controls') return;
+    this.update((d) => {
+      for (const band of d.bands) {
+        const moving = band.controls.filter((c) => sel.ids.includes(c.id));
+        if (!moving.length) continue;
+        const rest = band.controls.filter((c) => !sel.ids.includes(c.id));
+        band.controls = to === 'front' ? [...rest, ...moving] : [...moving, ...rest];
+      }
+    });
   }
 
   select(id: string, additive: boolean): void {

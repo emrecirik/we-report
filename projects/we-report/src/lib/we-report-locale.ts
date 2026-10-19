@@ -28,6 +28,32 @@ export interface WeReportLocale {
   redo: string;
   delete: string;
   duplicate: string;
+  cut: string;
+  copy: string;
+  paste: string;
+  selectAll: string;
+  arrange: string;
+  arrangeLeft: string;
+  arrangeCenter: string;
+  arrangeRight: string;
+  arrangeTop: string;
+  arrangeMiddle: string;
+  arrangeBottom: string;
+  distributeH: string;
+  distributeV: string;
+  sameWidth: string;
+  sameHeight: string;
+  bringToFront: string;
+  sendToBack: string;
+  arrangeHint: string;
+  explorer: string;
+  /** `{0}` = number of selected items. */
+  itemsSelected: string;
+  explorerHint: string;
+  emptyBand: string;
+  add: string;
+  data: string;
+  fitWidth: string;
   basicMode: string;
   advancedMode: string;
   toolbox: string;
@@ -252,6 +278,31 @@ export const weReportLocaleEn: WeReportLocale = {
   redo: 'Redo',
   delete: 'Delete',
   duplicate: 'Duplicate',
+  cut: 'Cut',
+  copy: 'Copy',
+  paste: 'Paste',
+  selectAll: 'Select all',
+  arrange: 'Arrange',
+  arrangeLeft: 'Align left edges',
+  arrangeCenter: 'Align centres',
+  arrangeRight: 'Align right edges',
+  arrangeTop: 'Align top edges',
+  arrangeMiddle: 'Align middles',
+  arrangeBottom: 'Align bottom edges',
+  distributeH: 'Space evenly across',
+  distributeV: 'Space evenly down',
+  sameWidth: 'Same width',
+  sameHeight: 'Same height',
+  bringToFront: 'Bring to front',
+  sendToBack: 'Send to back',
+  arrangeHint: 'Select two or more items to align them; the first one you clicked stays put.',
+  explorer: 'Outline',
+  itemsSelected: '{0} items selected',
+  explorerHint: 'Everything on the report, section by section. Click to select.',
+  emptyBand: '(empty)',
+  add: 'Add',
+  data: 'Data',
+  fitWidth: 'Fit to width',
   basicMode: 'Basic',
   advancedMode: 'Advanced',
   toolbox: 'Add to report',
@@ -474,6 +525,31 @@ export const weReportLocaleTr: WeReportLocale = {
   redo: 'Yinele',
   delete: 'Sil',
   duplicate: 'Çoğalt',
+  cut: 'Kes',
+  copy: 'Kopyala',
+  paste: 'Yapıştır',
+  selectAll: 'Tümünü seç',
+  arrange: 'Düzenle',
+  arrangeLeft: 'Sol kenarları hizala',
+  arrangeCenter: 'Ortaları hizala',
+  arrangeRight: 'Sağ kenarları hizala',
+  arrangeTop: 'Üst kenarları hizala',
+  arrangeMiddle: 'Dikey ortaları hizala',
+  arrangeBottom: 'Alt kenarları hizala',
+  distributeH: 'Yatayda eşit aralıkla dağıt',
+  distributeV: 'Dikeyde eşit aralıkla dağıt',
+  sameWidth: 'Aynı genişlik',
+  sameHeight: 'Aynı yükseklik',
+  bringToFront: 'Öne getir',
+  sendToBack: 'Arkaya gönder',
+  arrangeHint: 'Hizalamak için iki veya daha fazla öğe seçin; ilk tıkladığınız yerinde kalır.',
+  explorer: 'Gezgin',
+  itemsSelected: '{0} öğe seçili',
+  explorerHint: 'Rapordaki her şey, bölüm bölüm. Seçmek için tıklayın.',
+  emptyBand: '(boş)',
+  add: 'Ekle',
+  data: 'Veri',
+  fitWidth: 'Genişliğe sığdır',
   basicMode: 'Basit',
   advancedMode: 'Gelişmiş',
   toolbox: 'Rapora ekle',

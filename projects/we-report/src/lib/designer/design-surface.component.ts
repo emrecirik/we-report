@@ -64,6 +64,18 @@ interface DragOp {
   // Focusable so keyboard shortcuts (undo, delete, arrows) reach the designer after a click.
   host: { tabindex: '0' },
   template: `
+    @let r = ruler();
+    <svg class="ds__ruler" aria-hidden="true" [attr.width]="r.width" height="20" [attr.viewBox]="'0 0 ' + r.width + ' 20'">
+      <rect class="ds__ruler-margin" x="0" y="0" [attr.width]="r.left" height="20" />
+      <rect class="ds__ruler-margin" [attr.x]="r.width - r.right" y="0" [attr.width]="r.right" height="20" />
+      @if (r.selection; as sel) {
+        <rect class="ds__ruler-selection" [attr.x]="sel.x" y="0" [attr.width]="sel.width" height="20" />
+      }
+      <path class="ds__ruler-ticks" [attr.d]="r.ticks" />
+      @for (l of r.labels; track l.x) {
+        <text [attr.x]="l.x + 2" y="9">{{ l.text }}</text>
+      }
+    </svg>
     <div class="ds__page" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()" [style.--ds-margin-right.mm]="state.report().page.margins.right * zoom()">
       @for (band of state.report().bands; track band.id) {
         <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)">
@@ -83,6 +95,7 @@ interface DragOp {
             @for (c of band.controls; track c.id) {
               <div
                 class="ds__control"
+                [attr.data-control-id]="c.id"
                 [class.ds__control--selected]="isSelected(c.id)"
                 [attr.data-type]="c.type"
                 [style.left.mm]="c.x * zoom()"
@@ -148,6 +161,34 @@ interface DragOp {
       display: block;
       padding: 32px 136px 32px 24px;
       outline: none;
+    }
+    .ds__ruler {
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      display: block;
+      margin: -28px auto 8px;
+      padding-top: 6px;
+      box-sizing: content-box;
+      background: var(--we-report-workspace-bg, #f2f2f7);
+      font: 9px var(--we-report-font-family, system-ui, sans-serif);
+      overflow: visible;
+    }
+    .ds__ruler text {
+      fill: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+    }
+    .ds__ruler-ticks {
+      stroke: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+    .ds__ruler-margin {
+      fill: var(--we-report-hover-bg, rgba(118, 118, 128, 0.12));
+    }
+    .ds__ruler-selection {
+      fill: var(--we-report-selection-fill, rgba(0, 122, 255, 0.07));
+      stroke: var(--we-report-selection, #007aff);
+      stroke-width: 1;
     }
     .ds__page {
       box-sizing: border-box;
@@ -334,6 +375,32 @@ export class DesignSurfaceComponent implements OnDestroy {
   protected readonly guides = signal<Guide[]>([]);
 
   protected readonly geometry = computed(() => resolvePageGeometry(this.state.report().page));
+  /** Top ruler in screen pixels: 0 at the left margin, a tick per millimetre, a label per centimetre. */
+  protected readonly ruler = computed(() => {
+    const page = this.state.report().page;
+    const geometry = this.geometry();
+    const px = PX_PER_MM * this.zoom();
+    const left = page.margins.left * px;
+    const step = this.zoom() < 0.6 ? 5 : 1;
+    let ticks = '';
+    const labels: { x: number; text: string }[] = [];
+    for (let mm = -Math.floor(page.margins.left / step) * step; mm <= geometry.width - page.margins.left; mm += step) {
+      const x = Math.round((left + mm * px) * 10) / 10;
+      const h = mm % 10 === 0 ? 8 : mm % 5 === 0 ? 5 : 3;
+      ticks += `M${x} 20v-${h}`;
+      if (mm % 10 === 0 && mm >= 0) labels.push({ x, text: String(mm / 10) });
+    }
+    const selected = this.state.selectedControls();
+    const selection = selected.length
+      ? (() => {
+          const x1 = Math.min(...selected.map((c) => c.x));
+          const x2 = Math.max(...selected.map((c) => c.x + c.width));
+          return { x: left + x1 * px, width: (x2 - x1) * px };
+        })()
+      : null;
+    return { width: geometry.width * px, left, right: page.margins.right * px, ticks, labels, selection };
+  });
+
   protected readonly padding = computed(() => {
     const { top, right, bottom, left } = this.state.report().page.margins;
     const z = this.zoom();

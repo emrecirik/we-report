@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, input, model, signal, untracked } from '@angular/core';
-import { Band, BandKind, checkReport, generateListReport, inferSchema, ReportControlType, ReportDefinition, ReportIssue, resolvePageGeometry, resolveReportData } from 'we-report-core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, model, signal, untracked, viewChild } from '@angular/core';
+import { Band, BandKind, checkReport, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, resolvePageGeometry, resolveReportData } from 'we-report-core';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WeReportIcons } from '../we-report-icons';
@@ -64,6 +64,10 @@ export class WeReportDesignerComponent {
   protected readonly bandMenuOpen = signal(false);
   protected readonly dataDialogOpen = signal(false);
   protected readonly problemsOpen = signal(false);
+  protected readonly leftTab = signal<'add' | 'outline'>('add');
+  /** Right-click menu: screen position and the band it was opened on. */
+  protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean } | null>(null);
+  private readonly canvas = viewChild<ElementRef<HTMLElement>>('canvas');
   /** Design problems, checked on every edit; field names are judged only when there is data. */
   protected readonly issues = computed<ReportIssue[]>(() => {
     const { rows, parent } = this.fields();
@@ -109,6 +113,66 @@ export class WeReportDesignerComponent {
       .ready()
       .then((r) => this.fontFamilies.set(r.familyNames()))
       .catch(() => undefined);
+  }
+
+  /** Short label of a control for the outline: its name, its text or formula, else its type. */
+  protected outlineLabel(c: ReportControl): string {
+    if (c.name) return c.name;
+    if (c.type === 'text') return isExpression(c.text) ? c.text.expression : c.text || this.strings().controlNames.text;
+    if (c.type === 'barcode') return `${c.symbology}: ${isExpression(c.value) ? c.value.expression : c.value}`;
+    return this.strings().controlNames[c.type];
+  }
+
+  protected outlineIcon(c: ReportControl): keyof WeReportIcons {
+    if (c.type === 'shape') return c.shape === 'ellipse' ? 'ellipse' : 'rectangle';
+    if (c.type === 'barcode') return c.symbology === 'qrcode' ? 'qrcode' : 'barcode';
+    return c.type;
+  }
+
+  protected selectFromOutline(e: MouseEvent, id: string): void {
+    this.state.select(id, e.shiftKey || e.ctrlKey || e.metaKey);
+  }
+
+  protected isSelected(id: string): boolean {
+    const sel = this.state.selection();
+    return sel.kind === 'controls' && sel.ids.includes(id);
+  }
+
+  protected fitWidth(): void {
+    const el = this.canvas()?.nativeElement;
+    if (!el) return;
+    const pagePx = (resolvePageGeometry(this.state.report().page).width * 96) / 25.4;
+    // The surface keeps 24px on the left and 136px on the right for the section labels.
+    this.setZoom(Math.floor(((el.clientWidth - 24 - 136 - 16) / pagePx) * 20) / 20);
+  }
+
+  protected onCanvasWheel(e: WheelEvent): void {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    this.setZoom(this.zoomLevel() + (e.deltaY < 0 ? 0.1 : -0.1));
+  }
+
+  protected openContextMenu(e: MouseEvent): void {
+    const target = e.target as HTMLElement;
+    const bandEl = target.closest<HTMLElement>('[data-band-id]');
+    if (!bandEl) return;
+    e.preventDefault();
+    const controlId = target.closest<HTMLElement>('[data-control-id]')?.dataset['controlId'];
+    if (controlId) this.state.select(controlId, false);
+    else this.state.selection.set({ kind: 'band', id: bandEl.dataset['bandId']! });
+    this.contextMenu.set({ x: e.clientX, y: e.clientY, bandId: bandEl.dataset['bandId'] ?? null, onControl: !!controlId });
+  }
+
+  /** Runs a context-menu command and closes the menu. */
+  protected menu(action: () => void): void {
+    this.contextMenu.set(null);
+    action();
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  protected closeMenus(e: PointerEvent): void {
+    if (!this.contextMenu()) return;
+    if (!(e.target as HTMLElement).closest('.wd__context')) this.contextMenu.set(null);
   }
 
   protected iconName(name: string): keyof WeReportIcons {
@@ -213,8 +277,20 @@ export class WeReportDesignerComponent {
         e.preventDefault();
         this.state.deleteSelection();
       }
+    } else if (mod && e.key.toLowerCase() === 'c' && !typing) {
+      if (this.state.copySelection()) e.preventDefault();
+    } else if (mod && e.key.toLowerCase() === 'x' && !typing) {
+      e.preventDefault();
+      this.state.cutSelection();
+    } else if (mod && e.key.toLowerCase() === 'v' && !typing && this.state.hasClipboard()) {
+      e.preventDefault();
+      this.state.paste();
+    } else if (mod && e.key.toLowerCase() === 'a' && !typing) {
+      e.preventDefault();
+      this.state.selectAll();
     } else if (e.key === 'Escape' && !typing) {
-      this.state.selection.set({ kind: 'none' });
+      if (this.contextMenu()) this.contextMenu.set(null);
+      else this.state.selection.set({ kind: 'none' });
     } else if (e.key.startsWith('Arrow') && !typing && this.state.selection().kind === 'controls') {
       e.preventDefault();
       const step = e.shiftKey ? 5 : e.altKey ? 0.1 : 1;

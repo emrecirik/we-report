@@ -17,6 +17,7 @@
     <button type="button" class="wd__icon" (click)="setZoom(zoomLevel() - 0.1)" [title]="s.zoomOut" [attr.aria-label]="s.zoomOut" [innerHTML]="'zoomOut' | weReportIcon"></button>
     <span class="wd__zoom">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
     <button type="button" class="wd__icon" (click)="setZoom(zoomLevel() + 0.1)" [title]="s.zoomIn" [attr.aria-label]="s.zoomIn" [innerHTML]="'zoomIn' | weReportIcon"></button>
+    <button type="button" class="wd__icon" (click)="fitWidth()" [title]="s.fitWidth" [attr.aria-label]="s.fitWidth" [innerHTML]="'fitWidth' | weReportIcon"></button>
     <span class="wd__sep"></span>
     <div class="wd__menu">
       <button type="button" class="wd__text-btn" (click)="bandMenuOpen.set(!bandMenuOpen())" [attr.aria-expanded]="bandMenuOpen()">+ {{ s.addBand }}</button>
@@ -70,43 +71,71 @@
 @if (tab() === 'design') {
   <div class="wd__body">
     <aside class="wd__left">
-      <h2>{{ s.toolbox }}</h2>
-      <p class="wd__hint">{{ s.toolboxHint }}</p>
-      <div class="wd__tools">
-        @for (item of toolbox; track $index) {
-          <div class="wd__tool" draggable="true" (dragstart)="onToolDragStart($event, item)" [title]="s.controlNames[item.type]">
-            <span [innerHTML]="iconName(item.icon) | weReportIcon"></span>
-            <span>{{ item.variant === 'qrcode' ? 'QR' : s.controlNames[item.type] }}</span>
-          </div>
-        }
+      <div class="wd__left-tabs" role="tablist">
+        <button type="button" role="tab" [attr.aria-selected]="leftTab() === 'add'" [class.wd__left-tab--on]="leftTab() === 'add'" (click)="leftTab.set('add')">{{ s.add }}</button>
+        <button type="button" role="tab" [attr.aria-selected]="leftTab() === 'outline'" [class.wd__left-tab--on]="leftTab() === 'outline'" (click)="leftTab.set('outline')">{{ s.explorer }}</button>
       </div>
-
-      <h2>{{ s.fields }}</h2>
-      @if (fields().rows.length || fields().parent.length) {
-        <p class="wd__hint">{{ s.fieldsHint }}</p>
-        <ul class="wd__fields">
-          @for (f of fields().rows; track f.path) {
-            <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
-              <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
-            </li>
+      @if (leftTab() === 'add') {
+        <h2>{{ s.toolbox }}</h2>
+        <p class="wd__hint">{{ s.toolboxHint }}</p>
+        <div class="wd__tools">
+          @for (item of toolbox; track $index) {
+            <div class="wd__tool" draggable="true" (dragstart)="onToolDragStart($event, item)" [title]="s.controlNames[item.type]">
+              <span [innerHTML]="iconName(item.icon) | weReportIcon"></span>
+              <span>{{ item.variant === 'qrcode' ? 'QR' : s.controlNames[item.type] }}</span>
+            </div>
           }
-        </ul>
-        @if (fields().parent.length) {
-          <h3>{{ s.parentFields }}</h3>
+        </div>
+
+        <h2>{{ s.fields }}</h2>
+        @if (fields().rows.length || fields().parent.length) {
+          <p class="wd__hint">{{ s.fieldsHint }}</p>
           <ul class="wd__fields">
-            @for (f of fields().parent; track f.path) {
+            @for (f of fields().rows; track f.path) {
               <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                 <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
               </li>
             }
           </ul>
+          @if (fields().parent.length) {
+            <h3>{{ s.parentFields }}</h3>
+            <ul class="wd__fields">
+              @for (f of fields().parent; track f.path) {
+                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+                  <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          <p class="wd__hint">{{ s.noFields }}</p>
         }
       } @else {
-        <p class="wd__hint">{{ s.noFields }}</p>
+        <p class="wd__hint">{{ s.explorerHint }}</p>
+        <ul class="wd__outline" role="tree">
+          @for (band of state.report().bands; track band.id) {
+            <li role="treeitem" [attr.aria-expanded]="true">
+              <button type="button" class="wd__outline-band" [class.wd__outline--on]="state.selection().kind === 'band' && state.selectedBand()?.id === band.id" (click)="state.selection.set({ kind: 'band', id: band.id })">
+                {{ s.bandNames[band.kind] }}
+              </button>
+              <ul role="group">
+                @for (c of band.controls; track c.id) {
+                  <li role="treeitem">
+                    <button type="button" class="wd__outline-item" [class.wd__outline--on]="isSelected(c.id)" (click)="selectFromOutline($event, c.id)">
+                      <span [innerHTML]="outlineIcon(c) | weReportIcon"></span><span class="wd__outline-text">{{ outlineLabel(c) }}</span>
+                    </button>
+                  </li>
+                } @empty {
+                  <li class="wd__outline-empty">{{ s.emptyBand }}</li>
+                }
+              </ul>
+            </li>
+          }
+        </ul>
       }
     </aside>
 
-    <main class="wd__canvas" tabindex="-1">
+    <main #canvas class="wd__canvas" tabindex="-1" (contextmenu)="openContextMenu($event)" (wheel)="onCanvasWheel($event)">
       <we-report-design-surface [strings]="s" [zoom]="zoomLevel()" [sample]="sample()" />
     </main>
 
@@ -120,4 +149,28 @@
 
 @if (dataDialogOpen()) {
   <we-report-data-sources-dialog [strings]="s" [fetchFn]="fetchFn()" (closed)="dataDialogOpen.set(false)" />
+}
+
+@if (contextMenu(); as m) {
+  <div class="wd__menu-list wd__context" role="menu" [style.left.px]="m.x" [style.top.px]="m.y" (keydown.escape)="contextMenu.set(null)">
+    @if (m.onControl) {
+      <button type="button" role="menuitem" (click)="menu(state.cutSelection.bind(state))"><span [innerHTML]="'cut' | weReportIcon"></span>{{ s.cut }}<kbd>Ctrl+X</kbd></button>
+      <button type="button" role="menuitem" (click)="menu(state.copySelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.copy }}<kbd>Ctrl+C</kbd></button>
+    }
+    <button type="button" role="menuitem" [disabled]="!state.hasClipboard()" (click)="menu(state.paste.bind(state, m.bandId ?? undefined))"><span [innerHTML]="'paste' | weReportIcon"></span>{{ s.paste }}<kbd>Ctrl+V</kbd></button>
+    @if (m.onControl) {
+      <button type="button" role="menuitem" (click)="menu(state.duplicateSelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.duplicate }}<kbd>Ctrl+D</kbd></button>
+      <hr />
+      <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'front'))"><span [innerHTML]="'bringToFront' | weReportIcon"></span>{{ s.bringToFront }}</button>
+      <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'back'))"><span [innerHTML]="'sendToBack' | weReportIcon"></span>{{ s.sendToBack }}</button>
+      <hr />
+      <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.delete }}<kbd>Del</kbd></button>
+    } @else {
+      <button type="button" role="menuitem" (click)="menu(state.selectAll.bind(state))"><span [innerHTML]="'outline' | weReportIcon"></span>{{ s.selectAll }}<kbd>Ctrl+A</kbd></button>
+      @if (state.selectedBand()?.kind !== 'detail') {
+        <hr />
+        <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.removeBand }}</button>
+      }
+    }
+  </div>
 }
