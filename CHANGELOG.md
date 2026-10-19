@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Designer, desktop comfort: type on the page (double-click, F2 or just start typing on a selected
-  text or table cell), formulas open the formula editor; rubber-band selection; Ctrl+drag copies;
+  text or table cell), formulas open the formula editor; rubber-band selection; distances to the nearest items while moving; Ctrl+drag copies;
   copy and paste through the system clipboard (also between tabs, and pictures or text from other
   programs); drop a PNG/JPEG from the desktop onto the page; drop a field on a text to bind it;
   click a toolbox item or double-click a field to add it; a format bar (font, size, bold, italic,

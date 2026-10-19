@@ -28,7 +28,7 @@ const PX_PER_MM = 96 / 25.4;
 const SNAP_DISTANCE_MM = 1.5;
 const MIN_SIZE_MM = 1;
 
-interface Rect {
+export interface Rect {
   x: number;
   y: number;
   width: number;
@@ -39,6 +39,37 @@ interface Guide {
   bandId: string;
   orientation: 'v' | 'h';
   at: number;
+}
+
+/** The gap between a dragged item and its nearest neighbour, shown while moving (mm). */
+export interface Gap {
+  bandId: string;
+  orientation: 'v' | 'h';
+  x: number;
+  y: number;
+  length: number;
+}
+
+/** Gaps from `p` to the nearest rect on each side that faces it (overlaps on the other axis). */
+export function gapsAround(p: Rect, others: Rect[], bandId: string, max = 60): Gap[] {
+  const gaps: Gap[] = [];
+  const overlapY = (r: Rect) => Math.min(r.y + r.height, p.y + p.height) - Math.max(r.y, p.y);
+  const overlapX = (r: Rect) => Math.min(r.x + r.width, p.x + p.width) - Math.max(r.x, p.x);
+  const midY = (r: Rect) => (Math.max(r.y, p.y) + Math.min(r.y + r.height, p.y + p.height)) / 2;
+  const midX = (r: Rect) => (Math.max(r.x, p.x) + Math.min(r.x + r.width, p.x + p.width)) / 2;
+  const nearest = (items: Rect[], dist: (r: Rect) => number) =>
+    items.reduce<Rect | null>((best, r) => (dist(r) >= 0 && dist(r) <= max && (!best || dist(r) < dist(best)) ? r : best), null);
+  const facingH = others.filter((r) => overlapY(r) > 0);
+  const facingV = others.filter((r) => overlapX(r) > 0);
+  const left = nearest(facingH, (r) => p.x - (r.x + r.width));
+  const right = nearest(facingH, (r) => r.x - (p.x + p.width));
+  const up = nearest(facingV, (r) => p.y - (r.y + r.height));
+  const down = nearest(facingV, (r) => r.y - (p.y + p.height));
+  if (left) gaps.push({ bandId, orientation: 'h', x: left.x + left.width, y: midY(left), length: p.x - left.x - left.width });
+  if (right) gaps.push({ bandId, orientation: 'h', x: p.x + p.width, y: midY(right), length: right.x - p.x - p.width });
+  if (up) gaps.push({ bandId, orientation: 'v', x: midX(up), y: up.y + up.height, length: p.y - up.y - up.height });
+  if (down) gaps.push({ bandId, orientation: 'v', x: midX(down), y: p.y + p.height, length: down.y - p.y - p.height });
+  return gaps.filter((g) => g.length > 0.05);
 }
 
 type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
@@ -202,6 +233,20 @@ interface DragOp {
             }
             @for (g of guidesFor(band.id); track $index) {
               <div class="ds__guide" [class.ds__guide--v]="g.orientation === 'v'" [style.left.mm]="g.orientation === 'v' ? g.at * zoom() : null" [style.top.mm]="g.orientation === 'h' ? g.at * zoom() : null"></div>
+            }
+            @for (g of gaps(); track $index) {
+              @if (g.bandId === band.id) {
+                <div
+                  class="ds__gap"
+                  [class.ds__gap--v]="g.orientation === 'v'"
+                  [style.left.mm]="g.x * zoom()"
+                  [style.top.mm]="g.y * zoom()"
+                  [style.width.mm]="g.orientation === 'h' ? g.length * zoom() : null"
+                  [style.height.mm]="g.orientation === 'v' ? g.length * zoom() : null"
+                >
+                  <span>{{ g.length.toFixed(1) }}</span>
+                </div>
+              }
             }
           </div>
           <div class="ds__band-resize" (pointerdown)="onBandResizePointerDown($event, band)" [title]="strings().bandHeight"></div>
@@ -457,6 +502,30 @@ interface DragOp {
     .ds__handle[data-handle='s'] { left: 50%; top: 100%; cursor: ns-resize; }
     .ds__handle[data-handle='sw'] { left: 0; top: 100%; cursor: nesw-resize; }
     .ds__handle[data-handle='w'] { left: 0; top: 50%; cursor: ew-resize; }
+    .ds__gap {
+      position: absolute;
+      z-index: 4;
+      height: 0;
+      border-top: 1px dashed var(--we-report-guide, #ff375f);
+      pointer-events: none;
+    }
+    .ds__gap--v {
+      width: 0;
+      border-top: 0;
+      border-left: 1px dashed var(--we-report-guide, #ff375f);
+    }
+    .ds__gap span {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      padding: 0 4px;
+      border-radius: 4px;
+      background: var(--we-report-guide, #ff375f);
+      color: var(--we-report-accent-fg, #fff);
+      font: 600 10px var(--we-report-font-family, system-ui, sans-serif);
+      white-space: nowrap;
+    }
     .ds__guide {
       position: absolute;
       left: 0;
@@ -499,6 +568,7 @@ export class DesignSurfaceComponent implements OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
   protected readonly guides = signal<Guide[]>([]);
+  protected readonly gaps = signal<Gap[]>([]);
   /** The rubber band while dragging on an empty part of a section (mm in that section). */
   protected readonly marquee = signal<{ bandId: string; x: number; y: number; width: number; height: number } | null>(null);
   /** A bound item whose formula is open in the editor. */
@@ -985,6 +1055,8 @@ export class DesignSurfaceComponent implements OnDestroy {
         c.x = round(Math.max(0, o.x + mx));
         c.y = round(Math.max(0, o.y + my));
       }, op.key);
+      const moved = { ...primary, x: Math.max(0, primary.x + mx), y: Math.max(0, primary.y + my) };
+      this.gaps.set(op.originals.size === 1 ? gapsAround(moved, others, op.bandId) : []);
     } else {
       const h = op.handle!;
       let { x, y, width, height } = primary;
@@ -1013,6 +1085,7 @@ export class DesignSurfaceComponent implements OnDestroy {
     this.op = null;
     this.stopListening();
     this.guides.set([]);
+    this.gaps.set([]);
     if (op?.kind === 'marquee') {
       // A plain click on an empty part selects the section.
       if (!op.moved && !op.baseIds?.length) this.state.selection.set({ kind: 'band', id: op.bandId });
