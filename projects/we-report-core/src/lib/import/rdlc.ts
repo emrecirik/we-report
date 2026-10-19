@@ -20,6 +20,7 @@ export function rdlSize(value: string | undefined): number {
   const m = /^\s*(-?[\d.]+)\s*(mm|cm|in|pt|pc)?\s*$/i.exec(value ?? '');
   if (!m) return 0;
   const n = Number(m[1]);
+  if (!Number.isFinite(n) || n <= 0) return 0;
   const unit = (m[2] ?? 'in').toLowerCase();
   return unit === 'pc' ? toMm(n * 12, 'pt') : toMm(n, UNITS[unit]);
 }
@@ -118,7 +119,9 @@ class RdlcImport {
       report.dataMember = { dataSourceId: id };
       this.warnings.push(`Data set "${dataSet.attrs['Name']}": add its data under Data sources (the file holds only the field list).`);
     }
-    report.parameters = children(child(this.root, 'ReportParameters'), 'ReportParameter').map((p) => this.parameter(p));
+    report.parameters = children(child(this.root, 'ReportParameters'), 'ReportParameter')
+      .filter((p) => /^\w+$/.test(p.attrs['Name'] ?? ''))
+      .map((p) => this.parameter(p));
 
     const header = child(page, 'PageHeader');
     const footer = child(page, 'PageFooter');

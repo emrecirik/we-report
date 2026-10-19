@@ -19,7 +19,7 @@ function decode(s: string): string {
       const code = ref[1] === 'x' || ref[1] === 'X' ? parseInt(ref.slice(2), 16) : parseInt(ref.slice(1), 10);
       return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
     }
-    return NAMED[ref.toLowerCase()] ?? whole;
+    return Object.hasOwn(NAMED, ref.toLowerCase()) ? NAMED[ref.toLowerCase()] : whole;
   });
 }
 
@@ -54,7 +54,7 @@ export function parseXml(source: string): XmlElement {
       if (!open || open === root || open.name !== name) throw new XmlError(`Unexpected </${name}>.`);
       i = close + 1;
     } else {
-      const m = /^<([^\s/>]+)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/.exec(s.slice(lt, lt + 100_000));
+      const m = /^<([^\s/>]+)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>$/.exec(s.slice(lt, tagEnd(s, lt) + 1));
       if (!m) throw new XmlError(`Malformed tag at ${lt}.`);
       const element: XmlElement = { name: localName(m[1]), attrs: {}, children: [], text: '' };
       for (const a of m[2].matchAll(/([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) {
@@ -69,6 +69,22 @@ export function parseXml(source: string): XmlElement {
   const top = root.children[0];
   if (!top) throw new XmlError('The file has no XML element.');
   return top;
+}
+
+/** Index of the `>` closing the tag at `from`, skipping quoted attribute values (base64 images can be megabytes). */
+function tagEnd(s: string, from: number): number {
+  let quote = '';
+  for (let i = from + 1; i < s.length; i++) {
+    const c = s[i];
+    if (quote) {
+      if (c === quote) quote = '';
+    } else if (c === '"' || c === "'") {
+      quote = c;
+    } else if (c === '>') {
+      return i;
+    }
+  }
+  throw new XmlError(`Unterminated tag at ${from}.`);
 }
 
 function end(s: string, marker: string, from: number): number {

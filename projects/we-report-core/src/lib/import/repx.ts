@@ -16,7 +16,7 @@ export function importRepx(source: string, name = 'Report'): ImportResult {
   return new RepxImport(parseXml(source), name).run();
 }
 
-const SYMBOLOGIES: Record<string, string> = {
+const SYMBOLOGIES: Readonly<Record<string, string>> = {
   Code128: 'code128', Code39: 'code39', Code39Extended: 'code39ext', Code93: 'code93', EAN13: 'ean13', EAN8: 'ean8',
   UPCA: 'upca', UPCE0: 'upce', Interleaved2of5: 'interleaved2of5', ITF14: 'itf14', QRCode: 'qrcode', DataMatrix: 'datamatrix',
   PDF417: 'pdf417', Codabar: 'rationalizedCodabar', EAN128: 'gs1-128', DataBar: 'databaromni', AztecCode: 'azteccode',
@@ -25,8 +25,16 @@ const SYMBOLOGIES: Record<string, string> = {
 /** DevExpress criteria language → ours: nearly the same; aggregates and a few names differ. */
 export function devExpressToFormula(expression: string, calculated: Map<string, string> = new Map()): string | null {
   let e = expression.trim();
-  // Calculated fields have no counterpart: their formula is put in place, once.
-  for (const [name, formula] of calculated) e = e.replace(new RegExp(`\\[${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]`, 'g'), `(${formula})`);
+  // Calculated fields have no counterpart: their formula is put in place (they may use each
+  // other, a few levels deep). A size cap stops formulas that double at every level.
+  for (let depth = 0; depth < 5 && calculated.size; depth++) {
+    const next = e.replace(/\[([^\]]+)\]/g, (whole, name: string) => (calculated.has(name) ? `(${calculated.get(name)})` : whole));
+    if (next === e) break;
+    if (next.length > 10_000) return null;
+    e = next;
+  }
+  // Still a calculated field after five levels: nested too deep to convert.
+  if ([...e.matchAll(/\[([^\]]+)\]/g)].some((m) => calculated.has(m[1]))) return null;
   e = e
     .replace(/\[Parameters\.(\w+)\]/g, '[?$1]')
     .replace(/(^|[^\w[\]'])\?(\w+)/g, '$1[?$2]')
@@ -73,6 +81,7 @@ class RepxImport {
     const a = this.root.attrs;
     if (this.root.name !== 'XtraReportsLayoutSerializer') throw new Error('This is not a DevExpress report layout (.repx).');
     if (a['ReportUnit'] === 'TenthsOfAMillimeter') this.unit = 0.1;
+    if (a['ReportUnit'] === 'Pixels') this.unit = 25.4 / 96;
     const margins = (a['Margins'] ?? '100, 100, 100, 100').split(',').map((v) => this.mm(v));
     const paper = a['PaperKind'];
     let width = this.mm(a['PageWidth']);
@@ -86,13 +95,18 @@ class RepxImport {
     report.styles['default'] = { ...font };
 
     for (const s of this.items(child(this.root, 'StyleSheet'))) {
-      if (s.attrs['Name']) this.styles[s.attrs['Name']] = this.styleOf(s) ?? {};
+      // Style names become keys: plain names only (never __proto__ and friends).
+      if (/^[\w -]+$/.test(s.attrs['Name'] ?? '') && !/^(__proto__|constructor|prototype)$/.test(s.attrs['Name'])) {
+        this.styles[s.attrs['Name']] = this.styleOf(s) ?? {};
+      }
     }
     Object.assign(report.styles, this.styles);
     for (const f of this.items(child(this.root, 'CalculatedFields'))) {
       if (f.attrs['Name'] && f.attrs['Expression']) this.calculated.set(f.attrs['Name'], f.attrs['Expression']);
     }
-    report.parameters = this.items(child(this.root, 'Parameters')).map((p) => this.parameter(p));
+    report.parameters = this.items(child(this.root, 'Parameters'))
+      .filter((p) => /^\w+$/.test(p.attrs['Name'] ?? ''))
+      .map((p) => this.parameter(p));
     report.dataSources.push({ id: 'data', name: 'Data', kind: 'json', data: null });
     report.dataMember = { dataSourceId: 'data', ...(a['DataMember'] ? { path: a['DataMember'] } : {}) };
     this.warnings.push('Add the report data under Data sources: a .repx keeps only where the data came from.');
@@ -138,12 +152,17 @@ class RepxImport {
     for (const b of this.items(e)) {
       const type = this.type(b);
       const height = this.mm(b.attrs['HeightF'] ?? b.attrs['Height']);
-      const kind: Band['kind'] | undefined = inner
-        ? { DetailBand: 'subDetail', ReportHeaderBand: 'subHeader', ReportFooterBand: 'subFooter' }[type] as Band['kind'] | undefined
+      const kinds: Record<string, Band['kind']> = inner
+        ? { DetailBand: 'subDetail', ReportHeaderBand: 'subHeader', ReportFooterBand: 'subFooter' }
         : { PageHeaderBand: 'pageHeader', ReportHeaderBand: 'reportHeader', GroupHeaderBand: 'groupHeader', DetailBand: 'detail',
-            GroupFooterBand: 'groupFooter', ReportFooterBand: 'reportFooter', PageFooterBand: 'pageFooter' }[type] as Band['kind'] | undefined;
+            GroupFooterBand: 'groupFooter', ReportFooterBand: 'reportFooter', PageFooterBand: 'pageFooter' };
+      const kind = Object.hasOwn(kinds, type) ? kinds[type] : undefined;
       if (type === 'DetailReportBand' && !inner) {
         const path = b.attrs['DataMember']?.split('.').pop();
+        if (out.some((x) => x.kind === 'subDetail')) {
+          this.warnings.push(`Detail report "${b.attrs['Name']}": only one detail report is converted (one inner list per report).`);
+          continue;
+        }
         if (!path) {
           this.warnings.push(`Detail report "${b.attrs['Name']}" without a data member is not converted.`);
           continue;
@@ -167,7 +186,9 @@ class RepxImport {
       const level = Number(b.attrs['Level'] ?? 0);
       if (kind === 'groupHeader') {
         const field = this.items(child(b, 'GroupFields'))[0];
-        band.groupBy = { expression: field?.attrs['FieldName'] ? `[${field.attrs['FieldName']}]` : '' };
+        const groupFormula = field?.attrs['FieldName'] ? devExpressToFormula(`[${field.attrs['FieldName']}]`, this.calculated) : null;
+        if (field?.attrs['FieldName'] && groupFormula === null) this.warnings.push(`Group "${b.attrs['Name']}": its field ${field.attrs['FieldName']} could not be converted.`);
+        band.groupBy = { expression: groupFormula ?? '' };
         band.sort = field?.attrs['SortOrder'] === 'Descending' ? 'desc' : field?.attrs['SortOrder'] === 'None' ? 'none' : 'asc';
         if (b.attrs['RepeatEveryPage'] === 'true') band.repeatOnEveryPage = true;
         if (/WithFirstDetail|WholeGroup/.test(b.attrs['GroupUnion'] ?? '')) band.keepTogether = true;
@@ -264,7 +285,7 @@ class RepxImport {
       }
       case 'XRBarCode': {
         const generator = (child(e, 'Symbology')?.attrs['ControlType'] ?? '').split(',')[0].split('.').pop()?.replace(/Generator$/, '') ?? '';
-        const symbology = SYMBOLOGIES[generator];
+        const symbology = Object.hasOwn(SYMBOLOGIES, generator) ? SYMBOLOGIES[generator] : undefined;
         if (!symbology) this.warnings.push(`Barcode "${name}": ${generator || 'its'} symbology is not supported; Code 128 is used.`);
         const bound = this.formula(e, 'Text');
         return [{ id: this.id('barcode'), type: 'barcode', ...common, symbology: symbology ?? 'code128', value: bound ? { expression: bound } : (e.attrs['Text'] ?? ''), showText: e.attrs['ShowText'] !== 'false' && symbology !== 'qrcode' }];
@@ -306,11 +327,21 @@ class RepxImport {
     const columns = weights.map((w) => roundMm((common.width * w) / total));
     const rowWeights = rows.map((r) => Number(r.attrs['Weight'] ?? 1));
     const rowTotal = rowWeights.reduce((a, b) => a + b, 0) || 1;
+    // Column boundaries as fractions of the width; a cell spans the columns between its edges.
+    const bounds: number[] = [0];
+    for (const w of weights) bounds.push(bounds[bounds.length - 1] + w / total);
+    const nearest = (f: number) => bounds.reduce((best, b, i) => (Math.abs(b - f) < Math.abs(bounds[best] - f) ? i : best), 0);
     const tableRows: TableRow[] = rows.map((r, i) => {
-      const cells = this.items(child(r, 'Cells')).map((c) => {
+      const cellEls = this.items(child(r, 'Cells'));
+      const rowTotalWeight = cellEls.reduce((a, c) => a + Number(c.attrs['Weight'] ?? 1), 0) || 1;
+      let start = 0;
+      let edge = 0;
+      const cells = cellEls.map((c) => {
         const { text, format } = this.label(c);
-        // A wider cell spans as many columns as its weight covers.
-        const span = Math.max(1, Math.round((Number(c.attrs['Weight'] ?? 1) / total) * weights.length));
+        edge += Number(c.attrs['Weight'] ?? 1) / rowTotalWeight;
+        const end = Math.min(weights.length, Math.max(start + 1, nearest(edge)));
+        const span = end - start;
+        start = end;
         return { text, format, colSpan: span > 1 ? span : undefined, styleOverrides: this.styleOf(c) };
       });
       return { height: roundMm((common.height * rowWeights[i]) / rowTotal), cells };

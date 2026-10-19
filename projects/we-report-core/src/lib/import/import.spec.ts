@@ -231,4 +231,37 @@ describe('report import', () => {
     expect(() => importReport('namespace X { class R : XtraReport {} }', 'old.repx')).toThrowError(/saved as code/);
     expect(importReport('{"version":1,"name":"A","page":{"paper":"A4","orientation":"portrait","margins":{"top":1,"right":1,"bottom":1,"left":1},"displayUnit":"mm"},"styles":{},"dataSources":[],"bands":[]}').report.name).toBe('A');
   });
+
+  it('stays safe and sane on hostile or odd input', () => {
+    // Calculated fields that double at every level stop at a size cap instead of filling memory.
+    const doubling = new Map(Array.from({ length: 40 }, (_, k) => [`c${k}`, `[c${k + 1}] + [c${k + 1}]`] as [string, string]));
+    expect(devExpressToFormula('[c0]', doubling)).toBeNull();
+    expect(devExpressToFormula('[a]', new Map([['a', "'$&' + [b]"]]))).toBe("('$&' + [b])");
+    // A tag carrying a large embedded picture parses.
+    const big = 'A'.repeat(300_000);
+    expect(parseXml(`<r><p ImageSource="img,${big}" /></r>`).children[0].attrs['ImageSource'].length).toBe(big.length + 4);
+    expect(textAt(parseXml('<r><v>&constructor;</v></r>'), 'v')).toBe('&constructor;');
+    expect([rdlSize('1.2.3in'), rdlSize('.'), rdlSize('-2in')]).toEqual([0, 0, 0]);
+
+    const repx = (bands: string, extra = '') =>
+      importReport(`<XtraReportsLayoutSerializer Name="R" PageWidth="827" PageHeight="1169" Margins="100, 100, 100, 100">${extra}<Bands>${bands}</Bands></XtraReportsLayoutSerializer>`, 'r.repx');
+    // Built-in object names are not band kinds, styles or symbologies.
+    const odd = repx('<Item1 ControlType="Foo.constructor" HeightF="10" />', '<StyleSheet><Item1 Name="__proto__" Font="Arial, 20pt" /></StyleSheet>');
+    expect(odd.report.bands).toEqual([]);
+    expect(Object.keys(odd.report.styles)).toEqual(['default']);
+    // Cell spans never pass the last column: weights 2,1,1 → 3 columns of 4 widths.
+    const table = repx(`<Item1 ControlType="DetailBand" HeightF="25"><Controls><Item1 ControlType="XRTable" SizeF="400,25" LocationFloat="0,0"><Rows>
+      <Item1 ControlType="XRTableRow" Weight="1"><Cells><Item1 ControlType="XRTableCell" Weight="2" Text="a" /><Item2 ControlType="XRTableCell" Weight="1" Text="b" /><Item3 ControlType="XRTableCell" Weight="1" Text="c" /></Cells></Item1>
+      <Item2 ControlType="XRTableRow" Weight="1"><Cells><Item1 ControlType="XRTableCell" Weight="3" Text="wide" /><Item2 ControlType="XRTableCell" Weight="1" Text="d" /></Cells></Item2>
+    </Rows></Item1></Controls></Item1>`).report.bands[0].controls[0] as TableControl;
+    expect(table.columns).toEqual([50.8, 25.4, 25.4]);
+    expect(table.rows.map((r) => r.cells.reduce((n, c) => n + (c.colSpan ?? 1), 0))).toEqual([3, 3]);
+    expect(table.rows[1].cells.map((c) => c.colSpan ?? 1)).toEqual([2, 1]);
+    // One inner list: a second detail report is reported, not mixed in.
+    const two = repx(`<Item1 ControlType="DetailBand" HeightF="10" />
+      <Item2 ControlType="DetailReportBand" Name="A" DataMember="R.a"><Bands><Item1 ControlType="DetailBand" HeightF="5" /></Bands></Item2>
+      <Item3 ControlType="DetailReportBand" Name="B" DataMember="R.b"><Bands><Item1 ControlType="DetailBand" HeightF="5" /></Bands></Item3>`);
+    expect(two.report.bands.filter((b) => b.kind === 'subDetail').map((b) => b.rowsPath)).toEqual(['a']);
+    expect(two.warnings.join(' ')).toContain('Detail report "B"');
+  });
 });
