@@ -7,7 +7,7 @@
   copy and paste through the system clipboard (also between tabs, and pictures or text from other
   programs); drop a PNG/JPEG from the desktop onto the page; drop a field on a text to bind it;
   click a toolbox item or double-click a field to add it; a format bar (font, size, bold, italic,
-  underline, alignment, colours, border); right-click menu; outline tab; status bar with pointer
+  underline, alignment, colours, border); right-click menu (also: add text here, fit a section to its content); outline tab; status bar with pointer
   position and selection size; resizable and collapsible side panels that remember their width;
   zoom menu; grid size menu (0.5–5 mm or no grid); format painter (copy one item's look to another); keyboard shortcuts sheet (F1); Tab moves between items, Ctrl+arrows resize.
 - Viewer: page thumbnails, first/previous/next/last page, a page-number box that follows scrolling, zoom presets

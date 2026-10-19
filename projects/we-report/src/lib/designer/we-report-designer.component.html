@@ -245,7 +245,9 @@
       <hr />
       <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.delete }}<kbd>Del</kbd></button>
     } @else {
+      <button type="button" role="menuitem" (click)="menu(addTextAt.bind(this, m.bandId, m.at))"><span>T</span>{{ s.addTextHere }}</button>
       <button type="button" role="menuitem" (click)="menu(state.selectAll.bind(state))"><span [innerHTML]="'outline' | weReportIcon"></span>{{ s.selectAll }}<kbd>Ctrl+A</kbd></button>
+      <button type="button" role="menuitem" (click)="menu(fitBand.bind(this, m.bandId))"><span>↕</span>{{ s.fitBandToContent }}</button>
       @if (state.selectedBand()?.kind !== 'detail') {
         <hr />
         <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.removeBand }}</button>

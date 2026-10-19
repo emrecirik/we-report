@@ -90,7 +90,7 @@ export class WeReportDesignerComponent {
   protected readonly problemsOpen = signal(false);
   protected readonly leftTab = signal<'add' | 'outline'>('add');
   /** Right-click menu: screen position and the band it was opened on. */
-  protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean } | null>(null);
+  protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean; at?: { x: number; y: number } } | null>(null);
   private readonly canvas = viewChild<ElementRef<HTMLElement>>('canvas');
   private readonly surface = viewChild(DesignSurfaceComponent);
   protected readonly shortcutsOpen = signal(false);
@@ -336,7 +336,26 @@ export class WeReportDesignerComponent {
     const controlId = target.closest<HTMLElement>('[data-control-id]')?.dataset['controlId'];
     if (controlId) this.state.select(controlId, false);
     else this.state.selection.set({ kind: 'band', id: bandEl.dataset['bandId']! });
-    this.contextMenu.set({ x: e.clientX, y: e.clientY, bandId: bandEl.dataset['bandId'] ?? null, onControl: !!controlId });
+    const p = this.state.pointer();
+    const at = p && p.bandId === bandEl.dataset['bandId'] ? { x: p.x, y: p.y } : undefined;
+    this.contextMenu.set({ x: e.clientX, y: e.clientY, bandId: bandEl.dataset['bandId'] ?? null, onControl: !!controlId, at });
+  }
+
+  /** A new text where the section was right-clicked, ready to type in. */
+  protected addTextAt(bandId: string | null, at?: { x: number; y: number }): void {
+    const band = this.state.report().bands.find((b) => b.id === bandId);
+    const surface = this.surface();
+    if (!band || !surface) return;
+    surface.dropAt({ kind: 'control', type: 'text' }, band, Math.round(at?.x ?? 0), Math.round(at?.y ?? 0));
+    this.editSelected();
+  }
+
+  /** Shrinks (or grows) a section to just below its lowest item. */
+  protected fitBand(bandId: string | null): void {
+    this.state.update((d) => {
+      const band = d.bands.find((b) => b.id === bandId);
+      if (band) band.height = Math.max(2, Math.round(Math.max(0, ...band.controls.map((c) => c.y + c.height)) * 100) / 100);
+    });
   }
 
   /** Runs a context-menu command and closes the menu. */

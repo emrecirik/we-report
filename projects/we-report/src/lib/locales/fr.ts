@@ -298,6 +298,8 @@ export const weReportLocaleFr: WeReportLocale = {
   wizardTotals: 'Totaux des colonnes numériques',
   automatic: 'Automatique',
   createReport: 'Créer le rapport',
+  addTextHere: 'Ajouter un texte ici',
+  fitBandToContent: 'Ajuster la section à son contenu',
   thumbnails: 'Miniatures des pages',
   snapGrid: 'Aligner sur la grille (maintenez Alt pour déplacer librement)',
   gridOff: 'Sans grille',
