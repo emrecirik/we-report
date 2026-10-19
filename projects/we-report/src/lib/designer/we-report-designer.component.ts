@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, model, signal, untracked, viewChild } from '@angular/core';
-import { Band, BandKind, checkReport, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, resolvePageGeometry, resolveReportData } from 'we-report-core';
+import { Band, BandKind, checkReport, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, TextAlign } from 'we-report-core';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WeReportIcons } from '../we-report-icons';
@@ -71,6 +71,61 @@ export class WeReportDesignerComponent {
   /** Right-click menu: screen position and the band it was opened on. */
   protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean } | null>(null);
   private readonly canvas = viewChild<ElementRef<HTMLElement>>('canvas');
+  private readonly surface = viewChild(DesignSurfaceComponent);
+  protected readonly fontSizes = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
+  protected readonly textAligns: { value: TextAlign; icon: keyof WeReportIcons; label: 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' }[] = [
+    { value: 'left', icon: 'textLeft', label: 'alignLeft' },
+    { value: 'center', icon: 'textCenter', label: 'alignCenter' },
+    { value: 'right', icon: 'textRight', label: 'alignRight' },
+    { value: 'justify', icon: 'textJustify', label: 'alignJustify' },
+  ];
+
+  /** The look of the first selected item (or the clicked table cell), shown in the format bar. */
+  protected readonly formatStyle = computed(() => {
+    const c = this.state.selectedControls()[0];
+    if (!c) return null;
+    const cell = this.state.tableCell();
+    const cellOverrides = c.type === 'table' && cell?.controlId === c.id ? c.rows[cell.row]?.cells[cell.cell]?.styleOverrides : undefined;
+    return resolveStyle(this.state.report(), c.style, { ...c.styleOverrides, ...cellOverrides });
+  });
+
+  /** One line about the selection for the status bar. */
+  protected readonly selectionInfo = computed(() => {
+    const s = this.strings();
+    const controls = this.state.selectedControls();
+    if (controls.length === 1) {
+      const c = controls[0];
+      return { title: `${s.controlNames[c.type]} · ${c.name || c.id}`, box: c as { x: number; y: number; width: number; height: number } };
+    }
+    if (controls.length > 1) return { title: s.itemsSelected.replace('{0}', String(controls.length)), box: null };
+    const band = this.state.selectedBand();
+    if (band) return { title: s.bandNames[band.kind], box: { x: 0, y: 0, width: resolvePageGeometry(this.state.report().page).contentWidth, height: band.height } };
+    return { title: s.noSelection, box: null };
+  });
+
+  protected readonly pointerInfo = computed(() => {
+    const p = this.state.pointer();
+    const band = p && this.state.report().bands.find((b) => b.id === p.bandId);
+    return p && band ? `${this.strings().bandNames[band.kind]} · ${this.mm(p.x)} × ${this.mm(p.y)} mm` : '';
+  });
+
+  protected mm(v: number): string {
+    return String(Math.round(v * 10) / 10);
+  }
+
+  protected format<K extends keyof ReportStyle>(key: K, value: ReportStyle[K] | undefined): void {
+    this.state.applyStyle(key, value);
+  }
+
+  protected toggleFormat(key: 'bold' | 'italic' | 'underline'): void {
+    if (!this.formatStyle()) return;
+    this.state.applyStyle(key, !this.formatStyle()![key]);
+  }
+
+  protected setBorder(on: boolean): void {
+    const st = this.formatStyle();
+    this.state.applyStyle('border', on ? { width: 0.25, color: st?.color ?? '#000000', sides: { top: true, right: true, bottom: true, left: true } } : undefined);
+  }
   /** Design problems, checked on every edit; field names are judged only when there is data. */
   protected readonly issues = computed<ReportIssue[]>(() => {
     const { rows, parent } = this.fields();
@@ -287,6 +342,29 @@ export class WeReportDesignerComponent {
     } else if (mod && e.key.toLowerCase() === 'y' && !typing) {
       e.preventDefault();
       this.state.redo();
+    } else if (mod && ['b', 'i', 'u'].includes(e.key.toLowerCase()) && !typing && this.state.selection().kind === 'controls') {
+      e.preventDefault();
+      this.toggleFormat(({ b: 'bold', i: 'italic', u: 'underline' } as const)[e.key.toLowerCase() as 'b' | 'i' | 'u']);
+    } else if (mod && e.key === '0' && !typing) {
+      e.preventDefault();
+      this.fitWidth();
+    } else if (mod && (e.key === '=' || e.key === '+') && !typing) {
+      e.preventDefault();
+      this.setZoom(this.zoomLevel() + 0.1);
+    } else if (mod && e.key === '-' && !typing) {
+      e.preventDefault();
+      this.setZoom(this.zoomLevel() - 0.1);
+    } else if (e.key === 'Tab' && !typing && !mod) {
+      e.preventDefault();
+      this.state.selectNext(e.shiftKey ? -1 : 1);
+    } else if ((e.key === 'F2' || e.key === 'Enter') && !typing && this.state.selectedControls().length === 1) {
+      e.preventDefault();
+      this.surface()?.startEditing(this.state.selectedControls()[0]);
+    } else if (mod && e.key.startsWith('Arrow') && !typing && this.state.selection().kind === 'controls') {
+      // Ctrl+arrow resizes (Shift: 5 mm), plain arrows move.
+      e.preventDefault();
+      const step = e.shiftKey ? 5 : 1;
+      this.state.resizeSelection(e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0, e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0);
     } else if (mod && e.key.toLowerCase() === 'd' && !typing) {
       e.preventDefault();
       this.state.duplicateSelection();

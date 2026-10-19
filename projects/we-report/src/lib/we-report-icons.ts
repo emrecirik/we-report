@@ -24,6 +24,12 @@ export interface WeReportIcons {
   database: string;
   chart: string;
   table: string;
+  textLeft: string;
+  textCenter: string;
+  textRight: string;
+  textJustify: string;
+  borderAll: string;
+  borderNone: string;
   arrangeLeft: string;
   arrangeCenter: string;
   arrangeRight: string;
@@ -66,6 +72,12 @@ export const WE_REPORT_DEFAULT_ICONS: WeReportIcons = {
   checkbox: svg('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/>'),
   preview: svg('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
   design: svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'),
+  textLeft: svg('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
+  textCenter: svg('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'),
+  textRight: svg('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
+  textJustify: svg('<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'),
+  borderAll: svg('<rect x="4" y="4" width="16" height="16" rx="1"/>'),
+  borderNone: svg('<rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="2 3"/>'),
   table: svg('<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 10h18M3 14.5h18M9 5v14M15 5v14"/>'),
   chart: svg('<path d="M4 20h16"/><rect x="5" y="11" width="3" height="9" rx="0.5"/><rect x="10.5" y="6" width="3" height="14" rx="0.5"/><rect x="16" y="13" width="3" height="7" rx="0.5"/>'),
   database: svg('<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'),

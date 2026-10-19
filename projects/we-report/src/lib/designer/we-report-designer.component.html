@@ -145,14 +145,67 @@
       }
     </aside>
 
+    <div class="wd__center">
+    @let st = formatStyle();
+    <div class="wd__formatbar" role="toolbar" [attr.aria-label]="s.formatBar" [class.wd__formatbar--off]="!st">
+      <select class="wd__font" [disabled]="!st" (change)="format('fontFamily', $any($event.target).value)" [attr.aria-label]="s.font" [title]="s.font">
+        @for (f of fontFamilies(); track f) {
+          <option [value]="f" [selected]="st?.fontFamily === f">{{ f }}</option>
+        }
+        @if (st && !fontFamilies().includes(st.fontFamily)) {
+          <option [value]="st.fontFamily" selected>{{ st.fontFamily }}</option>
+        }
+      </select>
+      <input class="wd__size" type="number" min="4" max="200" step="1" list="wd-font-sizes" [disabled]="!st" [value]="st?.fontSize ?? ''" (change)="format('fontSize', +$any($event.target).value || undefined)" [attr.aria-label]="s.fontSize" [title]="s.fontSize" />
+      <datalist id="wd-font-sizes">
+        @for (n of fontSizes; track n) {
+          <option [value]="n"></option>
+        }
+      </datalist>
+      <span class="wd__sep"></span>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="st?.bold" (click)="toggleFormat('bold')" [title]="s.bold + ' (Ctrl+B)'" [attr.aria-pressed]="!!st?.bold"><b>B</b></button>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="st?.italic" (click)="toggleFormat('italic')" [title]="s.italic + ' (Ctrl+I)'" [attr.aria-pressed]="!!st?.italic"><i>I</i></button>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="st?.underline" (click)="toggleFormat('underline')" [title]="s.underline + ' (Ctrl+U)'" [attr.aria-pressed]="!!st?.underline"><u>U</u></button>
+      <span class="wd__sep"></span>
+      @for (a of textAligns; track a.value) {
+        <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="st?.textAlign === a.value" (click)="format('textAlign', a.value)" [title]="s[a.label]" [attr.aria-label]="s[a.label]" [innerHTML]="a.icon | weReportIcon"></button>
+      }
+      <span class="wd__sep"></span>
+      <label class="wd__well" [title]="s.textColor">
+        <span>A</span>
+        <input type="color" [disabled]="!st" [value]="st?.color ?? '#000000'" (input)="format('color', $any($event.target).value)" [attr.aria-label]="s.textColor" />
+      </label>
+      <label class="wd__well wd__well--fill" [title]="s.backgroundColor">
+        <span [style.background]="st?.backgroundColor ?? 'transparent'"></span>
+        <input type="color" [disabled]="!st" [value]="st?.backgroundColor ?? '#ffffff'" (input)="format('backgroundColor', $any($event.target).value)" [attr.aria-label]="s.backgroundColor" />
+      </label>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" (click)="format('backgroundColor', undefined)" [title]="s.backgroundColor + ': ' + s.noColor" [attr.aria-label]="s.noColor">∅</button>
+      <span class="wd__sep"></span>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="!!st?.border" (click)="setBorder(true)" [title]="s.allBorders" [attr.aria-label]="s.allBorders" [innerHTML]="'borderAll' | weReportIcon"></button>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" (click)="setBorder(false)" [title]="s.noBorder" [attr.aria-label]="s.noBorder" [innerHTML]="'borderNone' | weReportIcon"></button>
+    </div>
     <main #canvas class="wd__canvas" tabindex="-1" (contextmenu)="openContextMenu($event)" (wheel)="onCanvasWheel($event)">
-      <we-report-design-surface [strings]="s" [zoom]="zoomLevel()" [sample]="sample()" />
+      <we-report-design-surface [strings]="s" [zoom]="zoomLevel()" [sample]="sample()" [fields]="allFields()" />
     </main>
+    </div>
 
     <aside class="wd__right">
       <we-report-property-panel [strings]="s" [fields]="allFields()" [lists]="fields().lists" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
     </aside>
   </div>
+  <footer class="wd__status" aria-live="polite">
+    @let info = selectionInfo();
+    <span class="wd__status-sel">{{ info.title }}</span>
+    @if (info.box; as b) {
+      <span>{{ s.left }} {{ mm(b.x) }}</span>
+      <span>{{ s.top }} {{ mm(b.y) }}</span>
+      <span>{{ s.width }} {{ mm(b.width) }}</span>
+      <span>{{ s.height }} {{ mm(b.height) }} mm</span>
+    }
+    <span class="wd__spacer"></span>
+    <span class="wd__status-pointer">{{ pointerInfo() }}</span>
+    <span>{{ (zoomLevel() * 100).toFixed(0) }}%</span>
+  </footer>
 } @else {
   <we-report-viewer class="wd__preview" [report]="state.report()" [data]="data()" [locale]="s" [fetchFn]="fetchFn()" />
 }

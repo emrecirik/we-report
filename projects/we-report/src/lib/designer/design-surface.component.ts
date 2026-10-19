@@ -4,6 +4,8 @@ import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, formatValue, isExpre
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
+import { DesignerField } from './designer-fields';
+import { ExpressionEditorComponent } from './expression-editor.component';
 import { WeReportLocale } from '../we-report-locale';
 import { captionFor, createControl, fieldExpression } from './control-factory';
 import { DesignerState } from './designer-state';
@@ -42,7 +44,10 @@ interface Guide {
 type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 interface DragOp {
-  kind: 'move' | 'resize' | 'band';
+  kind: 'move' | 'resize' | 'band' | 'marquee';
+  /** marquee: what was selected before (Shift/Ctrl), and the section's screen position. */
+  baseIds?: string[];
+  origin?: { left: number; top: number };
   startX: number;
   startY: number;
   key: string;
@@ -59,7 +64,7 @@ interface DragOp {
 @Component({
   selector: 'we-report-design-surface',
   standalone: true,
-  imports: [WeReportIconPipe],
+  imports: [WeReportIconPipe, ExpressionEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Focusable so keyboard shortcuts (undo, delete, arrows) reach the designer after a click.
   host: { tabindex: '0' },
@@ -76,7 +81,7 @@ interface DragOp {
         <text [attr.x]="l.x + 2" y="9">{{ l.text }}</text>
       }
     </svg>
-    <div class="ds__page" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()" [style.--ds-margin-right.mm]="state.report().page.margins.right * zoom()">
+    <div class="ds__page" (pointermove)="trackPointer($event)" (pointerleave)="state.pointer.set(null)" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()" [style.--ds-margin-right.mm]="state.report().page.margins.right * zoom()">
       @if (watermarkText(); as wm) {
         <div class="ds__watermark" aria-hidden="true" [style.color]="state.report().watermark?.color ?? defaultWatermarkColor" [style.font-size.mm]="geometry().width * zoom() * 0.12" [style.transform]="'translate(-50%, -50%) rotate(' + -(state.report().watermark?.angle ?? 45) + 'deg)'">{{ wm }}</div>
       }
@@ -91,7 +96,7 @@ interface DragOp {
             [style.height.mm]="band.height * zoom()"
             [style.background-color]="band.backgroundColor ?? null"
             [style.background-size.mm]="gridSize() * zoom()"
-            (pointerdown)="onBodyPointerDown($event)"
+            (pointerdown)="onBodyPointerDown($event, band)"
             (dragover)="onDragOver($event)"
             (drop)="onDrop($event, band)"
           >
@@ -106,6 +111,7 @@ interface DragOp {
                 [style.width.mm]="c.width * zoom()"
                 [style.height.mm]="c.height * zoom()"
                 (pointerdown)="onControlPointerDown($event, c, band)"
+                (dblclick)="startEditing(c)"
               >
                 @switch (c.type) {
                   @case ('line') {
@@ -148,7 +154,14 @@ interface DragOp {
                         [style.width.mm]="cell.width * zoom()"
                         [style.height.mm]="cell.height * zoom()"
                         (click)="selectCell(c.id, cell.row, cell.index)"
-                      >{{ cell.text }}</div>
+                        (dblclick)="$event.stopPropagation(); startEditing(c, cell.row, cell.index)"
+                      >
+                        @if (isEditing(c.id, cell.row, cell.index)) {
+                          <textarea class="ds__editor" [value]="editText()" [style]="cell.style" (pointerdown)="$event.stopPropagation()" (keydown)="onEditorKey($event)" (blur)="commitEditing($event)" [attr.aria-label]="strings().content"></textarea>
+                        } @else {
+                          {{ cell.text }}
+                        }
+                      </div>
                     }
                   }
                   @case ('chart') {
@@ -161,7 +174,11 @@ interface DragOp {
                     <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
                   }
                   @default {
-                    <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">{{ caption(c, band) }}</div>
+                    @if (isEditing(c.id)) {
+                      <textarea class="ds__editor" [value]="editText()" [style]="textStyle(c)" (pointerdown)="$event.stopPropagation()" (keydown)="onEditorKey($event)" (blur)="commitEditing($event)" [attr.aria-label]="strings().content"></textarea>
+                    } @else {
+                      <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">{{ caption(c, band) }}</div>
+                    }
                   }
                 }
                 @if (isOnlySelected(c.id)) {
@@ -170,6 +187,11 @@ interface DragOp {
                   }
                 }
               </div>
+            }
+            @if (marquee(); as m) {
+              @if (m.bandId === band.id) {
+                <div class="ds__marquee" [style.left.mm]="m.x * zoom()" [style.top.mm]="m.y * zoom()" [style.width.mm]="m.width * zoom()" [style.height.mm]="m.height * zoom()"></div>
+              }
             }
             @if (columnShade(band); as shade) {
               <div class="ds__columns" [style.left.mm]="shade.left * zoom()" aria-hidden="true">
@@ -184,6 +206,9 @@ interface DragOp {
         </div>
       }
     </div>
+    @if (formulaEdit(); as f) {
+      <we-report-expression-editor [expression]="f.expression" [fields]="fields()" [strings]="strings()" (applied)="applyFormula($event)" (closed)="formulaEdit.set(null)" />
+    }
   `,
   styles: `
     :host {
@@ -327,6 +352,29 @@ interface DragOp {
       cursor: move;
       z-index: 1;
     }
+    /* Typing on the page: the editor takes the item's box and look. */
+    .ds__editor {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      border: 0;
+      outline: 2px solid var(--we-report-selection, #007aff);
+      resize: none;
+      overflow: hidden;
+      background: var(--we-report-page-bg, #fff);
+      line-height: 1.36;
+    }
+    .ds__marquee {
+      position: absolute;
+      z-index: 7;
+      border: 1px solid var(--we-report-selection, #007aff);
+      background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.07));
+      pointer-events: none;
+    }
     .ds__cell {
       position: absolute;
       display: flex;
@@ -437,6 +485,8 @@ export class DesignSurfaceComponent implements OnDestroy {
   readonly gridSize = input(1);
   /** When set, bound text shows this data instead of its formula. */
   readonly sample = input<DesignSample | null>(null);
+  /** Fields for the formula editor opened by double-clicking a bound item. */
+  readonly fields = input<DesignerField[]>([]);
 
   protected readonly state = inject(DesignerState);
   private readonly config = inject(WE_REPORT_CONFIG);
@@ -444,6 +494,18 @@ export class DesignSurfaceComponent implements OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
   protected readonly guides = signal<Guide[]>([]);
+  /** The rubber band while dragging on an empty part of a section (mm in that section). */
+  protected readonly marquee = signal<{ bandId: string; x: number; y: number; width: number; height: number } | null>(null);
+  /** A bound item whose formula is open in the editor. */
+  protected readonly formulaEdit = signal<{ controlId: string; row?: number; cell?: number; expression: string } | null>(null);
+  /** The text an in-place editor starts with. */
+  protected readonly editText = computed(() => {
+    const e = this.state.editing();
+    if (!e) return '';
+    const c = this.state.selectedControls().find((x) => x.id === e.controlId) ?? this.state.report().bands.flatMap((b) => b.controls).find((x) => x.id === e.controlId);
+    const value = c?.type === 'text' ? c.text : c?.type === 'table' && e.row !== undefined && e.cell !== undefined ? c.rows[e.row]?.cells[e.cell]?.text : '';
+    return typeof value === 'string' ? value : '';
+  });
 
   protected readonly geometry = computed(() => resolvePageGeometry(this.state.report().page));
   /** Top ruler in screen pixels: 0 at the left margin, a tick per millimetre, a label per centimetre. */
@@ -689,10 +751,94 @@ export class DesignSurfaceComponent implements OnDestroy {
     this.state.selection.set({ kind: 'band', id });
   }
 
-  protected onBodyPointerDown(e: PointerEvent): void {
+  /** On an empty part of a section: starts a rubber-band selection (Shift/Ctrl add to the selection). */
+  protected onBodyPointerDown(e: PointerEvent, band: Band): void {
     if (e.button !== 0) return;
     this.host.nativeElement.focus({ preventScroll: true });
-    this.state.selection.set({ kind: 'none' });
+    const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+    const sel = this.state.selection();
+    const base = additive && sel.kind === 'controls' ? sel.ids : [];
+    if (!additive) this.state.selection.set({ kind: 'none' });
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    this.begin(e, { kind: 'marquee', bandId: band.id, originals: new Map(), baseIds: base, origin: { left: rect.left, top: rect.top } });
+  }
+
+  // ── Editing on the page ─────────────────────────────────────────────────────
+
+  protected isEditing(controlId: string, row?: number, cell?: number): boolean {
+    const e = this.state.editing();
+    return !!e && e.controlId === controlId && e.row === row && e.cell === cell;
+  }
+
+  /** Double-click / F2: fixed text is typed on the page, a formula opens the formula editor. */
+  startEditing(c: ReportControl, row?: number, cell?: number): void {
+    let value: Bindable<string> | undefined;
+    if (c.type === 'text') value = c.text;
+    else if (c.type === 'table') {
+      const at = row ?? this.state.tableCell()?.row;
+      const index = cell ?? this.state.tableCell()?.cell;
+      if (at === undefined || index === undefined) return;
+      row = at;
+      cell = index;
+      value = c.rows[row]?.cells[cell]?.text;
+    }
+    if (value === undefined) return;
+    this.state.selection.set({ kind: 'controls', ids: [c.id] });
+    if (isExpression(value)) {
+      this.formulaEdit.set({ controlId: c.id, row, cell, expression: value.expression });
+      return;
+    }
+    this.state.editing.set({ controlId: c.id, row, cell });
+    // The editor exists after this change is rendered.
+    setTimeout(() => {
+      const editor = this.host.nativeElement.querySelector<HTMLTextAreaElement>('.ds__editor');
+      editor?.focus();
+      editor?.select();
+    });
+  }
+
+  /** Enter keeps the text, Shift+Enter starts a new line, Escape leaves it as it was. */
+  protected onEditorKey(e: KeyboardEvent): void {
+    e.stopPropagation();
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.state.editing.set(null);
+      this.host.nativeElement.focus({ preventScroll: true });
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      (e.target as HTMLTextAreaElement).blur();
+    }
+  }
+
+  protected commitEditing(e: FocusEvent): void {
+    const editing = this.state.editing();
+    if (!editing) return;
+    const text = (e.target as HTMLTextAreaElement).value;
+    this.state.editing.set(null);
+    this.setText(editing.controlId, editing.row, editing.cell, text);
+    this.host.nativeElement.focus({ preventScroll: true });
+  }
+
+  protected applyFormula(expression: string): void {
+    const f = this.formulaEdit();
+    this.formulaEdit.set(null);
+    if (f) this.setText(f.controlId, f.row, f.cell, { expression });
+  }
+
+  private setText(controlId: string, row: number | undefined, cell: number | undefined, text: Bindable<string>): void {
+    this.state.updateControls([controlId], (c) => {
+      if (c.type === 'text') c.text = text;
+      else if (c.type === 'table' && row !== undefined && cell !== undefined && c.rows[row]?.cells[cell]) c.rows[row].cells[cell].text = text;
+    });
+  }
+
+  /** Pointer position in mm inside the section under it, for the status bar. */
+  protected trackPointer(e: PointerEvent): void {
+    const body = (e.target as HTMLElement).closest<HTMLElement>('[data-band-id]');
+    if (!body) return this.state.pointer.set(null);
+    const r = body.getBoundingClientRect();
+    const scale = PX_PER_MM * this.zoom();
+    this.state.pointer.set({ bandId: body.dataset['bandId']!, x: round((e.clientX - r.left) / scale), y: round((e.clientY - r.top) / scale) });
   }
 
   // ── Drag: move / resize / band height ───────────────────────────────────────
@@ -755,6 +901,24 @@ export class DesignSurfaceComponent implements OnDestroy {
     op.moved = true;
     const snap = !e.altKey;
 
+    if (op.kind === 'marquee') {
+      const o = op.origin!;
+      const x1 = (op.startX - o.left) / scale;
+      const y1 = (op.startY - o.top) / scale;
+      const x2 = (e.clientX - o.left) / scale;
+      const y2 = (e.clientY - o.top) / scale;
+      const box = { x: Math.min(x1, x2), y: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
+      this.marquee.set({ bandId: op.bandId, ...box });
+      // Everything the band touches is selected, as in desktop designers.
+      const band = this.state.report().bands.find((b) => b.id === op.bandId);
+      const hit = (band?.controls ?? [])
+        .filter((c) => c.x < box.x + box.width && c.x + c.width > box.x && c.y < box.y + box.height && c.y + c.height > box.y)
+        .map((c) => c.id);
+      const ids = [...new Set([...(op.baseIds ?? []), ...hit])];
+      this.state.selection.set(ids.length ? { kind: 'controls', ids } : op.baseIds?.length ? { kind: 'controls', ids: op.baseIds } : { kind: 'none' });
+      return;
+    }
+
     if (op.kind === 'band') {
       const band = this.state.report().bands.find((b) => b.id === op.bandId);
       const minHeight = Math.max(2, ...(band?.controls.map((c) => c.y + c.height) ?? [0]));
@@ -810,6 +974,12 @@ export class DesignSurfaceComponent implements OnDestroy {
     this.op = null;
     this.stopListening();
     this.guides.set([]);
+    if (op?.kind === 'marquee') {
+      // A plain click on an empty part selects the section.
+      if (!op.moved && !op.baseIds?.length) this.state.selection.set({ kind: 'band', id: op.bandId });
+      this.marquee.set(null);
+      return;
+    }
     // A click (no drag) inside a multi-selection narrows it to the clicked control.
     if (op?.kind === 'move' && !op.moved && !op.additive && op.originals.size > 1) {
       this.state.selection.set({ kind: 'controls', ids: [op.primaryId!] });

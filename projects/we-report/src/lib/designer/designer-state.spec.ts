@@ -123,6 +123,37 @@ describe('DesignerState', () => {
     state.selectAll();
     expect(state.selectedControls().map((c) => c.id)).toEqual(['a', 'b']);
   });
+
+  it('formats the selection like a format bar: a clicked table cell, else every selected item', () => {
+    state.addControls('detail', [box('a', 0, 0), box('b', 20, 0)]);
+    state.selection.set({ kind: 'controls', ids: ['a', 'b'] });
+    state.applyStyle('bold', true);
+    expect([ctl('a').styleOverrides?.bold, ctl('b').styleOverrides?.bold]).toEqual([true, true]);
+    state.applyStyle('bold', undefined);
+    expect(ctl('a').styleOverrides).toBeUndefined();
+
+    const table = { id: 't', type: 'table' as const, x: 0, y: 10, width: 40, height: 6, columns: [20, 20], rows: [{ height: 6, cells: [{ text: 'x' }, { text: 'y' }] }] };
+    state.addControls('detail', [table]);
+    state.tableCell.set({ controlId: 't', row: 0, cell: 1 });
+    state.applyStyle('color', '#ff0000');
+    const t = ctl('t') as typeof table & { styleOverrides?: unknown };
+    expect(t.rows[0].cells.map((c) => (c as { styleOverrides?: { color?: string } }).styleOverrides?.color)).toEqual([undefined, '#ff0000']);
+    expect(t.styleOverrides).toBeUndefined();
+  });
+
+  it('resizes with the keyboard and tabs through items top to bottom, left to right', () => {
+    state.addControls('detail', [box('right', 30, 0), box('below', 0, 5), box('left', 0, 0)]);
+    state.selection.set({ kind: 'controls', ids: ['left'] });
+    state.resizeSelection(5, -10);
+    expect([ctl('left').width, ctl('left').height]).toEqual([15, 1]);
+    state.selectNext(1);
+    expect(state.selectedControls()[0].id).toBe('right');
+    state.selectNext(1);
+    expect(state.selectedControls()[0].id).toBe('below');
+    state.selectNext(-1);
+    state.selectNext(-1);
+    expect(state.selectedControls()[0].id).toBe('left');
+  });
 });
 
 describe('designer helpers', () => {

@@ -1,5 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { Band, createBlankReport, ReportControl, ReportDefinition } from 'we-report-core';
+import { Band, createBlankReport, ReportControl, ReportDefinition, ReportStyle } from 'we-report-core';
 import { TableCellRef } from './table-ops';
 
 export type Selection = { kind: 'none' } | { kind: 'controls'; ids: string[] } | { kind: 'band'; id: string };
@@ -38,6 +38,10 @@ export class DesignerState {
   readonly canRedo = signal(false);
   /** The table cell last clicked; the inspector edits it while its table is selected. */
   readonly tableCell = signal<TableCellRef | null>(null);
+  /** Text being typed on the page (double-click / F2): a text control, or a cell of a table. */
+  readonly editing = signal<{ controlId: string; row?: number; cell?: number } | null>(null);
+  /** Where the pointer is on the page, for the status bar: band and mm inside it. */
+  readonly pointer = signal<{ bandId: string; x: number; y: number } | null>(null);
   /** The first data row and its scope, for live values in the design and the formula editor. */
   readonly sample = signal<{ row: unknown; rows: readonly unknown[]; parent: unknown } | null>(null);
 
@@ -273,6 +277,53 @@ export class DesignerState {
       if (dimension !== 'width') c.height = ref.height;
       band.height = Math.max(band.height, c.y + c.height);
     });
+  }
+
+  /**
+   * Sets one style property on the selection, the way a format bar does: on the clicked table
+   * cell when a single table is selected and a cell of it is chosen, else on every selected item.
+   * `undefined` removes the override (back to the style sheet).
+   */
+  applyStyle<K extends keyof ReportStyle>(key: K, value: ReportStyle[K] | undefined): void {
+    const sel = this.selection();
+    if (sel.kind !== 'controls') return;
+    const set = (target: { styleOverrides?: ReportStyle }) => {
+      const style: ReportStyle = { ...target.styleOverrides };
+      if (value === undefined) delete style[key];
+      else style[key] = value;
+      target.styleOverrides = Object.keys(style).length ? style : undefined;
+    };
+    const cell = this.tableCell();
+    const single = sel.ids.length === 1 ? this.selectedControls()[0] : undefined;
+    if (single?.type === 'table' && cell?.controlId === single.id) {
+      this.updateControls([single.id], (c) => {
+        const target = c.type === 'table' ? c.rows[cell.row]?.cells[cell.cell] : undefined;
+        if (target) set(target);
+      }, `format-${key}`);
+      return;
+    }
+    this.updateControls(sel.ids, (c) => set(c), `format-${key}`);
+  }
+
+  /** Grows or shrinks the selection by (dw, dh) mm, never below 1 mm. */
+  resizeSelection(dw: number, dh: number): void {
+    const sel = this.selection();
+    if (sel.kind !== 'controls') return;
+    this.updateControls(sel.ids, (c, band) => {
+      c.width = round(Math.max(1, c.width + dw));
+      c.height = round(Math.max(1, c.height + dh));
+      band.height = Math.max(band.height, round(c.y + c.height));
+    }, 'resize-keys');
+  }
+
+  /** Tab order of a band: top to bottom, then left to right. */
+  selectNext(step: 1 | -1): void {
+    const all = this.report().bands.flatMap((b) => [...b.controls].sort((p, q) => p.y - q.y || p.x - q.x));
+    if (!all.length) return;
+    const sel = this.selection();
+    const current = sel.kind === 'controls' ? all.findIndex((c) => c.id === sel.ids[sel.ids.length - 1]) : -1;
+    const next = current < 0 ? (step > 0 ? 0 : all.length - 1) : (current + step + all.length) % all.length;
+    this.selection.set({ kind: 'controls', ids: [all[next].id] });
   }
 
   /** Draw order inside a band: later controls paint on top. */
