@@ -36,7 +36,7 @@
       }
     </div>
     @if (shownFields().rows.length) {
-      <button type="button" class="wd__text-btn wd__magic" (click)="autoDesign()" [title]="s.autoDesignHint"><span [innerHTML]="'wand' | weReportIcon"></span>&nbsp;{{ s.autoDesign }}</button>
+      <button type="button" class="wd__text-btn wd__magic" (click)="autoDesign()" [title]="s.autoDesignHint"><span [innerHTML]="'wand' | weReportIcon"></span>&nbsp;{{ s.wizardTitle }}</button>
     }
     <button type="button" class="wd__text-btn" (click)="dataDialogOpen.set(true)">
       <span [innerHTML]="'database' | weReportIcon"></span>&nbsp;{{ s.dataSources }}

@@ -61,7 +61,7 @@ Formulas and formats are described in [Formulas](expressions.md).
 
 The designer behaves like a desktop report designer:
 
-- **Start fast** — *Design from data* opens the report wizard: pick the columns, what to group and
+- **Start fast** — the *Report wizard* builds a list from your data: pick the columns, what to group and
   sort by, totals and paper orientation. Undo brings your previous design back.
 - **Add** — drag an item or a data field onto the page, or click an item / double-click a field to
   add it to the selected section. Right-click an empty spot for *Add text here*. Drop a field on a
