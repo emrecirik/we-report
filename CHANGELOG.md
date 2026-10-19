@@ -10,7 +10,10 @@
   built in the designer without typing a formula.
 - Watermark: large text behind every page (`watermark`), fixed or from data (e.g. `PAID` only for
   paid invoices), rotated 45° or straight.
-- Formulas: `AmountInWords` and `NumberToWords` (Turkish and English).
+- Formulas: `AmountInWords` and `NumberToWords` (Turkish and English), and a formula editor (ƒx
+  next to every formula) listing fields, parameters and every function by category with a
+  one-line explanation, inserting at the cursor and showing the result for the first row as you
+  type. Core exports the catalogue as `EXPRESSION_FUNCTIONS`.
 - Designer: Arrange section (align edges/centres, space evenly, same width/height, bring to
   front/send to back), right-click menu, cut/copy/paste (also between designers) and select all
   with the usual shortcuts, an Outline tab listing every item by section, a top ruler with margins

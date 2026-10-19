@@ -257,6 +257,21 @@ export interface WeReportLocale {
   chartHint: string;
   conditionalFormatting: string;
   watermark: string;
+  formulaEditor: string;
+  formulaEditorHint: string;
+  formulaResult: string;
+  formulaEmpty: string;
+  apply: string;
+  cancel: string;
+  fnLogic: string;
+  fnText: string;
+  fnNumber: string;
+  fnDate: string;
+  fnAggregate: string;
+  functions: string;
+  openFormulaEditor: string;
+  /** One sentence per function of `EXPRESSION_FUNCTIONS`, keyed by name. */
+  functionHelp: Record<string, string>;
   watermarkHint: string;
   watermarkAngle: string;
   conditionalHint: string;
@@ -534,6 +549,53 @@ export const weReportLocaleEn: WeReportLocale = {
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
+  formulaEditor: 'Formula editor',
+  formulaEditorHint: 'Click a field or function to insert it at the cursor.',
+  formulaResult: 'Result for the first row',
+  formulaEmpty: '(empty)',
+  apply: 'Apply',
+  cancel: 'Cancel',
+  fnLogic: 'Logic',
+  fnText: 'Text',
+  fnNumber: 'Number',
+  fnDate: 'Date',
+  fnAggregate: 'Totals',
+  functions: 'Functions',
+  openFormulaEditor: 'Open the formula editor',
+  functionHelp: {
+    Iif: 'Chooses between two values: the first when the condition is true, otherwise the second.',
+    IsNull: 'The value, or the fallback when it is empty.',
+    Concat: 'Joins texts together.',
+    Len: 'Number of characters.',
+    Upper: 'CAPITAL LETTERS (Turkish İ/ı handled).',
+    Lower: 'small letters (Turkish İ/ı handled).',
+    Trim: 'Removes spaces at both ends.',
+    Substring: 'Part of a text, from a position (0 = first character).',
+    Replace: 'Replaces every occurrence of a text.',
+    Contains: 'True when the text contains the part.',
+    StartsWith: 'True when the text starts with the part.',
+    EndsWith: 'True when the text ends with the part.',
+    ToString: 'The value as text.',
+    Format: 'Shows a value with a pattern, e.g. \'n2\' or \'dd.MM.yyyy\'.',
+    AmountInWords: 'An amount written in words with its currency, for invoices and cheques.',
+    NumberToWords: 'A whole number written in words.',
+    Round: 'Rounds to the given decimals (half away from zero).',
+    Abs: 'The number without its sign.',
+    Floor: 'Rounds down to a whole number.',
+    Ceiling: 'Rounds up to a whole number.',
+    ToNumber: 'Reads a number from text.',
+    Today: 'The print date (no time).',
+    Now: 'The print date and time.',
+    Year: 'Year of a date.',
+    Month: 'Month of a date (1–12).',
+    Day: 'Day of the month.',
+    AddDays: 'A date moved by a number of days, e.g. a due date.',
+    Sum: 'Total over the rows in scope (group, page or report).',
+    Count: 'Number of rows in scope.',
+    Avg: 'Average over the rows in scope.',
+    Min: 'Smallest value over the rows in scope (or of two values).',
+    Max: 'Largest value over the rows in scope (or of two values).',
+  },
   watermarkHint: 'Large faint text behind every page, e.g. DRAFT or PAID. Can come from data.',
   watermarkAngle: 'Direction',
   conditionalHint: 'Change the look when a condition is true, e.g. negative amounts in red.',
@@ -811,6 +873,53 @@ export const weReportLocaleTr: WeReportLocale = {
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
+  formulaEditor: 'Formül düzenleyici',
+  formulaEditorHint: 'Bir alana veya fonksiyona tıklayınca imlecin olduğu yere eklenir.',
+  formulaResult: 'İlk satır için sonuç',
+  formulaEmpty: '(boş)',
+  apply: 'Uygula',
+  cancel: 'Vazgeç',
+  fnLogic: 'Mantık',
+  fnText: 'Metin',
+  fnNumber: 'Sayı',
+  fnDate: 'Tarih',
+  fnAggregate: 'Toplamlar',
+  functions: 'Fonksiyonlar',
+  openFormulaEditor: 'Formül düzenleyiciyi aç',
+  functionHelp: {
+    Iif: 'İki değer arasında seçer: koşul doğruysa ilki, değilse ikincisi.',
+    IsNull: 'Değer boşsa yerine konacak değeri verir.',
+    Concat: 'Metinleri birleştirir.',
+    Len: 'Karakter sayısı.',
+    Upper: 'BÜYÜK HARF (Türkçe İ/ı doğru).',
+    Lower: 'küçük harf (Türkçe İ/ı doğru).',
+    Trim: 'Baştaki ve sondaki boşlukları siler.',
+    Substring: 'Metnin bir parçası; konum 0 ilk karakterdir.',
+    Replace: 'Bir metnin geçtiği her yeri değiştirir.',
+    Contains: 'Metin parçayı içeriyorsa doğru.',
+    StartsWith: 'Metin parçayla başlıyorsa doğru.',
+    EndsWith: 'Metin parçayla bitiyorsa doğru.',
+    ToString: 'Değeri metne çevirir.',
+    Format: 'Değeri bir kalıpla gösterir; örn. \'n2\' veya \'dd.MM.yyyy\'.',
+    AmountInWords: 'Tutarı para birimiyle yazıyla yazar; fatura ve çekler için.',
+    NumberToWords: 'Tam sayıyı yazıyla yazar.',
+    Round: 'Verilen ondalık basamağa yuvarlar.',
+    Abs: 'Sayının işaretsiz hâli.',
+    Floor: 'Aşağı yuvarlar.',
+    Ceiling: 'Yukarı yuvarlar.',
+    ToNumber: 'Metinden sayı okur.',
+    Today: 'Yazdırma tarihi (saatsiz).',
+    Now: 'Yazdırma tarihi ve saati.',
+    Year: 'Tarihin yılı.',
+    Month: 'Tarihin ayı (1–12).',
+    Day: 'Ayın günü.',
+    AddDays: 'Tarihe gün ekler; örn. vade tarihi.',
+    Sum: 'Kapsamdaki satırların toplamı (grup, sayfa veya rapor).',
+    Count: 'Kapsamdaki satır sayısı.',
+    Avg: 'Kapsamdaki satırların ortalaması.',
+    Min: 'Kapsamdaki en küçük değer (veya iki değerden küçüğü).',
+    Max: 'Kapsamdaki en büyük değer (veya iki değerden büyüğü).',
+  },
   watermarkHint: 'Her sayfanın arkasında büyük, soluk yazı; örneğin TASLAK veya ÖDENDİ. Veriden de gelebilir.',
   watermarkAngle: 'Yön',
   conditionalHint: 'Bir koşul doğru olduğunda görünümü değiştirin; örneğin eksi tutarlar kırmızı olsun.',

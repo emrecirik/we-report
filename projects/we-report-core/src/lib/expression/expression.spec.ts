@@ -1,5 +1,5 @@
 import { amountInWords, numberToWords } from './words';
-import { evaluate } from './evaluate';
+import { evaluate, EXPRESSION_FUNCTIONS, implementedFunctionNames } from './evaluate';
 import { ExpressionError, parseExpression } from './parser';
 
 describe('expression language', () => {
@@ -113,5 +113,13 @@ describe('amounts in words', () => {
     expect(numberToWords(1234, 'en-US')).toBe('one thousand two hundred thirty-four');
     expect(amountInWords(-12.05, 'en-US', 'USD')).toBe('minus twelve dollars and five cents');
     expect(evaluate('AmountInWords([x])', { row: { x: 100 }, locale: 'tr-TR', currency: 'TRY' })).toBe('Yüz Türk Lirası');
+  });
+});
+
+describe('function catalogue', () => {
+  it('lists exactly the functions the interpreter implements', () => {
+    const catalogue = EXPRESSION_FUNCTIONS.map((f) => f.name.toLowerCase()).sort();
+    expect(catalogue).toEqual([...new Set(implementedFunctionNames())].sort());
+    for (const f of EXPRESSION_FUNCTIONS) expect(f.signature.startsWith(`${f.name}(`)).toBeTrue();
   });
 });

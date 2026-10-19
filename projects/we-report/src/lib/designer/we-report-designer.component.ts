@@ -76,16 +76,7 @@ export class WeReportDesignerComponent {
   });
   /** Show the first data row inside bound controls instead of their formulas. */
   protected readonly showData = signal(true);
-  protected readonly sample = computed<DesignSample | null>(() => {
-    if (!this.showData()) return null;
-    try {
-      const { rows, parent } = resolveReportData(this.state.report(), this.data());
-      if (!rows?.length && parent === undefined) return null;
-      return { row: rows?.[0], rows: rows ?? [], parent };
-    } catch {
-      return null;
-    }
-  });
+  protected readonly sample = computed<DesignSample | null>(() => (this.showData() ? this.state.sample() : null));
 
   protected readonly fields = computed(() => designerFields(this.state.report(), this.data()));
   protected readonly allFields = computed<DesignerField[]>(() => [...this.fields().rows, ...this.fields().parent]);
@@ -109,6 +100,17 @@ export class WeReportDesignerComponent {
       });
     }, { allowSignalWrites: true });
     effect(() => this.zoomLevel.set(this.zoom()), { allowSignalWrites: true });
+    // The formula editor reads the sample even when "Show data" is off.
+    effect(() => {
+      let sample: DesignSample | null = null;
+      try {
+        const { rows, parent } = resolveReportData(this.state.report(), this.data());
+        if (rows?.length || parent !== undefined) sample = { row: rows?.[0], rows: rows ?? [], parent };
+      } catch {
+        sample = null;
+      }
+      this.state.sample.set(sample);
+    }, { allowSignalWrites: true });
     this.fontsService
       .ready()
       .then((r) => this.fontFamilies.set(r.familyNames()))

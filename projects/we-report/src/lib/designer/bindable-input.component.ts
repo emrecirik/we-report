@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { Bindable, isExpression } from 'we-report-core';
 import { WeReportLocale } from '../we-report-locale';
 import { DesignerField } from './designer-fields';
+import { ExpressionEditorComponent } from './expression-editor.component';
 
 /**
  * Edits a value that is either fixed or comes from data: "Fixed text" with a text box, or
@@ -10,6 +11,7 @@ import { DesignerField } from './designer-fields';
 @Component({
   selector: 'we-report-bindable-input',
   standalone: true,
+  imports: [ExpressionEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bi__mode" role="radiogroup">
@@ -27,8 +29,14 @@ import { DesignerField } from './designer-fields';
       }
       <label class="bi__formula">
         <span>{{ strings().expression }}</span>
-        <input class="bi__input bi__mono" [value]="expression()" (input)="setExpression($any($event.target).value)" spellcheck="false" />
+        <span class="bi__row">
+          <input class="bi__input bi__mono" [value]="expression()" (input)="setExpression($any($event.target).value)" spellcheck="false" />
+          <button type="button" class="bi__fx" (click)="editorOpen.set(true)" [title]="strings().openFormulaEditor" [attr.aria-label]="strings().openFormulaEditor">ƒx</button>
+        </span>
       </label>
+      @if (editorOpen()) {
+        <we-report-expression-editor [expression]="expression()" [fields]="fields()" [strings]="strings()" (applied)="setExpression($event); editorOpen.set(false)" (closed)="editorOpen.set(false)" />
+      }
       <small class="bi__hint">{{ strings().expressionHint }}</small>
     } @else if (multiline()) {
       <textarea class="bi__input" rows="3" [value]="fixedText()" (input)="setFixed($any($event.target).value)"></textarea>
@@ -85,6 +93,23 @@ import { DesignerField } from './designer-fields';
         transition: none;
       }
     }
+    .bi__row {
+      display: flex;
+      gap: 4px;
+    }
+    .bi__fx {
+      flex: none;
+      width: 30px;
+      border: 0;
+      border-radius: var(--we-report-control-radius, 7px);
+      background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.07));
+      color: var(--we-report-accent, #007aff);
+      font: italic 600 13px Georgia, 'Times New Roman', serif;
+      cursor: pointer;
+    }
+    .bi__fx:hover {
+      background: var(--we-report-hover-bg, rgba(118, 118, 128, 0.12));
+    }
     .bi__mono {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     }
@@ -108,6 +133,7 @@ export class BindableInputComponent {
   readonly multiline = input(false);
   readonly valueChange = output<Bindable<string>>();
 
+  protected readonly editorOpen = signal(false);
   protected readonly bound = computed(() => isExpression(this.value()));
   protected readonly expression = computed(() => {
     const v = this.value();

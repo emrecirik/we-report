@@ -113,12 +113,59 @@ const FUNCTIONS: Record<string, FunctionDef> = {
 
 const AGGREGATES = new Set(['sum', 'count', 'avg', 'min', 'max']);
 
-/** Names the designer's expression editor can offer (aggregates and Iif included). */
-export const EXPRESSION_FUNCTION_NAMES: readonly string[] = [
-  'Iif', 'IsNull', 'Concat', 'NumberToWords', 'AmountInWords', 'Len', 'Upper', 'Lower', 'Trim', 'Substring', 'Replace', 'Contains',
-  'StartsWith', 'EndsWith', 'Round', 'Abs', 'Floor', 'Ceiling', 'ToNumber', 'ToString', 'Format',
-  'Today', 'Now', 'Year', 'Month', 'Day', 'AddDays', 'Sum', 'Count', 'Avg', 'Min', 'Max',
+export type FunctionCategory = 'logic' | 'text' | 'number' | 'date' | 'aggregate';
+
+/** One entry of the function catalogue the designer's formula editor offers. */
+export interface FunctionInfo {
+  name: string;
+  /** How it is called, e.g. `Round(number, digits?)`. */
+  signature: string;
+  category: FunctionCategory;
+}
+
+/** Every function of the language. Explanations are locale strings keyed by `name`. */
+export const EXPRESSION_FUNCTIONS: readonly FunctionInfo[] = [
+  { name: 'Iif', signature: 'Iif(condition, then, else)', category: 'logic' },
+  { name: 'IsNull', signature: 'IsNull(value, fallback)', category: 'logic' },
+  { name: 'Concat', signature: 'Concat(a, b, …)', category: 'text' },
+  { name: 'Len', signature: 'Len(text)', category: 'text' },
+  { name: 'Upper', signature: 'Upper(text)', category: 'text' },
+  { name: 'Lower', signature: 'Lower(text)', category: 'text' },
+  { name: 'Trim', signature: 'Trim(text)', category: 'text' },
+  { name: 'Substring', signature: 'Substring(text, start, length?)', category: 'text' },
+  { name: 'Replace', signature: 'Replace(text, find, with)', category: 'text' },
+  { name: 'Contains', signature: 'Contains(text, part)', category: 'text' },
+  { name: 'StartsWith', signature: 'StartsWith(text, part)', category: 'text' },
+  { name: 'EndsWith', signature: 'EndsWith(text, part)', category: 'text' },
+  { name: 'ToString', signature: 'ToString(value)', category: 'text' },
+  { name: 'Format', signature: "Format(value, 'pattern')", category: 'text' },
+  { name: 'AmountInWords', signature: 'AmountInWords(amount, currency?)', category: 'text' },
+  { name: 'NumberToWords', signature: 'NumberToWords(number)', category: 'text' },
+  { name: 'Round', signature: 'Round(number, digits?)', category: 'number' },
+  { name: 'Abs', signature: 'Abs(number)', category: 'number' },
+  { name: 'Floor', signature: 'Floor(number)', category: 'number' },
+  { name: 'Ceiling', signature: 'Ceiling(number)', category: 'number' },
+  { name: 'ToNumber', signature: 'ToNumber(value)', category: 'number' },
+  { name: 'Today', signature: 'Today()', category: 'date' },
+  { name: 'Now', signature: 'Now()', category: 'date' },
+  { name: 'Year', signature: 'Year(date)', category: 'date' },
+  { name: 'Month', signature: 'Month(date)', category: 'date' },
+  { name: 'Day', signature: 'Day(date)', category: 'date' },
+  { name: 'AddDays', signature: 'AddDays(date, days)', category: 'date' },
+  { name: 'Sum', signature: 'Sum(value)', category: 'aggregate' },
+  { name: 'Count', signature: 'Count()', category: 'aggregate' },
+  { name: 'Avg', signature: 'Avg(value)', category: 'aggregate' },
+  { name: 'Min', signature: 'Min(value)', category: 'aggregate' },
+  { name: 'Max', signature: 'Max(value)', category: 'aggregate' },
 ];
+
+/** Function names only, in catalogue order. */
+export const EXPRESSION_FUNCTION_NAMES: readonly string[] = EXPRESSION_FUNCTIONS.map((f) => f.name);
+
+/** Lower-case names the interpreter implements; the catalogue test keeps both lists in step. */
+export function implementedFunctionNames(): string[] {
+  return [...Object.keys(FUNCTIONS), ...AGGREGATES, 'iif'];
+}
 
 /** Resolves a field path on own properties only, so `[__proto__]` or `[constructor]` read nothing. */
 function readField(row: unknown, path: string[]): Value {
