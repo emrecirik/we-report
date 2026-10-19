@@ -305,6 +305,9 @@ export class WeReportDesignerComponent {
   }
 
   protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  protected readonly gridSteps = [0, 0.5, 1, 2, 5];
+  /** Snap grid in mm; 0 turns the grid off. */
+  protected readonly gridSize = signal(1);
 
   protected pickZoom(value: string): void {
     if (value === 'width') this.fitWidth();

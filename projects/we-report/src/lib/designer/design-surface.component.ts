@@ -129,6 +129,7 @@ interface DragOp {
             [style.height.mm]="band.height * zoom()"
             [style.background-color]="band.backgroundColor ?? null"
             [style.background-size.mm]="gridSize() * zoom()"
+            [style.background-image]="gridSize() ? null : 'none'"
             (pointerdown)="onBodyPointerDown($event, band)"
             (dragover)="onDragOver($event)"
             (drop)="onDrop($event, band)"

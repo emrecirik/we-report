@@ -45,6 +45,11 @@
       <input type="checkbox" [checked]="showData()" (change)="showData.set($any($event.target).checked)" />
       {{ s.showData }}
     </label>
+    <select class="wd__zoom" [title]="s.snapGrid" [attr.aria-label]="s.snapGrid" (change)="gridSize.set(+$any($event.target).value)">
+      @for (g of gridSteps; track g) {
+        <option [value]="g" [selected]="g === gridSize()">{{ g ? '▦ ' + g + ' mm' : s.gridOff }}</option>
+      }
+    </select>
     <span class="wd__spacer"></span>
     <div class="wd__menu">
       <button type="button" class="wd__text-btn" [class.wd__issues]="issues().length" (click)="problemsOpen.set(!problemsOpen())" [attr.aria-expanded]="problemsOpen()">
@@ -194,7 +199,7 @@
       <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="!!state.painter()" (click)="togglePainter()" [title]="s.formatPainter" [attr.aria-label]="s.formatPainter" [attr.aria-pressed]="!!state.painter()" [innerHTML]="'brush' | weReportIcon"></button>
     </div>
     <main #canvas class="wd__canvas" tabindex="-1" (contextmenu)="openContextMenu($event)" (wheel)="onCanvasWheel($event)">
-      <we-report-design-surface [strings]="s" [zoom]="zoomLevel()" [sample]="sample()" [fields]="allFields()" />
+      <we-report-design-surface [strings]="s" [zoom]="zoomLevel()" [gridSize]="gridSize()" [sample]="sample()" [fields]="allFields()" />
     </main>
     </div>
 

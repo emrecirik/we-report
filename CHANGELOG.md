@@ -9,7 +9,7 @@
   click a toolbox item or double-click a field to add it; a format bar (font, size, bold, italic,
   underline, alignment, colours, border); right-click menu; outline tab; status bar with pointer
   position and selection size; resizable and collapsible side panels that remember their width;
-  zoom menu; format painter (copy one item's look to another); keyboard shortcuts sheet (F1); Tab moves between items, Ctrl+arrows resize.
+  zoom menu; grid size menu (0.5–5 mm or no grid); format painter (copy one item's look to another); keyboard shortcuts sheet (F1); Tab moves between items, Ctrl+arrows resize.
 - Viewer: first/previous/next/last page, a page-number box that follows scrolling, zoom presets
   (50–200 %, fit width, whole page), find in report (Ctrl+F) with highlighted matches and
   next/previous, PageUp/PageDown/Home/End and Ctrl+P. New theme token `--we-report-search-highlight`.

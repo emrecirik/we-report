@@ -284,6 +284,8 @@ export interface WeReportLocale {
   wizardTotals: string;
   automatic: string;
   createReport: string;
+  snapGrid: string;
+  gridOff: string;
   formatPainter: string;
   addByClick: string;
   resizePanel: string;
@@ -644,6 +646,8 @@ export const weReportLocaleEn: WeReportLocale = {
   wizardTotals: 'Totals of number columns',
   automatic: 'Automatic',
   createReport: 'Create report',
+  snapGrid: 'Snap to grid (hold Alt to move freely)',
+  gridOff: 'No grid',
   formatPainter: 'Copy formatting: click it, then click another item (Esc cancels)',
   addByClick: 'Click an item (or double-click a field) to add it to the selected section.',
   resizePanel: 'Drag to resize, double-click to hide',
@@ -1036,6 +1040,8 @@ export const weReportLocaleTr: WeReportLocale = {
   wizardTotals: 'Sayı sütunlarının toplamı',
   automatic: 'Otomatik',
   createReport: 'Raporu oluştur',
+  snapGrid: 'Izgaraya yapıştır (serbest taşımak için Alt basılı tutun)',
+  gridOff: 'Izgara yok',
   formatPainter: 'Biçimi kopyala: tıklayın, sonra başka bir öğeye tıklayın (Esc vazgeçer)',
   addByClick: 'Bir öğeye tıklayın (veya bir alana çift tıklayın): seçili bölüme eklenir.',
   resizePanel: 'Boyutlandırmak için sürükleyin, gizlemek için çift tıklayın',
