@@ -4,7 +4,7 @@
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'design'" [class.wd__tab--on]="tab() === 'design'" (click)="tab.set('design')">
       <span [innerHTML]="'design' | weReportIcon"></span>{{ s.design }}
     </button>
-    <button type="button" role="tab" [attr.aria-selected]="tab() === 'preview'" [class.wd__tab--on]="tab() === 'preview'" (click)="tab.set('preview')">
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'preview'" [class.wd__tab--on]="tab() === 'preview'" (click)="tab.set('preview')" title="F5">
       <span [innerHTML]="'preview' | weReportIcon"></span>{{ s.preview }}
     </button>
   </div>
@@ -331,6 +331,7 @@
       <dt>Alt</dt><dd>{{ s.noSnap }}</dd>
       <dt>Ctrl + ⇱</dt><dd>{{ s.dragCopy }}</dd>
       <dt>⬚</dt><dd>{{ s.rubberBand }}</dd>
+      <dt>F5</dt><dd>{{ s.preview }} · {{ s.design }}</dd>
       <dt>F1</dt><dd>{{ s.keyboardShortcuts }}</dd>
     </dl>
     <button type="button" class="wd__text-btn" (click)="shortcutsOpen.set(false)">{{ s.close }}</button>

@@ -545,6 +545,12 @@ export class WeReportDesignerComponent {
 
   @HostListener('keydown', ['$event'])
   protected onKeydown(e: KeyboardEvent): void {
+    if (e.key === 'F5') {
+      // Desktop designers preview with F5; here it switches between design and preview.
+      e.preventDefault();
+      this.tab.set(this.tab() === 'design' ? 'preview' : 'design');
+      return;
+    }
     if (this.tab() !== 'design') return;
     const target = e.target as HTMLElement;
     const typing = target.closest('input, textarea, select, [contenteditable="true"]');
