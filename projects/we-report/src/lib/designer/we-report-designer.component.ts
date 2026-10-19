@@ -118,7 +118,7 @@ export class WeReportDesignerComponent {
       let sample: DesignSample | null = null;
       try {
         const { rows, parent } = resolveReportData(this.state.report(), this.data());
-        if (rows?.length || parent !== undefined) sample = { row: rows?.[0], rows: rows ?? [], parent };
+        if (rows?.length || (parent !== undefined && parent !== null)) sample = { row: rows?.[0], rows: rows ?? [], parent };
       } catch {
         sample = null;
       }
