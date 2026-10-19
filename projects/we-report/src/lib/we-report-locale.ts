@@ -257,6 +257,11 @@ export interface WeReportLocale {
   chartHint: string;
   conditionalFormatting: string;
   watermark: string;
+  reportLocale: string;
+  reportLocaleRegion: string;
+  reportCurrency: string;
+  reportLocaleDefault: string;
+  reportLocaleHint: string;
   formulaEditor: string;
   formulaEditorHint: string;
   formulaResult: string;
@@ -549,6 +554,11 @@ export const weReportLocaleEn: WeReportLocale = {
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
+  reportLocale: 'Language and region',
+  reportLocaleRegion: 'Numbers and dates',
+  reportCurrency: 'Currency',
+  reportLocaleDefault: 'App default',
+  reportLocaleHint: 'How this report writes numbers, dates, money and amounts in words, wherever it is printed.',
   formulaEditor: 'Formula editor',
   formulaEditorHint: 'Click a field or function to insert it at the cursor.',
   formulaResult: 'Result for the first row',
@@ -873,6 +883,11 @@ export const weReportLocaleTr: WeReportLocale = {
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
+  reportLocale: 'Dil ve bölge',
+  reportLocaleRegion: 'Sayı ve tarihler',
+  reportCurrency: 'Para birimi',
+  reportLocaleDefault: 'Uygulama ayarı',
+  reportLocaleHint: 'Bu rapor nerede yazdırılırsa yazdırılsın sayıları, tarihleri, parayı ve yazıyla tutarı nasıl yazacağı.',
   formulaEditor: 'Formül düzenleyici',
   formulaEditorHint: 'Bir alana veya fonksiyona tıklayınca imlecin olduğu yere eklenir.',
   formulaResult: 'İlk satır için sonuç',

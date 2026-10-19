@@ -1,11 +1,20 @@
 # we-report
 
+[![npm version](https://img.shields.io/npm/v/we-report-angular.svg?label=we-report-angular)](https://www.npmjs.com/package/we-report-angular)
+[![npm downloads](https://img.shields.io/npm/dm/we-report-angular.svg?label=downloads)](https://www.npmjs.com/package/we-report-angular)
+[![npm version](https://img.shields.io/npm/v/we-report-core.svg?label=we-report-core)](https://www.npmjs.com/package/we-report-core)
+[![npm downloads](https://img.shields.io/npm/dm/we-report-core.svg?label=downloads)](https://www.npmjs.com/package/we-report-core)
+[![CI](https://github.com/emrecirik/we-report/actions/workflows/ci.yml/badge.svg)](https://github.com/emrecirik/we-report/actions/workflows/ci.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Angular 18-22](https://img.shields.io/badge/Angular-18%20%E2%80%93%2022-dd0031.svg)](https://angular.dev)
+[![Languages](https://img.shields.io/badge/UI-EN%20%C2%B7%20TR%20%C2%B7%20DE%20%C2%B7%20FR%20%C2%B7%20ES-5b5bd6.svg)](docs/localization.md)
+
 **Free, open-source, native Angular report designer and viewer.** Design banded reports with drag
 and drop, bind them to JSON, Excel/CSV, web services or live databases, preview, print and export to
 PDF and Excel — the DevExpress XtraReports / Crystal Reports experience, MIT licensed, with **no
 backend required**.
 
-> Status: early development, not yet published to npm. Try it in the Studio (`npm start`).
+**Try it:** [we-report Studio](https://emrecirik.github.io/we-report/) · **Install:** `npm install we-report-angular we-report-core`
 
 ## Why
 
@@ -48,6 +57,7 @@ backend required**.
 - [Data sources](docs/data-sources.md)
 - [Data backend](docs/backend.md) — protocol and samples
 - [Theming and fonts](docs/theming.md)
+- [Languages and regions](docs/localization.md)
 
 ## Development
 

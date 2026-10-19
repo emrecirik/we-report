@@ -58,6 +58,28 @@
     </div>
   </section>
   <section class="pp__section">
+    <h3>{{ s.reportLocale }}</h3>
+    <label class="pp__row">
+      <span>{{ s.reportLocaleRegion }}</span>
+      <select (change)="setCulture('locale', $any($event.target).value)">
+        <option value="" [selected]="!report().locale">{{ s.reportLocaleDefault }}</option>
+        @for (l of cultures; track l.id) {
+          <option [value]="l.id" [selected]="report().locale === l.id">{{ l.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="pp__row">
+      <span>{{ s.reportCurrency }}</span>
+      <select (change)="setCulture('currency', $any($event.target).value)">
+        <option value="" [selected]="!report().currency">{{ s.reportLocaleDefault }}</option>
+        @for (c of currencies; track c) {
+          <option [value]="c" [selected]="report().currency === c">{{ c }}</option>
+        }
+      </select>
+    </label>
+    <small class="pp__hint">{{ s.reportLocaleHint }}</small>
+  </section>
+  <section class="pp__section">
     <h3>{{ s.watermark }}</h3>
     @let wm = report().watermark;
     <we-report-bindable-input [value]="wm?.text ?? ''" [fields]="fields()" [strings]="s" (valueChange)="setWatermark({ text: $event })" />

@@ -3,6 +3,10 @@
  */
 
 export * from './lib/we-report-locale';
+export * from './lib/locales/de';
+export * from './lib/locales/fr';
+export * from './lib/locales/es';
+export * from './lib/we-report-locales';
 export * from './lib/we-report-config';
 export * from './lib/we-report-icons';
 export * from './lib/we-report-icon.pipe';

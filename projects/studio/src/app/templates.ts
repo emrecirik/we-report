@@ -8,6 +8,7 @@ import sales from '../templates/sales.wrpt.json';
 
 export interface StudioTemplate {
   id: string;
+  /** Turkish and English; other languages show the English name. */
   name: { tr: string; en: string };
   description: { tr: string; en: string };
   report: () => ReportDefinition;

@@ -7,7 +7,7 @@
     {{ t.template }}
     <select (change)="useTemplate($any($event.target).value)">
       @for (tpl of templates; track tpl.id) {
-        <option [value]="tpl.id" [selected]="tpl.id === templateId()">{{ tpl.name[language()] }}</option>
+        <option [value]="tpl.id" [selected]="tpl.id === templateId()">{{ language() === 'tr' ? tpl.name.tr : tpl.name.en }}</option>
       }
     </select>
   </label>
@@ -18,10 +18,17 @@
   </label>
   <button type="button" (click)="save()">{{ t.save }}</button>
   <span class="spacer"></span>
+  <a class="badge" href="https://www.npmjs.com/package/we-report-angular" target="_blank" rel="noopener" title="npm">
+    <img src="https://img.shields.io/npm/dm/we-report-angular.svg?label=npm%20downloads" alt="npm downloads" height="20" />
+  </a>
+  <a class="badge" href="https://github.com/emrecirik/we-report" target="_blank" rel="noopener" title="GitHub">
+    <img src="https://img.shields.io/github/stars/emrecirik/we-report.svg?style=social" alt="GitHub stars" height="20" />
+  </a>
   <button type="button" (click)="toggleTheme()" [attr.aria-pressed]="dark()">{{ t.theme }}: {{ dark() ? '☾' : '☀' }}</button>
   <select (change)="language.set($any($event.target).value)" aria-label="Language">
-    <option value="tr" [selected]="language() === 'tr'">Türkçe</option>
-    <option value="en" [selected]="language() === 'en'">English</option>
+    @for (l of languages; track l.id) {
+      <option [value]="l.id" [selected]="language() === l.id">{{ l.name }}</option>
+    }
   </select>
 </header>
 
@@ -58,8 +65,8 @@
               <we-report-page [page]="page" [zoom]="0.28" />
             }
           </div>
-          <strong>{{ tpl.name[language()] }}</strong>
-          <small>{{ tpl.description[language()] }}</small>
+          <strong>{{ language() === 'tr' ? tpl.name.tr : tpl.name.en }}</strong>
+          <small>{{ language() === 'tr' ? tpl.description.tr : tpl.description.en }}</small>
         </button>
       }
     </div>

@@ -296,5 +296,9 @@ export interface ReportDefinition {
   /** Id of the data source the detail band repeats over, plus an optional path to the rows. */
   dataMember?: { dataSourceId: string; path?: string };
   watermark?: Watermark;
+  /** BCP 47 locale for numbers, dates and words (`tr-TR`, `de-DE`); the host's when omitted. */
+  locale?: string;
+  /** ISO 4217 code for money formats (`TRY`, `EUR`); the host's when omitted. */
+  currency?: string;
   bands: Band[];
 }

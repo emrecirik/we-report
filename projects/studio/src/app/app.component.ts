@@ -1,11 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { csvToObjects, DefinitionVersionError, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
-import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleEn, weReportLocaleTr, WeReportPageComponent } from 'we-report-angular';
-import { STUDIO_TEXT } from './studio-text';
+import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
+import { STUDIO_TEXT, StudioLanguage } from './studio-text';
 import { TEMPLATES } from './templates';
 
 const BACKEND_KEY = 'we-report-studio.backendUrl';
 const AUTOSAVE_KEY = 'we-report-studio.autosave';
+const LANGUAGE_KEY = 'we-report-studio.language';
+
+const LANGUAGES: { id: StudioLanguage; name: string }[] = [
+  { id: 'tr', name: 'Türkçe' },
+  { id: 'en', name: 'English' },
+  { id: 'de', name: 'Deutsch' },
+  { id: 'fr', name: 'Français' },
+  { id: 'es', name: 'Español' },
+];
+
+/** The saved choice, else the browser's language when the studio speaks it, else Turkish. */
+function initialLanguage(): StudioLanguage {
+  const wanted = [readStorage(LANGUAGE_KEY), ...(navigator.languages ?? [])].map((l) => (l ?? '').slice(0, 2).toLowerCase());
+  return wanted.map((l) => LANGUAGES.find((x) => x.id === l)?.id).find(Boolean) ?? 'tr';
+}
 
 // Storage can be unavailable (private mode, blocked site data): the studio works without it.
 function readStorage(key: string): string | null {
@@ -34,10 +49,11 @@ function writeStorage(key: string, value: string): void {
 })
 export class AppComponent {
   protected readonly templates = TEMPLATES;
-  protected readonly language = signal<'tr' | 'en'>('tr');
+  protected readonly languages = LANGUAGES;
+  protected readonly language = signal<StudioLanguage>(initialLanguage());
   protected readonly dark = signal(false);
   protected readonly text = computed(() => STUDIO_TEXT[this.language()]);
-  protected readonly locale = computed(() => (this.language() === 'tr' ? weReportLocaleTr : weReportLocaleEn));
+  protected readonly locale = computed(() => weReportLocaleFor(this.language()));
 
   protected readonly templateId = signal(TEMPLATES[0].id);
   protected readonly report = signal<ReportDefinition>(TEMPLATES[0].report());
@@ -59,6 +75,10 @@ export class AppComponent {
     const deployed = document.querySelector<HTMLMetaElement>('meta[name="we-report-backend"]')?.content;
     backend.url.set(saved || deployed || '');
     effect(() => writeStorage(BACKEND_KEY, backend.url()));
+    effect(() => {
+      writeStorage(LANGUAGE_KEY, this.language());
+      document.documentElement.lang = this.language();
+    });
 
     // The last design comes back after a reload; a first visit starts at the gallery.
     const restored = this.restore();

@@ -477,7 +477,8 @@ export class DesignSurfaceComponent implements OnDestroy {
       const sample = this.sample();
       if (!sample) return c.text.expression;
       try {
-        const options = { locale: this.config.locale ?? 'en-US', currency: this.config.currency ?? 'USD' };
+        const report = this.state.report();
+        const options = { locale: report.locale || this.config.locale || 'en-US', currency: report.currency || this.config.currency || 'USD' };
         const value = evaluate(c.text.expression, { ...sample, ...options, now: new Date() });
         return typeof value === 'string' && !c.format ? value : formatValue(value, c.format, options);
       } catch {

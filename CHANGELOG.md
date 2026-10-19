@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Languages: the designer and viewer now speak German (`weReportLocaleDe`), French
+  (`weReportLocaleFr`) and Spanish (`weReportLocaleEs`) besides English and Turkish;
+  `weReportLocaleFor('de-AT')` picks one from a locale tag; a test keeps every language complete.
+- Regions: a report can carry its own `locale` and `currency` (designer: Language and region), so
+  its numbers, dates, money and amounts in words look the same wherever it is printed.
+- Studio: five languages (remembers the choice, follows the browser on the first visit), npm
+  downloads and GitHub stars in the header. README shows npm version/download badges.
 - Charts: a `chart` control (column, bar, line, pie, doughnut) that groups the rows of its section
   by a field and sums, counts, averages or takes the min/max of a value; value labels, legend with
   percentages, title, number format, own colours and grid colour. Drawn from the same primitives

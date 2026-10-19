@@ -258,7 +258,8 @@ export class ExpressionEditorComponent implements AfterViewInit {
   protected readonly result = computed<{ text: string; error: boolean }>(() => {
     const formula = this.draft().trim();
     if (!formula) return { text: this.strings().formulaEmpty, error: false };
-    const options = { locale: this.config.locale ?? 'en-US', currency: this.config.currency ?? 'USD' };
+    const report = this.state.report();
+    const options = { locale: report.locale || this.config.locale || 'en-US', currency: report.currency || this.config.currency || 'USD' };
     const sample = this.state.sample();
     try {
       const value = evaluate(formula, { ...sample, params: resolveParameters(this.parameters()), ...options, now: new Date() });

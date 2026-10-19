@@ -58,7 +58,8 @@ export const appConfig: ApplicationConfig = {
 | `defaultFontsUrl` | Where the bundled fonts are served (`assets/we-report/fonts/`), or `null` to use only yours. |
 | `backendUrl` | A [data backend](backend.md), for live databases and proxied web services. |
 
-The second argument is the language of the designer and viewer (`weReportLocaleEn` by default).
+The second argument is the language of the designer and viewer (`weReportLocaleEn` by default;
+also `weReportLocaleTr`, `De`, `Fr`, `Es` — see [Languages and regions](localization.md)).
 
 ## Let users design reports
 

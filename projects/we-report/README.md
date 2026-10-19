@@ -1,5 +1,11 @@
 # we-report-angular
 
+[![npm version](https://img.shields.io/npm/v/we-report-angular.svg)](https://www.npmjs.com/package/we-report-angular)
+[![npm downloads](https://img.shields.io/npm/dm/we-report-angular.svg)](https://www.npmjs.com/package/we-report-angular)
+[![CI](https://github.com/emrecirik/we-report/actions/workflows/ci.yml/badge.svg)](https://github.com/emrecirik/we-report/actions/workflows/ci.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/emrecirik/we-report/blob/main/LICENSE)
+[![Angular 18-22](https://img.shields.io/badge/Angular-18%20%E2%80%93%2022-dd0031.svg)](https://angular.dev)
+
 **Free, native Angular report designer and viewer.** Drag-and-drop banded reports, live data in the
 design, paper sizes from A4 to 80 mm receipt rolls, barcodes and QR codes, parameters, print, PDF and
 Excel — MIT licensed, no backend required. Angular 18 – 22.

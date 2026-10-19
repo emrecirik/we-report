@@ -1,5 +1,10 @@
 # we-report-core
 
+[![npm version](https://img.shields.io/npm/v/we-report-core.svg)](https://www.npmjs.com/package/we-report-core)
+[![npm downloads](https://img.shields.io/npm/dm/we-report-core.svg)](https://www.npmjs.com/package/we-report-core)
+[![CI](https://github.com/emrecirik/we-report/actions/workflows/ci.yml/badge.svg)](https://github.com/emrecirik/we-report/actions/workflows/ci.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/emrecirik/we-report/blob/main/LICENSE)
+
 The framework-free engine of [we-report](https://github.com/emrecirik/we-report): the report format,
 formulas, data loading, the layout/pagination engine, and PDF and Excel output. Runs in browsers and
 Node. The Angular designer and viewer live in

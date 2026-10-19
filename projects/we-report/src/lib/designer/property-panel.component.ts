@@ -48,6 +48,24 @@ const AGGREGATES: { value: ChartAggregate; label: keyof WeReportLocale }[] = [
   { value: 'max', label: 'aggMax' },
 ];
 
+/** Regions offered for a report's number, date and word formats (any BCP 47 tag works in the file). */
+const CULTURES: { id: string; name: string }[] = [
+  { id: 'tr-TR', name: 'Türkçe (Türkiye)' },
+  { id: 'en-US', name: 'English (United States)' },
+  { id: 'en-GB', name: 'English (United Kingdom)' },
+  { id: 'de-DE', name: 'Deutsch (Deutschland)' },
+  { id: 'fr-FR', name: 'Français (France)' },
+  { id: 'es-ES', name: 'Español (España)' },
+  { id: 'it-IT', name: 'Italiano (Italia)' },
+  { id: 'nl-NL', name: 'Nederlands (Nederland)' },
+  { id: 'pt-BR', name: 'Português (Brasil)' },
+  { id: 'ru-RU', name: 'Русский (Россия)' },
+  { id: 'ar-SA', name: 'العربية (السعودية)' },
+  { id: 'ja-JP', name: '日本語 (日本)' },
+];
+
+const CURRENCIES = ['TRY', 'USD', 'EUR', 'GBP', 'CHF', 'JPY', 'RUB', 'SAR', 'AED', 'BRL'];
+
 const ALIGN_ACTIONS: { edge: AlignEdge; icon: keyof WeReportIcons; label: keyof WeReportLocale & `arrange${string}` }[] = [
   { edge: 'left', icon: 'arrangeLeft', label: 'arrangeLeft' },
   { edge: 'center', icon: 'arrangeCenter', label: 'arrangeCenter' },
@@ -78,6 +96,8 @@ export class PropertyPanelComponent {
   protected readonly formats = FORMATS;
   protected readonly alignActions = ALIGN_ACTIONS;
   protected readonly chartTypes = CHART_TYPES;
+  protected readonly cultures = CULTURES;
+  protected readonly currencies = CURRENCIES;
   protected readonly aggregates = AGGREGATES;
   protected readonly conditionOps = CONDITION_OPS;
 
@@ -100,6 +120,11 @@ export class PropertyPanelComponent {
 
   protected setReport<K extends 'name'>(key: K, value: string): void {
     this.state.update((d) => (d[key] = value), `report-${key}`);
+  }
+
+  /** Empty means "use the app's setting". */
+  protected setCulture(key: 'locale' | 'currency', value: string): void {
+    this.state.update((d) => (d[key] = value || undefined));
   }
 
   /** Empty text removes the watermark. */

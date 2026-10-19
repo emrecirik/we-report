@@ -246,4 +246,15 @@ describe('layout engine', () => {
     const pdf = await PDFDocument.load(await renderPdf(doc, fonts, { title: 'Charts', date: NOW }));
     expect(pdf.getPageCount()).toBe(1);
   });
+
+  it('formats with the region and currency of the report over those of the host', () => {
+    const report = listReport([{ Name: 'a', Amount: 1234.5 }]);
+    report.bands[1].controls[0] = { id: 'amt', type: 'text', x: 0, y: 0, width: 60, height: 6, text: { expression: '[Amount]' }, format: 'c2' };
+    const text = (r: ReportDefinition) =>
+      layoutReport(r, { fonts, now: NOW, locale: 'en-US', currency: 'USD' }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0]?.text);
+    expect(text(report)).toContain('$1,234.50');
+    report.locale = 'de-DE';
+    report.currency = 'EUR';
+    expect(text(report).some((t) => /^1\.234,50\s€$/.test(t))).toBeTrue();
+  });
 });

@@ -87,8 +87,9 @@ class LayoutRun {
     private readonly options: LayoutOptions,
   ) {
     this.geometry = resolvePageGeometry(def.page);
-    this.locale = options.locale ?? 'en-US';
-    this.currency = options.currency ?? 'USD';
+    // A report written for one region keeps its formats wherever it is printed.
+    this.locale = def.locale || options.locale || 'en-US';
+    this.currency = def.currency || options.currency || 'USD';
     this.now = options.now;
     this.params = resolveParameters(def.parameters, options.params);
   }
