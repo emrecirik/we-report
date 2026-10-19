@@ -410,12 +410,25 @@ class LayoutRun {
     const items: LayoutItem[] = [];
     const deferred: RenderedBand['deferred'] = [];
     let height = band.height;
-    for (const control of band.controls) {
-      if (control.visible !== undefined && !this.truthy(this.bind(control.visible, scope, control.id))) continue;
+    const shown = band.controls.filter((c) => c.visible === undefined || this.truthy(this.bind(c.visible, scope, c.id)));
+    // Fixed items first decide the height; stretching items then reach down to it.
+    const results = new Map<ReportControl, ReturnType<typeof this.renderControl>>();
+    for (const control of shown) {
+      if (control.stretch) continue;
       const result = this.renderControl(control, scope);
+      results.set(control, result);
+      height = Math.max(height, control.y + result.height);
+    }
+    for (const control of shown) {
+      if (!control.stretch) continue;
+      const result = this.renderControl({ ...control, height: Math.max(control.height, height - control.y) }, scope);
+      results.set(control, result);
+      height = Math.max(height, control.y + result.height);
+    }
+    for (const control of shown) {
+      const result = results.get(control)!;
       if (result.deferred) deferred.push(result.deferred);
       items.push(...result.items);
-      height = Math.max(height, control.y + result.height);
     }
     if (band.backgroundColor) {
       items.unshift({ kind: 'rect', x: 0, y: 0, width: this.cellWidth(band), height, fill: band.backgroundColor });

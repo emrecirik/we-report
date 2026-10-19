@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Items can *extend to the bottom when the section grows* (`stretch`), so cell borders and column
+  lines stay aligned next to a text that grows (Advanced → Behaviour).
 - Formulas: `RowNumber()` — 1, 2, 3 … for each row, restarting in every group and inner list.
 - Studio: delivery note template (row numbers, quantities, signature lines).
 - Studio: *Share* puts the design and its data into a link (gzip in the address bar, no server);

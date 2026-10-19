@@ -105,6 +105,20 @@ describe('layout engine', () => {
     expect(texts(doc.pages[0])).toEqual(['Title', 'Drinks', 'Tea', 'Coffee', 'Sum: 30', 'Fruit', 'Apple', 'Sum: 3', '1 / 1']);
   });
 
+  it('stretches marked items to the bottom of a grown section', () => {
+    const report = listReport([{ Name: 'A long name that wraps onto several lines in a narrow box', Price: 1 }]);
+    const detail = report.bands.find((b) => b.kind === 'detail')!;
+    detail.controls = [
+      { id: 'name', type: 'text', x: 0, y: 0, width: 20, height: 6, canGrow: true, text: { expression: '[Name]' } },
+      { id: 'box', type: 'shape', shape: 'rectangle', x: 20, y: 0, width: 10, height: 6, stretch: true },
+      { id: 'fixed', type: 'shape', shape: 'rectangle', x: 30, y: 0, width: 10, height: 6 },
+    ];
+    const doc = layoutReport(report, { fonts, now: NOW });
+    const rects = doc.pages[0].items.filter((i) => i.kind === 'rect') as { height: number }[];
+    expect(rects[0].height).toBeGreaterThan(12);
+    expect(rects[1].height).toBe(6);
+  });
+
   it('sorts detail rows inside their group', () => {
     const report = listReport([
       { Name: 'Tea', Cat: 'Drinks', Price: 10 },

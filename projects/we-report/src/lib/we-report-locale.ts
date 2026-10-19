@@ -284,6 +284,8 @@ export interface WeReportLocale {
   wizardTotals: string;
   automatic: string;
   createReport: string;
+  stretch: string;
+  stretchHint: string;
   fitToText: string;
   collapseBand: string;
   expandBand: string;
@@ -660,6 +662,8 @@ export const weReportLocaleEn: WeReportLocale = {
   wizardTotals: 'Totals of number columns',
   automatic: 'Automatic',
   createReport: 'Create report',
+  stretch: 'Extend to the bottom when the section grows',
+  stretchHint: 'For cell borders and column lines next to a text that grows.',
   fitToText: 'Fit size to text',
   collapseBand: 'Collapse section',
   expandBand: 'Expand section',
@@ -1069,6 +1073,8 @@ export const weReportLocaleTr: WeReportLocale = {
   wizardTotals: 'Sayı sütunlarının toplamı',
   automatic: 'Otomatik',
   createReport: 'Raporu oluştur',
+  stretch: 'Bölüm uzayınca alta kadar uzat',
+  stretchHint: 'Uzayan bir metnin yanındaki hücre kenarlıkları ve sütun çizgileri için.',
   fitToText: 'Boyutu metne sığdır',
   collapseBand: 'Bölümü daralt',
   expandBand: 'Bölümü genişlet',

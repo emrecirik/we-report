@@ -660,6 +660,10 @@
       <span class="pp__label">{{ s.visibleWhen }}</span>
       <input class="pp__mono" [value]="$any(visibleValue(c)).expression ?? ''" (input)="setVisible({ expression: $any($event.target).value })" spellcheck="false" placeholder="[Total] > 0" />
       <small class="pp__hint">{{ s.visibleWhenHint }}</small>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="!!c.stretch" (change)="set('stretch', $any($event.target).checked || undefined)" />
+        <span>{{ s.stretch }}<small class="pp__hint">{{ s.stretchHint }}</small></span>
+      </label>
     </section>
   }
 }

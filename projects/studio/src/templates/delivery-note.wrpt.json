@@ -60,11 +60,11 @@
       "kind": "detail",
       "height": 7,
       "controls": [
-        { "id": "rowNo", "type": "text", "x": 0, "y": 0, "width": 10, "height": 7, "style": "num", "text": { "expression": "RowNumber()" } },
-        { "id": "code", "type": "text", "x": 10, "y": 0, "width": 25, "height": 7, "style": "cell", "text": { "expression": "[code]" } },
+        { "id": "rowNo", "type": "text", "stretch": true, "x": 0, "y": 0, "width": 10, "height": 7, "style": "num", "text": { "expression": "RowNumber()" } },
+        { "id": "code", "type": "text", "stretch": true, "x": 10, "y": 0, "width": 25, "height": 7, "style": "cell", "text": { "expression": "[code]" } },
         { "id": "product", "type": "text", "x": 35, "y": 0, "width": 105, "height": 7, "style": "cell", "text": { "expression": "[product]" }, "canGrow": true },
-        { "id": "qty", "type": "text", "x": 140, "y": 0, "width": 22, "height": 7, "style": "num", "text": { "expression": "[qty]" }, "format": "n0" },
-        { "id": "unit", "type": "text", "x": 162, "y": 0, "width": 18, "height": 7, "style": "cell", "text": "Adet" }
+        { "id": "qty", "type": "text", "stretch": true, "x": 140, "y": 0, "width": 22, "height": 7, "style": "num", "text": { "expression": "[qty]" }, "format": "n0" },
+        { "id": "unit", "type": "text", "stretch": true, "x": 162, "y": 0, "width": 18, "height": 7, "style": "cell", "text": "Adet" }
       ]
     },
     {
