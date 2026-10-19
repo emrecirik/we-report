@@ -232,13 +232,18 @@ export class WeReportDesignerComponent {
     const { rows, parent } = this.fields();
     const known = rows.length || parent.length;
     const inner = this.fields().inner;
-    return checkReport(
-      this.state.report(),
-      known ? rows.map((f) => f.path) : undefined,
-      known ? parent.map((f) => f.path) : undefined,
-      undefined,
-      inner.length ? inner.map((f) => f.path) : undefined,
-    );
+    const bandOf = (id: string) => this.state.report().bands.find((b) => b.controls.some((c) => c.id === id))?.id ?? '';
+    const cut: ReportIssue[] = [...(this.surface()?.cutTexts() ?? [])].map((controlId) => ({ code: 'textCut', severity: 'warning', bandId: bandOf(controlId), controlId }));
+    return [
+      ...checkReport(
+        this.state.report(),
+        known ? rows.map((f) => f.path) : undefined,
+        known ? parent.map((f) => f.path) : undefined,
+        undefined,
+        inner.length ? inner.map((f) => f.path) : undefined,
+      ),
+      ...cut,
+    ];
   });
   /** Show the first data row inside bound controls instead of their formulas. */
   protected readonly showData = signal(readSaved('showData', true, (v) => typeof v === 'boolean'));
@@ -626,6 +631,7 @@ export class WeReportDesignerComponent {
       emptyFormula: s.issueEmptyFormula,
       overlap: s.issueOverlap,
       outsideColumn: s.issueOutsideColumn,
+      textCut: s.issueTextCut,
     }[issue.code];
     return text.replace('{0}', issue.detail ?? '');
   }
@@ -634,8 +640,14 @@ export class WeReportDesignerComponent {
     this.state.selection.set({ kind: 'controls', ids: [issue.controlId] });
   }
 
-  /** Moves (and if needed narrows) an item back inside the paper. */
+  /** Moves (and if needed narrows) an item back inside the paper; a cut text grows to fit instead. */
   protected fixIssue(issue: ReportIssue): void {
+    if (issue.code === 'textCut') {
+      this.state.updateControls([issue.controlId], (c) => {
+        if (c.type === 'text') c.canGrow = true;
+      });
+      return;
+    }
     const width = resolvePageGeometry(this.state.report().page).contentWidth;
     this.state.updateControls([issue.controlId], (c) => {
       c.width = Math.min(c.width, width);

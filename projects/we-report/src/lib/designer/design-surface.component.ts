@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
+import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, wrapText, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -140,6 +140,7 @@ interface DragOp {
                 class="ds__control"
                 [attr.data-control-id]="c.id"
                 [class.ds__control--selected]="isSelected(c.id)"
+                [class.ds__control--cut]="cutTexts().has(c.id)"
                 [attr.data-type]="c.type"
                 [style.left.mm]="c.x * zoom()"
                 [style.top.mm]="c.y * zoom()"
@@ -413,6 +414,10 @@ interface DragOp {
     :host(.ds--painting) .ds__control {
       cursor: copy;
     }
+    /* A text that will be cut off in print. */
+    .ds__control--cut {
+      box-shadow: inset 0 -2px 0 var(--we-report-warning-fg, #c93400);
+    }
     .ds__editor {
       position: absolute;
       inset: 0;
@@ -579,6 +584,27 @@ export class DesignSurfaceComponent implements OnDestroy {
   protected readonly handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
   protected readonly guides = signal<Guide[]>([]);
   protected readonly gaps = signal<Gap[]>([]);
+  private readonly fontsService = inject(WeReportFontsService);
+  /** Texts (without Grow to fit text) whose content does not fit, measured with the report's fonts like the print. */
+  readonly cutTexts = signal<ReadonlySet<string>>(new Set());
+  private measureRun = 0;
+  private readonly measureTexts = effect(() => {
+    const report = this.state.report();
+    const texts = report.bands.flatMap((b) => b.controls.filter((c) => c.type === 'text' && !c.canGrow).map((c) => ({ c, text: this.caption(c, b) })));
+    const run = ++this.measureRun;
+    void this.fontsService.ready().then((fonts) => {
+      if (run !== this.measureRun) return;
+      const cut = new Set<string>();
+      for (const { c, text } of texts) {
+        if (!text) continue;
+        const style = resolveStyle(report, c.style, c.styleOverrides);
+        const font = fonts.resolve(style.fontFamily, style.bold, style.italic);
+        const lines = wrapText(text, font, style.fontSize, Math.max(0, c.width - 2 * style.padding));
+        if (lines.length * font.lineHeight(style.fontSize) + 2 * style.padding > c.height + 0.05) cut.add(c.id);
+      }
+      this.cutTexts.set(cut);
+    });
+  });
   /** The rubber band while dragging on an empty part of a section (mm in that section). */
   protected readonly marquee = signal<{ bandId: string; x: number; y: number; width: number; height: number } | null>(null);
   /** A bound item whose formula is open in the editor. */

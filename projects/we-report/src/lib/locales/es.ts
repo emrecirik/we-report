@@ -298,6 +298,7 @@ export const weReportLocaleEs: WeReportLocale = {
   wizardTotals: 'Totales de las columnas numéricas',
   automatic: 'Automático',
   createReport: 'Crear informe',
+  issueTextCut: 'El texto no cabe en su cuadro y se corta.',
   stretch: 'Extender hasta abajo cuando la sección crece',
   stretchHint: 'Para bordes de celda y líneas de columna junto a un texto que crece.',
   fitToText: 'Ajustar el tamaño al texto',

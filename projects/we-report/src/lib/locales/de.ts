@@ -298,6 +298,7 @@ export const weReportLocaleDe: WeReportLocale = {
   wizardTotals: 'Summen der Zahlenspalten',
   automatic: 'Automatisch',
   createReport: 'Bericht erstellen',
+  issueTextCut: 'Der Text passt nicht in sein Feld und wird abgeschnitten.',
   stretch: 'Bis zum unteren Rand verlängern, wenn der Bereich wächst',
   stretchHint: 'Für Zellrahmen und Spaltenlinien neben einem wachsenden Text.',
   fitToText: 'Größe an Text anpassen',

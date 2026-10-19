@@ -298,6 +298,7 @@ export const weReportLocaleFr: WeReportLocale = {
   wizardTotals: 'Totaux des colonnes numériques',
   automatic: 'Automatique',
   createReport: 'Créer le rapport',
+  issueTextCut: 'Le texte ne tient pas dans sa zone et est coupé.',
   stretch: 'Prolonger jusqu’en bas quand la section s’agrandit',
   stretchHint: 'Pour les bordures de cellule et les lignes de colonne à côté d’un texte qui s’agrandit.',
   fitToText: 'Ajuster la taille au texte',
