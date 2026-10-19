@@ -231,3 +231,55 @@ jobs:
           npx --yes wait-on@8 -t 30000 http-get://127.0.0.1:5480/v1/info
           node ../../../tools/protocol-conformance/run.mjs http://127.0.0.1:5480
           kill %1
+
+  backend-go:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: shop
+          POSTGRES_USER: owner
+          POSTGRES_PASSWORD: owner
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U owner -d shop" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: samples/backends/go
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: samples/backends/go/go.mod
+          cache-dependency-path: samples/backends/go/go.sum
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - run: go vet ./... && go build -o we-report-backend .
+
+      - name: Protocol conformance — SQLite
+        run: |
+          ./we-report-backend &
+          npx --yes wait-on@8 -t 30000 http-get://127.0.0.1:5480/v1/info
+          node ../../../tools/protocol-conformance/run.mjs http://127.0.0.1:5480
+          kill %1
+
+      - name: Load the sample dataset into PostgreSQL with a read-only user
+        env:
+          PGPASSWORD: owner
+        run: |
+          psql -h 127.0.0.1 -U owner -d shop -v ON_ERROR_STOP=1 -f ../../data/seed.sql
+          psql -h 127.0.0.1 -U owner -d shop -v ON_ERROR_STOP=1 -f ../node/postgres-readonly.sql
+
+      - name: Protocol conformance — PostgreSQL
+        env:
+          WE_REPORT_CONNECTIONS: '[{"id":"shop","name":"Shop","dialect":"postgres","url":"postgresql://report_reader:reader-password-change-me@127.0.0.1:5432/shop","allowFreeSql":true}]'
+        run: |
+          ./we-report-backend &
+          npx --yes wait-on@8 -t 30000 http-get://127.0.0.1:5480/v1/info
+          node ../../../tools/protocol-conformance/run.mjs http://127.0.0.1:5480
+          kill %1
