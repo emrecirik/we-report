@@ -1,0 +1,27 @@
+{
+  "name": "we-report-angular",
+  "version": "0.0.1",
+  "description": "Free, native Angular banded report designer and viewer — drag-and-drop design, paper sizes, data binding, barcodes, PDF export. No backend required.",
+  "license": "MIT",
+  "author": "Emre CIRIK",
+  "homepage": "https://github.com/emrecirik/we-report#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emrecirik/we-report.git",
+    "directory": "projects/we-report"
+  },
+  "bugs": {
+    "url": "https://github.com/emrecirik/we-report/issues"
+  },
+  "keywords": ["angular", "report", "report-designer", "report-viewer", "reporting", "pdf", "barcode", "banded-report", "crystal-reports-alternative", "devexpress-alternative"],
+  "peerDependencies": {
+    "@angular/common": "^18.2.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/core": "^18.2.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/platform-browser": "^18.2.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "we-report-core": "~0.0.1"
+  },
+  "sideEffects": false
+}

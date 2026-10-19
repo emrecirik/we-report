@@ -1,0 +1,7 @@
+@use '../../we-report/styles/we-report-theme';
+
+body {
+  margin: 0;
+  font-family: var(--we-report-font-family);
+  background: var(--we-report-workspace-bg);
+}

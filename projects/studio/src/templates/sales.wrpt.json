@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "name": "Şehirlere göre satışlar",
+  "page": { "paper": "A4", "orientation": "portrait", "margins": { "top": 14, "right": 14, "bottom": 12, "left": 14 }, "displayUnit": "mm" },
+  "styles": {
+    "default": { "fontFamily": "Noto Sans", "fontSize": 9, "color": "#1f2328", "padding": 1 },
+    "title": { "fontSize": 18, "bold": true, "color": "#0f766e" },
+    "subtitle": { "fontSize": 9, "color": "#6b7280" },
+    "th": { "fontSize": 8, "bold": true, "color": "#0f766e", "verticalAlign": "bottom", "border": { "width": 0.4, "color": "#0f766e", "sides": { "top": false, "right": false, "bottom": true, "left": false } } },
+    "group": { "fontSize": 11, "bold": true, "color": "#ffffff", "backgroundColor": "#0f766e", "verticalAlign": "middle", "padding": 1.5 },
+    "num": { "textAlign": "right", "verticalAlign": "middle" },
+    "cell": { "verticalAlign": "middle" },
+    "subtotal": { "bold": true, "textAlign": "right", "verticalAlign": "middle", "backgroundColor": "#f0fdfa" },
+    "grand": { "bold": true, "fontSize": 11, "textAlign": "right", "color": "#0f766e" },
+    "muted": { "fontSize": 7.5, "color": "#6b7280" }
+  },
+  "dataSources": [{ "id": "sales", "name": "Satışlar", "kind": "json", "data": null }],
+  "parameters": [{ "name": "minAmount", "type": "number", "label": "En düşük tutar", "defaultValue": 0 }],
+  "dataMember": { "dataSourceId": "sales" },
+  "bands": [
+    {
+      "id": "pageHeader", "kind": "pageHeader", "height": 26,
+      "controls": [
+        { "id": "title", "type": "text", "x": 0, "y": 0, "width": 140, "height": 9, "style": "title", "text": "Şehirlere göre satışlar" },
+        { "id": "sub", "type": "text", "x": 0, "y": 9, "width": 140, "height": 6, "style": "subtitle", "text": { "expression": "'Tutarı ' + Format([?minAmount], 'n2') + ' ve üzeri siparişler'" } },
+        { "id": "printed", "type": "pageInfo", "x": 140, "y": 2, "width": 42, "height": 6, "style": "muted", "styleOverrides": { "textAlign": "right" }, "info": "printDate", "format": "dd.MM.yyyy HH:mm" },
+        { "id": "h1", "type": "text", "x": 0, "y": 19, "width": 24, "height": 7, "style": "th", "text": "Sipariş" },
+        { "id": "h2", "type": "text", "x": 24, "y": 19, "width": 24, "height": 7, "style": "th", "text": "Tarih" },
+        { "id": "h3", "type": "text", "x": 48, "y": 19, "width": 70, "height": 7, "style": "th", "text": "Müşteri" },
+        { "id": "h4", "type": "text", "x": 118, "y": 19, "width": 18, "height": 7, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "Adet" },
+        { "id": "h5", "type": "text", "x": 136, "y": 19, "width": 30, "height": 7, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "Tutar" },
+        { "id": "h6", "type": "text", "x": 166, "y": 19, "width": 16, "height": 7, "style": "th", "styleOverrides": { "textAlign": "center" }, "text": "Ödendi" }
+      ]
+    },
+    {
+      "id": "cityHeader", "kind": "groupHeader", "height": 11, "groupBy": { "expression": "[city]" }, "sort": "asc", "keepTogether": false, "repeatOnEveryPage": true,
+      "controls": [
+        { "id": "cityName", "type": "text", "x": 0, "y": 2, "width": 182, "height": 8, "style": "group", "text": { "expression": "[city] + '  ·  ' + Count() + ' sipariş'" } }
+      ]
+    },
+    {
+      "id": "detail", "kind": "detail", "height": 6.5,
+      "controls": [
+        { "id": "no", "type": "text", "x": 0, "y": 0, "width": 24, "height": 6.5, "style": "cell", "styleOverrides": { "color": "#6b7280" }, "text": { "expression": "[orderNo]" }, "format": "d" },
+        { "id": "date", "type": "text", "x": 24, "y": 0, "width": 24, "height": 6.5, "style": "cell", "text": { "expression": "[date]" }, "format": "dd.MM.yyyy" },
+        { "id": "customer", "type": "text", "x": 48, "y": 0, "width": 70, "height": 6.5, "style": "cell", "text": { "expression": "[customer]" } },
+        { "id": "items", "type": "text", "x": 118, "y": 0, "width": 18, "height": 6.5, "style": "num", "text": { "expression": "[items]" }, "format": "n0" },
+        { "id": "amount", "type": "text", "x": 136, "y": 0, "width": 30, "height": 6.5, "style": "num", "text": { "expression": "[amount]" }, "format": "c2", "visible": { "expression": "[amount] >= IsNull([?minAmount], 0)" } },
+        { "id": "paid", "type": "checkbox", "x": 171, "y": 1.25, "width": 4, "height": 4, "checked": { "expression": "[paid]" } }
+      ]
+    },
+    {
+      "id": "cityFooter", "kind": "groupFooter", "groupHeaderId": "cityHeader", "height": 9,
+      "controls": [
+        { "id": "subLabel", "type": "text", "x": 48, "y": 1, "width": 70, "height": 7, "style": "subtotal", "text": { "expression": "[city] + ' toplamı'" } },
+        { "id": "subItems", "type": "text", "x": 118, "y": 1, "width": 18, "height": 7, "style": "subtotal", "text": { "expression": "Sum([items])" }, "format": "n0" },
+        { "id": "subAmount", "type": "text", "x": 136, "y": 1, "width": 30, "height": 7, "style": "subtotal", "text": { "expression": "Sum([amount])" }, "format": "c2" },
+        { "id": "subPaid", "type": "text", "x": 166, "y": 1, "width": 16, "height": 7, "style": "subtotal", "styleOverrides": { "textAlign": "center", "fontSize": 8 }, "text": { "expression": "Format(Sum(Iif([paid], 1, 0)) / Count(), 'p0')" } }
+      ]
+    },
+    {
+      "id": "reportFooter", "kind": "reportFooter", "height": 14,
+      "controls": [
+        { "id": "grandRule", "type": "line", "x": 0, "y": 2, "width": 182, "height": 1, "direction": "horizontal", "lineWidth": 0.5, "color": "#0f766e" },
+        { "id": "grandLabel", "type": "text", "x": 48, "y": 5, "width": 70, "height": 8, "style": "grand", "text": "GENEL TOPLAM" },
+        { "id": "grandItems", "type": "text", "x": 118, "y": 5, "width": 18, "height": 8, "style": "grand", "text": { "expression": "Sum([items])" }, "format": "n0" },
+        { "id": "grandAmount", "type": "text", "x": 136, "y": 5, "width": 30, "height": 8, "style": "grand", "text": { "expression": "Sum([amount])" }, "format": "c2" }
+      ]
+    },
+    {
+      "id": "pageFooter", "kind": "pageFooter", "height": 8,
+      "controls": [
+        { "id": "pageNo", "type": "pageInfo", "x": 112, "y": 2, "width": 70, "height": 6, "style": "muted", "styleOverrides": { "textAlign": "right" }, "info": "pageNofM", "format": "Sayfa {0} / {1}" },
+        { "id": "brand", "type": "text", "x": 0, "y": 2, "width": 90, "height": 6, "style": "muted", "text": "we-report ile hazırlandı — tüm veriler kurgusaldır" }
+      ]
+    }
+  ]
+}

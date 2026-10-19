@@ -1,0 +1,79 @@
+// we-report designer/viewer theme. Every property must exist in all three blocks below.
+// Override any of them in your app's styles to restyle the designer.
+
+:root {
+  --we-report-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --we-report-workspace-bg: #eef0f3;
+  --we-report-page-bg: #ffffff;
+  --we-report-page-shadow: 0 1px 3px rgba(15, 23, 42, 0.12), 0 8px 24px rgba(15, 23, 42, 0.08);
+  --we-report-margin-guide: #c4cad4;
+  --we-report-band-border: #d5dae1;
+  --we-report-band-label-bg: #f4f6f8;
+  --we-report-band-label-fg: #57606a;
+  --we-report-control-outline: #9aa4b2;
+  --we-report-accent: #2563eb;
+  --we-report-fg: #1f2328;
+  --we-report-muted-fg: #57606a;
+  --we-report-toolbar-bg: #ffffff;
+  --we-report-panel-bg: #ffffff;
+  --we-report-input-bg: #ffffff;
+  --we-report-hover-bg: #f1f3f6;
+  --we-report-selection: #2563eb;
+  --we-report-selection-fill: rgba(37, 99, 235, 0.08);
+  --we-report-guide: #ec4899;
+  --we-report-warning-bg: #fff8e6;
+  --we-report-warning-fg: #7a4b00;
+  --we-report-backdrop: rgba(15, 23, 42, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --we-report-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --we-report-workspace-bg: #16181d;
+    --we-report-page-bg: #ffffff;
+    --we-report-page-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+    --we-report-margin-guide: #c4cad4;
+    --we-report-band-border: #d5dae1;
+    --we-report-band-label-bg: #262a31;
+    --we-report-band-label-fg: #c9d1d9;
+    --we-report-control-outline: #9aa4b2;
+    --we-report-accent: #60a5fa;
+    --we-report-fg: #e6edf3;
+    --we-report-muted-fg: #9da7b3;
+    --we-report-toolbar-bg: #1f2329;
+    --we-report-panel-bg: #1b1e23;
+    --we-report-input-bg: #262a31;
+    --we-report-hover-bg: #2a2f37;
+    --we-report-selection: #60a5fa;
+    --we-report-selection-fill: rgba(96, 165, 250, 0.12);
+    --we-report-guide: #f472b6;
+    --we-report-warning-bg: #3a2e12;
+    --we-report-warning-fg: #f5d48a;
+    --we-report-backdrop: rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root[data-theme='dark'] {
+  --we-report-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --we-report-workspace-bg: #16181d;
+  --we-report-page-bg: #ffffff;
+  --we-report-page-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --we-report-margin-guide: #c4cad4;
+  --we-report-band-border: #d5dae1;
+  --we-report-band-label-bg: #262a31;
+  --we-report-band-label-fg: #c9d1d9;
+  --we-report-control-outline: #9aa4b2;
+  --we-report-accent: #60a5fa;
+  --we-report-fg: #e6edf3;
+  --we-report-muted-fg: #9da7b3;
+  --we-report-toolbar-bg: #1f2329;
+  --we-report-panel-bg: #1b1e23;
+  --we-report-input-bg: #262a31;
+  --we-report-hover-bg: #2a2f37;
+  --we-report-selection: #60a5fa;
+  --we-report-selection-fill: rgba(96, 165, 250, 0.12);
+  --we-report-guide: #f472b6;
+  --we-report-warning-bg: #3a2e12;
+  --we-report-warning-fg: #f5d48a;
+  --we-report-backdrop: rgba(0, 0, 0, 0.55);
+}

@@ -1,0 +1,123 @@
+@let s = strings();
+<div class="wd__toolbar" role="toolbar">
+  <div class="wd__tabs" role="tablist">
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'design'" [class.wd__tab--on]="tab() === 'design'" (click)="tab.set('design')">
+      <span [innerHTML]="'design' | weReportIcon"></span>{{ s.design }}
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'preview'" [class.wd__tab--on]="tab() === 'preview'" (click)="tab.set('preview')">
+      <span [innerHTML]="'preview' | weReportIcon"></span>{{ s.preview }}
+    </button>
+  </div>
+  @if (tab() === 'design') {
+    <span class="wd__sep"></span>
+    <button type="button" class="wd__icon" [disabled]="!state.canUndo()" (click)="state.undo()" [title]="s.undo + ' (Ctrl+Z)'" [attr.aria-label]="s.undo" [innerHTML]="'undo' | weReportIcon"></button>
+    <button type="button" class="wd__icon" [disabled]="!state.canRedo()" (click)="state.redo()" [title]="s.redo + ' (Ctrl+Y)'" [attr.aria-label]="s.redo" [innerHTML]="'redo' | weReportIcon"></button>
+    <button type="button" class="wd__icon" [disabled]="state.selection().kind !== 'controls'" (click)="state.deleteSelection()" [title]="s.delete + ' (Del)'" [attr.aria-label]="s.delete" [innerHTML]="'trash' | weReportIcon"></button>
+    <span class="wd__sep"></span>
+    <button type="button" class="wd__icon" (click)="setZoom(zoomLevel() - 0.1)" [title]="s.zoomOut" [attr.aria-label]="s.zoomOut" [innerHTML]="'zoomOut' | weReportIcon"></button>
+    <span class="wd__zoom">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
+    <button type="button" class="wd__icon" (click)="setZoom(zoomLevel() + 0.1)" [title]="s.zoomIn" [attr.aria-label]="s.zoomIn" [innerHTML]="'zoomIn' | weReportIcon"></button>
+    <span class="wd__sep"></span>
+    <div class="wd__menu">
+      <button type="button" class="wd__text-btn" (click)="bandMenuOpen.set(!bandMenuOpen())" [attr.aria-expanded]="bandMenuOpen()">+ {{ s.addBand }}</button>
+      @if (bandMenuOpen()) {
+        <div class="wd__menu-list" role="menu">
+          @for (k of addableBands(); track k) {
+            <button type="button" role="menuitem" (click)="addBand(k)">{{ k === 'groupHeader' ? s.groupBy + '…' : s.bandNames[k] }}</button>
+          }
+        </div>
+      }
+    </div>
+    @if (fields().rows.length) {
+      <button type="button" class="wd__text-btn wd__magic" (click)="autoDesign()" [title]="s.autoDesignHint">✨ {{ s.autoDesign }}</button>
+    }
+    <button type="button" class="wd__text-btn" (click)="dataDialogOpen.set(true)">
+      <span [innerHTML]="'database' | weReportIcon"></span>&nbsp;{{ s.dataSources }}
+    </button>
+    <label class="wd__toggle">
+      <input type="checkbox" [checked]="showData()" (change)="showData.set($any($event.target).checked)" />
+      {{ s.showData }}
+    </label>
+    <span class="wd__spacer"></span>
+    <div class="wd__menu">
+      <button type="button" class="wd__text-btn" [class.wd__issues]="issues().length" (click)="problemsOpen.set(!problemsOpen())" [attr.aria-expanded]="problemsOpen()">
+        {{ issues().length ? '⚠ ' + issues().length : '✓' }} {{ s.problems }}
+      </button>
+      @if (problemsOpen()) {
+        <div class="wd__menu-list wd__problems" role="list">
+          @for (issue of issues(); track $index) {
+            <div class="wd__problem" role="listitem">
+              <button type="button" class="wd__problem-text" (click)="showIssue(issue)">
+                <code>{{ issue.controlId }}</code> {{ issueText(issue) }}
+              </button>
+              @if (issue.code === 'outsidePage') {
+                <button type="button" class="wd__fix" (click)="fixIssue(issue)">{{ s.fixIt }}</button>
+              }
+            </div>
+          } @empty {
+            <p class="wd__hint">{{ s.noProblems }}</p>
+          }
+        </div>
+      }
+    </div>
+    <div class="wd__mode" role="radiogroup">
+      <button type="button" role="radio" [attr.aria-checked]="!advanced()" [class.wd__mode--on]="!advanced()" (click)="advanced.set(false)">{{ s.basicMode }}</button>
+      <button type="button" role="radio" [attr.aria-checked]="advanced()" [class.wd__mode--on]="advanced()" (click)="advanced.set(true)">{{ s.advancedMode }}</button>
+    </div>
+  }
+</div>
+
+@if (tab() === 'design') {
+  <div class="wd__body">
+    <aside class="wd__left">
+      <h2>{{ s.toolbox }}</h2>
+      <p class="wd__hint">{{ s.toolboxHint }}</p>
+      <div class="wd__tools">
+        @for (item of toolbox; track $index) {
+          <div class="wd__tool" draggable="true" (dragstart)="onToolDragStart($event, item)" [title]="s.controlNames[item.type]">
+            <span [innerHTML]="iconName(item.icon) | weReportIcon"></span>
+            <span>{{ item.variant === 'qrcode' ? 'QR' : s.controlNames[item.type] }}</span>
+          </div>
+        }
+      </div>
+
+      <h2>{{ s.fields }}</h2>
+      @if (fields().rows.length || fields().parent.length) {
+        <p class="wd__hint">{{ s.fieldsHint }}</p>
+        <ul class="wd__fields">
+          @for (f of fields().rows; track f.path) {
+            <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+              <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
+            </li>
+          }
+        </ul>
+        @if (fields().parent.length) {
+          <h3>{{ s.parentFields }}</h3>
+          <ul class="wd__fields">
+            @for (f of fields().parent; track f.path) {
+              <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+                <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
+              </li>
+            }
+          </ul>
+        }
+      } @else {
+        <p class="wd__hint">{{ s.noFields }}</p>
+      }
+    </aside>
+
+    <main class="wd__canvas" tabindex="-1">
+      <we-report-design-surface [strings]="s" [zoom]="zoomLevel()" [sample]="sample()" />
+    </main>
+
+    <aside class="wd__right">
+      <we-report-property-panel [strings]="s" [fields]="allFields()" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
+    </aside>
+  </div>
+} @else {
+  <we-report-viewer class="wd__preview" [report]="state.report()" [data]="data()" [locale]="s" [fetchFn]="fetchFn()" />
+}
+
+@if (dataDialogOpen()) {
+  <we-report-data-sources-dialog [strings]="s" [fetchFn]="fetchFn()" (closed)="dataDialogOpen.set(false)" />
+}

@@ -1,0 +1,120 @@
+# Getting started
+
+we-report is two npm packages:
+
+| Package | What it is |
+|---|---|
+| `we-report-core` | The engine: report format, formulas, data loading, layout, PDF and Excel output. No framework; runs in browsers and Node. |
+| `we-report-angular` | `<we-report-designer>` and `<we-report-viewer>` for Angular 18 – 22. |
+
+No backend is needed to design, preview, print or export. A backend is only for live databases
+and web services that block browser calls — see [data sources](data-sources.md).
+
+## Install
+
+```bash
+npm install we-report-angular we-report-core
+```
+
+Serve the bundled fonts (Noto Sans: Latin, Turkish, Greek, Cyrillic) by adding them to the assets
+of your app in `angular.json`:
+
+```json
+"assets": [
+  { "glob": "*.ttf", "input": "node_modules/we-report-core/fonts", "output": "assets/we-report/fonts" }
+]
+```
+
+and the theme to your global styles:
+
+```scss
+@use 'we-report-angular/styles/we-report-theme';
+```
+
+## Configure
+
+```ts
+// app.config.ts
+import { provideWeReport, weReportLocaleTr } from 'we-report-angular';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideWeReport({ locale: 'tr-TR', currency: 'TRY' }, weReportLocaleTr),
+  ],
+};
+```
+
+| Option | Meaning |
+|---|---|
+| `locale`, `currency` | Number, money and date formatting of report output. |
+| `fonts` | Your own font families (see [theming](theming.md#fonts)). |
+| `defaultFontsUrl` | Where the bundled fonts are served (`assets/we-report/fonts/`), or `null` to use only yours. |
+| `backendUrl` | A [data backend](backend.md), for live databases and proxied web services. |
+
+The second argument is the language of the designer and viewer (`weReportLocaleEn` by default).
+
+## Let users design reports
+
+```ts
+import { WeReportDesignerComponent } from 'we-report-angular';
+import { createBlankReport, ReportDefinition } from 'we-report-core';
+
+@Component({
+  imports: [WeReportDesignerComponent],
+  template: `<we-report-designer [(report)]="report" [data]="orders" style="height: 100vh" />`,
+})
+export class ReportEditorPage {
+  report = signal<ReportDefinition>(createBlankReport('Orders'));
+  orders = [{ no: 1, customer: 'Ayla', total: 1250.5 }];
+}
+```
+
+`report` is updated on every edit. Save it anywhere — it is plain JSON (`*.wrpt.json`):
+
+```ts
+save() {
+  this.http.put('/api/reports/orders', this.report()).subscribe();
+}
+```
+
+`data` is optional sample data: its fields appear in the field list, it is shown inside the design
+and used by the preview. Without it, the report's own data sources are used.
+
+## Show and print reports
+
+```ts
+import { WeReportViewerComponent } from 'we-report-angular';
+
+@Component({
+  imports: [WeReportViewerComponent],
+  template: `<we-report-viewer [report]="report" [data]="invoice" />`,
+})
+export class InvoicePage { /* … */ }
+```
+
+The viewer shows pages exactly as the PDF will print them, with zoom, **Print**, **PDF** and
+**Excel** buttons. `parameters` passes [report parameters](data-sources.md#parameters),
+`printDate` fixes the print time for reproducible output.
+
+## Without Angular (Node, a worker, a CLI)
+
+```ts
+import { FontRegistry, layoutReport, migrateDefinition, renderPdf } from 'we-report-core';
+
+const fonts = await FontRegistry.create();
+fonts.register('Noto Sans', { regular: await read('NotoSans-Regular.ttf'), bold: await read('NotoSans-Bold.ttf') });
+
+const report = migrateDefinition(JSON.parse(text)); // upgrades files saved by older versions
+const doc = layoutReport(report, { fonts, data, now: new Date(), locale: 'tr-TR', currency: 'TRY' });
+const pdf = await renderPdf(doc, fonts, { title: report.name });
+```
+
+`layoutReport` is synchronous and deterministic: the same report, data, fonts and `now` always
+produce the same pages. `reportTable` + `writeXlsx` produce an Excel workbook of the rows.
+
+## Next
+
+- [Formulas](expressions.md) — `[Price] * [Qty]`, `Sum(...)`, `Iif(...)`, formats
+- [Data sources](data-sources.md) — JSON, CSV/Excel, web services, databases, parameters
+- [Data backend](backend.md) — the protocol and ready-made backends in 4 languages
+- [Theming and fonts](theming.md)

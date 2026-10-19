@@ -1,0 +1,385 @@
+@let s = strings();
+<h2 class="pp__title">{{ s.properties }}</h2>
+
+@let selectedControl = control();
+@let selectedBand = band();
+@if (selectedControl) {
+  <div class="pp__subtitle">{{ s.controlNames[selectedControl.type] }} · <code>{{ selectedControl.id }}</code></div>
+} @else if (controls().length > 1) {
+  <div class="pp__subtitle">{{ controls().length }} × </div>
+} @else if (selectedBand) {
+  <div class="pp__subtitle">{{ s.bandNames[selectedBand.kind] }}</div>
+}
+
+<!-- ── Report (nothing selected) ───────────────────────────────────────── -->
+@if (!controls().length && !band()) {
+  <section class="pp__section">
+    <h3>{{ s.groupPage }}</h3>
+    <label class="pp__row pp__row--stack">
+      <span>{{ s.reportName }}</span>
+      <input [value]="report().name" (input)="setReport('name', $any($event.target).value)" />
+    </label>
+    <label class="pp__row pp__row--stack">
+      <span>{{ s.paper }}</span>
+      <select (change)="setPaper($any($event.target).value)">
+        @for (p of papers; track p.id) {
+          <option [value]="p.id" [selected]="p.id === report().page.paper">{{ p.id }} ({{ p.width }} × {{ p.height ?? '∞' }} mm)</option>
+        }
+        <option value="custom" [selected]="report().page.paper === 'custom'">{{ s.customSize }}</option>
+      </select>
+    </label>
+    @if (report().page.paper === 'custom') {
+      <div class="pp__grid">
+        <label class="pp__row pp__row--stack">
+          <span>{{ s.width }} (mm)</span>
+          <input type="number" min="10" step="1" [value]="num(report().page.width)" (input)="setPage('width', $any($event.target).value)" />
+        </label>
+        <label class="pp__row pp__row--stack">
+          <span>{{ s.height }} (mm)</span>
+          <input type="number" min="10" step="1" [value]="num(report().page.height)" (input)="setPage('height', $any($event.target).value)" />
+        </label>
+      </div>
+    }
+    <div class="pp__row pp__row--stack">
+      <span>{{ s.orientation }}</span>
+      <div class="pp__segmented">
+        <button type="button" [class.pp__on]="report().page.orientation === 'portrait'" (click)="setPage('orientation', 'portrait')">{{ s.portrait }}</button>
+        <button type="button" [class.pp__on]="report().page.orientation === 'landscape'" (click)="setPage('orientation', 'landscape')">{{ s.landscape }}</button>
+      </div>
+    </div>
+    <div class="pp__row pp__row--stack">
+      <span>{{ s.margins }} (mm)</span>
+      <div class="pp__grid pp__grid--4">
+        <label><small>{{ s.marginTop }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.top)" (input)="setMargin('top', $any($event.target).value)" /></label>
+        <label><small>{{ s.marginRight }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.right)" (input)="setMargin('right', $any($event.target).value)" /></label>
+        <label><small>{{ s.marginBottom }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.bottom)" (input)="setMargin('bottom', $any($event.target).value)" /></label>
+        <label><small>{{ s.marginLeft }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.left)" (input)="setMargin('left', $any($event.target).value)" /></label>
+      </div>
+    </div>
+  </section>
+  @if (advanced() && report().dataMember) {
+    <section class="pp__section">
+      <h3>{{ s.groupData }}</h3>
+      <label class="pp__row pp__row--stack">
+        <span>{{ s.dataRows }}</span>
+        <input [value]="report().dataMember?.path ?? ''" (input)="setRowsPath($any($event.target).value)" spellcheck="false" />
+        <small class="pp__hint">{{ s.dataRowsHint }}</small>
+      </label>
+    </section>
+  }
+}
+
+<!-- ── Band ─────────────────────────────────────────────────────────────── -->
+@if (band(); as b) {
+  <section class="pp__section">
+    <h3>{{ s.groupLayout }}</h3>
+    <label class="pp__row">
+      <span>{{ s.bandHeight }} (mm)</span>
+      <input type="number" min="2" step="1" [value]="num(b.height)" (input)="setBand('height', $any($event.target).value)" />
+    </label>
+    <label class="pp__row">
+      <span>{{ s.backgroundColor }}</span>
+      <span class="pp__color">
+        <input type="color" [value]="b.backgroundColor ?? '#ffffff'" (input)="setBand('backgroundColor', $any($event.target).value)" />
+        <button type="button" class="pp__link" (click)="setBand('backgroundColor', '')">{{ s.noColor }}</button>
+      </span>
+    </label>
+  </section>
+  @if (b.kind === 'groupHeader') {
+    <section class="pp__section">
+      <h3>{{ s.groupBy }}</h3>
+      @if (fields().length) {
+        <select (change)="setBand('groupBy', $any($event.target).value)">
+          @for (f of fields(); track f.expression) {
+            <option [value]="f.expression" [selected]="f.expression === b.groupBy?.expression">{{ f.label }}</option>
+          }
+        </select>
+      }
+      <input class="pp__mono" [value]="b.groupBy?.expression ?? ''" (input)="setBand('groupBy', $any($event.target).value)" spellcheck="false" />
+      <label class="pp__row">
+        <span>{{ s.sortGroups }}</span>
+        <select (change)="setBand('sort', $any($event.target).value)">
+          <option value="asc" [selected]="!b.sort || b.sort === 'asc'">{{ s.sortAsc }}</option>
+          <option value="desc" [selected]="b.sort === 'desc'">{{ s.sortDesc }}</option>
+          <option value="none" [selected]="b.sort === 'none'">{{ s.sortNone }}</option>
+        </select>
+      </label>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="!!b.keepTogether" (change)="toggleBand('keepTogether', $any($event.target).checked)" />
+        <span>{{ s.keepTogether }}<small class="pp__hint">{{ s.keepTogetherHint }}</small></span>
+      </label>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="!!b.repeatOnEveryPage" (change)="toggleBand('repeatOnEveryPage', $any($event.target).checked)" />
+        <span>{{ s.repeatOnEveryPage }}</span>
+      </label>
+    </section>
+  }
+  @if (advanced() && b.kind !== 'pageHeader' && b.kind !== 'pageFooter') {
+    <section class="pp__section">
+      <h3>{{ s.groupBehaviour }}</h3>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="!!b.pageBreakBefore" (change)="toggleBand('pageBreakBefore', $any($event.target).checked)" />
+        <span>{{ s.pageBreakBefore }}</span>
+      </label>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="!!b.pageBreakAfter" (change)="toggleBand('pageBreakAfter', $any($event.target).checked)" />
+        <span>{{ s.pageBreakAfter }}</span>
+      </label>
+    </section>
+  }
+  @if (b.kind !== 'detail') {
+    <button type="button" class="pp__danger" (click)="removeBand()">{{ s.removeBand }}</button>
+  }
+}
+
+<!-- ── Control(s) ───────────────────────────────────────────────────────── -->
+@if (controls().length) {
+  @if (control(); as c) {
+    <!-- Content first: it is what people change most. -->
+    @switch (c.type) {
+      @case ('text') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" [multiline]="true" (valueChange)="setBindable('text', $event)" />
+          <label class="pp__row">
+            <span>{{ s.format }}</span>
+            <select (change)="set('format', $any($event.target).value)">
+              @for (f of formats; track f.value) {
+                <option [value]="f.value" [selected]="(c.format ?? '') === f.value">{{ $any(s)[f.key] }}</option>
+              }
+              @if (formatIsCustom()) {
+                <option [value]="c.format" selected>{{ c.format }}</option>
+              }
+            </select>
+          </label>
+          @if (advanced()) {
+            <input class="pp__mono" [value]="c.format ?? ''" (input)="set('format', $any($event.target).value)" spellcheck="false" placeholder="n2 · c2 · dd.MM.yyyy" />
+          }
+          <label class="pp__check">
+            <input type="checkbox" [checked]="!!c.canGrow" (change)="set('canGrow', $any($event.target).checked || undefined)" />
+            <span>{{ s.canGrow }}<small class="pp__hint">{{ s.canGrowHint }}</small></span>
+          </label>
+        </section>
+      }
+      @case ('barcode') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <label class="pp__row">
+            <span>{{ s.symbology }}</span>
+            <select (change)="set('symbology', $any($event.target).value)">
+              @for (sym of symbologies; track sym) {
+                <option [value]="sym" [selected]="sym === c.symbology">{{ sym }}</option>
+              }
+              @if (!symbologies.includes(c.symbology)) {
+                <option [value]="c.symbology" selected>{{ c.symbology }}</option>
+              }
+            </select>
+          </label>
+          <span class="pp__label">{{ s.barcodeValue }}</span>
+          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" (valueChange)="setBindable('value', $event)" />
+          <label class="pp__check">
+            <input type="checkbox" [checked]="c.showText" (change)="set('showText', $any($event.target).checked)" />
+            <span>{{ s.showText }}</span>
+          </label>
+        </section>
+      }
+      @case ('image') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <label class="pp__file">
+            <input type="file" accept="image/png,image/jpeg" (change)="chooseImage($event)" />
+            <span>{{ s.chooseImage }}</span>
+          </label>
+          <span class="pp__label">{{ s.fromData }}</span>
+          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" (valueChange)="setBindable('source', $event)" />
+          <label class="pp__row">
+            <span>{{ s.fit }}</span>
+            <select (change)="set('fit', $any($event.target).value)">
+              <option value="contain" [selected]="c.fit === 'contain'">{{ s.fitContain }}</option>
+              <option value="cover" [selected]="c.fit === 'cover'">{{ s.fitCover }}</option>
+              <option value="stretch" [selected]="c.fit === 'stretch'">{{ s.fitStretch }}</option>
+              <option value="none" [selected]="c.fit === 'none'">{{ s.fitNone }}</option>
+            </select>
+          </label>
+        </section>
+      }
+      @case ('line') {
+        <section class="pp__section">
+          <h3>{{ s.groupAppearance }}</h3>
+          <label class="pp__row">
+            <span>{{ s.lineDirection }}</span>
+            <select (change)="set('direction', $any($event.target).value)">
+              <option value="horizontal" [selected]="c.direction === 'horizontal'">{{ s.horizontal }}</option>
+              <option value="vertical" [selected]="c.direction === 'vertical'">{{ s.vertical }}</option>
+              <option value="diagonalDown" [selected]="c.direction === 'diagonalDown'">{{ s.diagonalDown }}</option>
+              <option value="diagonalUp" [selected]="c.direction === 'diagonalUp'">{{ s.diagonalUp }}</option>
+            </select>
+          </label>
+          <label class="pp__row">
+            <span>{{ s.lineWidth }} (mm)</span>
+            <input type="number" min="0.05" step="0.05" [value]="num(c.lineWidth)" (input)="set('lineWidth', asNumber($any($event.target).value, 0.05))" />
+          </label>
+          <label class="pp__row">
+            <span>{{ s.color }}</span>
+            <input type="color" [value]="c.color ?? style()?.color ?? '#000000'" (input)="set('color', $any($event.target).value)" />
+          </label>
+        </section>
+      }
+      @case ('shape') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <label class="pp__row">
+            <span>{{ s.shape }}</span>
+            <select (change)="set('shape', $any($event.target).value)">
+              <option value="rectangle" [selected]="c.shape === 'rectangle'">{{ s.rectangle }}</option>
+              <option value="roundedRectangle" [selected]="c.shape === 'roundedRectangle'">{{ s.roundedRectangle }}</option>
+              <option value="ellipse" [selected]="c.shape === 'ellipse'">{{ s.ellipse }}</option>
+            </select>
+          </label>
+          @if (c.shape === 'roundedRectangle') {
+            <label class="pp__row">
+              <span>{{ s.cornerRadius }} (mm)</span>
+              <input type="number" min="0" step="0.5" [value]="num(c.cornerRadius ?? 2)" (input)="set('cornerRadius', asNumber($any($event.target).value, 0))" />
+            </label>
+          }
+        </section>
+      }
+      @case ('pageInfo') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <label class="pp__row">
+            <span>{{ s.pageInfo }}</span>
+            <select (change)="set('info', $any($event.target).value)">
+              <option value="pageNumber" [selected]="c.info === 'pageNumber'">{{ s.pageNumber }}</option>
+              <option value="pageCount" [selected]="c.info === 'pageCount'">{{ s.pageTotal }}</option>
+              <option value="pageNofM" [selected]="c.info === 'pageNofM'">{{ s.pageNofM }}</option>
+              <option value="printDate" [selected]="c.info === 'printDate'">{{ s.printDate }}</option>
+            </select>
+          </label>
+          @if (c.info === 'pageNofM' || c.info === 'printDate') {
+            <label class="pp__row pp__row--stack">
+              <span>{{ s.format }}</span>
+              <input class="pp__mono" [value]="c.format ?? ''" (input)="set('format', $any($event.target).value)" [placeholder]="c.info === 'pageNofM' ? '{0} / {1}' : 'dd.MM.yyyy'" spellcheck="false" />
+            </label>
+          }
+        </section>
+      }
+      @case ('checkbox') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <span class="pp__label">{{ s.checked }}</span>
+          <we-report-bindable-input [value]="checkedValue(c)" [fields]="fields()" [strings]="s" (valueChange)="setBindable('checked', $event)" />
+        </section>
+      }
+    }
+
+    <section class="pp__section">
+      <h3>{{ s.groupLayout }}</h3>
+      <div class="pp__grid">
+        <label class="pp__row pp__row--stack"><span>{{ s.left }}</span><input type="number" min="0" step="0.5" [value]="num(c.x)" (input)="setGeometry('x', $any($event.target).value)" /></label>
+        <label class="pp__row pp__row--stack"><span>{{ s.top }}</span><input type="number" min="0" step="0.5" [value]="num(c.y)" (input)="setGeometry('y', $any($event.target).value)" /></label>
+        <label class="pp__row pp__row--stack"><span>{{ s.width }}</span><input type="number" min="0.5" step="0.5" [value]="num(c.width)" (input)="setGeometry('width', $any($event.target).value)" /></label>
+        <label class="pp__row pp__row--stack"><span>{{ s.height }}</span><input type="number" min="0.5" step="0.5" [value]="num(c.height)" (input)="setGeometry('height', $any($event.target).value)" /></label>
+      </div>
+    </section>
+  }
+
+  <!-- Appearance applies to every selected control at once. -->
+  @if (style(); as st) {
+    @if (hasText()) {
+      <section class="pp__section">
+        <h3>{{ s.groupAppearance }}</h3>
+        <label class="pp__row pp__row--stack">
+          <span>{{ s.font }}</span>
+          <select (change)="setStyle('fontFamily', $any($event.target).value)">
+            @for (f of fontFamilies(); track f) {
+              <option [value]="f" [selected]="f === st.fontFamily">{{ f }}</option>
+            }
+            @if (!fontFamilies().includes(st.fontFamily)) {
+              <option [value]="st.fontFamily" selected>{{ st.fontFamily }}</option>
+            }
+          </select>
+        </label>
+        <div class="pp__row">
+          <span>{{ s.fontSize }} (pt)</span>
+          <input type="number" min="4" max="200" step="0.5" [value]="num(st.fontSize)" (input)="setStyle('fontSize', asNumber($any($event.target).value, 4))" />
+        </div>
+        <div class="pp__segmented">
+          <button type="button" [class.pp__on]="st.bold" (click)="setStyle('bold', !st.bold)" [attr.aria-pressed]="st.bold"><b>{{ s.bold }}</b></button>
+          <button type="button" [class.pp__on]="st.italic" (click)="setStyle('italic', !st.italic)" [attr.aria-pressed]="st.italic"><i>{{ s.italic }}</i></button>
+          <button type="button" [class.pp__on]="st.underline" (click)="setStyle('underline', !st.underline)" [attr.aria-pressed]="st.underline"><u>{{ s.underline }}</u></button>
+        </div>
+        <div class="pp__row pp__row--stack">
+          <span>{{ s.alignment }}</span>
+          <div class="pp__segmented">
+            <button type="button" [class.pp__on]="st.textAlign === 'left'" (click)="setStyle('textAlign', 'left')">{{ s.alignLeft }}</button>
+            <button type="button" [class.pp__on]="st.textAlign === 'center'" (click)="setStyle('textAlign', 'center')">{{ s.alignCenter }}</button>
+            <button type="button" [class.pp__on]="st.textAlign === 'right'" (click)="setStyle('textAlign', 'right')">{{ s.alignRight }}</button>
+          </div>
+        </div>
+        <div class="pp__row pp__row--stack">
+          <span>{{ s.verticalAlignment }}</span>
+          <div class="pp__segmented">
+            <button type="button" [class.pp__on]="st.verticalAlign === 'top'" (click)="setStyle('verticalAlign', 'top')">{{ s.alignTop }}</button>
+            <button type="button" [class.pp__on]="st.verticalAlign === 'middle'" (click)="setStyle('verticalAlign', 'middle')">{{ s.alignMiddle }}</button>
+            <button type="button" [class.pp__on]="st.verticalAlign === 'bottom'" (click)="setStyle('verticalAlign', 'bottom')">{{ s.alignBottom }}</button>
+          </div>
+        </div>
+        <label class="pp__row">
+          <span>{{ s.textColor }}</span>
+          <input type="color" [value]="st.color" (input)="setStyle('color', $any($event.target).value)" />
+        </label>
+      </section>
+    }
+    @if (control()?.type !== 'line') {
+      <section class="pp__section">
+        @if (!hasText()) {
+          <h3>{{ s.groupAppearance }}</h3>
+        }
+        <label class="pp__row">
+          <span>{{ s.backgroundColor }}</span>
+          <span class="pp__color">
+            <input type="color" [value]="st.backgroundColor ?? '#ffffff'" (input)="setStyle('backgroundColor', $any($event.target).value)" />
+            <button type="button" class="pp__link" (click)="setStyle('backgroundColor', undefined)">{{ s.noColor }}</button>
+          </span>
+        </label>
+        <div class="pp__row pp__row--stack">
+          <span>{{ s.border }}</span>
+          <div class="pp__segmented">
+            <button type="button" [class.pp__on]="!!st.border?.sides?.top" (click)="toggleBorderSide('top', !st.border?.sides?.top)">{{ s.marginTop }}</button>
+            <button type="button" [class.pp__on]="!!st.border?.sides?.right" (click)="toggleBorderSide('right', !st.border?.sides?.right)">{{ s.marginRight }}</button>
+            <button type="button" [class.pp__on]="!!st.border?.sides?.bottom" (click)="toggleBorderSide('bottom', !st.border?.sides?.bottom)">{{ s.marginBottom }}</button>
+            <button type="button" [class.pp__on]="!!st.border?.sides?.left" (click)="toggleBorderSide('left', !st.border?.sides?.left)">{{ s.marginLeft }}</button>
+          </div>
+        </div>
+        @if (st.border) {
+          <div class="pp__grid">
+            <label class="pp__row pp__row--stack">
+              <span>{{ s.borderWidth }}</span>
+              <input type="number" min="0.05" step="0.05" [value]="num(st.border.width)" (input)="setBorder({ width: asNumber($any($event.target).value, 0.05) })" />
+            </label>
+            <label class="pp__row pp__row--stack">
+              <span>{{ s.borderColor }}</span>
+              <input type="color" [value]="st.border.color" (input)="setBorder({ color: $any($event.target).value })" />
+            </label>
+          </div>
+        }
+        @if (advanced() && hasText()) {
+          <label class="pp__row">
+            <span>{{ s.padding }} (mm)</span>
+            <input type="number" min="0" step="0.1" [value]="num(st.padding)" (input)="setStyle('padding', asNumber($any($event.target).value, 0))" />
+          </label>
+        }
+      </section>
+    }
+  }
+
+  @if (advanced() && control(); as c) {
+    <section class="pp__section">
+      <h3>{{ s.groupBehaviour }}</h3>
+      <span class="pp__label">{{ s.visibleWhen }}</span>
+      <input class="pp__mono" [value]="$any(visibleValue(c)).expression ?? ''" (input)="setVisible({ expression: $any($event.target).value })" spellcheck="false" placeholder="[Total] > 0" />
+      <small class="pp__hint">{{ s.visibleWhenHint }}</small>
+    </section>
+  }
+}

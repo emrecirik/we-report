@@ -1,0 +1,258 @@
+{
+  "number": "WR2026000042",
+  "date": "2026-10-19",
+  "paymentDays": 30,
+  "paid": false,
+  "seller": {
+    "name": "Örnek Ticaret A.Ş.",
+    "address": "Deneme Mah. Örnek Cad. No: 1, Kadıköy / İstanbul",
+    "taxOffice": "Örnek",
+    "taxNo": "0000000000"
+  },
+  "customer": {
+    "name": "Yıldız Gıda ve Pazarlama Ltd. Şti.",
+    "address": "Çiçek Sok. No: 7 Kat: 2",
+    "city": "Çankaya / Ankara"
+  },
+  "note": "Ödemenizi vade tarihine kadar TR00 0000 0000 0000 0000 0000 00 numaralı hesaba yapabilirsiniz. Bu fatura we-report ile oluşturulmuştur; tüm bilgiler örnektir.",
+  "lines": [
+    {
+      "code": "29001000",
+      "product": "Türk kahvesi 250 g",
+      "qty": 14,
+      "price": 269.51,
+      "vat": 20
+    },
+    {
+      "code": "29001001",
+      "product": "Çay (siyah) 1 kg",
+      "qty": 17,
+      "price": 381.48,
+      "vat": 20
+    },
+    {
+      "code": "29001002",
+      "product": "Zeytinyağı 1 L",
+      "qty": 13,
+      "price": 92.88,
+      "vat": 1
+    },
+    {
+      "code": "29001003",
+      "product": "Kuru kayısı 500 g",
+      "qty": 6,
+      "price": 157.93,
+      "vat": 20
+    },
+    {
+      "code": "29001004",
+      "product": "Fındık içi 1 kg",
+      "qty": 18,
+      "price": 342.26,
+      "vat": 10
+    },
+    {
+      "code": "29001005",
+      "product": "Lokum çeşitleri 400 g",
+      "qty": 7,
+      "price": 70.19,
+      "vat": 20
+    },
+    {
+      "code": "29001006",
+      "product": "Pul biber 200 g",
+      "qty": 21,
+      "price": 423.08,
+      "vat": 10
+    },
+    {
+      "code": "29001007",
+      "product": "Bal (çiçek) 850 g",
+      "qty": 7,
+      "price": 423.96,
+      "vat": 1
+    },
+    {
+      "code": "29001008",
+      "product": "Tahin 600 g",
+      "qty": 19,
+      "price": 482.32,
+      "vat": 20
+    },
+    {
+      "code": "29001009",
+      "product": "Pekmez 700 g",
+      "qty": 3,
+      "price": 181.77,
+      "vat": 10
+    },
+    {
+      "code": "29001010",
+      "product": "Bulgur 2,5 kg",
+      "qty": 2,
+      "price": 149.14,
+      "vat": 10
+    },
+    {
+      "code": "29001011",
+      "product": "Kırmızı mercimek 1 kg",
+      "qty": 19,
+      "price": 150.26,
+      "vat": 10
+    },
+    {
+      "code": "29001012",
+      "product": "Nohut 1 kg",
+      "qty": 1,
+      "price": 297.1,
+      "vat": 10
+    },
+    {
+      "code": "29001013",
+      "product": "Ayçiçek yağı 5 L",
+      "qty": 16,
+      "price": 356.97,
+      "vat": 20
+    },
+    {
+      "code": "29001014",
+      "product": "Toz şeker 5 kg",
+      "qty": 20,
+      "price": 130.4,
+      "vat": 20
+    },
+    {
+      "code": "29001015",
+      "product": "Un (tip 550) 10 kg",
+      "qty": 11,
+      "price": 460.54,
+      "vat": 1
+    },
+    {
+      "code": "29001016",
+      "product": "Makarna 500 g x 20 koli — kurumsal tedarik sözleşmesi kapsamında aylık sevkiyat",
+      "qty": 21,
+      "price": 159.16,
+      "vat": 1
+    },
+    {
+      "code": "29001017",
+      "product": "Pirinç (baldo) 2,5 kg",
+      "qty": 12,
+      "price": 32.32,
+      "vat": 1
+    },
+    {
+      "code": "29001018",
+      "product": "Türk kahvesi 250 g",
+      "qty": 23,
+      "price": 135.64,
+      "vat": 1
+    },
+    {
+      "code": "29001019",
+      "product": "Çay (siyah) 1 kg",
+      "qty": 15,
+      "price": 371.91,
+      "vat": 10
+    },
+    {
+      "code": "29001020",
+      "product": "Zeytinyağı 1 L",
+      "qty": 20,
+      "price": 311.79,
+      "vat": 10
+    },
+    {
+      "code": "29001021",
+      "product": "Kuru kayısı 500 g",
+      "qty": 3,
+      "price": 149.32,
+      "vat": 1
+    },
+    {
+      "code": "29001022",
+      "product": "Fındık içi 1 kg",
+      "qty": 22,
+      "price": 488.5,
+      "vat": 1
+    },
+    {
+      "code": "29001023",
+      "product": "Lokum çeşitleri 400 g",
+      "qty": 20,
+      "price": 126.35,
+      "vat": 10
+    },
+    {
+      "code": "29001024",
+      "product": "Pul biber 200 g",
+      "qty": 2,
+      "price": 32.45,
+      "vat": 1
+    },
+    {
+      "code": "29001025",
+      "product": "Bal (çiçek) 850 g",
+      "qty": 9,
+      "price": 280.55,
+      "vat": 20
+    },
+    {
+      "code": "29001026",
+      "product": "Tahin 600 g",
+      "qty": 11,
+      "price": 202.26,
+      "vat": 10
+    },
+    {
+      "code": "29001027",
+      "product": "Pekmez 700 g",
+      "qty": 16,
+      "price": 219.51,
+      "vat": 1
+    },
+    {
+      "code": "29001028",
+      "product": "Bulgur 2,5 kg",
+      "qty": 19,
+      "price": 227.44,
+      "vat": 20
+    },
+    {
+      "code": "29001029",
+      "product": "Kırmızı mercimek 1 kg",
+      "qty": 5,
+      "price": 347.41,
+      "vat": 10
+    },
+    {
+      "code": "29001030",
+      "product": "Nohut 1 kg",
+      "qty": 19,
+      "price": 321.77,
+      "vat": 10
+    },
+    {
+      "code": "29001031",
+      "product": "Ayçiçek yağı 5 L",
+      "qty": 11,
+      "price": 132.53,
+      "vat": 1
+    },
+    {
+      "code": "29001032",
+      "product": "Toz şeker 5 kg",
+      "qty": 8,
+      "price": 279.35,
+      "vat": 1
+    },
+    {
+      "code": "29001033",
+      "product": "Un (tip 550) 10 kg",
+      "qty": 24,
+      "price": 415.49,
+      "vat": 10
+    }
+  ]
+}

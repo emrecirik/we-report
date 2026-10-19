@@ -1,0 +1,114 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--we-report-band-border);
+  background: var(--we-report-toolbar-bg);
+  color: var(--we-report-fg);
+  font-size: 13px;
+}
+.brand {
+  font-size: 15px;
+}
+.brand span {
+  color: var(--we-report-accent);
+}
+.tag {
+  color: var(--we-report-muted-fg);
+}
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+button,
+select,
+.file {
+  font: inherit;
+  color: inherit;
+  padding: 5px 10px;
+  border: 1px solid var(--we-report-band-border);
+  border-radius: 6px;
+  background: var(--we-report-input-bg);
+  cursor: pointer;
+}
+.file {
+  position: relative;
+}
+.file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.spacer {
+  flex: 1;
+}
+.message {
+  padding: 8px 14px;
+  background: var(--we-report-warning-bg);
+  color: var(--we-report-warning-fg);
+  font-size: 13px;
+}
+.designer {
+  flex: 1;
+  min-height: 0;
+}
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 50;
+}
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 51;
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--we-report-panel-bg);
+  color: var(--we-report-fg);
+  box-shadow: var(--we-report-page-shadow);
+}
+.dialog h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.dialog p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--we-report-muted-fg);
+}
+.dialog textarea {
+  min-height: 320px;
+  font: 12px ui-monospace, Consolas, monospace;
+  padding: 8px;
+  border: 1px solid var(--we-report-band-border);
+  border-radius: 6px;
+  background: var(--we-report-input-bg);
+  color: inherit;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.primary {
+  background: var(--we-report-accent);
+  color: var(--we-report-page-bg);
+  border-color: var(--we-report-accent);
+}

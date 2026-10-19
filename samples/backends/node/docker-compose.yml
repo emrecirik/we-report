@@ -1,0 +1,26 @@
+# docker compose up  →  backend on http://127.0.0.1:5480 with a PostgreSQL sample database.
+# Build context is the repository root so the shared sample dataset can be copied in.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: shop
+      POSTGRES_USER: owner
+      POSTGRES_PASSWORD: owner-password-change-me
+    volumes:
+      - ../../data/seed.sql:/docker-entrypoint-initdb.d/01-seed.sql:ro
+      - ./postgres-readonly.sql:/docker-entrypoint-initdb.d/02-readonly.sql:ro
+  backend:
+    build:
+      context: ../../..
+      dockerfile: samples/backends/node/Dockerfile
+    depends_on: [db]
+    ports:
+      - "127.0.0.1:5480:5480"
+    environment:
+      # Inside Docker the backend must listen on all interfaces; the port is published on
+      # 127.0.0.1 only. Expose it publicly only with WE_REPORT_AUTH_TOKEN or your own auth.
+      WE_REPORT_AUTH_TOKEN: change-me
+      WE_REPORT_CONNECTIONS: >-
+        [{"id":"shop","name":"Sample shop (PostgreSQL)","dialect":"postgres",
+          "url":"postgres://report_reader:reader-password-change-me@db:5432/shop"}]

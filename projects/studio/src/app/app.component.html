@@ -1,0 +1,44 @@
+@let t = text();
+<header class="bar">
+  <strong class="brand">we-report <span>Studio</span></strong>
+  <small class="tag">{{ t.free }}</small>
+  <label class="field">
+    {{ t.template }}
+    <select (change)="useTemplate($any($event.target).value)">
+      @for (tpl of templates; track tpl.id) {
+        <option [value]="tpl.id" [selected]="tpl.id === templateId()">{{ tpl.name[language()] }}</option>
+      }
+    </select>
+  </label>
+  <button type="button" (click)="openDataDialog()">{{ t.data }}</button>
+  <label class="file">
+    <input type="file" accept=".json,application/json" (change)="open($event)" />
+    {{ t.open }}
+  </label>
+  <button type="button" (click)="save()">{{ t.save }}</button>
+  <span class="spacer"></span>
+  <button type="button" (click)="toggleTheme()" [attr.aria-pressed]="dark()">{{ t.theme }}: {{ dark() ? '☾' : '☀' }}</button>
+  <select (change)="language.set($any($event.target).value)" aria-label="Language">
+    <option value="tr" [selected]="language() === 'tr'">Türkçe</option>
+    <option value="en" [selected]="language() === 'en'">English</option>
+  </select>
+</header>
+
+@if (message(); as m) {
+  <div class="message" role="alert">{{ m }}</div>
+}
+
+<we-report-designer class="designer" [(report)]="report" [data]="data()" [locale]="locale()" />
+
+@if (dataDialogOpen()) {
+  <div class="backdrop" (click)="dataDialogOpen.set(false)"></div>
+  <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="t.dataTitle">
+    <h2>{{ t.dataTitle }}</h2>
+    <p>{{ t.dataHelp }}</p>
+    <textarea [value]="dataDraft()" (input)="dataDraft.set($any($event.target).value)" spellcheck="false"></textarea>
+    <div class="actions">
+      <button type="button" (click)="dataDialogOpen.set(false)">{{ t.cancel }}</button>
+      <button type="button" class="primary" (click)="applyData()">{{ t.apply }}</button>
+    </div>
+  </div>
+}

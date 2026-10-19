@@ -1,0 +1,138 @@
+@let s = strings();
+<div class="dsd__backdrop" (click)="closed.emit()"></div>
+<div class="dsd" role="dialog" aria-modal="true" [attr.aria-label]="s.dataSources">
+  <header class="dsd__head">
+    <h2>{{ s.dataSources }}</h2>
+    <button type="button" class="dsd__close" (click)="closed.emit()" [attr.aria-label]="s.close">×</button>
+  </header>
+
+  <div class="dsd__body">
+    <nav class="dsd__list">
+      @for (src of report().dataSources; track src.id) {
+        <button type="button" class="dsd__item" [class.dsd__item--on]="src.id === source()?.id" (click)="select(src.id)">
+          <span>{{ src.name }}</span>
+          <small>{{ kindLabel(src) }}@if (report().dataMember?.dataSourceId === src.id) { · {{ s.rowsSource }} }</small>
+        </button>
+      } @empty {
+        <p class="dsd__hint">{{ s.noSources }}</p>
+      }
+      <div class="dsd__add">
+        <button type="button" (click)="add('json')">+ JSON</button>
+        <button type="button" (click)="add('csv')">+ CSV / Excel</button>
+        <button type="button" (click)="add('webService')">+ {{ s.webService }}</button>
+        <button type="button" (click)="add('database')">+ {{ s.database }}</button>
+      </div>
+
+      <h3>{{ s.parameters }}</h3>
+      <p class="dsd__hint">{{ s.parametersHint }}</p>
+      @for (p of report().parameters ?? []; track $index; let i = $index) {
+        <div class="dsd__param">
+          <input [value]="p.name" (input)="setParameter(i, 'name', $any($event.target).value)" [attr.aria-label]="s.parameterName" spellcheck="false" />
+          <select (change)="setParameter(i, 'type', $any($event.target).value)" [attr.aria-label]="s.parameterType">
+            @for (t of types; track t) {
+              <option [value]="t" [selected]="t === p.type">{{ typeLabel(t) }}</option>
+            }
+          </select>
+          <input [value]="p.label ?? ''" (input)="setParameter(i, 'label', $any($event.target).value)" [placeholder]="s.parameterLabel" />
+          <input [value]="p.defaultValue ?? ''" (input)="setParameter(i, 'defaultValue', $any($event.target).value)" [placeholder]="s.defaultValue" />
+          <button type="button" class="dsd__icon" (click)="removeParameter(i)" [attr.aria-label]="s.delete">×</button>
+          <code class="dsd__use">[?{{ p.name }}] · {{ '{{' }}{{ p.name }}{{ '}}' }}</code>
+        </div>
+      }
+      <button type="button" class="dsd__link" (click)="addParameter()">+ {{ s.addParameter }}</button>
+    </nav>
+
+    <section class="dsd__editor">
+      @if (source(); as src) {
+        <label class="dsd__field">
+          <span>{{ s.sourceName }}</span>
+          <input [value]="src.name" (input)="setName($any($event.target).value)" />
+        </label>
+
+        <div class="dsd__rows">
+          @if (isMain()) {
+            <label class="dsd__field">
+              <span>{{ s.dataRows }}</span>
+              <input list="dsd-paths" [value]="report().dataMember?.path ?? ''" (input)="setRowsPath($any($event.target).value)" spellcheck="false" [placeholder]="s.wholeData" />
+              <datalist id="dsd-paths">
+                @for (p of listPaths(); track p) {
+                  <option [value]="p"></option>
+                }
+              </datalist>
+              <small class="dsd__hint">{{ s.dataRowsHint }} · {{ s.rowCount.replace('{0}', '' + rowCount()) }}</small>
+            </label>
+          } @else {
+            <button type="button" class="dsd__link" (click)="useForRows()">{{ s.useForRows }}</button>
+          }
+        </div>
+
+        @switch (src.kind) {
+          @case ('json') {
+            <label class="dsd__field dsd__grow">
+              <span>{{ s.jsonData }}</span>
+              <textarea spellcheck="false" [value]="jsonText(src)" (change)="setJson($any($event.target).value)"></textarea>
+            </label>
+            @if (jsonError(); as err) {
+              <p class="dsd__error">{{ err }}</p>
+            }
+          }
+          @case ('csv') {
+            <label class="dsd__field dsd__grow">
+              <span>{{ s.csvData }}</span>
+              <textarea spellcheck="false" [value]="src.text" (input)="setCsv($any($event.target).value)"></textarea>
+              <small class="dsd__hint">{{ s.rowCount.replace('{0}', '' + csvRows(src)) }}</small>
+            </label>
+          }
+          @case ('webService') {
+            @let w = web(src)!;
+            <div class="dsd__inline">
+              <select (change)="setWeb('method', $any($event.target).value)" [attr.aria-label]="s.method">
+                <option value="GET" [selected]="(w.method ?? 'GET') === 'GET'">GET</option>
+                <option value="POST" [selected]="w.method === 'POST'">POST</option>
+              </select>
+              <input class="dsd__url" [value]="w.url" (input)="setWeb('url', $any($event.target).value)" [attr.aria-label]="s.url" spellcheck="false" placeholder="https://api.example.com/orders?from={{ '{{' }}from{{ '}}' }}" />
+              <button type="button" class="dsd__primary" (click)="test()" [disabled]="testing()">{{ testing() ? s.testing : s.test }}</button>
+            </div>
+            @if (testResult(); as r) {
+              <p [class.dsd__ok]="r.ok" [class.dsd__error]="!r.ok">{{ r.message }}</p>
+            }
+            <div class="dsd__field">
+              <span>{{ s.headers }}</span>
+              @for (h of w.headers ?? []; track $index; let i = $index) {
+                <div class="dsd__inline">
+                  <input [value]="h.name" (input)="setHeader(i, 'name', $any($event.target).value)" placeholder="Authorization" [attr.aria-label]="s.headerName" />
+                  <input [value]="h.value" (input)="setHeader(i, 'value', $any($event.target).value)" placeholder="Bearer {{ '{{' }}token{{ '}}' }}" [attr.aria-label]="s.headerValue" />
+                  <button type="button" class="dsd__icon" (click)="removeHeader(i)" [attr.aria-label]="s.delete">×</button>
+                </div>
+              }
+              <button type="button" class="dsd__link" (click)="addHeader()">+ {{ s.addHeader }}</button>
+            </div>
+            @if (w.method === 'POST') {
+              <label class="dsd__field">
+                <span>{{ s.requestBody }}</span>
+                <textarea spellcheck="false" rows="4" [value]="w.body ?? ''" (input)="setWeb('body', $any($event.target).value)"></textarea>
+              </label>
+            }
+            <label class="dsd__check">
+              <input type="checkbox" [checked]="w.via === 'backend'" (change)="setWeb('via', $any($event.target).checked ? 'backend' : '')" />
+              <span>{{ s.viaBackend }}<small class="dsd__hint">{{ s.viaBackendHint }}</small></span>
+            </label>
+            <p class="dsd__warning">{{ s.secretWarning }}</p>
+          }
+          @case ('database') {
+            <we-report-database-source-editor
+              [source]="db(src)!"
+              [parameters]="report().parameters ?? []"
+              [strings]="s"
+              [fetchFn]="fetchFn()"
+              (edit)="applyDbEdit($event)"
+            />
+          }
+        }
+        <button type="button" class="dsd__danger" (click)="remove()">{{ s.removeSource }}</button>
+      } @else {
+        <p class="dsd__hint">{{ s.noSources }}</p>
+      }
+    </section>
+  </div>
+</div>

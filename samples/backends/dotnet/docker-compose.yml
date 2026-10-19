@@ -1,0 +1,25 @@
+# docker compose up  →  backend on http://127.0.0.1:5480 next to a SQL Server instance.
+# Create your database and a read-only login (see README), then point WE_REPORT_CONNECTIONS at it.
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Change-me-123!"
+    ports:
+      - "127.0.0.1:1433:1433"
+  backend:
+    build:
+      context: ../../..
+      dockerfile: samples/backends/dotnet/Dockerfile
+    depends_on: [db]
+    ports:
+      - "127.0.0.1:5480:5480"
+    environment:
+      # Inside Docker the backend listens on all interfaces; the port is published on 127.0.0.1
+      # only. Expose it publicly only with WE_REPORT_AUTH_TOKEN or your own auth.
+      WE_REPORT_AUTH_TOKEN: change-me
+      # Without connections the built-in SQLite sample shop is served. For SQL Server:
+      # WE_REPORT_CONNECTIONS: >-
+      #   [{"id":"erp","name":"ERP","dialect":"sqlserver",
+      #     "url":"Server=db;Database=Erp;User Id=report_reader;Password=...;TrustServerCertificate=True"}]

@@ -1,0 +1,714 @@
+import { DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
+import { Band, evaluate, formatValue, isExpression, ReportControl, ReportControlType, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { WE_REPORT_CONFIG } from '../we-report-config';
+import { WeReportFontsService } from '../we-report-fonts.service';
+import { WeReportIconPipe } from '../we-report-icon.pipe';
+import { WeReportLocale } from '../we-report-locale';
+import { captionFor, createControl, fieldExpression } from './control-factory';
+import { DesignerState } from './designer-state';
+
+/** First row of the data, shown inside bound controls while designing. */
+export interface DesignSample {
+  row: unknown;
+  rows: readonly unknown[];
+  parent: unknown;
+}
+
+/** Payload of an HTML5 drag from the toolbox or the field list. */
+export type DesignerDragData =
+  | { kind: 'control'; type: ReportControlType; variant?: string }
+  | { kind: 'field'; path: string; parent: boolean; format?: string };
+
+export const DRAG_MIME = 'application/x-we-report';
+
+const PX_PER_MM = 96 / 25.4;
+const SNAP_DISTANCE_MM = 1.5;
+const MIN_SIZE_MM = 1;
+
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface Guide {
+  bandId: string;
+  orientation: 'v' | 'h';
+  at: number;
+}
+
+type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
+interface DragOp {
+  kind: 'move' | 'resize' | 'band';
+  startX: number;
+  startY: number;
+  key: string;
+  handle?: Handle;
+  bandId: string;
+  primaryId?: string;
+  originals: Map<string, Rect>;
+  bandHeight?: number;
+  additive?: boolean;
+  moved: boolean;
+}
+
+/** The page, its bands and controls, with selection, drag, resize, snapping and drop targets. */
+@Component({
+  selector: 'we-report-design-surface',
+  standalone: true,
+  imports: [WeReportIconPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  // Focusable so keyboard shortcuts (undo, delete, arrows) reach the designer after a click.
+  host: { tabindex: '0' },
+  template: `
+    <div class="ds__page" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()">
+      @for (band of state.report().bands; track band.id) {
+        <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)">
+          <button type="button" class="ds__band-label" (click)="selectBand(band.id)">
+            {{ bandLabel(band) }}
+          </button>
+          <div
+            class="ds__band-body"
+            [attr.data-band-id]="band.id"
+            [style.height.mm]="band.height * zoom()"
+            [style.background-color]="band.backgroundColor ?? null"
+            [style.background-size.mm]="gridSize() * zoom()"
+            (pointerdown)="onBodyPointerDown($event)"
+            (dragover)="onDragOver($event)"
+            (drop)="onDrop($event, band)"
+          >
+            @for (c of band.controls; track c.id) {
+              <div
+                class="ds__control"
+                [class.ds__control--selected]="isSelected(c.id)"
+                [attr.data-type]="c.type"
+                [style.left.mm]="c.x * zoom()"
+                [style.top.mm]="c.y * zoom()"
+                [style.width.mm]="c.width * zoom()"
+                [style.height.mm]="c.height * zoom()"
+                (pointerdown)="onControlPointerDown($event, c, band)"
+              >
+                @switch (c.type) {
+                  @case ('line') {
+                    <svg class="ds__fill" preserveAspectRatio="none" [attr.viewBox]="'0 0 ' + c.width + ' ' + c.height">
+                      <line
+                        [attr.x1]="lineCoords(c)[0]"
+                        [attr.y1]="lineCoords(c)[1]"
+                        [attr.x2]="lineCoords(c)[2]"
+                        [attr.y2]="lineCoords(c)[3]"
+                        [attr.stroke]="lineColor(c)"
+                        [attr.stroke-width]="lineWidth(c)"
+                      />
+                    </svg>
+                  }
+                  @case ('shape') {
+                    <div class="ds__fill" [style]="shapeStyle(c)"></div>
+                  }
+                  @case ('image') {
+                    @if (staticImage(c); as src) {
+                      <img class="ds__fill ds__image" [src]="src" [style.object-fit]="objectFit(c)" alt="" />
+                    } @else {
+                      <div class="ds__placeholder" [innerHTML]="'image' | weReportIcon"></div>
+                    }
+                  }
+                  @case ('barcode') {
+                    <div class="ds__placeholder">
+                      <span [innerHTML]="(isQr(c) ? 'qrcode' : 'barcode') | weReportIcon"></span>
+                      <small>{{ barcodeLabel(c) }}</small>
+                    </div>
+                  }
+                  @case ('checkbox') {
+                    <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
+                  }
+                  @default {
+                    <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">{{ caption(c) }}</div>
+                  }
+                }
+                @if (isOnlySelected(c.id)) {
+                  @for (h of handles; track h) {
+                    <span class="ds__handle" [attr.data-handle]="h" (pointerdown)="onHandlePointerDown($event, c, band, h)"></span>
+                  }
+                }
+              </div>
+            }
+            @for (g of guidesFor(band.id); track $index) {
+              <div class="ds__guide" [class.ds__guide--v]="g.orientation === 'v'" [style.left.mm]="g.orientation === 'v' ? g.at * zoom() : null" [style.top.mm]="g.orientation === 'h' ? g.at * zoom() : null"></div>
+            }
+          </div>
+          <div class="ds__band-resize" (pointerdown)="onBandResizePointerDown($event, band)" [title]="strings().bandHeight"></div>
+        </div>
+      }
+    </div>
+  `,
+  styles: `
+    :host {
+      display: block;
+      padding: 24px;
+      outline: none;
+    }
+    .ds__page {
+      box-sizing: border-box;
+      margin: 0 auto;
+      background: var(--we-report-page-bg, #fff);
+      box-shadow: var(--we-report-page-shadow, 0 1px 3px rgba(0, 0, 0, 0.2));
+      outline: 1px dashed var(--we-report-margin-guide, #c4cad4);
+      outline-offset: -1px;
+    }
+    .ds__band {
+      position: relative;
+    }
+    .ds__band-label {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      font: 11px var(--we-report-font-family, system-ui, sans-serif);
+      padding: 2px 6px;
+      background: var(--we-report-band-label-bg, #f4f6f8);
+      color: var(--we-report-band-label-fg, #57606a);
+      cursor: pointer;
+      user-select: none;
+    }
+    .ds__band--selected .ds__band-label {
+      background: var(--we-report-selection, #2563eb);
+      color: var(--we-report-page-bg, #fff);
+    }
+    .ds__band-body {
+      position: relative;
+      background-image: radial-gradient(circle, var(--we-report-margin-guide, #c4cad4) 0.6px, transparent 0.6px);
+      outline: 1px solid var(--we-report-band-border, #d5dae1);
+    }
+    .ds__band-resize {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -3px;
+      height: 6px;
+      cursor: ns-resize;
+      z-index: 2;
+    }
+    .ds__control {
+      position: absolute;
+      box-sizing: border-box;
+      outline: 1px dotted var(--we-report-control-outline, #9aa4b2);
+      cursor: move;
+      touch-action: none;
+    }
+    .ds__control--selected {
+      outline: 1.5px solid var(--we-report-selection, #2563eb);
+      background: var(--we-report-selection-fill, rgba(37, 99, 235, 0.08));
+      z-index: 1;
+    }
+    .ds__fill {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .ds__image {
+      display: block;
+    }
+    .ds__placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--we-report-muted-fg, #57606a);
+      font: 10px var(--we-report-font-family, system-ui, sans-serif);
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .ds__text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.36;
+      pointer-events: none;
+    }
+    .ds__text--bound {
+      text-decoration: underline dotted var(--we-report-accent, #2563eb);
+    }
+    .ds__handle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      margin: -4px 0 0 -4px;
+      box-sizing: border-box;
+      background: var(--we-report-page-bg, #fff);
+      border: 1.5px solid var(--we-report-selection, #2563eb);
+      border-radius: 2px;
+      z-index: 3;
+    }
+    .ds__handle[data-handle='nw'] { left: 0; top: 0; cursor: nwse-resize; }
+    .ds__handle[data-handle='n'] { left: 50%; top: 0; cursor: ns-resize; }
+    .ds__handle[data-handle='ne'] { left: 100%; top: 0; cursor: nesw-resize; }
+    .ds__handle[data-handle='e'] { left: 100%; top: 50%; cursor: ew-resize; }
+    .ds__handle[data-handle='se'] { left: 100%; top: 100%; cursor: nwse-resize; }
+    .ds__handle[data-handle='s'] { left: 50%; top: 100%; cursor: ns-resize; }
+    .ds__handle[data-handle='sw'] { left: 0; top: 100%; cursor: nesw-resize; }
+    .ds__handle[data-handle='w'] { left: 0; top: 50%; cursor: ew-resize; }
+    .ds__guide {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 0;
+      border-top: 1px dashed var(--we-report-guide, #ec4899);
+      pointer-events: none;
+      z-index: 4;
+    }
+    .ds__guide--v {
+      top: 0;
+      bottom: 0;
+      right: auto;
+      width: 0;
+      height: auto;
+      border-top: 0;
+      border-left: 1px dashed var(--we-report-guide, #ec4899);
+    }
+  `,
+})
+export class DesignSurfaceComponent implements OnDestroy {
+  readonly strings = input.required<WeReportLocale>();
+  readonly zoom = input(1);
+  /** Snap grid in mm; 0 turns snapping off. */
+  readonly gridSize = input(1);
+  /** When set, bound text shows this data instead of its formula. */
+  readonly sample = input<DesignSample | null>(null);
+
+  protected readonly state = inject(DesignerState);
+  private readonly config = inject(WE_REPORT_CONFIG);
+  private readonly dom = inject(DOCUMENT);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  protected readonly handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+  protected readonly guides = signal<Guide[]>([]);
+
+  protected readonly geometry = computed(() => resolvePageGeometry(this.state.report().page));
+  protected readonly padding = computed(() => {
+    const { top, right, bottom, left } = this.state.report().page.margins;
+    const z = this.zoom();
+    return `${top * z}mm ${right * z}mm ${bottom * z}mm ${left * z}mm`;
+  });
+
+  private op: DragOp | null = null;
+  private readonly onMove = (e: PointerEvent) => this.pointerMove(e);
+  private readonly onUp = (e: PointerEvent) => this.pointerUp(e);
+  private opCounter = 0;
+
+  ngOnDestroy(): void {
+    this.stopListening();
+  }
+
+  // ── Rendering helpers ───────────────────────────────────────────────────────
+
+  protected bandLabel(band: Band): string {
+    const name = this.strings().bandNames[band.kind];
+    return band.kind === 'groupHeader' && band.groupBy ? `${name}: ${band.groupBy.expression}` : name;
+  }
+
+  protected isSelected(id: string): boolean {
+    const sel = this.state.selection();
+    return sel.kind === 'controls' && sel.ids.includes(id);
+  }
+
+  protected isOnlySelected(id: string): boolean {
+    const sel = this.state.selection();
+    return sel.kind === 'controls' && sel.ids.length === 1 && sel.ids[0] === id;
+  }
+
+  protected isBandSelected(id: string): boolean {
+    const sel = this.state.selection();
+    return sel.kind === 'band' && sel.id === id;
+  }
+
+  protected guidesFor(bandId: string): Guide[] {
+    return this.guides().filter((g) => g.bandId === bandId);
+  }
+
+  protected isBound(c: ReportControl): boolean {
+    return c.type === 'text' && isExpression(c.text);
+  }
+
+  protected boundExpression(c: ReportControl): string {
+    return c.type === 'text' && isExpression(c.text) ? c.text.expression : '';
+  }
+
+  protected caption(c: ReportControl): string {
+    if (c.type === 'text') {
+      if (!isExpression(c.text)) return c.text;
+      const sample = this.sample();
+      if (!sample) return c.text.expression;
+      try {
+        const options = { locale: this.config.locale ?? 'en-US', currency: this.config.currency ?? 'USD' };
+        const value = evaluate(c.text.expression, { ...sample, ...options, now: new Date() });
+        return typeof value === 'string' && !c.format ? value : formatValue(value, c.format, options);
+      } catch {
+        return c.text.expression;
+      }
+    }
+    if (c.type === 'pageInfo') {
+      const s = this.strings();
+      return c.info === 'pageNumber' ? '1' : c.info === 'pageCount' ? '9' : c.info === 'pageNofM' ? (c.format || '{0} / {1}').replace('{0}', '1').replace('{1}', '9') : s.printDate;
+    }
+    return '';
+  }
+
+  protected textStyle(c: ReportControl): Record<string, string> {
+    const s = resolveStyle(this.state.report(), c.style, c.styleOverrides);
+    const z = this.zoom();
+    const style: Record<string, string> = {
+      'font-family': `'${WeReportFontsService.cssFamily(s.fontFamily)}', sans-serif`,
+      'font-size': `${s.fontSize * z}pt`,
+      'font-weight': s.bold ? '700' : '400',
+      'font-style': s.italic ? 'italic' : 'normal',
+      color: s.color,
+      'text-align': s.textAlign === 'justify' ? 'justify' : s.textAlign,
+      'justify-content': s.verticalAlign === 'middle' ? 'center' : s.verticalAlign === 'bottom' ? 'flex-end' : 'flex-start',
+      padding: `${s.padding * z}mm`,
+    };
+    if (s.underline) style['text-decoration'] = 'underline';
+    if (s.backgroundColor) style['background'] = s.backgroundColor;
+    if (s.border && s.border.width > 0) {
+      const b = `${s.border.width * z}mm solid ${s.border.color}`;
+      if (s.border.sides.top) style['border-top'] = b;
+      if (s.border.sides.right) style['border-right'] = b;
+      if (s.border.sides.bottom) style['border-bottom'] = b;
+      if (s.border.sides.left) style['border-left'] = b;
+    }
+    return style;
+  }
+
+  protected shapeStyle(c: ReportControl): Record<string, string> {
+    if (c.type !== 'shape') return {};
+    const s = resolveStyle(this.state.report(), c.style, c.styleOverrides);
+    const z = this.zoom();
+    return {
+      border: `${(s.border?.width ?? 0.25) * z}mm solid ${s.border?.color ?? s.color}`,
+      background: s.backgroundColor ?? 'transparent',
+      'border-radius': c.shape === 'ellipse' ? '50%' : c.shape === 'roundedRectangle' ? `${(c.cornerRadius ?? 2) * z}mm` : '0',
+    };
+  }
+
+  protected lineCoords(c: ReportControl): [number, number, number, number] {
+    if (c.type !== 'line') return [0, 0, 0, 0];
+    const { width: w, height: h } = c;
+    return c.direction === 'horizontal' ? [0, h / 2, w, h / 2] : c.direction === 'vertical' ? [w / 2, 0, w / 2, h] : c.direction === 'diagonalDown' ? [0, 0, w, h] : [0, h, w, 0];
+  }
+
+  protected lineColor(c: ReportControl): string {
+    return c.type === 'line' ? (c.color ?? resolveStyle(this.state.report(), c.style, c.styleOverrides).color) : '';
+  }
+
+  protected lineWidth(c: ReportControl): number {
+    return c.type === 'line' ? c.lineWidth : 0;
+  }
+
+  protected staticImage(c: ReportControl): string | null {
+    return c.type === 'image' && typeof c.source === 'string' && c.source.startsWith('data:image/') ? c.source : null;
+  }
+
+  protected objectFit(c: ReportControl): string {
+    if (c.type !== 'image') return 'contain';
+    return c.fit === 'stretch' ? 'fill' : c.fit;
+  }
+
+  protected isQr(c: ReportControl): boolean {
+    return c.type === 'barcode' && /qr/i.test(c.symbology);
+  }
+
+  protected barcodeLabel(c: ReportControl): string {
+    if (c.type !== 'barcode') return '';
+    return `${c.symbology}: ${isExpression(c.value) ? c.value.expression : c.value}`;
+  }
+
+  // ── Selection ───────────────────────────────────────────────────────────────
+
+  protected selectBand(id: string): void {
+    this.state.selection.set({ kind: 'band', id });
+  }
+
+  protected onBodyPointerDown(e: PointerEvent): void {
+    if (e.button !== 0) return;
+    this.host.nativeElement.focus({ preventScroll: true });
+    this.state.selection.set({ kind: 'none' });
+  }
+
+  // ── Drag: move / resize / band height ───────────────────────────────────────
+
+  protected onControlPointerDown(e: PointerEvent, c: ReportControl, band: Band): void {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+    this.state.select(c.id, additive);
+    const ids = this.state.selection().kind === 'controls' ? (this.state.selection() as { ids: string[] }).ids : [];
+    if (!ids.includes(c.id)) return;
+    this.begin(e, { kind: 'move', bandId: band.id, primaryId: c.id, originals: this.rectsOf(ids), additive });
+  }
+
+  protected onHandlePointerDown(e: PointerEvent, c: ReportControl, band: Band, handle: Handle): void {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+    this.begin(e, { kind: 'resize', bandId: band.id, primaryId: c.id, handle, originals: this.rectsOf([c.id]) });
+  }
+
+  protected onBandResizePointerDown(e: PointerEvent, band: Band): void {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+    this.state.selection.set({ kind: 'band', id: band.id });
+    this.begin(e, { kind: 'band', bandId: band.id, bandHeight: band.height, originals: new Map() });
+  }
+
+  private begin(e: PointerEvent, op: Omit<DragOp, 'startX' | 'startY' | 'key' | 'moved'>): void {
+    this.host.nativeElement.focus({ preventScroll: true });
+    this.op = { ...op, startX: e.clientX, startY: e.clientY, key: `drag${++this.opCounter}`, moved: false };
+    this.dom.addEventListener('pointermove', this.onMove);
+    this.dom.addEventListener('pointerup', this.onUp);
+    this.dom.addEventListener('pointercancel', this.onUp);
+  }
+
+  private stopListening(): void {
+    this.dom.removeEventListener('pointermove', this.onMove);
+    this.dom.removeEventListener('pointerup', this.onUp);
+    this.dom.removeEventListener('pointercancel', this.onUp);
+  }
+
+  private rectsOf(ids: string[]): Map<string, Rect> {
+    const map = new Map<string, Rect>();
+    for (const b of this.state.report().bands) {
+      for (const c of b.controls) if (ids.includes(c.id)) map.set(c.id, { x: c.x, y: c.y, width: c.width, height: c.height });
+    }
+    return map;
+  }
+
+  private pointerMove(e: PointerEvent): void {
+    const op = this.op;
+    if (!op) return;
+    const scale = PX_PER_MM * this.zoom();
+    const dx = (e.clientX - op.startX) / scale;
+    const dy = (e.clientY - op.startY) / scale;
+    if (!op.moved && Math.abs(dx) < 0.3 && Math.abs(dy) < 0.3) return;
+    op.moved = true;
+    const snap = !e.altKey;
+
+    if (op.kind === 'band') {
+      const band = this.state.report().bands.find((b) => b.id === op.bandId);
+      const minHeight = Math.max(2, ...(band?.controls.map((c) => c.y + c.height) ?? [0]));
+      const height = Math.max(minHeight, this.snapToGrid(op.bandHeight! + dy, snap));
+      this.state.updateBand(op.bandId, (b) => (b.height = round(height)), op.key);
+      return;
+    }
+
+    const primary = op.originals.get(op.primaryId!)!;
+    const others = this.otherRects(op.bandId, [...op.originals.keys()]);
+    const guides: Guide[] = [];
+
+    if (op.kind === 'move') {
+      const proposed = { ...primary, x: primary.x + dx, y: primary.y + dy };
+      const sx = this.snapAxis([proposed.x, proposed.x + proposed.width / 2, proposed.x + proposed.width], others, 'v', snap);
+      const sy = this.snapAxis([proposed.y, proposed.y + proposed.height / 2, proposed.y + proposed.height], others, 'h', snap);
+      const ox = sx ? sx.delta : this.snapToGrid(proposed.x, snap) - proposed.x;
+      const oy = sy ? sy.delta : this.snapToGrid(proposed.y, snap) - proposed.y;
+      if (sx) guides.push({ bandId: op.bandId, orientation: 'v', at: sx.at });
+      if (sy) guides.push({ bandId: op.bandId, orientation: 'h', at: sy.at });
+      const mx = dx + ox;
+      const my = dy + oy;
+      this.state.updateControls([...op.originals.keys()], (c) => {
+        const o = op.originals.get(c.id)!;
+        c.x = round(Math.max(0, o.x + mx));
+        c.y = round(Math.max(0, o.y + my));
+      }, op.key);
+    } else {
+      const h = op.handle!;
+      let { x, y, width, height } = primary;
+      let right = x + width;
+      let bottom = y + height;
+      if (h.includes('w')) x = this.snapEdge(x + dx, others, 'v', snap, op.bandId, guides);
+      if (h.includes('e')) right = this.snapEdge(right + dx, others, 'v', snap, op.bandId, guides);
+      if (h.includes('n')) y = this.snapEdge(y + dy, others, 'h', snap, op.bandId, guides);
+      if (h.includes('s')) bottom = this.snapEdge(bottom + dy, others, 'h', snap, op.bandId, guides);
+      x = Math.max(0, Math.min(x, right - MIN_SIZE_MM));
+      y = Math.max(0, Math.min(y, bottom - MIN_SIZE_MM));
+      width = Math.max(MIN_SIZE_MM, right - x);
+      height = Math.max(MIN_SIZE_MM, bottom - y);
+      this.state.updateControls([op.primaryId!], (c) => {
+        c.x = round(x);
+        c.y = round(y);
+        c.width = round(width);
+        c.height = round(height);
+      }, op.key);
+    }
+    this.guides.set(guides);
+  }
+
+  private pointerUp(e: PointerEvent): void {
+    const op = this.op;
+    this.op = null;
+    this.stopListening();
+    this.guides.set([]);
+    // A click (no drag) inside a multi-selection narrows it to the clicked control.
+    if (op?.kind === 'move' && !op.moved && !op.additive && op.originals.size > 1) {
+      this.state.selection.set({ kind: 'controls', ids: [op.primaryId!] });
+      return;
+    }
+    if (!op || !op.moved || op.kind !== 'move') return;
+    // Dropped over another band: move the controls there, keeping their position under the pointer.
+    const target = this.bandBodyAt(e.clientX, e.clientY);
+    if (!target || target.id === op.bandId) return;
+    const scale = PX_PER_MM * this.zoom();
+    const ids = [...op.originals.keys()];
+    const primary = op.originals.get(op.primaryId!)!;
+    const pointerYInTarget = (e.clientY - target.rect.top) / scale;
+    const grabOffset = (op.startY - this.bandBodyRect(op.bandId)!.top) / scale - primary.y;
+    const newPrimaryY = Math.max(0, pointerYInTarget - grabOffset);
+    this.state.update((d) => {
+      const from = d.bands.find((b) => b.id === op.bandId)!;
+      const to = d.bands.find((b) => b.id === target.id)!;
+      const moving = from.controls.filter((c) => ids.includes(c.id));
+      from.controls = from.controls.filter((c) => !ids.includes(c.id));
+      for (const c of moving) {
+        c.y = round(Math.max(0, newPrimaryY + (op.originals.get(c.id)!.y - primary.y)));
+        to.height = Math.max(to.height, round(c.y + c.height));
+        to.controls.push(c);
+      }
+    }, op.key);
+  }
+
+  private bandBodyAt(x: number, y: number): { id: string; rect: DOMRect } | null {
+    for (const el of this.dom.elementsFromPoint(x, y)) {
+      const body = (el as HTMLElement).closest?.('[data-band-id]') as HTMLElement | null;
+      if (body) return { id: body.dataset['bandId']!, rect: body.getBoundingClientRect() };
+    }
+    return null;
+  }
+
+  private bandBodyRect(id: string): DOMRect | null {
+    const el = this.dom.querySelector(`[data-band-id="${CSS.escape(id)}"]`);
+    return el ? el.getBoundingClientRect() : null;
+  }
+
+  private otherRects(bandId: string, exclude: string[]): Rect[] {
+    const band = this.state.report().bands.find((b) => b.id === bandId);
+    const rects = band?.controls.filter((c) => !exclude.includes(c.id)) ?? [];
+    // The band's own edges (page content box) are snap targets too.
+    return [...rects, { x: 0, y: 0, width: this.geometry().contentWidth, height: band?.height ?? 0 }];
+  }
+
+  /** Finds the closest edge/centre alignment among `others` for any of `candidates`. */
+  private snapAxis(candidates: number[], others: Rect[], axis: 'v' | 'h', enabled: boolean): { delta: number; at: number } | null {
+    if (!enabled) return null;
+    let best: { delta: number; at: number } | null = null;
+    for (const r of others) {
+      const lines = axis === 'v' ? [r.x, r.x + r.width / 2, r.x + r.width] : [r.y, r.y + r.height / 2, r.y + r.height];
+      for (const line of lines) {
+        for (const c of candidates) {
+          const delta = line - c;
+          if (Math.abs(delta) <= SNAP_DISTANCE_MM && (!best || Math.abs(delta) < Math.abs(best.delta))) best = { delta, at: line };
+        }
+      }
+    }
+    return best;
+  }
+
+  private snapEdge(value: number, others: Rect[], axis: 'v' | 'h', enabled: boolean, bandId: string, guides: Guide[]): number {
+    const s = this.snapAxis([value], others, axis, enabled);
+    if (s) {
+      guides.push({ bandId, orientation: axis, at: s.at });
+      return value + s.delta;
+    }
+    return this.snapToGrid(value, enabled);
+  }
+
+  private snapToGrid(value: number, enabled: boolean): number {
+    const g = this.gridSize();
+    return enabled && g > 0 ? Math.round(value / g) * g : value;
+  }
+
+  // ── Drop from toolbox / field list ──────────────────────────────────────────
+
+  protected onDragOver(e: DragEvent): void {
+    if (e.dataTransfer?.types.includes(DRAG_MIME)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  protected onDrop(e: DragEvent, band: Band): void {
+    const raw = e.dataTransfer?.getData(DRAG_MIME);
+    if (!raw) return;
+    e.preventDefault();
+    let data: DesignerDragData;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const scale = PX_PER_MM * this.zoom();
+    const x = this.snapToGrid((e.clientX - rect.left) / scale, true);
+    const y = this.snapToGrid((e.clientY - rect.top) / scale, true);
+    this.dropAt(data, band, x, y);
+  }
+
+  /** Creates controls for a drop at (x, y) mm inside `band`. */
+  dropAt(data: DesignerDragData, band: Band, x: number, y: number): void {
+    const width = this.geometry().contentWidth;
+    if (data.kind === 'control') {
+      const control = createControl(data.type, this.state.newId(data.type), x, y, this.strings().newText, data.variant);
+      control.x = round(Math.max(0, Math.min(x, width - control.width)));
+      control.y = round(Math.max(0, y));
+      this.growBand(band, [control]);
+      return;
+    }
+    const value: ReportControl = {
+      id: this.state.newId('text'),
+      type: 'text',
+      x: 0,
+      y: round(Math.max(0, y)),
+      width: 40,
+      height: 6,
+      text: { expression: fieldExpression(data.path, data.parent) },
+      format: data.format,
+    };
+    const name = data.path.split('.').pop()!;
+    if (band.kind === 'detail') {
+      // Rows repeat, so only the value goes here.
+      value.x = round(Math.max(0, Math.min(x, width - value.width)));
+      this.growBand(band, [value]);
+    } else {
+      // Elsewhere a caption + value pair reads better: "Invoice no  WR-42".
+      const label: ReportControl = { id: this.state.newId('label'), type: 'text', x: 0, y: value.y, width: 30, height: 6, text: captionFor(name), styleOverrides: { bold: true } };
+      label.x = round(Math.max(0, Math.min(x, width - label.width - value.width)));
+      value.x = round(label.x + label.width);
+      this.growBand(band, [label, value]);
+    }
+  }
+
+  private growBand(band: Band, controls: ReportControl[]): void {
+    const bottom = Math.max(...controls.map((c) => c.y + c.height));
+    this.state.update((d) => {
+      const b = d.bands.find((x) => x.id === band.id)!;
+      b.controls.push(...controls);
+      if (bottom > b.height) b.height = round(bottom);
+    });
+    this.state.selection.set({ kind: 'controls', ids: controls.map((c) => c.id) });
+  }
+}
+
+function round(v: number): number {
+  return Math.round(v * 100) / 100;
+}

@@ -1,0 +1,44 @@
+{
+ "store": {
+  "name": "Örnek Market",
+  "address": "Deneme Cad. No: 1",
+  "city": "Fallowick",
+  "taxNo": "0000000000"
+ },
+ "receiptNo": "F-000417",
+ "date": "2026-10-19T14:32:00",
+ "cashier": "Kasa 2",
+ "payment": "Kredi kartı",
+ "items": [
+  {
+   "name": "Çay (siyah) 1 kg",
+   "qty": 1,
+   "price": 189.9
+  },
+  {
+   "name": "Toz şeker 5 kg",
+   "qty": 1,
+   "price": 214.5
+  },
+  {
+   "name": "Yumurta 30 lu",
+   "qty": 2,
+   "price": 149.75
+  },
+  {
+   "name": "Beyaz peynir 500 g",
+   "qty": 1,
+   "price": 179
+  },
+  {
+   "name": "Ekmek",
+   "qty": 3,
+   "price": 15
+  },
+  {
+   "name": "Zeytinyağı 1 L (kampanyalı ürün, son kullanma 2027)",
+   "qty": 1,
+   "price": 399.9
+  }
+ ]
+}

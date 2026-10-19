@@ -1,0 +1,183 @@
+openapi: 3.1.0
+info:
+  title: we-report data protocol
+  version: 1.0.0
+  license: { name: MIT }
+  description: |
+    The only contract between we-report (designer, viewer) and a data backend. Any language can
+    implement it; reference implementations live in `samples/backends/*` and are verified by
+    `tools/protocol-conformance`.
+
+    Security rules every implementation follows (see the samples):
+    - Connection strings and secrets never leave the backend; only ids and names are returned.
+    - Query values always travel as driver parameters; identifiers are validated against the
+      introspected schema and quoted by the dialect.
+    - Free SQL is off unless enabled per connection; every query has a timeout and a row limit.
+    - `/v1/webservice/fetch` refuses loopback, private, link-local and metadata addresses.
+    - The backend binds to 127.0.0.1 unless the integrator configures authentication.
+servers:
+  - url: http://127.0.0.1:5480
+paths:
+  /v1/info:
+    get:
+      summary: Protocol version and capabilities of this backend
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Info' }
+  /v1/connections:
+    get:
+      summary: Connections the caller may use (never the connection strings)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Connection' }
+  /v1/connections/{id}/schema:
+    get:
+      summary: Tables and columns of a connection
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DatabaseSchema' }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/connections/{id}/query:
+    post:
+      summary: Run a structured query (or free SQL when the connection allows it)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QueryRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueryResult' }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '504': { $ref: '#/components/responses/Error' }
+  /v1/webservice/fetch:
+    post:
+      summary: Fetch a web service on the caller's behalf (CORS-blocked APIs, server-side secrets)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FetchRequest' }
+      responses:
+        '200':
+          description: The upstream body, parsed (JSON) or as rows (CSV)
+          content:
+            application/json:
+              schema: {}
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+components:
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, description: Human-readable, never contains secrets }
+    Info:
+      type: object
+      required: [protocol, server, capabilities]
+      properties:
+        protocol: { type: integer, const: 1 }
+        server: { type: string, examples: [we-report-node] }
+        capabilities:
+          type: object
+          properties:
+            webServiceFetch: { type: boolean }
+            demo: { type: boolean, description: Public demo mode — fixed read-only connections }
+    Connection:
+      type: object
+      required: [id, name, dialect, freeSql]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dialect: { type: string, enum: [sqlite, postgres, mysql, sqlserver, oracle] }
+        freeSql: { type: boolean, description: Whether free SQL queries are accepted }
+    DatabaseSchema:
+      type: object
+      required: [tables]
+      properties:
+        tables:
+          type: array
+          items:
+            type: object
+            required: [name, columns]
+            properties:
+              name: { type: string }
+              columns:
+                type: array
+                items:
+                  type: object
+                  required: [name, type]
+                  properties:
+                    name: { type: string }
+                    type: { type: string, enum: [string, number, boolean, date, unknown] }
+    QueryRequest:
+      type: object
+      properties:
+        query: { $ref: './schemas/query.json' }
+        sql: { type: string, description: Free SQL with :name placeholders; only when the connection allows it }
+        params:
+          type: object
+          additionalProperties: true
+          description: Values for parameter references in `query.where[].param` or `:name` in `sql`
+      oneOf:
+        - required: [query]
+        - required: [sql]
+    QueryResult:
+      type: object
+      required: [columns, rows, truncated]
+      properties:
+        columns:
+          type: array
+          items:
+            type: object
+            required: [name, type]
+            properties:
+              name: { type: string }
+              type: { type: string }
+        rows:
+          type: array
+          items: { type: object, additionalProperties: true }
+        truncated: { type: boolean, description: The row limit was reached; more rows exist }
+    FetchRequest:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string, format: uri }
+        method: { type: string, enum: [GET, POST], default: GET }
+        headers:
+          type: array
+          items:
+            type: object
+            required: [name, value]
+            properties:
+              name: { type: string }
+              value: { type: string }
+        body: { type: string }

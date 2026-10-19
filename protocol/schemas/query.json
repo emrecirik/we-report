@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/emrecirik/we-report/protocol/schemas/query.json",
+  "title": "we-report structured query (v1)",
+  "description": "What the visual query builder produces. The backend validates every identifier against the introspected schema, quotes it for its dialect and sends every value as a driver parameter.",
+  "type": "object",
+  "required": ["table"],
+  "additionalProperties": false,
+  "properties": {
+    "table": { "type": "string", "minLength": 1 },
+    "columns": {
+      "description": "Columns to return; all when omitted.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "where": {
+      "description": "Conditions, combined with AND.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["column", "op"],
+        "additionalProperties": false,
+        "properties": {
+          "column": { "type": "string" },
+          "op": { "enum": ["=", "!=", "<", "<=", ">", ">=", "like", "in", "isNull", "notNull"] },
+          "value": { "description": "A literal value (an array for `in`)." },
+          "param": { "type": "string", "description": "Name of a report parameter whose value is used instead of `value`." }
+        }
+      }
+    },
+    "orderBy": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["column"],
+        "additionalProperties": false,
+        "properties": {
+          "column": { "type": "string" },
+          "dir": { "enum": ["asc", "desc"], "default": "asc" }
+        }
+      }
+    },
+    "limit": { "type": "integer", "minimum": 1, "description": "Capped by the backend's own row limit." }
+  }
+}

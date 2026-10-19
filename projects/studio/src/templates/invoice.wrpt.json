@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "name": "Invoice",
+  "page": {
+    "paper": "A4",
+    "orientation": "portrait",
+    "margins": { "top": 15, "right": 15, "bottom": 12, "left": 15 },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": { "fontFamily": "Noto Sans", "fontSize": 9, "color": "#1f2328", "padding": 0.8 },
+    "brand": { "fontSize": 13, "bold": true, "color": "#1d4ed8" },
+    "title": { "fontSize": 22, "bold": true, "color": "#1d4ed8", "textAlign": "right" },
+    "muted": { "fontSize": 8, "color": "#6b7280" },
+    "label": { "fontSize": 8, "color": "#6b7280", "bold": true },
+    "th": { "fontSize": 8, "bold": true, "color": "#ffffff", "backgroundColor": "#1d4ed8", "verticalAlign": "middle", "padding": 1.2 },
+    "cell": { "verticalAlign": "middle", "padding": 1.2 },
+    "num": { "verticalAlign": "middle", "padding": 1.2, "textAlign": "right" },
+    "totalLabel": { "textAlign": "right", "color": "#6b7280", "padding": 1.2 },
+    "totalValue": { "textAlign": "right", "padding": 1.2 },
+    "grand": { "textAlign": "right", "bold": true, "fontSize": 11, "color": "#ffffff", "backgroundColor": "#1d4ed8", "verticalAlign": "middle", "padding": 1.5 }
+  },
+  "dataSources": [{ "id": "invoice", "name": "Invoice", "kind": "json", "data": null }],
+  "dataMember": { "dataSourceId": "invoice", "path": "lines" },
+  "bands": [
+    {
+      "id": "pageHeader",
+      "kind": "pageHeader",
+      "height": 16,
+      "controls": [
+        { "id": "company", "type": "text", "x": 0, "y": 0, "width": 100, "height": 7, "style": "brand", "text": { "expression": "[^.seller.name]" } },
+        { "id": "companyAddr", "type": "text", "x": 0, "y": 7, "width": 125, "height": 8, "style": "muted", "text": { "expression": "[^.seller.address] + ' · ' + [^.seller.taxOffice] + ' V.D. ' + [^.seller.taxNo]" } },
+        { "id": "title", "type": "text", "x": 130, "y": 0, "width": 50, "height": 12, "style": "title", "text": "FATURA" },
+        { "id": "rule", "type": "line", "x": 0, "y": 15, "width": 180, "height": 1, "direction": "horizontal", "lineWidth": 0.4, "color": "#1d4ed8" }
+      ]
+    },
+    {
+      "id": "reportHeader",
+      "kind": "reportHeader",
+      "height": 46,
+      "controls": [
+        { "id": "box", "type": "shape", "x": 0, "y": 3, "width": 105, "height": 30, "shape": "roundedRectangle", "cornerRadius": 2, "styleOverrides": { "backgroundColor": "#f5f7ff", "border": { "width": 0.2, "color": "#c7d2fe", "sides": { "top": true, "right": true, "bottom": true, "left": true } } } },
+        { "id": "billTo", "type": "text", "x": 3, "y": 5, "width": 60, "height": 5, "style": "label", "text": "SAYIN" },
+        { "id": "custName", "type": "text", "x": 3, "y": 10, "width": 99, "height": 6, "styleOverrides": { "bold": true, "fontSize": 11 }, "text": { "expression": "[^.customer.name]" } },
+        { "id": "custAddr", "type": "text", "x": 3, "y": 16, "width": 99, "height": 12, "text": { "expression": "[^.customer.address] + '\n' + [^.customer.city]" }, "canGrow": true },
+        { "id": "noLbl", "type": "text", "x": 115, "y": 4, "width": 30, "height": 6, "style": "label", "text": "Fatura No" },
+        { "id": "no", "type": "text", "x": 145, "y": 4, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right", "bold": true }, "text": { "expression": "[^.number]" } },
+        { "id": "dateLbl", "type": "text", "x": 115, "y": 11, "width": 30, "height": 6, "style": "label", "text": "Tarih" },
+        { "id": "date", "type": "text", "x": 145, "y": 11, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right" }, "text": { "expression": "[^.date]" }, "format": "dd.MM.yyyy" },
+        { "id": "dueLbl", "type": "text", "x": 115, "y": 18, "width": 30, "height": 6, "style": "label", "text": "Vade" },
+        { "id": "due", "type": "text", "x": 145, "y": 18, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right" }, "text": { "expression": "AddDays([^.date], [^.paymentDays])" }, "format": "dd.MM.yyyy" },
+        { "id": "barcode", "type": "barcode", "x": 115, "y": 25, "width": 65, "height": 9, "symbology": "code128", "value": { "expression": "[^.number]" }, "showText": false },
+        { "id": "hCode", "type": "text", "x": 0, "y": 38, "width": 25, "height": 8, "style": "th", "text": "Kod" },
+        { "id": "hProduct", "type": "text", "x": 25, "y": 38, "width": 75, "height": 8, "style": "th", "text": "Ürün / Hizmet" },
+        { "id": "hQty", "type": "text", "x": 100, "y": 38, "width": 20, "height": 8, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "Miktar" },
+        { "id": "hPrice", "type": "text", "x": 120, "y": 38, "width": 30, "height": 8, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "Birim Fiyat" },
+        { "id": "hTotal", "type": "text", "x": 150, "y": 38, "width": 30, "height": 8, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "Tutar" }
+      ]
+    },
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 7,
+      "controls": [
+        { "id": "code", "type": "text", "x": 0, "y": 0, "width": 25, "height": 7, "style": "cell", "styleOverrides": { "color": "#6b7280" }, "text": { "expression": "[code]" } },
+        { "id": "product", "type": "text", "x": 25, "y": 0, "width": 75, "height": 7, "style": "cell", "text": { "expression": "[product]" }, "canGrow": true },
+        { "id": "qty", "type": "text", "x": 100, "y": 0, "width": 20, "height": 7, "style": "num", "text": { "expression": "[qty]" }, "format": "n0" },
+        { "id": "price", "type": "text", "x": 120, "y": 0, "width": 30, "height": 7, "style": "num", "text": { "expression": "[price]" }, "format": "c2" },
+        { "id": "total", "type": "text", "x": 150, "y": 0, "width": 30, "height": 7, "style": "num", "text": { "expression": "[qty] * [price]" }, "format": "c2" },
+        { "id": "sep", "type": "line", "x": 0, "y": 6.5, "width": 180, "height": 1, "direction": "horizontal", "lineWidth": 0.15, "color": "#e5e7eb" }
+      ]
+    },
+    {
+      "id": "reportFooter",
+      "kind": "reportFooter",
+      "height": 52,
+      "controls": [
+        { "id": "subLbl", "type": "text", "x": 100, "y": 4, "width": 50, "height": 7, "style": "totalLabel", "text": "Ara Toplam" },
+        { "id": "sub", "type": "text", "x": 150, "y": 4, "width": 30, "height": 7, "style": "totalValue", "text": { "expression": "Sum([qty] * [price])" }, "format": "c2" },
+        { "id": "vatLbl", "type": "text", "x": 100, "y": 11, "width": 50, "height": 7, "style": "totalLabel", "text": "KDV" },
+        { "id": "vat", "type": "text", "x": 150, "y": 11, "width": 30, "height": 7, "style": "totalValue", "text": { "expression": "Sum([qty] * [price] * [vat] / 100)" }, "format": "c2" },
+        { "id": "grandLbl", "type": "text", "x": 100, "y": 19, "width": 50, "height": 9, "style": "grand", "text": "GENEL TOPLAM" },
+        { "id": "grand", "type": "text", "x": 150, "y": 19, "width": 30, "height": 9, "style": "grand", "text": { "expression": "Sum([qty] * [price] * (1 + [vat] / 100))" }, "format": "c2" },
+        { "id": "qr", "type": "barcode", "x": 0, "y": 4, "width": 24, "height": 24, "symbology": "qrcode", "value": { "expression": "'https://example.com/fatura/' + [^.number]" }, "showText": false },
+        { "id": "noteLbl", "type": "text", "x": 28, "y": 4, "width": 66, "height": 5, "style": "label", "text": "NOT" },
+        { "id": "note", "type": "text", "x": 28, "y": 9, "width": 66, "height": 19, "style": "muted", "text": { "expression": "[^.note]" }, "canGrow": true },
+        { "id": "paid", "type": "checkbox", "x": 0, "y": 33, "width": 5, "height": 5, "checked": { "expression": "[^.paid]" } },
+        { "id": "paidLbl", "type": "text", "x": 6, "y": 33, "width": 40, "height": 5, "style": "muted", "styleOverrides": { "verticalAlign": "middle" }, "text": "Ödendi" }
+      ]
+    },
+    {
+      "id": "pageFooter",
+      "kind": "pageFooter",
+      "height": 8,
+      "controls": [
+        { "id": "printed", "type": "pageInfo", "x": 0, "y": 2, "width": 60, "height": 6, "style": "muted", "info": "printDate", "format": "'Yazdırma:' dd.MM.yyyy HH:mm" },
+        { "id": "pageNo", "type": "pageInfo", "x": 120, "y": 2, "width": 60, "height": 6, "style": "muted", "styleOverrides": { "textAlign": "right" }, "info": "pageNofM", "format": "Sayfa {0} / {1}" }
+      ]
+    }
+  ]
+}

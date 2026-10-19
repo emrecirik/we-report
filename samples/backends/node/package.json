@@ -1,0 +1,18 @@
+{
+  "name": "we-report-backend-node",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference we-report data backend: SQLite (built in) and PostgreSQL, web service proxy with SSRF protection.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.mjs"
+  },
+  "optionalDependencies": {
+    "pg": "^8.13.0"
+  }
+}
