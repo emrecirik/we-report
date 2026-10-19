@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Layout: a text that grows pushes the items below it (in the same columns) down instead of
+  overlapping them, keeping their spacing — as in desktop designers.
 - Formula editor: suggestions while typing — functions with their explanation, `[` for fields and
   parameters; arrows to choose, Enter or Tab to insert.
 - Items can *extend to the bottom when the section grows* (`stretch`), so cell borders and column

@@ -411,19 +411,29 @@ class LayoutRun {
     const deferred: RenderedBand['deferred'] = [];
     let height = band.height;
     const shown = band.controls.filter((c) => c.visible === undefined || this.truthy(this.bind(c.visible, scope, c.id)));
+    // An item that grows pushes down the items below it (that share its columns), as in desktop
+    // designers. Top to bottom, so a push carries on down the section.
+    const growths: { x1: number; x2: number; bottom: number; delta: number }[] = [];
+    const shiftOf = (c: ReportControl) =>
+      growths.reduce((m, g) => (g.bottom <= c.y + 0.01 && g.x1 < c.x + c.width && g.x2 > c.x ? Math.max(m, g.delta) : m), 0);
     // Fixed items first decide the height; stretching items then reach down to it.
     const results = new Map<ReportControl, ReturnType<typeof this.renderControl>>();
-    for (const control of shown) {
+    for (const control of [...shown].sort((a, b) => a.y - b.y)) {
       if (control.stretch) continue;
-      const result = this.renderControl(control, scope);
+      const shift = shiftOf(control);
+      const result = this.renderControl(shift ? { ...control, y: control.y + shift } : control, scope);
       results.set(control, result);
-      height = Math.max(height, control.y + result.height);
+      if (result.height > control.height + 0.01 || shift) {
+        growths.push({ x1: control.x, x2: control.x + control.width, bottom: control.y + control.height, delta: shift + Math.max(0, result.height - control.height) });
+      }
+      height = Math.max(height, control.y + shift + result.height);
     }
     for (const control of shown) {
       if (!control.stretch) continue;
-      const result = this.renderControl({ ...control, height: Math.max(control.height, height - control.y) }, scope);
+      const y = control.y + shiftOf(control);
+      const result = this.renderControl({ ...control, y, height: Math.max(control.height, height - y) }, scope);
       results.set(control, result);
-      height = Math.max(height, control.y + result.height);
+      height = Math.max(height, y + result.height);
     }
     for (const control of shown) {
       const result = results.get(control)!;
