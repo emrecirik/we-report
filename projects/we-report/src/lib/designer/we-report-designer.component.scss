@@ -705,6 +705,78 @@ button {
   box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
 }
 
+.wd__wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  input[type='text'],
+  select {
+    height: 28px;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: var(--we-report-control-radius, 7px);
+    padding: 0 8px;
+    background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
+    color: inherit;
+    font: inherit;
+  }
+}
+
+.wd__wizard-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.wd__wizard-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 4px 12px;
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0.5px solid var(--we-report-separator, rgba(60, 60, 67, 0.14));
+  border-radius: var(--we-report-control-radius, 7px);
+
+  legend {
+    padding: 0 4px;
+    color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+  }
+
+  label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.wd__wizard-hint {
+  margin: 0;
+  color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+  font-size: 12px;
+}
+
+.wd__wizard-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.wd__primary {
+  height: 30px;
+  border: 0;
+  border-radius: var(--we-report-control-radius, 7px);
+  padding: 0 14px;
+  background: var(--we-report-accent, #007aff);
+  color: var(--we-report-accent-fg, #fff);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .wd__sheet-backdrop {
   position: fixed;
   inset: 0;

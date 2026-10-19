@@ -427,18 +427,60 @@ export class WeReportDesignerComponent {
     this.state.selection.set({ kind: 'band', id });
   }
 
-  /** Replaces the layout with a tidy list of the data (undoable): the fastest way to a first report. */
+  /** The report wizard's choices while it is open. */
+  protected readonly wizard = signal<{
+    title: string;
+    fields: { name: string; on: boolean }[];
+    groupBy: string;
+    totals: boolean;
+    orientation: '' | 'portrait' | 'landscape';
+  } | null>(null);
+
+  /** Opens the report wizard: pick columns, grouping, totals and paper, then a tidy list is built. */
   protected autoDesign(): void {
     const { rows } = resolveReportData(this.state.report(), this.data());
-    const fields = inferSchema(rows ?? []);
+    const fields = inferSchema(rows ?? []).filter((f) => f.type !== 'object' && f.type !== 'array' && f.type !== 'image');
+    if (!fields.length) return;
+    const name = this.state.report().name;
+    // A blank report is still called "Report": show the localized word instead.
+    this.wizard.set({
+      title: name && name !== 'Report' ? name : this.strings().newReportTitle,
+      fields: fields.map((f, i) => ({ name: f.name, on: i < 12 })),
+      groupBy: '',
+      totals: true,
+      orientation: '',
+    });
+  }
+
+  protected updateWizard(change: Partial<NonNullable<ReturnType<typeof this.wizard>>>): void {
+    const w = this.wizard();
+    if (w) this.wizard.set({ ...w, ...change });
+  }
+
+  protected toggleWizardField(name: string): void {
+    const w = this.wizard();
+    if (w) this.wizard.set({ ...w, fields: w.fields.map((f) => (f.name === name ? { ...f, on: !f.on } : f)) });
+  }
+
+  /** Replaces the layout with the wizard's list report (undoable). */
+  protected runWizard(): void {
+    const w = this.wizard();
+    if (!w) return;
+    const { rows } = resolveReportData(this.state.report(), this.data());
+    const schema = inferSchema(rows ?? []);
+    const chosen = new Set(w.fields.filter((f) => f.on || f.name === w.groupBy).map((f) => f.name));
+    const fields = schema.filter((f) => chosen.has(f.name));
     if (!fields.length) return;
     const s = this.strings();
     this.state.update((d) => {
-      // A blank report is still called "Report": show the localized word instead.
-      const title = d.name && d.name !== 'Report' ? d.name : s.newReportTitle;
-      const generated = generateListReport(d, fields, { title, total: s.totalLabel, pageOf: s.pageOfFormat }, '', rows ?? []);
+      const generated = generateListReport(d, fields, { title: w.title, total: s.totalLabel, pageOf: s.pageOfFormat }, '', rows ?? [], {
+        groupBy: w.groupBy || undefined,
+        totals: w.totals,
+        orientation: w.orientation || undefined,
+      });
       Object.assign(d, generated);
     });
+    this.wizard.set(null);
     this.state.selection.set({ kind: 'none' });
   }
 

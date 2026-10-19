@@ -248,6 +248,46 @@
   </div>
 }
 
+@if (wizard(); as w) {
+  <div class="wd__sheet-backdrop" (click)="wizard.set(null)"></div>
+  <div class="wd__sheet wd__wizard" role="dialog" aria-modal="true" [attr.aria-label]="s.wizardTitle" (keydown.escape)="wizard.set(null)">
+    <h2>{{ s.wizardTitle }}</h2>
+    <label class="wd__wizard-row">
+      <span>{{ s.wizardReportTitle }}</span>
+      <input type="text" [value]="w.title" (input)="updateWizard({ title: $any($event.target).value })" />
+    </label>
+    <fieldset class="wd__wizard-fields">
+      <legend>{{ s.wizardColumns }}</legend>
+      @for (f of w.fields; track f.name) {
+        <label><input type="checkbox" [checked]="f.on" [disabled]="f.name === w.groupBy" (change)="toggleWizardField(f.name)" /> {{ f.name }}</label>
+      }
+    </fieldset>
+    <label class="wd__wizard-row">
+      <span>{{ s.groupBy }}</span>
+      <select (change)="updateWizard({ groupBy: $any($event.target).value })">
+        <option value="" [selected]="!w.groupBy">{{ s.noGrouping }}</option>
+        @for (f of w.fields; track f.name) {
+          <option [value]="f.name" [selected]="f.name === w.groupBy">{{ f.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="wd__wizard-row">
+      <span>{{ s.orientation }}</span>
+      <select (change)="updateWizard({ orientation: $any($event.target).value })">
+        <option value="" [selected]="!w.orientation">{{ s.automatic }}</option>
+        <option value="portrait" [selected]="w.orientation === 'portrait'">{{ s.portrait }}</option>
+        <option value="landscape" [selected]="w.orientation === 'landscape'">{{ s.landscape }}</option>
+      </select>
+    </label>
+    <label class="wd__wizard-check"><input type="checkbox" [checked]="w.totals" (change)="updateWizard({ totals: !w.totals })" /> {{ s.wizardTotals }}</label>
+    <p class="wd__wizard-hint">{{ s.autoDesignHint }}</p>
+    <div class="wd__wizard-actions">
+      <button type="button" class="wd__text-btn" (click)="wizard.set(null)">{{ s.cancel }}</button>
+      <button type="button" class="wd__primary" (click)="runWizard()">{{ s.createReport }}</button>
+    </div>
+  </div>
+}
+
 @if (shortcutsOpen()) {
   <div class="wd__sheet-backdrop" (click)="shortcutsOpen.set(false)"></div>
   <div class="wd__sheet" role="dialog" aria-modal="true" [attr.aria-label]="s.keyboardShortcuts" (keydown.escape)="shortcutsOpen.set(false)">

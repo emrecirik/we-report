@@ -277,6 +277,13 @@ export interface WeReportLocale {
   rubberBand: string;
   noSnap: string;
   dragCopy: string;
+  wizardTitle: string;
+  wizardReportTitle: string;
+  wizardColumns: string;
+  noGrouping: string;
+  wizardTotals: string;
+  automatic: string;
+  createReport: string;
   addByClick: string;
   resizePanel: string;
   alignJustify: string;
@@ -629,6 +636,13 @@ export const weReportLocaleEn: WeReportLocale = {
   rubberBand: 'Select several: drag on an empty spot',
   noSnap: 'Hold while dragging: no snapping',
   dragCopy: 'Drag with Ctrl held to copy',
+  wizardTitle: 'Report wizard',
+  wizardReportTitle: 'Report title',
+  wizardColumns: 'Columns to show',
+  noGrouping: 'No grouping',
+  wizardTotals: 'Totals of number columns',
+  automatic: 'Automatic',
+  createReport: 'Create report',
   addByClick: 'Click an item (or double-click a field) to add it to the selected section.',
   resizePanel: 'Drag to resize, double-click to hide',
   alignJustify: 'Justify',
@@ -1013,6 +1027,13 @@ export const weReportLocaleTr: WeReportLocale = {
   rubberBand: 'Birden çok seç: boş yerde sürükle',
   noSnap: 'Sürüklerken basılı tut: yapışma yok',
   dragCopy: 'Ctrl basılı sürükleyince kopyalar',
+  wizardTitle: 'Rapor sihirbazı',
+  wizardReportTitle: 'Rapor başlığı',
+  wizardColumns: 'Gösterilecek sütunlar',
+  noGrouping: 'Gruplama yok',
+  wizardTotals: 'Sayı sütunlarının toplamı',
+  automatic: 'Otomatik',
+  createReport: 'Raporu oluştur',
   addByClick: 'Bir öğeye tıklayın (veya bir alana çift tıklayın): seçili bölüme eklenir.',
   resizePanel: 'Boyutlandırmak için sürükleyin, gizlemek için çift tıklayın',
   alignJustify: 'İki yana yasla',

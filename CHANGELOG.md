@@ -13,6 +13,9 @@
 - Viewer: first/previous/next/last page, a page-number box that follows scrolling, zoom presets
   (50–200 %, fit width, whole page), find in report (Ctrl+F) with highlighted matches and
   next/previous, PageUp/PageDown/Home/End and Ctrl+P. New theme token `--we-report-search-highlight`.
+- Report wizard: "Design from data" now asks which columns to show, what to group by, whether to
+  print totals and which paper orientation to use, then builds the list (`generateListReport`
+  takes `GenerateOptions { groupBy, totals, orientation }`).
 - Fix: duplicating several items of the same kind gave them the same id.
 
 ## 0.4.0 — 2026-10-19

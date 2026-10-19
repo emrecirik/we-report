@@ -51,6 +51,29 @@ describe('generateListReport', () => {
     expect(totals).toEqual(['totalLabel', 'Sum([qty])', 'Sum([price])']);
   });
 
+  it('groups by a field with a heading and group totals, as the wizard asks', async () => {
+    const data = [
+      { city: 'B', customer: 'x', amount: 2 },
+      { city: 'A', customer: 'y', amount: 1 },
+      { city: 'B', customer: 'z', amount: 3 },
+    ];
+    const report = generateListReport(createBlankReport(), inferSchema(data), labels, '', data, { groupBy: 'city', orientation: 'landscape' });
+    expect(report.page.orientation).toBe('landscape');
+    expect(report.bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'groupFooter', 'reportFooter', 'pageFooter']);
+    // The group field is the heading, not a column.
+    expect(report.bands.find((b) => b.kind === 'detail')!.controls.filter((c) => c.type === 'text').length).toBe(2);
+    const fonts = await loadTestFonts();
+    const doc = layoutReport(report, { fonts, data, now: new Date(2026, 0, 1) });
+    const texts = doc.pages[0].items.filter((x): x is TextItem => x.kind === 'text').map((t) => t.lines.map((l) => l.text).join(' '));
+    expect(texts.indexOf('A')).toBeLessThan(texts.indexOf('B'));
+    expect(texts).toContain('5'); // group B total
+    expect(texts).toContain('6');
+    expect(doc.problems).toEqual([]);
+
+    const plain = generateListReport(createBlankReport(), inferSchema(data), labels, '', data, { totals: false });
+    expect(plain.bands.some((b) => b.kind === 'reportFooter')).toBeFalse();
+  });
+
   it('makes readable captions', () => {
     expect(captionFor('orderDate')).toBe('Order date');
     expect(captionFor('customer_name')).toBe('Customer name');

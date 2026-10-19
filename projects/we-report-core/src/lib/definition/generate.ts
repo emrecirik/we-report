@@ -9,6 +9,16 @@ export interface GenerateLabels {
   pageOf: string;
 }
 
+/** Choices of the report wizard; every one is optional. */
+export interface GenerateOptions {
+  /** One group per value of this field: a heading, the rows, and the group's totals. */
+  groupBy?: string;
+  /** Totals of numeric columns at the end (and per group). Default true. */
+  totals?: boolean;
+  /** Default: landscape when there are more than seven columns. */
+  orientation?: 'portrait' | 'landscape';
+}
+
 /** "unitPrice" / "unit_price" → "Unit price": a readable caption for a field name. */
 export function captionFor(name: string): string {
   const words = name
@@ -37,9 +47,13 @@ export function generateListReport(
   labels: GenerateLabels,
   parentPrefix = '',
   rows: readonly unknown[] = [],
+  options: GenerateOptions = {},
 ): ReportDefinition {
-  const columns = fields.filter((f) => f.type !== 'object' && f.type !== 'array' && f.type !== 'image').slice(0, MAX_COLUMNS);
-  const page = { ...base.page, orientation: columns.length > 7 ? ('landscape' as const) : base.page.orientation };
+  const scalar = (f: FieldSchema) => f.type !== 'object' && f.type !== 'array' && f.type !== 'image';
+  const groupField = options.groupBy ? fields.find((f) => f.name === options.groupBy && scalar(f)) : undefined;
+  // The group's value is its heading, so it is not repeated as a column.
+  const columns = fields.filter((f) => scalar(f) && f !== groupField).slice(0, MAX_COLUMNS);
+  const page = { ...base.page, orientation: options.orientation ?? (columns.length > 7 ? ('landscape' as const) : base.page.orientation) };
   const width = resolvePageGeometry(page).contentWidth;
   const total = columns.reduce((s, f) => s + weight(f), 0) || 1;
   const fontSize = columns.length > 9 ? 8 : 9;
@@ -89,21 +103,26 @@ export function generateListReport(
     format: formatOf(f),
     canGrow: f.type === 'string' ? true : undefined,
   }));
-  const totals: ReportControl[] = layout.filter(({ field: f }) => summable(f)).map(({ field: f, x, width: w }, i) => ({
-    id: `total${i + 1}`,
-    type: 'text',
-    x,
-    y: 1,
-    width: w,
-    height: 7,
-    style: 'total',
-    text: { expression: `Sum(${field(f)})` },
-    format: formatOf(f),
-  }));
-  const firstTotalX = totals.length ? Math.min(...totals.map((t) => t.x)) : 0;
-  if (totals.length && firstTotalX > 0) {
-    totals.unshift({ id: 'totalLabel', type: 'text', x: 0, y: 1, width: firstTotalX, height: 7, style: 'total', styleOverrides: { textAlign: 'left' }, text: labels.total });
-  }
+  const totalsRow = (prefix: string): ReportControl[] => {
+    const cells: ReportControl[] = layout.filter(({ field: f }) => summable(f)).map(({ field: f, x, width: w }, i) => ({
+      id: `${prefix}${i + 1}`,
+      type: 'text',
+      x,
+      y: 1,
+      width: w,
+      height: 7,
+      style: 'total',
+      text: { expression: `Sum(${field(f)})` },
+      format: formatOf(f),
+    }));
+    const firstX = cells.length ? Math.min(...cells.map((t) => t.x)) : 0;
+    if (cells.length && firstX > 0) {
+      cells.unshift({ id: `${prefix}Label`, type: 'text', x: 0, y: 1, width: firstX, height: 7, style: 'total', styleOverrides: { textAlign: 'left' }, text: labels.total });
+    }
+    return cells;
+  };
+  const withTotals = options.totals !== false;
+  const totals = withTotals ? totalsRow('total') : [];
 
   const bands: Band[] = [
     {
@@ -123,6 +142,18 @@ export function generateListReport(
       controls: [...detailCells, { id: 'rowRule', type: 'line', x: 0, y: 5.6, width, height: 0.8, direction: 'horizontal', lineWidth: 0.1, color: '#e5e7eb' }],
     },
   ];
+  if (groupField) {
+    const groupTotals = withTotals ? totalsRow('groupTotal') : [];
+    bands.splice(1, 0, {
+      id: 'group1',
+      kind: 'groupHeader',
+      height: 10,
+      groupBy: { expression: field(groupField) },
+      keepTogether: true,
+      controls: [{ id: 'groupValue', type: 'text', x: 0, y: 2, width, height: 7, style: 'group', text: { expression: field(groupField) }, format: formatOf(groupField) }],
+    });
+    if (groupTotals.length) bands.splice(3, 0, { id: 'group1Footer', kind: 'groupFooter', groupHeaderId: 'group1', height: 10, controls: groupTotals });
+  }
   if (totals.length) bands.push({ id: 'reportFooter', kind: 'reportFooter', height: 10, controls: totals });
   bands.push({
     id: 'pageFooter',
@@ -143,6 +174,7 @@ export function generateListReport(
       title: { fontSize: 16, bold: true, color: '#1d4ed8' },
       columnHeader: { bold: true, fontSize: fontSize - 0.5, color: '#ffffff', backgroundColor: '#2563eb', verticalAlign: 'middle', padding: 1 },
       cell: { verticalAlign: 'middle', padding: 1 },
+      group: { bold: true, fontSize: fontSize + 1.5, color: '#1d4ed8', verticalAlign: 'bottom' },
       total: { bold: true, textAlign: 'right', padding: 1, border: { width: 0.3, color: '#2563eb', sides: { top: true, right: false, bottom: false, left: false } } },
       muted: { fontSize: 7.5, color: '#6b7280' },
     },
