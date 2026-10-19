@@ -1,5 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { Band, createBlankReport, ReportControl, ReportDefinition } from 'we-report-core';
+import { TableCellRef } from './table-ops';
 
 export type Selection = { kind: 'none' } | { kind: 'controls'; ids: string[] } | { kind: 'band'; id: string };
 
@@ -36,6 +37,8 @@ export class DesignerState {
   readonly canUndo = signal(false);
   readonly canRedo = signal(false);
   /** The first data row and its scope, for live values in the design and the formula editor. */
+  /** The table cell last clicked; the inspector edits it while its table is selected. */
+  readonly tableCell = signal<TableCellRef | null>(null);
   readonly sample = signal<{ row: unknown; rows: readonly unknown[]; parent: unknown } | null>(null);
 
   readonly selectedControls = computed(() => {

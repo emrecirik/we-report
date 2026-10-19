@@ -345,6 +345,62 @@
           }
         </section>
       }
+      @case ('table') {
+        @let cellInfo = selectedCell();
+        <section class="pp__section">
+          <h3>{{ s.tableSection }}</h3>
+          <small class="pp__hint">{{ s.tableHint }}</small>
+          <div class="pp__buttons">
+            <button type="button" (click)="tableOp('insertRow')">+ {{ s.addRow }}</button>
+            <button type="button" (click)="tableOp('insertColumn')">+ {{ s.addColumn }}</button>
+            <button type="button" [disabled]="c.rows.length < 2" (click)="tableOp('deleteRow')">− {{ s.deleteRow }}</button>
+            <button type="button" [disabled]="c.columns.length < 2" (click)="tableOp('deleteColumn')">− {{ s.deleteColumn }}</button>
+            <button type="button" [disabled]="!cellInfo || cellInfo.index >= c.rows[cellInfo.row].cells.length - 1" (click)="tableOp('mergeRight')">{{ s.mergeCells }}</button>
+            <button type="button" [disabled]="!cellInfo || (cellInfo.cell.colSpan ?? 1) < 2" (click)="tableOp('splitCell')">{{ s.splitCell }}</button>
+          </div>
+          <label class="pp__check">
+            <input type="checkbox" [checked]="!!c.canGrow" (change)="set('canGrow', $any($event.target).checked || undefined)" />
+            <span>{{ s.canGrow }}<small class="pp__hint">{{ s.canGrowHint }}</small></span>
+          </label>
+        </section>
+        @if (cellInfo) {
+          <section class="pp__section">
+            <h3>{{ s.selectedCell }}</h3>
+            <we-report-bindable-input [value]="cellInfo.cell.text" [fields]="fields()" [strings]="s" (valueChange)="setCell({ text: $event })" />
+            <label class="pp__row">
+              <span>{{ s.format }}</span>
+              <select (change)="setCell({ format: $any($event.target).value || undefined })">
+                @for (f of formats; track f.value) {
+                  <option [value]="f.value" [selected]="(cellInfo.cell.format ?? '') === f.value">{{ s[f.key] }}</option>
+                }
+              </select>
+            </label>
+            <div class="pp__segmented" role="radiogroup" [attr.aria-label]="s.alignment">
+              @for (a of ['left', 'center', 'right']; track a) {
+                <button type="button" role="radio" [attr.aria-checked]="cellAlign(cellInfo.cell) === a" [class.pp__on]="cellAlign(cellInfo.cell) === a" (click)="setCellStyle('textAlign', $any(a))">
+                  {{ a === 'left' ? s.alignLeft : a === 'center' ? s.alignCenter : s.alignRight }}
+                </button>
+              }
+            </div>
+            <div class="pp__rule-then">
+              <button type="button" class="pp__chip" [class.pp__on]="cellInfo.cell.styleOverrides?.bold" (click)="setCellStyle('bold', cellInfo.cell.styleOverrides?.bold ? undefined : true)">{{ s.bold }}</button>
+              <span>{{ s.backgroundColor }}</span>
+              <input type="color" [value]="cellInfo.cell.styleOverrides?.backgroundColor ?? '#ffffff'" (input)="setCellStyle('backgroundColor', $any($event.target).value)" [attr.aria-label]="s.backgroundColor" />
+              <button type="button" class="pp__link" (click)="setCellStyle('backgroundColor', undefined)">{{ s.noColor }}</button>
+            </div>
+            <div class="pp__grid">
+              <label class="pp__row pp__row--stack">
+                <span>{{ s.columnWidth }}</span>
+                <input type="number" min="2" step="1" [value]="num(c.columns[cellInfo.column])" (input)="setColumnWidth(cellInfo.column, $any($event.target).value)" />
+              </label>
+              <label class="pp__row pp__row--stack">
+                <span>{{ s.rowHeight }}</span>
+                <input type="number" min="2" step="0.5" [value]="num(c.rows[cellInfo.row].height)" (input)="setRowHeight(cellInfo.row, $any($event.target).value)" />
+              </label>
+            </div>
+          </section>
+        }
+      }
       @case ('chart') {
         <section class="pp__section">
           <h3>{{ s.groupContent }}</h3>

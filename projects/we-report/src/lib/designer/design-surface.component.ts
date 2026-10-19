@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, DEFAULT_WATERMARK_COLOR, evaluate, formatValue, isExpression, ReportControl, ReportControlType, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -135,6 +135,21 @@ interface DragOp {
                       <span [innerHTML]="(isQr(c) ? 'qrcode' : 'barcode') | weReportIcon"></span>
                       <small>{{ barcodeLabel(c) }}</small>
                     </div>
+                  }
+                  @case ('table') {
+                    @for (cell of tableCells(c); track $index) {
+                      <div
+                        class="ds__cell"
+                        [class.ds__cell--on]="isCellSelected(c.id, cell.row, cell.index)"
+                        [class.ds__text--bound]="cell.bound"
+                        [style]="cell.style"
+                        [style.left.mm]="cell.x * zoom()"
+                        [style.top.mm]="cell.y * zoom()"
+                        [style.width.mm]="cell.width * zoom()"
+                        [style.height.mm]="cell.height * zoom()"
+                        (click)="selectCell(c.id, cell.row, cell.index)"
+                      >{{ cell.text }}</div>
+                    }
                   }
                   @case ('chart') {
                     <div class="ds__placeholder ds__chart">
@@ -310,6 +325,21 @@ interface DragOp {
       outline-offset: 0;
       background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.07));
       cursor: move;
+      z-index: 1;
+    }
+    .ds__cell {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.36;
+    }
+    .ds__cell--on {
+      outline: 2px solid var(--we-report-selection, #007aff);
+      outline-offset: -2px;
       z-index: 1;
     }
     .ds__fill {
@@ -513,7 +543,62 @@ export class DesignSurfaceComponent implements OnDestroy {
   }
 
   protected textStyle(c: ReportControl): Record<string, string> {
-    const s = resolveStyle(this.state.report(), c.style, c.styleOverrides);
+    return this.styleOf(c.style, c.styleOverrides);
+  }
+
+  /** Cells of a table control in mm relative to the control, with their text and look. */
+  protected tableCells(c: ReportControl): { row: number; index: number; x: number; y: number; width: number; height: number; text: string; bound: boolean; style: Record<string, string> }[] {
+    if (c.type !== 'table') return [];
+    const out: ReturnType<typeof this.tableCells> = [];
+    let y = 0;
+    c.rows.forEach((row, r) => {
+      let column = 0;
+      let x = 0;
+      row.cells.forEach((cell, i) => {
+        const span = Math.max(1, Math.min(cell.colSpan ?? 1, c.columns.length - column));
+        const width = c.columns.slice(column, column + span).reduce((a, b) => a + b, 0);
+        if (column < c.columns.length) {
+          out.push({
+            row: r, index: i, x, y, width, height: row.height,
+            text: this.bindableText(cell.text, cell.format),
+            bound: isExpression(cell.text),
+            style: this.styleOf(c.style, { ...c.styleOverrides, ...cell.styleOverrides }),
+          });
+        }
+        x += width;
+        column += span;
+      });
+      y += row.height;
+    });
+    return out;
+  }
+
+  protected isCellSelected(controlId: string, row: number, cell: number): boolean {
+    const ref = this.state.tableCell();
+    return !!ref && ref.controlId === controlId && ref.row === row && ref.cell === cell && this.isSelected(controlId);
+  }
+
+  protected selectCell(controlId: string, row: number, cell: number): void {
+    this.state.tableCell.set({ controlId, row, cell });
+  }
+
+  /** Fixed text, or a formula shown with the first data row when there is one. */
+  private bindableText(text: Bindable<string>, format: string | undefined): string {
+    if (!isExpression(text)) return text;
+    const sample = this.sample();
+    if (!sample) return text.expression;
+    try {
+      const report = this.state.report();
+      const options = { locale: report.locale || this.config.locale || 'en-US', currency: report.currency || this.config.currency || 'USD' };
+      const value = evaluate(text.expression, { ...sample, ...options, now: new Date() });
+      return typeof value === 'string' && !format ? value : formatValue(value, format, options);
+    } catch {
+      return text.expression;
+    }
+  }
+
+  private styleOf(name: string | undefined, overrides: ReportStyle | undefined): Record<string, string> {
+    const s = resolveStyle(this.state.report(), name, overrides);
     const z = this.zoom();
     const style: Record<string, string> = {
       'font-family': `'${WeReportFontsService.cssFamily(s.fontFamily)}', sans-serif`,
@@ -854,6 +939,22 @@ export class DesignSurfaceComponent implements OnDestroy {
       control.y = round(Math.max(0, y));
       this.growBand(band, [control]);
       return;
+    }
+    // A field dropped on a table cell fills that cell.
+    const table = band.controls.find((c) => c.type === 'table' && x >= c.x && x <= c.x + c.width && y >= c.y && y <= c.y + c.height);
+    if (table?.type === 'table') {
+      const hit = this.tableCells(table).find((c) => x >= table.x + c.x && x < table.x + c.x + c.width && y >= table.y + c.y && y < table.y + c.y + c.height);
+      if (hit) {
+        this.state.updateControls([table.id], (c) => {
+          if (c.type !== 'table') return;
+          const cell = c.rows[hit.row].cells[hit.index];
+          cell.text = { expression: fieldExpression(data.path, data.parent) };
+          cell.format = data.format;
+        });
+        this.state.selection.set({ kind: 'controls', ids: [table.id] });
+        this.state.tableCell.set({ controlId: table.id, row: hit.row, cell: hit.index });
+        return;
+      }
     }
     const value: ReportControl = {
       id: this.state.newId('text'),

@@ -7,6 +7,8 @@ import {
   ChartAggregate,
   ChartType,
   FormattingRule,
+  TableCell,
+  TextAlign,
   Watermark,
   isExpression,
   LabelSheet,
@@ -23,6 +25,7 @@ import { WeReportLocale } from '../we-report-locale';
 import { BindableInputComponent } from './bindable-input.component';
 import { DesignerField } from './designer-fields';
 import { AlignEdge, DesignerState } from './designer-state';
+import { columnOf, deleteColumn, deleteRow, insertColumn, insertRow, mergeRight, splitCell, syncSize } from './table-ops';
 import { buildCondition, CONDITION_OPS, parseCondition, SimpleCondition } from './formatting-rule';
 
 const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
@@ -113,7 +116,16 @@ export class PropertyPanelComponent {
     const c = this.controls()[0];
     return c ? resolveStyle(this.report(), c.style, c.styleOverrides) : null;
   });
-  protected readonly hasText = computed(() => this.controls().some((c) => c.type === 'text' || c.type === 'pageInfo' || c.type === 'barcode'));
+  protected readonly hasText = computed(() => this.controls().some((c) => c.type === 'text' || c.type === 'pageInfo' || c.type === 'barcode' || c.type === 'table'));
+
+  /** The clicked cell of the selected table, with its row and first column. */
+  protected readonly selectedCell = computed(() => {
+    const c = this.control();
+    const ref = this.state.tableCell();
+    if (c?.type !== 'table' || !ref || ref.controlId !== c.id) return null;
+    const cell = c.rows[ref.row]?.cells[ref.cell];
+    return cell ? { cell, row: ref.row, index: ref.cell, column: columnOf(c.rows[ref.row], ref.cell) } : null;
+  });
   protected readonly formatIsCustom = computed(() => {
     const c = this.control();
     const f = c && (c.type === 'text' || c.type === 'pageInfo') ? c.format : undefined;
@@ -253,6 +265,78 @@ export class PropertyPanelComponent {
 
   protected setExpression(key: 'category' | 'value', expression: string): void {
     this.set(key, { expression }, `chart-${key}`);
+  }
+
+  // ── Table ──────────────────────────────────────────────────────────────────
+
+  /** Row/column commands act on the clicked cell, or on the last row/column. */
+  protected tableOp(op: 'insertRow' | 'insertColumn' | 'deleteRow' | 'deleteColumn' | 'mergeRight' | 'splitCell'): void {
+    const c = this.control();
+    if (c?.type !== 'table') return;
+    const at = this.selectedCell();
+    const row = at?.row ?? c.rows.length - 1;
+    const column = at?.column ?? c.columns.length - 1;
+    this.state.updateControls([c.id], (t, band) => {
+      if (t.type !== 'table') return;
+      if (op === 'insertRow') insertRow(t, row);
+      else if (op === 'insertColumn') insertColumn(t, column);
+      else if (op === 'deleteRow') deleteRow(t, row);
+      else if (op === 'deleteColumn') deleteColumn(t, column);
+      else if (op === 'mergeRight' && at) mergeRight(t, at.row, at.index);
+      else if (op === 'splitCell' && at) splitCell(t, at.row, at.index);
+      band.height = Math.max(band.height, t.y + t.height);
+    });
+    // A removed row or cell leaves no selection behind.
+    const t = this.control();
+    if (t?.type === 'table' && at && !t.rows[at.row]?.cells[at.index]) this.state.tableCell.set(null);
+  }
+
+  private updateCell(mutate: (cell: TableCell) => void, coalesce?: string): void {
+    const c = this.control();
+    const at = this.selectedCell();
+    if (c?.type !== 'table' || !at) return;
+    this.state.updateControls([c.id], (t) => {
+      if (t.type === 'table') mutate(t.rows[at.row].cells[at.index]);
+    }, coalesce);
+  }
+
+  protected setCell(patch: Partial<TableCell>): void {
+    this.updateCell((cell) => Object.assign(cell, patch), 'cell-content');
+  }
+
+  protected setCellStyle<K extends keyof ReportStyle>(key: K, value: ReportStyle[K] | undefined): void {
+    this.updateCell((cell) => {
+      const style: ReportStyle = { ...cell.styleOverrides };
+      if (value === undefined) delete style[key];
+      else style[key] = value;
+      cell.styleOverrides = Object.keys(style).length ? style : undefined;
+    }, `cell-${key}`);
+  }
+
+  protected cellAlign(cell: TableCell): TextAlign {
+    const c = this.control();
+    return cell.styleOverrides?.textAlign ?? resolveStyle(this.report(), c?.style, c?.styleOverrides).textAlign;
+  }
+
+  protected setColumnWidth(column: number, value: string): void {
+    const c = this.control();
+    if (c?.type !== 'table') return;
+    this.state.updateControls([c.id], (t) => {
+      if (t.type !== 'table') return;
+      t.columns[column] = positive(value, 2);
+      syncSize(t);
+    }, `table-col-${column}`);
+  }
+
+  protected setRowHeight(row: number, value: string): void {
+    const c = this.control();
+    if (c?.type !== 'table') return;
+    this.state.updateControls([c.id], (t, band) => {
+      if (t.type !== 'table') return;
+      t.rows[row].height = positive(value, 2);
+      syncSize(t);
+      band.height = Math.max(band.height, t.y + t.height);
+    }, `table-row-${row}`);
   }
 
   // ── Conditional formatting ──────────────────────────────────────────────────

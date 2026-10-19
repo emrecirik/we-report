@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Tables: a `table` control — column widths, rows, cells that span columns, fixed text or formulas
+  per cell with their own format, bold, alignment and background; the table's border becomes the
+  grid; rows can grow to fit their text. In the designer: click a cell to edit it, add/remove rows
+  and columns, merge and split, set column width and row height, drop a data field on a cell.
 - Label sheets: the detail section can print rows side by side (`columns: { count, gap }`), filling
   across, then down, then the next sheet. Ready layouts for common A4 and Letter label sheets
   (`LABEL_SHEETS`, `applyLabelSheet`) set the paper, margins and label size in one step; the

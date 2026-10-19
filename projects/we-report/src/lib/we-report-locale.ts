@@ -257,6 +257,18 @@ export interface WeReportLocale {
   chartHint: string;
   conditionalFormatting: string;
   watermark: string;
+  tableSection: string;
+  addRow: string;
+  addColumn: string;
+  deleteRow: string;
+  deleteColumn: string;
+  mergeCells: string;
+  splitCell: string;
+  selectedCell: string;
+  columnWidth: string;
+  rowHeight: string;
+  tableHint: string;
+  columnN: string;
   labelSheet: string;
   labelSheetChoose: string;
   labelSheetHint: string;
@@ -316,6 +328,7 @@ export const weReportLocaleEn: WeReportLocale = {
     pageInfo: 'Page number / date',
     checkbox: 'Checkbox',
     chart: 'Chart',
+    table: 'Table',
   },
 
   zoomIn: 'Zoom in',
@@ -562,6 +575,18 @@ export const weReportLocaleEn: WeReportLocale = {
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
+  tableSection: 'Table',
+  addRow: 'Add row',
+  addColumn: 'Add column',
+  deleteRow: 'Delete row',
+  deleteColumn: 'Delete column',
+  mergeCells: 'Merge with next',
+  splitCell: 'Split',
+  selectedCell: 'Selected cell',
+  columnWidth: 'Column width (mm)',
+  rowHeight: 'Row height (mm)',
+  tableHint: 'Click a cell to edit it. Drop a data field on a cell to show its value there.',
+  columnN: 'Column {0}',
   labelSheet: 'Label sheet',
   labelSheetChoose: 'Choose a sheet…',
   labelSheetHint: 'Sets the paper, margins and label size. Page and report headers/footers are removed; undo brings them back.',
@@ -653,6 +678,7 @@ export const weReportLocaleTr: WeReportLocale = {
     pageInfo: 'Sayfa no / tarih',
     checkbox: 'Onay kutusu',
     chart: 'Grafik',
+    table: 'Tablo',
   },
 
   zoomIn: 'Yakınlaştır',
@@ -899,6 +925,18 @@ export const weReportLocaleTr: WeReportLocale = {
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
+  tableSection: 'Tablo',
+  addRow: 'Satır ekle',
+  addColumn: 'Sütun ekle',
+  deleteRow: 'Satırı sil',
+  deleteColumn: 'Sütunu sil',
+  mergeCells: 'Sonrakiyle birleştir',
+  splitCell: 'Böl',
+  selectedCell: 'Seçili hücre',
+  columnWidth: 'Sütun genişliği (mm)',
+  rowHeight: 'Satır yüksekliği (mm)',
+  tableHint: 'Düzenlemek için bir hücreye tıklayın. Bir veri alanını hücreye bırakınca değeri orada görünür.',
+  columnN: 'Sütun {0}',
   labelSheet: 'Etiket kağıdı',
   labelSheetChoose: 'Bir kağıt seçin…',
   labelSheetHint: 'Kağıdı, kenar boşluklarını ve etiket boyutunu ayarlar. Sayfa ve rapor başlık/altlıkları kaldırılır; geri al ile geri gelir.',

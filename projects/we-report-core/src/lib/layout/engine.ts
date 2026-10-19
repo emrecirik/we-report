@@ -6,6 +6,8 @@ import {
   Band,
   Bindable,
   ChartControl,
+  TableCell,
+  TableControl,
   isExpression,
   ReportControl,
   ReportDefinition,
@@ -371,6 +373,8 @@ class LayoutRun {
         const height = c.canGrow ? Math.max(c.height, this.measureTextHeight(text, style, c.width)) : c.height;
         return { items: this.textBox(text, style, { ...box, height }), height };
       }
+      case 'table':
+        return this.renderTable(c, scope);
       case 'pageInfo':
         return {
           items: [],
@@ -480,6 +484,38 @@ class LayoutRun {
       if (Number.isFinite(value) || c.aggregate === 'count') groups.get(label)!.push(Number.isFinite(value) ? value : 0);
     }
     return [...groups].map(([label, values]) => ({ label, value: aggregate(c.aggregate ?? 'sum', values) }));
+  }
+
+  /** Cells laid out on the column grid; with `canGrow` each row is as tall as its tallest text. */
+  private renderTable(c: TableControl, scope: Scope): { items: LayoutItem[]; height: number } {
+    const items: LayoutItem[] = [];
+    const tableOverrides = this.overridesFor(c, scope);
+    let y = c.y;
+    for (const row of c.rows) {
+      const cells: { text: string; style: ResolvedStyle; x: number; width: number }[] = [];
+      let column = 0;
+      let x = c.x;
+      for (const cell of row.cells) {
+        if (column >= c.columns.length) break;
+        const span = Math.max(1, Math.min(cell.colSpan ?? 1, c.columns.length - column));
+        const width = c.columns.slice(column, column + span).reduce((a, b) => a + b, 0);
+        const style = resolveStyle(this.def, c.style, { ...tableOverrides, ...cell.styleOverrides });
+        cells.push({ text: this.cellText(cell, scope, c.id), style, x, width });
+        x += width;
+        column += span;
+      }
+      const height = c.canGrow ? Math.max(row.height, ...cells.map((cell) => this.measureTextHeight(cell.text, cell.style, cell.width))) : row.height;
+      for (const cell of cells) items.push(...this.textBox(cell.text, cell.style, { x: cell.x, y, width: cell.width, height }));
+      y += height;
+    }
+    return { items, height: y - c.y };
+  }
+
+  private cellText(cell: TableCell, scope: Scope, controlId: string): string {
+    const value = this.bind(cell.text, scope, controlId);
+    if (value === ERROR_TEXT) return ERROR_TEXT;
+    if (typeof value === 'string' && !cell.format) return value;
+    return formatValue(value, cell.format, { locale: this.locale, currency: this.currency });
   }
 
   private textOf(c: TextControl, scope: Scope): string {

@@ -1,4 +1,4 @@
-import { FieldSchema, ReportControl, ReportControlType } from 'we-report-core';
+import { DEFAULT_TABLE_BORDER_COLOR, FieldSchema, ReportControl, ReportControlType } from 'we-report-core';
 
 export { captionFor } from 'we-report-core';
 
@@ -12,6 +12,7 @@ export const TOOLBOX_ITEMS: { type: ReportControlType; icon: string; variant?: s
   { type: 'barcode', icon: 'qrcode', variant: 'qrcode' },
   { type: 'pageInfo', icon: 'pageInfo' },
   { type: 'checkbox', icon: 'checkbox' },
+  { type: 'table', icon: 'table' },
   { type: 'chart', icon: 'chart' },
 ];
 
@@ -35,6 +36,20 @@ export function createControl(type: ReportControlType, id: string, x: number, y:
       return { ...base, type, width: 40, height: 6, info: 'pageNofM' };
     case 'checkbox':
       return { ...base, type, width: 5, height: 5, checked: true };
+    case 'table':
+      // A header row and a value row: the usual start of a list.
+      return {
+        ...base,
+        type,
+        width: 120,
+        height: 14,
+        columns: [40, 40, 40],
+        styleOverrides: { border: { width: 0.25, color: DEFAULT_TABLE_BORDER_COLOR, sides: { top: true, right: true, bottom: true, left: true } } },
+        rows: [
+          { height: 7, cells: [1, 2, 3].map((n) => ({ text: `${text} ${n}`, styleOverrides: { bold: true } })) },
+          { height: 7, cells: [{ text: '' }, { text: '' }, { text: '' }] },
+        ],
+      };
     case 'chart':
       return { ...base, type, width: 120, height: 60, chartType: 'column', category: { expression: '' }, value: { expression: '' }, showValues: true };
   }

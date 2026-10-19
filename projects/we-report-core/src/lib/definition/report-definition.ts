@@ -159,6 +159,31 @@ export interface ChartControl extends ControlBase {
   gridColor?: string;
 }
 
+/** One cell of a table row; a cell may span the columns to its right. */
+export interface TableCell {
+  text: Bindable<string>;
+  format?: string;
+  /** Number of columns this cell covers; default 1. */
+  colSpan?: number;
+  /** Merged over the table's own style, so a table border becomes the grid. */
+  styleOverrides?: ReportStyle;
+}
+
+export interface TableRow {
+  height: number;
+  cells: TableCell[];
+}
+
+/** A grid of cells, e.g. a header row and a value row in a detail band. */
+export interface TableControl extends ControlBase {
+  type: 'table';
+  /** Column widths in mm; the table is as wide as their sum. */
+  columns: number[];
+  rows: TableRow[];
+  /** Rows grow to fit their longest text instead of cutting it off. */
+  canGrow?: boolean;
+}
+
 export type ReportControl =
   | TextControl
   | LineControl
@@ -167,7 +192,8 @@ export type ReportControl =
   | BarcodeControl
   | PageInfoControl
   | CheckboxControl
-  | ChartControl;
+  | ChartControl
+  | TableControl;
 
 export type ReportControlType = ReportControl['type'];
 

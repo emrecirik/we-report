@@ -307,4 +307,30 @@ describe('layout engine', () => {
     expect(wide.bottom).toBeLessThanOrEqual(14.001);
     expect(wide.item.width).toBe(57.5);
   });
+
+  it('lays out a table: columns, spans, data cells, growing rows and a border grid', () => {
+    const report = listReport([{ Name: 'Kuşadası çok uzun bir ürün adı ki iki satıra sığmaz ve büyümesi gerekir', Qty: 3 }]);
+    report.bands[1].controls[0] = {
+      id: 't', type: 'table', x: 5, y: 0, width: 90, height: 12, columns: [20, 30, 40], canGrow: true,
+      styleOverrides: { border: { width: 0.2, color: '#000000', sides: { top: true, right: true, bottom: true, left: true } } },
+      rows: [
+        { height: 6, cells: [{ text: 'Head', colSpan: 2 }, { text: 'Qty' }] },
+        { height: 6, cells: [{ text: 'A' }, { text: { expression: '[Name]' } }, { text: { expression: '[Qty]' }, format: 'n2' }] },
+      ],
+    };
+    const items = layoutReport(report, { fonts, now: NOW }).pages[0].items;
+    const texts = items.filter((i): i is TextItem => i.kind === 'text');
+    const cell = (t: string) => texts.find((x) => x.lines[0]?.text.startsWith(t))!;
+    expect([cell('Head').x, cell('Head').width]).toEqual([20, 50]); // margin 15 + x 5; spans 20 + 30
+    expect([cell('Qty').x, cell('Qty').width]).toEqual([70, 40]);
+    expect(cell('3.00').x).toBe(70);
+    const name = cell('Kuşadası');
+    expect(name.lines.length).toBeGreaterThan(1);
+    // The grown row is as tall as the long name, and every cell of the row shares that height.
+    expect(cell('A').height).toBeCloseTo(name.height, 5);
+    expect(name.height).toBeGreaterThan(6);
+    expect(cell('A').y - cell('Head').y).toBeCloseTo(6, 5);
+    // Four border lines per cell: the table border is the grid.
+    expect(items.filter((i) => i.kind === 'line').length).toBe(5 * 4);
+  });
 });

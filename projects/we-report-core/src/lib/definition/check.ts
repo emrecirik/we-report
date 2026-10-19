@@ -44,6 +44,8 @@ function bindings(c: ReportControl): Bindable<unknown>[] {
       return [...list, c.source];
     case 'checkbox':
       return [...list, c.checked];
+    case 'table':
+      return [...list, ...c.rows.flatMap((r) => r.cells.map((cell) => cell.text))];
     case 'chart':
       return [...list, ...[c.category, c.value].filter((e) => e.expression.trim())];
     default:
