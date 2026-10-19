@@ -127,7 +127,7 @@ interface DragOp {
           <div
             class="ds__band-body"
             [attr.data-band-id]="band.id"
-            [style.height.mm]="folded ? 3 : band.height * zoom()"
+            [style.height.mm]="folded ? 6 : band.height * zoom()"
             [style.background-color]="band.backgroundColor ?? null"
             [style.background-size.mm]="gridSize() * zoom()"
             [style.background-image]="gridSize() ? null : 'none'"
