@@ -298,6 +298,7 @@ export const weReportLocaleEs: WeReportLocale = {
   wizardTotals: 'Totales de las columnas numéricas',
   automatic: 'Automático',
   createReport: 'Crear informe',
+  formatPainter: 'Copiar formato: haga clic y luego en otro elemento (Esc cancela)',
   addByClick: 'Pulse un elemento (o doble clic en un campo) para añadirlo a la sección elegida.',
   resizePanel: 'Arrastrar para cambiar el tamaño, doble clic para ocultar',
   alignJustify: 'Justificar',

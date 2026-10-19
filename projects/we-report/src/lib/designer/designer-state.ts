@@ -42,6 +42,8 @@ export class DesignerState {
   /** The table cell last clicked; the inspector edits it while its table is selected. */
   readonly tableCell = signal<TableCellRef | null>(null);
   /** Text being typed on the page (double-click / F2): a text control, or a cell of a table. */
+  /** Format painter: the look picked up from one item, applied to the next item clicked. */
+  readonly painter = signal<Pick<ReportControl, 'style' | 'styleOverrides'> | null>(null);
   readonly editing = signal<{ controlId: string; row?: number; cell?: number } | null>(null);
   /** Where the pointer is on the page, for the status bar: band and mm inside it. */
   readonly pointer = signal<{ bandId: string; x: number; y: number } | null>(null);

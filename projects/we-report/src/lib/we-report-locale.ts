@@ -284,6 +284,7 @@ export interface WeReportLocale {
   wizardTotals: string;
   automatic: string;
   createReport: string;
+  formatPainter: string;
   addByClick: string;
   resizePanel: string;
   alignJustify: string;
@@ -643,6 +644,7 @@ export const weReportLocaleEn: WeReportLocale = {
   wizardTotals: 'Totals of number columns',
   automatic: 'Automatic',
   createReport: 'Create report',
+  formatPainter: 'Copy formatting: click it, then click another item (Esc cancels)',
   addByClick: 'Click an item (or double-click a field) to add it to the selected section.',
   resizePanel: 'Drag to resize, double-click to hide',
   alignJustify: 'Justify',
@@ -1034,6 +1036,7 @@ export const weReportLocaleTr: WeReportLocale = {
   wizardTotals: 'Sayı sütunlarının toplamı',
   automatic: 'Otomatik',
   createReport: 'Raporu oluştur',
+  formatPainter: 'Biçimi kopyala: tıklayın, sonra başka bir öğeye tıklayın (Esc vazgeçer)',
   addByClick: 'Bir öğeye tıklayın (veya bir alana çift tıklayın): seçili bölüme eklenir.',
   resizePanel: 'Boyutlandırmak için sürükleyin, gizlemek için çift tıklayın',
   alignJustify: 'İki yana yasla',

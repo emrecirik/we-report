@@ -30,6 +30,7 @@ export interface WeReportIcons {
   textJustify: string;
   borderAll: string;
   borderNone: string;
+  brush: string;
   arrangeLeft: string;
   arrangeCenter: string;
   arrangeRight: string;
@@ -78,6 +79,7 @@ export const WE_REPORT_DEFAULT_ICONS: WeReportIcons = {
   textJustify: svg('<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'),
   borderAll: svg('<rect x="4" y="4" width="16" height="16" rx="1"/>'),
   borderNone: svg('<rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="2 3"/>'),
+  brush: svg('<rect x="4" y="3" width="14" height="6" rx="1.5"/><path d="M18 6h2v5h-8v3"/><rect x="10.5" y="14" width="3" height="7" rx="1"/>'),
   table: svg('<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 10h18M3 14.5h18M9 5v14M15 5v14"/>'),
   chart: svg('<path d="M4 20h16"/><rect x="5" y="11" width="3" height="9" rx="0.5"/><rect x="10.5" y="6" width="3" height="14" rx="0.5"/><rect x="16" y="13" width="3" height="7" rx="0.5"/>'),
   database: svg('<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'),

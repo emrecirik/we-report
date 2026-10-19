@@ -69,7 +69,7 @@ interface DragOp {
   imports: [WeReportIconPipe, ExpressionEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Focusable so keyboard shortcuts (undo, delete, arrows) reach the designer after a click.
-  host: { tabindex: '0' },
+  host: { tabindex: '0', '[class.ds--painting]': '!!state.painter()' },
   template: `
     @let r = ruler();
     <svg class="ds__ruler" aria-hidden="true" [attr.width]="r.width" height="20" [attr.viewBox]="'0 0 ' + r.width + ' 20'">
@@ -355,6 +355,9 @@ interface DragOp {
       z-index: 1;
     }
     /* Typing on the page: the editor takes the item's box and look. */
+    :host(.ds--painting) .ds__control {
+      cursor: copy;
+    }
     .ds__editor {
       position: absolute;
       inset: 0;
@@ -871,6 +874,16 @@ export class DesignSurfaceComponent implements OnDestroy {
     if (e.button !== 0) return;
     e.stopPropagation();
     e.preventDefault();
+    const look = this.state.painter();
+    if (look) {
+      this.state.painter.set(null);
+      this.state.updateControls([c.id], (x) => {
+        x.style = look.style;
+        x.styleOverrides = structuredClone(look.styleOverrides);
+      });
+      this.state.selection.set({ kind: 'controls', ids: [c.id] });
+      return;
+    }
     const additive = e.shiftKey || e.ctrlKey || e.metaKey;
     const sel = this.state.selection();
     const toggleOnClick = (e.ctrlKey || e.metaKey) && sel.kind === 'controls' && sel.ids.includes(c.id);

@@ -213,6 +213,11 @@ export class WeReportDesignerComponent {
     this.state.applyStyle(key, !this.formatStyle()![key]);
   }
 
+  protected togglePainter(): void {
+    const c = this.state.selectedControls()[0];
+    this.state.painter.set(this.state.painter() || !c ? null : { style: c.style, styleOverrides: structuredClone(c.styleOverrides) });
+  }
+
   protected setBorder(on: boolean): void {
     const st = this.formatStyle();
     this.state.applyStyle('border', on ? { width: 0.25, color: st?.color ?? '#000000', sides: { top: true, right: true, bottom: true, left: true } } : undefined);
@@ -575,6 +580,7 @@ export class WeReportDesignerComponent {
       this.state.selectAll();
     } else if (e.key === 'Escape' && !typing) {
       if (this.contextMenu()) this.contextMenu.set(null);
+      else if (this.state.painter()) this.state.painter.set(null);
       else this.state.selection.set({ kind: 'none' });
     } else if (e.key.startsWith('Arrow') && !typing && this.state.selection().kind === 'controls') {
       e.preventDefault();

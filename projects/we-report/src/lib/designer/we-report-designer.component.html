@@ -191,6 +191,7 @@
       <span class="wd__sep"></span>
       <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="!!st?.border" (click)="setBorder(true)" [title]="s.allBorders" [attr.aria-label]="s.allBorders" [innerHTML]="'borderAll' | weReportIcon"></button>
       <button type="button" class="wd__icon wd__fmt" [disabled]="!st" (click)="setBorder(false)" [title]="s.noBorder" [attr.aria-label]="s.noBorder" [innerHTML]="'borderNone' | weReportIcon"></button>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="!!state.painter()" (click)="togglePainter()" [title]="s.formatPainter" [attr.aria-label]="s.formatPainter" [attr.aria-pressed]="!!state.painter()" [innerHTML]="'brush' | weReportIcon"></button>
     </div>
     <main #canvas class="wd__canvas" tabindex="-1" (contextmenu)="openContextMenu($event)" (wheel)="onCanvasWheel($event)">
       <we-report-design-surface [strings]="s" [zoom]="zoomLevel()" [sample]="sample()" [fields]="allFields()" />

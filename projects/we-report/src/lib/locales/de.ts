@@ -298,6 +298,7 @@ export const weReportLocaleDe: WeReportLocale = {
   wizardTotals: 'Summen der Zahlenspalten',
   automatic: 'Automatisch',
   createReport: 'Bericht erstellen',
+  formatPainter: 'Format übertragen: anklicken, dann ein anderes Element anklicken (Esc bricht ab)',
   addByClick: 'Element anklicken (oder Feld doppelklicken), um es zum gewählten Abschnitt hinzuzufügen.',
   resizePanel: 'Ziehen zum Ändern, Doppelklick zum Ausblenden',
   alignJustify: 'Blocksatz',
