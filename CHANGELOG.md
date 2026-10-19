@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-10-19
 
 - Smaller apps: the barcode engine (bwip-js, ~0.9 MB) now loads on demand together with the font
   engine (`FontRegistry.create()`), so an app's initial bundle shrinks from about 1.5 MB to 0.6 MB

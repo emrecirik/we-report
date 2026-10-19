@@ -5,6 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/we-report-core.svg?label=we-report-core)](https://www.npmjs.com/package/we-report-core)
 [![npm downloads](https://img.shields.io/npm/dm/we-report-core.svg?label=downloads)](https://www.npmjs.com/package/we-report-core)
 [![CI](https://github.com/emrecirik/we-report/actions/workflows/ci.yml/badge.svg)](https://github.com/emrecirik/we-report/actions/workflows/ci.yml)
+[![Angular 18-22 builds](https://github.com/emrecirik/we-report/actions/workflows/compat.yml/badge.svg)](https://github.com/emrecirik/we-report/actions/workflows/compat.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Angular 18-22](https://img.shields.io/badge/Angular-18%20%E2%80%93%2022-dd0031.svg)](https://angular.dev)
 [![Languages](https://img.shields.io/badge/UI-EN%20%C2%B7%20TR%20%C2%B7%20DE%20%C2%B7%20FR%20%C2%B7%20ES-5b5bd6.svg)](docs/localization.md)
