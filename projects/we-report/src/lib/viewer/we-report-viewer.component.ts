@@ -101,7 +101,7 @@ import { WeReportPageComponent } from './we-report-page.component';
     }
     <div class="we-report-viewer__main">
     @if (showThumbs() && pageTotal() > 1) {
-      <nav class="we-report-viewer__thumbs" [attr.aria-label]="strings().thumbnails">
+      <nav #thumbs class="we-report-viewer__thumbs" [attr.aria-label]="strings().thumbnails">
         @for (page of document()!.pages; track $index; let p = $index) {
           <button type="button" class="we-report-viewer__thumb" [class.we-report-viewer__thumb--current]="currentPage() === p + 1" (click)="goToPage(p + 1)" [attr.aria-label]="strings().pageNumber + ' ' + (p + 1)">
             @defer (on viewport) {
@@ -429,6 +429,7 @@ export class WeReportViewerComponent {
   protected readonly query = signal('');
   protected readonly matchIndex = signal(0);
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+  private readonly thumbs = viewChild<ElementRef<HTMLElement>>('thumbs');
   private readonly searchBox = viewChild<ElementRef<HTMLInputElement>>('searchBox');
 
   /** Every line containing the search text: page, item and line index, in reading order. */
@@ -476,7 +477,7 @@ export class WeReportViewerComponent {
   protected goToPage(n: number): void {
     const target = Math.min(Math.max(1, Math.round(n) || 1), this.pageTotal());
     this.scroller()?.nativeElement.querySelector(`[data-page="${target}"]`)?.scrollIntoView({ block: 'start' });
-    this.currentPage.set(target);
+    this.setCurrent(target);
   }
 
   /** The page whose top is nearest the top of the view is the current page. */
@@ -488,7 +489,13 @@ export class WeReportViewerComponent {
     box.querySelectorAll<HTMLElement>('[data-page]').forEach((el) => {
       if (el.getBoundingClientRect().top - top <= box.clientHeight / 3) best = Number(el.dataset['page']);
     });
-    this.currentPage.set(best);
+    if (best !== this.currentPage()) this.setCurrent(best);
+  }
+
+  private setCurrent(page: number): void {
+    this.currentPage.set(page);
+    // Keep the current page's thumbnail in sight.
+    this.thumbs()?.nativeElement.children[page - 1]?.scrollIntoView({ block: 'nearest' });
   }
 
   protected pickZoom(value: string): void {
