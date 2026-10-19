@@ -57,7 +57,7 @@ function bindings(c: ReportControl): Bindable<unknown>[] {
  * Static checks of a design. `rowFields` / `parentFields` (dotted paths) enable the unknown-field
  * check; without them field names are not judged.
  */
-export function checkReport(def: ReportDefinition, rowFields?: string[], parentFields?: string[], paramNames?: string[]): ReportIssue[] {
+export function checkReport(def: ReportDefinition, rowFields?: string[], parentFields?: string[], paramNames?: string[], innerFields?: string[]): ReportIssue[] {
   const issues: ReportIssue[] = [];
   let width = Infinity;
   try {
@@ -68,8 +68,12 @@ export function checkReport(def: ReportDefinition, rowFields?: string[], parentF
   const rows = rowFields && new Set(rowFields);
   const parent = parentFields && new Set(parentFields);
   const params = new Set(paramNames ?? (def.parameters ?? []).map((p) => p.name));
+  const inner = innerFields && new Set(innerFields);
 
   for (const band of def.bands) {
+    // Inside an inner list a field is an item's, and `^.` reads the detail row around it.
+    const own = band.kind.startsWith('sub') ? inner : rows;
+    const outer = band.kind.startsWith('sub') ? rows : parent;
     for (const c of band.controls) {
       if (c.x + c.width > width + 0.01) issues.push({ code: 'outsidePage', severity: 'error', bandId: band.id, controlId: c.id });
       for (const b of bindings(c)) {
@@ -90,9 +94,9 @@ export function checkReport(def: ReportDefinition, rowFields?: string[], parentF
         for (const path of paths) {
           const [head, ...rest] = path;
           const known =
-            head === '^' ? !parent || parent.has(rest.join('.'))
+            head === '^' ? !outer || outer.has(rest.join('.'))
             : head.startsWith('?') ? params.has(head.slice(1))
-            : !rows || rows.has(path.join('.'));
+            : !own || own.has(path.join('.'));
           if (!known) issues.push({ code: 'unknownField', severity: 'warning', bandId: band.id, controlId: c.id, detail: path.join('.') });
         }
       }

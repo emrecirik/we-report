@@ -2,6 +2,8 @@ import { createBlankReport, migrateDefinition, ReportDefinition } from 'we-repor
 import invoiceData from '../templates/invoice.data.json';
 import invoice from '../templates/invoice.wrpt.json';
 import labels from '../templates/labels.wrpt.json';
+import ordersData from '../templates/orders.data.json';
+import orders from '../templates/orders.wrpt.json';
 import receiptData from '../templates/receipt.data.json';
 import receipt from '../templates/receipt.wrpt.json';
 import salesData from '../templates/sales.data.json';
@@ -30,6 +32,13 @@ export const TEMPLATES: StudioTemplate[] = [
     description: { tr: 'Gruplar, ara toplamlar, grafikler ve koşullu biçim', en: 'Groups, subtotals, charts and conditional formatting' },
     report: () => migrateDefinition(structuredClone(sales)),
     data: salesData,
+  },
+  {
+    id: 'orders',
+    name: { tr: 'Müşteri siparişleri (iç liste)', en: 'Customer orders (inner list)' },
+    description: { tr: 'Her müşterinin altında siparişleri ve ara toplamı', en: 'Each customer with their orders and subtotal' },
+    report: () => migrateDefinition(structuredClone(orders)),
+    data: ordersData,
   },
   {
     id: 'labels',

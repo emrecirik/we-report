@@ -9,6 +9,7 @@ import { LayoutPage, PathItem, RectItem, TextItem } from './layout-types';
 import { niceScale } from './chart';
 import { barcodeItem } from './barcode';
 import { applyLabelSheet, LABEL_SHEETS } from '../definition/label-sheets';
+import { checkReport } from '../definition/check';
 import { wrapText } from './text-wrap';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
@@ -332,5 +333,29 @@ describe('layout engine', () => {
     expect(cell('A').y - cell('Head').y).toBeCloseTo(6, 5);
     // Four border lines per cell: the table border is the grid.
     expect(items.filter((i) => i.kind === 'line').length).toBe(5 * 4);
+  });
+
+  it('prints an inner list under every row, with its own header, footer and totals', () => {
+    const report = listReport([
+      { Name: 'Ayşe', orders: [{ no: 1, amount: 10 }, { no: 2, amount: 15 }] },
+      { Name: 'Bora', orders: [] },
+      { Name: 'Cem', orders: [{ no: 3, amount: 7 }] },
+    ]);
+    const text = (id: string, expression: string) => ({ id, type: 'text' as const, x: 0, y: 0, width: 80, height: 5, text: { expression } });
+    report.bands.splice(2, 0,
+      { id: 'sh', kind: 'subHeader', height: 5, controls: [text('sh1', "'Orders of ' + [^.Name]")] },
+      { id: 'sd', kind: 'subDetail', height: 5, rowsPath: 'orders', controls: [text('sd1', "[^.Name] + ' #' + [no] + ' ' + [amount]")] },
+      { id: 'sf', kind: 'subFooter', height: 5, controls: [text('sf1', "'Total ' + Sum([amount]) + ' in ' + Count()")] },
+    );
+    const doc = layoutReport(report, { fonts, now: NOW });
+    expect(doc.problems).toEqual([]);
+    expect(texts(doc.pages[0]).slice(1, -1)).toEqual([
+      'Ayşe', 'Orders of Ayşe', 'Ayşe #1 10', 'Ayşe #2 15', 'Total 25 in 2',
+      'Bora',
+      'Cem', 'Orders of Cem', 'Cem #3 7', 'Total 7 in 1',
+    ]);
+    // Inner fields are judged against the item, `^.` against the row around it.
+    expect(checkReport(report, ['Name', 'orders'], [], [], ['no', 'amount']).filter((i) => i.code === 'unknownField')).toEqual([]);
+    expect(checkReport(report, ['Name'], [], [], ['no']).map((i) => i.detail)).toContain('amount');
   });
 });

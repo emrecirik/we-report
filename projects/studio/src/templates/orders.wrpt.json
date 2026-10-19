@@ -1,0 +1,389 @@
+{
+  "version": 1,
+  "name": "Müşteri sipariş dökümü",
+  "locale": "tr-TR",
+  "currency": "TRY",
+  "page": {
+    "paper": "A4",
+    "orientation": "portrait",
+    "margins": {
+      "top": 14,
+      "right": 14,
+      "bottom": 12,
+      "left": 14
+    },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": {
+      "fontFamily": "Noto Sans",
+      "fontSize": 9,
+      "color": "#1f2328",
+      "padding": 0.5
+    },
+    "title": {
+      "fontSize": 16,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "muted": {
+      "fontSize": 8,
+      "color": "#6b7280"
+    },
+    "customer": {
+      "fontSize": 11,
+      "bold": true,
+      "color": "#0f172a",
+      "verticalAlign": "middle"
+    },
+    "th": {
+      "fontSize": 8,
+      "bold": true,
+      "color": "#0f766e",
+      "verticalAlign": "middle"
+    },
+    "num": {
+      "textAlign": "right"
+    },
+    "sub": {
+      "bold": true,
+      "textAlign": "right",
+      "verticalAlign": "middle"
+    }
+  },
+  "dataSources": [
+    {
+      "id": "customers",
+      "name": "Customers",
+      "kind": "json",
+      "data": null
+    }
+  ],
+  "dataMember": {
+    "dataSourceId": "customers"
+  },
+  "bands": [
+    {
+      "id": "pageHeader",
+      "kind": "pageHeader",
+      "height": 16,
+      "controls": [
+        {
+          "id": "title",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 120,
+          "height": 9,
+          "text": "Müşteri sipariş dökümü",
+          "style": "title"
+        },
+        {
+          "id": "sub",
+          "type": "text",
+          "x": 0,
+          "y": 9,
+          "width": 120,
+          "height": 5,
+          "text": "Her müşterinin siparişleri ve toplamı",
+          "style": "muted"
+        },
+        {
+          "id": "printed",
+          "type": "pageInfo",
+          "info": "printDate",
+          "x": 132,
+          "y": 2,
+          "width": 50,
+          "height": 5,
+          "style": "muted",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 12,
+      "backgroundColor": "#f0fdfa",
+      "controls": [
+        {
+          "id": "customer",
+          "type": "text",
+          "x": 2,
+          "y": 1.5,
+          "width": 90,
+          "height": 9,
+          "text": {
+            "expression": "[customer]"
+          },
+          "style": "customer"
+        },
+        {
+          "id": "city",
+          "type": "text",
+          "x": 92,
+          "y": 1.5,
+          "width": 40,
+          "height": 9,
+          "text": {
+            "expression": "[city]"
+          },
+          "style": "muted",
+          "styleOverrides": {
+            "verticalAlign": "middle"
+          }
+        },
+        {
+          "id": "phone",
+          "type": "text",
+          "x": 132,
+          "y": 1.5,
+          "width": 48,
+          "height": 9,
+          "text": {
+            "expression": "[phone]"
+          },
+          "style": "muted",
+          "styleOverrides": {
+            "verticalAlign": "middle",
+            "textAlign": "right"
+          }
+        }
+      ]
+    },
+    {
+      "id": "subHeader",
+      "kind": "subHeader",
+      "height": 7,
+      "controls": [
+        {
+          "id": "h1",
+          "type": "text",
+          "x": 6,
+          "y": 1,
+          "width": 30,
+          "height": 5,
+          "text": "Sipariş",
+          "style": "th"
+        },
+        {
+          "id": "h2",
+          "type": "text",
+          "x": 36,
+          "y": 1,
+          "width": 30,
+          "height": 5,
+          "text": "Tarih",
+          "style": "th"
+        },
+        {
+          "id": "h3",
+          "type": "text",
+          "x": 96,
+          "y": 1,
+          "width": 26,
+          "height": 5,
+          "text": "Adet",
+          "style": "th",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "h4",
+          "type": "text",
+          "x": 122,
+          "y": 1,
+          "width": 40,
+          "height": 5,
+          "text": "Tutar",
+          "style": "th",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "h5",
+          "type": "text",
+          "x": 164,
+          "y": 1,
+          "width": 18,
+          "height": 5,
+          "text": "Ödendi",
+          "style": "th",
+          "styleOverrides": {
+            "textAlign": "center"
+          }
+        }
+      ]
+    },
+    {
+      "id": "subDetail",
+      "kind": "subDetail",
+      "height": 6,
+      "rowsPath": "orders",
+      "controls": [
+        {
+          "id": "no",
+          "type": "text",
+          "x": 6,
+          "y": 0.5,
+          "width": 30,
+          "height": 5,
+          "text": {
+            "expression": "[orderNo]"
+          }
+        },
+        {
+          "id": "date",
+          "type": "text",
+          "x": 36,
+          "y": 0.5,
+          "width": 30,
+          "height": 5,
+          "text": {
+            "expression": "[date]"
+          },
+          "format": "dd.MM.yyyy"
+        },
+        {
+          "id": "items",
+          "type": "text",
+          "x": 96,
+          "y": 0.5,
+          "width": 26,
+          "height": 5,
+          "text": {
+            "expression": "[items]"
+          },
+          "style": "num"
+        },
+        {
+          "id": "amount",
+          "type": "text",
+          "x": 122,
+          "y": 0.5,
+          "width": 40,
+          "height": 5,
+          "text": {
+            "expression": "[amount]"
+          },
+          "style": "num",
+          "format": "c2",
+          "formatting": [
+            {
+              "when": "[amount] >= 5000",
+              "style": {
+                "bold": true,
+                "color": "#15803d"
+              }
+            }
+          ]
+        },
+        {
+          "id": "paid",
+          "type": "checkbox",
+          "x": 171,
+          "y": 1,
+          "width": 4,
+          "height": 4,
+          "checked": {
+            "expression": "[paid]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "subFooter",
+      "kind": "subFooter",
+      "height": 10,
+      "controls": [
+        {
+          "id": "rule",
+          "type": "line",
+          "x": 96,
+          "y": 0.5,
+          "width": 86,
+          "height": 1,
+          "direction": "horizontal",
+          "lineWidth": 0.2,
+          "color": "#94a3b8"
+        },
+        {
+          "id": "cnt",
+          "type": "text",
+          "x": 6,
+          "y": 2,
+          "width": 90,
+          "height": 6,
+          "text": {
+            "expression": "Count() + ' sipariş · ' + [^.customer]"
+          },
+          "style": "muted",
+          "styleOverrides": {
+            "verticalAlign": "middle"
+          }
+        },
+        {
+          "id": "sumItems",
+          "type": "text",
+          "x": 96,
+          "y": 2,
+          "width": 26,
+          "height": 6,
+          "text": {
+            "expression": "Sum([items])"
+          },
+          "style": "sub"
+        },
+        {
+          "id": "sumAmount",
+          "type": "text",
+          "x": 122,
+          "y": 2,
+          "width": 40,
+          "height": 6,
+          "text": {
+            "expression": "Sum([amount])"
+          },
+          "style": "sub",
+          "format": "c2"
+        }
+      ]
+    },
+    {
+      "id": "pageFooter",
+      "kind": "pageFooter",
+      "height": 8,
+      "controls": [
+        {
+          "id": "pageNo",
+          "type": "pageInfo",
+          "info": "pageNofM",
+          "format": "Sayfa {0} / {1}",
+          "x": 132,
+          "y": 2,
+          "width": 50,
+          "height": 5,
+          "style": "muted",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "brand",
+          "type": "text",
+          "x": 0,
+          "y": 2,
+          "width": 120,
+          "height": 5,
+          "text": "we-report ile hazırlandı — tüm veriler kurgusaldır",
+          "style": "muted"
+        }
+      ]
+    }
+  ]
+}

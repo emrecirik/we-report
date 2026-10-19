@@ -257,6 +257,10 @@ export interface WeReportLocale {
   chartHint: string;
   conditionalFormatting: string;
   watermark: string;
+  innerList: string;
+  innerListOf: string;
+  innerListHint: string;
+  innerFields: string;
   tableSection: string;
   addRow: string;
   addColumn: string;
@@ -315,6 +319,9 @@ export const weReportLocaleEn: WeReportLocale = {
     pageHeader: 'Page header',
     groupHeader: 'Group header',
     detail: 'Detail (repeats for every row)',
+    subHeader: 'Inner list header',
+    subDetail: 'Inner list (repeats for every item)',
+    subFooter: 'Inner list footer',
     groupFooter: 'Group footer',
     pageFooter: 'Page footer',
     reportFooter: 'Report footer',
@@ -575,6 +582,10 @@ export const weReportLocaleEn: WeReportLocale = {
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
+  innerList: 'Inner list',
+  innerListOf: 'List inside each row',
+  innerListHint: 'Repeats for every item of a list inside each row, e.g. a customer’s orders. [field] is the item, [^.field] the row around it.',
+  innerFields: 'Inner list fields',
   tableSection: 'Table',
   addRow: 'Add row',
   addColumn: 'Add column',
@@ -665,6 +676,9 @@ export const weReportLocaleTr: WeReportLocale = {
     pageHeader: 'Sayfa başlığı',
     groupHeader: 'Grup başlığı',
     detail: 'Detay (her satır için tekrarlanır)',
+    subHeader: 'İç liste başlığı',
+    subDetail: 'İç liste (her öğe için tekrarlanır)',
+    subFooter: 'İç liste altlığı',
     groupFooter: 'Grup altlığı',
     pageFooter: 'Sayfa altlığı',
     reportFooter: 'Rapor altlığı',
@@ -925,6 +939,10 @@ export const weReportLocaleTr: WeReportLocale = {
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
+  innerList: 'İç liste',
+  innerListOf: 'Her satırın içindeki liste',
+  innerListHint: 'Her satırın içindeki listenin her öğesi için tekrarlanır; örneğin müşterinin siparişleri. [alan] öğeyi, [^.alan] dıştaki satırı okur.',
+  innerFields: 'İç liste alanları',
   tableSection: 'Tablo',
   addRow: 'Satır ekle',
   addColumn: 'Sütun ekle',

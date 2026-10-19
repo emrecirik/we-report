@@ -97,6 +97,16 @@
               </li>
             }
           </ul>
+          @if (fields().inner.length) {
+            <h3>{{ s.innerFields }}</h3>
+            <ul class="wd__fields">
+              @for (f of fields().inner; track f.path) {
+                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+                  <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
+                </li>
+              }
+            </ul>
+          }
           @if (fields().parent.length) {
             <h3>{{ s.parentFields }}</h3>
             <ul class="wd__fields">
@@ -140,7 +150,7 @@
     </main>
 
     <aside class="wd__right">
-      <we-report-property-panel [strings]="s" [fields]="allFields()" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
+      <we-report-property-panel [strings]="s" [fields]="allFields()" [lists]="fields().lists" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
     </aside>
   </div>
 } @else {

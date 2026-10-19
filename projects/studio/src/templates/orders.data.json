@@ -1,0 +1,235 @@
+[
+  {
+    "customer": "Ayla Yıldırımtepe",
+    "city": "Fallowick",
+    "phone": "0 (588) 555 92 23",
+    "orders": []
+  },
+  {
+    "customer": "Bora Akdere",
+    "city": "Thistlebay",
+    "phone": "0 (514) 555 22 67",
+    "orders": [
+      {
+        "orderNo": 2026102,
+        "date": "2026-08-25",
+        "items": 10,
+        "amount": 4330.13,
+        "paid": true
+      },
+      {
+        "orderNo": 2026101,
+        "date": "2026-09-14",
+        "items": 10,
+        "amount": 5317.26,
+        "paid": false
+      }
+    ]
+  },
+  {
+    "customer": "Cansu Uluova",
+    "city": "Merrowdale",
+    "phone": "0 (553) 555 60 42",
+    "orders": []
+  },
+  {
+    "customer": "Deniz Karasu",
+    "city": "Ashbourne",
+    "phone": "0 (540) 555 57 56",
+    "orders": [
+      {
+        "orderNo": 2026104,
+        "date": "2026-02-24",
+        "items": 6,
+        "amount": 1079.4,
+        "paid": true
+      },
+      {
+        "orderNo": 2026105,
+        "date": "2026-05-15",
+        "items": 3,
+        "amount": 8357.39,
+        "paid": false
+      },
+      {
+        "orderNo": 2026103,
+        "date": "2026-06-26",
+        "items": 7,
+        "amount": 9496.82,
+        "paid": true
+      }
+    ]
+  },
+  {
+    "customer": "Ece Gökbel",
+    "city": "Merrowdale",
+    "phone": "0 (588) 555 13 83",
+    "orders": [
+      {
+        "orderNo": 2026107,
+        "date": "2026-02-14",
+        "items": 9,
+        "amount": 7673.58,
+        "paid": false
+      },
+      {
+        "orderNo": 2026106,
+        "date": "2026-07-03",
+        "items": 7,
+        "amount": 8491.46,
+        "paid": true
+      },
+      {
+        "orderNo": 2026108,
+        "date": "2026-08-13",
+        "items": 9,
+        "amount": 2642.45,
+        "paid": true
+      }
+    ]
+  },
+  {
+    "customer": "Furkan Tunçkaya",
+    "city": "Corran",
+    "phone": "0 (517) 555 96 70",
+    "orders": [
+      {
+        "orderNo": 2026110,
+        "date": "2026-02-23",
+        "items": 10,
+        "amount": 4222.04,
+        "paid": true
+      },
+      {
+        "orderNo": 2026109,
+        "date": "2026-03-27",
+        "items": 1,
+        "amount": 9155.21,
+        "paid": true
+      }
+    ]
+  },
+  {
+    "customer": "Gizem Aydoğmuş",
+    "city": "Merrowdale",
+    "phone": "0 (578) 555 73 65",
+    "orders": [
+      {
+        "orderNo": 2026114,
+        "date": "2026-01-05",
+        "items": 11,
+        "amount": 8408.89,
+        "paid": false
+      },
+      {
+        "orderNo": 2026113,
+        "date": "2026-07-14",
+        "items": 4,
+        "amount": 2972.96,
+        "paid": true
+      },
+      {
+        "orderNo": 2026111,
+        "date": "2026-09-09",
+        "items": 9,
+        "amount": 3969.24,
+        "paid": false
+      },
+      {
+        "orderNo": 2026115,
+        "date": "2026-09-16",
+        "items": 6,
+        "amount": 8773.96,
+        "paid": true
+      },
+      {
+        "orderNo": 2026112,
+        "date": "2026-09-26",
+        "items": 11,
+        "amount": 4892.57,
+        "paid": true
+      }
+    ]
+  },
+  {
+    "customer": "Harun Sarıçam",
+    "city": "Thistlebay",
+    "phone": "0 (536) 555 28 67",
+    "orders": [
+      {
+        "orderNo": 2026116,
+        "date": "2026-01-27",
+        "items": 5,
+        "amount": 3179.08,
+        "paid": false
+      },
+      {
+        "orderNo": 2026117,
+        "date": "2026-02-15",
+        "items": 12,
+        "amount": 6877.8,
+        "paid": false
+      },
+      {
+        "orderNo": 2026118,
+        "date": "2026-05-15",
+        "items": 3,
+        "amount": 9197.23,
+        "paid": false
+      },
+      {
+        "orderNo": 2026119,
+        "date": "2026-08-03",
+        "items": 11,
+        "amount": 2714.81,
+        "paid": true
+      }
+    ]
+  },
+  {
+    "customer": "Irmak Kızılkaya",
+    "city": "Thistlebay",
+    "phone": "0 (507) 555 84 79",
+    "orders": []
+  },
+  {
+    "customer": "Kaan Demirkent",
+    "city": "Ashbourne",
+    "phone": "0 (533) 555 25 89",
+    "orders": []
+  },
+  {
+    "customer": "Lale Ilgaz",
+    "city": "Ashbourne",
+    "phone": "0 (545) 555 29 10",
+    "orders": []
+  },
+  {
+    "customer": "Mert Bozdağlı",
+    "city": "Corran",
+    "phone": "0 (594) 555 74 62",
+    "orders": [
+      {
+        "orderNo": 2026121,
+        "date": "2026-08-19",
+        "items": 3,
+        "amount": 9114.07,
+        "paid": false
+      },
+      {
+        "orderNo": 2026120,
+        "date": "2026-08-23",
+        "items": 12,
+        "amount": 8922.0,
+        "paid": true
+      },
+      {
+        "orderNo": 2026122,
+        "date": "2026-09-10",
+        "items": 2,
+        "amount": 4114.46,
+        "paid": true
+      }
+    ]
+  }
+]

@@ -202,6 +202,10 @@ export type BandKind =
   | 'pageHeader'
   | 'groupHeader'
   | 'detail'
+  /** Inner list: repeats for every item of a list inside each detail row (e.g. a customer's orders). */
+  | 'subHeader'
+  | 'subDetail'
+  | 'subFooter'
   | 'groupFooter'
   | 'pageFooter'
   | 'reportFooter';
@@ -215,6 +219,11 @@ export interface Band {
   groupBy?: Expression;
   /** groupHeader only: order of the groups; rows keep their order inside a group. Default `asc`. */
   sort?: 'asc' | 'desc' | 'none';
+  /**
+   * subDetail only: path of the list inside each detail row, e.g. `orders`. Inside the inner list
+   * `[field]` reads the item and `[^.field]` the detail row around it; totals run over the items.
+   */
+  rowsPath?: string;
   /** groupFooter only: id of the groupHeader band it closes. */
   groupHeaderId?: string;
   /** groupHeader: repeat on every page the group spans. pageHeader/pageFooter always repeat. */

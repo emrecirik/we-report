@@ -95,6 +95,8 @@ export class PropertyPanelComponent {
   readonly fields = input<DesignerField[]>([]);
   readonly fontFamilies = input<string[]>([]);
   readonly advanced = input(false);
+  /** Lists inside a row that an inner list can repeat over. */
+  readonly lists = input<string[]>([]);
 
   protected readonly state = inject(DesignerState);
   protected readonly papers = PAPER_SIZES;
@@ -184,13 +186,14 @@ export class PropertyPanelComponent {
 
   // ── Band ────────────────────────────────────────────────────────────────────
 
-  protected setBand(key: 'height' | 'groupBy' | 'sort' | 'backgroundColor', value: string): void {
+  protected setBand(key: 'height' | 'groupBy' | 'sort' | 'backgroundColor' | 'rowsPath', value: string): void {
     const band = this.band();
     if (!band) return;
     this.state.updateBand(band.id, (b) => {
       if (key === 'height') b.height = Math.max(2, Math.max(positive(value, 2), ...b.controls.map((c) => c.y + c.height)));
       else if (key === 'groupBy') b.groupBy = { expression: value };
       else if (key === 'sort') b.sort = value as Band['sort'];
+      else if (key === 'rowsPath') b.rowsPath = value || undefined;
       else b.backgroundColor = value || undefined;
     }, `band-${key}`);
   }

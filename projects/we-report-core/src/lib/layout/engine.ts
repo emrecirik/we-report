@@ -46,6 +46,8 @@ interface PageInfo {
 interface Scope {
   row: unknown;
   rows: readonly unknown[];
+  /** What `[^.field]` reads; the report's parent object unless inside an inner list. */
+  parent?: unknown;
 }
 
 /** A band rendered at the origin; items are relative to its top-left corner. */
@@ -167,7 +169,12 @@ class LayoutRun {
     detail: Band | undefined,
   ): void {
     if (level === headers.length) {
-      if (detail) for (const row of rows) entries.push({ type: 'band', rendered: this.renderBand(detail, { row, rows }) });
+      if (detail) {
+        for (const row of rows) {
+          entries.push({ type: 'band', rendered: this.renderBand(detail, { row, rows }) });
+          this.emitInnerList(entries, row);
+        }
+      }
       return;
     }
     const header = headers[level];
@@ -190,6 +197,21 @@ class LayoutRun {
       (entries[startIndex] as Extract<Entry, { type: 'groupStart' }>).end = entries.length - 1;
       start = end;
     }
+  }
+
+  /** The inner list of one detail row: its header, a band per item, its footer. Nothing when empty. */
+  private emitInnerList(entries: Entry[], row: unknown): void {
+    const bands = this.def.bands;
+    const sub = bands.find((b) => b.kind === 'subDetail');
+    if (!sub?.rowsPath?.trim()) return;
+    const value = this.eval(`[${sub.rowsPath}]`, { row, rows: [] }, sub.id);
+    const items = Array.isArray(value) ? value : [];
+    if (!items.length) return;
+    const header = bands.find((b) => b.kind === 'subHeader');
+    const footer = bands.find((b) => b.kind === 'subFooter');
+    if (header) entries.push({ type: 'band', rendered: this.renderBand(header, { row: items[0], rows: items, parent: row }) });
+    for (const item of items) entries.push({ type: 'band', rendered: this.renderBand(sub, { row: item, rows: items, parent: row }) });
+    if (footer) entries.push({ type: 'band', rendered: this.renderBand(footer, { row: items[items.length - 1], rows: items, parent: row }) });
   }
 
   // ── Pagination ──────────────────────────────────────────────────────────────
@@ -605,7 +627,7 @@ class LayoutRun {
     const ctx: EvaluationContext = {
       row: scope.row,
       rows: scope.rows,
-      parent: this.parent,
+      parent: scope.parent ?? this.parent,
       params: this.params,
       locale: this.locale,
       currency: this.currency,

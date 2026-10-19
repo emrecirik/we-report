@@ -17,6 +17,9 @@ const BAND_ORDER: Record<BandKind, number> = {
   reportHeader: 1,
   groupHeader: 2,
   detail: 3,
+  subHeader: 3.1,
+  subDetail: 3.2,
+  subFooter: 3.3,
   groupFooter: 4,
   reportFooter: 5,
   pageFooter: 6,
@@ -72,17 +75,27 @@ export class WeReportDesignerComponent {
   protected readonly issues = computed<ReportIssue[]>(() => {
     const { rows, parent } = this.fields();
     const known = rows.length || parent.length;
-    return checkReport(this.state.report(), known ? rows.map((f) => f.path) : undefined, known ? parent.map((f) => f.path) : undefined);
+    const inner = this.fields().inner;
+    return checkReport(
+      this.state.report(),
+      known ? rows.map((f) => f.path) : undefined,
+      known ? parent.map((f) => f.path) : undefined,
+      undefined,
+      inner.length ? inner.map((f) => f.path) : undefined,
+    );
   });
   /** Show the first data row inside bound controls instead of their formulas. */
   protected readonly showData = signal(true);
   protected readonly sample = computed<DesignSample | null>(() => (this.showData() ? this.state.sample() : null));
 
   protected readonly fields = computed(() => designerFields(this.state.report(), this.data()));
-  protected readonly allFields = computed<DesignerField[]>(() => [...this.fields().rows, ...this.fields().parent]);
+  protected readonly allFields = computed<DesignerField[]>(() => [...this.fields().rows, ...this.fields().parent, ...this.fields().inner]);
   protected readonly addableBands = computed(() => {
     const kinds = new Set(this.state.report().bands.map((b) => b.kind));
     const list: BandKind[] = (['reportHeader', 'reportFooter', 'pageHeader', 'pageFooter'] as BandKind[]).filter((k) => !kinds.has(k));
+    // An inner list needs a list inside the rows; its header and footer need the list section.
+    if (!kinds.has('subDetail') && this.fields().lists.length) list.push('subDetail');
+    if (kinds.has('subDetail')) list.push(...(['subHeader', 'subFooter'] as BandKind[]).filter((k) => !kinds.has(k)));
     return [...list, 'groupHeader' as BandKind];
   });
 
@@ -210,8 +223,10 @@ export class WeReportDesignerComponent {
         // …and its footer, placed right after the detail band, the innermost footer.
         const detailIndex = d.bands.findIndex((b) => b.kind === 'detail');
         d.bands.splice(detailIndex + 1, 0, { id: `${id}Footer`, kind: 'groupFooter', groupHeaderId: id, height: 8, controls: [] });
+      } else if (kind === 'subDetail') {
+        d.bands.push({ id, kind, height: 6, rowsPath: this.fields().lists[0], controls: [] });
       } else {
-        d.bands.push({ id, kind, height: kind.startsWith('page') ? 10 : 15, controls: [] });
+        d.bands.push({ id, kind, height: kind.startsWith('page') ? 10 : kind.startsWith('sub') ? 6 : 15, controls: [] });
       }
       d.bands = orderBands(d.bands);
     });

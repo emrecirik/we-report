@@ -137,7 +137,7 @@ interface DragOp {
                     </div>
                   }
                   @case ('table') {
-                    @for (cell of tableCells(c); track $index) {
+                    @for (cell of tableCells(c, band); track $index) {
                       <div
                         class="ds__cell"
                         [class.ds__cell--on]="isCellSelected(c.id, cell.row, cell.index)"
@@ -161,7 +161,7 @@ interface DragOp {
                     <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
                   }
                   @default {
-                    <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">{{ caption(c) }}</div>
+                    <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">{{ caption(c, band) }}</div>
                   }
                 }
                 @if (isOnlySelected(c.id)) {
@@ -491,6 +491,7 @@ export class DesignSurfaceComponent implements OnDestroy {
 
   protected bandLabel(band: Band): string {
     const name = this.strings().bandNames[band.kind];
+    if (band.kind === 'subDetail' && band.rowsPath) return `${name}: ${band.rowsPath}`;
     return band.kind === 'groupHeader' && band.groupBy ? `${name}: ${band.groupBy.expression}` : name;
   }
 
@@ -521,10 +522,10 @@ export class DesignSurfaceComponent implements OnDestroy {
     return c.type === 'text' && isExpression(c.text) ? c.text.expression : '';
   }
 
-  protected caption(c: ReportControl): string {
+  protected caption(c: ReportControl, band?: Band): string {
     if (c.type === 'text') {
       if (!isExpression(c.text)) return c.text;
-      const sample = this.sample();
+      const sample = this.sampleFor(band);
       if (!sample) return c.text.expression;
       try {
         const report = this.state.report();
@@ -547,7 +548,7 @@ export class DesignSurfaceComponent implements OnDestroy {
   }
 
   /** Cells of a table control in mm relative to the control, with their text and look. */
-  protected tableCells(c: ReportControl): { row: number; index: number; x: number; y: number; width: number; height: number; text: string; bound: boolean; style: Record<string, string> }[] {
+  protected tableCells(c: ReportControl, band?: Band): { row: number; index: number; x: number; y: number; width: number; height: number; text: string; bound: boolean; style: Record<string, string> }[] {
     if (c.type !== 'table') return [];
     const out: ReturnType<typeof this.tableCells> = [];
     let y = 0;
@@ -560,7 +561,7 @@ export class DesignSurfaceComponent implements OnDestroy {
         if (column < c.columns.length) {
           out.push({
             row: r, index: i, x, y, width, height: row.height,
-            text: this.bindableText(cell.text, cell.format),
+            text: this.bindableText(cell.text, cell.format, band),
             bound: isExpression(cell.text),
             style: this.styleOf(c.style, { ...c.styleOverrides, ...cell.styleOverrides }),
           });
@@ -573,6 +574,20 @@ export class DesignSurfaceComponent implements OnDestroy {
     return out;
   }
 
+  /** Inside an inner list the sample is the first item of the first row's list, around that row. */
+  private sampleFor(band: Band | undefined): DesignSample | null {
+    const sample = this.sample();
+    if (!sample || !band?.kind.startsWith('sub')) return sample;
+    const path = this.state.report().bands.find((b) => b.kind === 'subDetail')?.rowsPath;
+    if (!path) return null;
+    try {
+      const items = evaluate(`[${path}]`, { row: sample.row });
+      return Array.isArray(items) && items.length ? { row: items[0], rows: items, parent: sample.row } : null;
+    } catch {
+      return null;
+    }
+  }
+
   protected isCellSelected(controlId: string, row: number, cell: number): boolean {
     const ref = this.state.tableCell();
     return !!ref && ref.controlId === controlId && ref.row === row && ref.cell === cell && this.isSelected(controlId);
@@ -583,9 +598,9 @@ export class DesignSurfaceComponent implements OnDestroy {
   }
 
   /** Fixed text, or a formula shown with the first data row when there is one. */
-  private bindableText(text: Bindable<string>, format: string | undefined): string {
+  private bindableText(text: Bindable<string>, format: string | undefined, band?: Band): string {
     if (!isExpression(text)) return text;
-    const sample = this.sample();
+    const sample = this.sampleFor(band);
     if (!sample) return text.expression;
     try {
       const report = this.state.report();
@@ -944,7 +959,7 @@ export class DesignSurfaceComponent implements OnDestroy {
     // A field dropped on a table cell fills that cell.
     const table = band.controls.find((c) => c.type === 'table' && x >= c.x && x <= c.x + c.width && y >= c.y && y <= c.y + c.height);
     if (table?.type === 'table') {
-      const hit = this.tableCells(table).find((c) => x >= table.x + c.x && x < table.x + c.x + c.width && y >= table.y + c.y && y < table.y + c.y + c.height);
+      const hit = this.tableCells(table, band).find((c) => x >= table.x + c.x && x < table.x + c.x + c.width && y >= table.y + c.y && y < table.y + c.y + c.height);
       if (hit) {
         this.state.updateControls([table.id], (c) => {
           if (c.type !== 'table') return;

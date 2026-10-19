@@ -123,6 +123,23 @@
       </span>
     </label>
   </section>
+  @if (b.kind === 'subDetail') {
+    <section class="pp__section">
+      <h3>{{ s.innerList }}</h3>
+      <label class="pp__row pp__row--stack">
+        <span>{{ s.innerListOf }}</span>
+        <select (change)="setBand('rowsPath', $any($event.target).value)">
+          @for (l of lists(); track l) {
+            <option [value]="l" [selected]="b.rowsPath === l">{{ l }}</option>
+          }
+          @if (b.rowsPath && !lists().includes(b.rowsPath)) {
+            <option [value]="b.rowsPath" selected>{{ b.rowsPath }}</option>
+          }
+        </select>
+      </label>
+      <small class="pp__hint">{{ s.innerListHint }}</small>
+    </section>
+  }
   @if (b.kind === 'detail') {
     <section class="pp__section">
       <h3>{{ s.labelSheet }}</h3>

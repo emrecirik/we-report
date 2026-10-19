@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Inner lists (master–detail): new `subHeader`, `subDetail` (with `rowsPath`) and `subFooter`
+  sections print a list inside every detail row — e.g. each customer's orders with their own
+  header and subtotal — and page like any other section. Inside them `[field]` is the item and
+  `[^.field]` the row around it; totals run over the row's items. The designer lists the inner
+  fields, shows their live values and checks them; Studio has a customer-orders template.
 - Tables: a `table` control — column widths, rows, cells that span columns, fixed text or formulas
   per cell with their own format, bold, alignment and background; the table's border becomes the
   grid; rows can grow to fit their text. In the designer: click a cell to edit it, add/remove rows
