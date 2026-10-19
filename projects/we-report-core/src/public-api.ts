@@ -30,3 +30,7 @@ export * from './lib/data/backend-client';
 export * from './lib/definition/generate';
 export * from './lib/render/xlsx';
 export * from './lib/definition/check';
+export * from './lib/import/common';
+export * from './lib/import/rdlc';
+export * from './lib/import/repx';
+export * from './lib/import/import-report';

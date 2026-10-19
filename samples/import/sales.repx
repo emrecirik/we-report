@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<XtraReportsLayoutSerializer SerializerVersion="23.2.3.0" Ref="1" ControlType="DevExpress.XtraReports.UI.XtraReport, DevExpress.XtraReports.v23.2" Name="SalesReport" DisplayName="Sales" Margins="50, 50, 60, 60" PaperKind="A4" PageWidth="827" PageHeight="1169" Font="Arial, 9.75pt" DataMember="Orders">
+  <Parameters><Item1 Ref="2" Name="minAmount" Description="Minimum amount" Type="#Ref-3" ValueInfo="100" /></Parameters>
+  <CalculatedFields><Item1 Ref="4" Name="LineTotal" Expression="[Qty] * [Price]" /></CalculatedFields>
+  <StyleSheet><Item1 Ref="5" Name="Header" Font="Arial, 12pt, style=Bold" ForeColor="0, 70, 140" BackColor="WhiteSmoke" /></StyleSheet>
+  <Bands>
+    <Item1 Ref="6" ControlType="TopMarginBand" Name="TopMargin" HeightF="60" />
+    <Item2 Ref="7" ControlType="PageHeaderBand" Name="PageHeader" HeightF="40">
+      <Controls>
+        <Item1 Ref="8" ControlType="XRLabel" Name="title" Text="Sales &amp; returns" LocationFloat="0, 0" SizeF="400, 30" StyleName="Header" TextAlignment="MiddleLeft" />
+        <Item2 Ref="9" ControlType="XRPageInfo" Name="pageInfo" PageInfo="NumberOfTotal" TextFormatString="Page {0} of {1}" LocationFloat="527, 0" SizeF="200, 23" TextAlignment="TopRight" />
+      </Controls>
+    </Item2>
+    <Item3 Ref="10" ControlType="GroupHeaderBand" Name="CityHeader" HeightF="30" Level="0">
+      <GroupFields><Item1 Ref="11" FieldName="City" SortOrder="Descending" /></GroupFields>
+      <Controls>
+        <Item1 Ref="12" ControlType="XRLabel" Name="city" LocationFloat="0, 5" SizeF="300, 23" Font="Arial, 11pt, style=Bold">
+          <ExpressionBindings><Item1 Ref="13" EventName="BeforePrint" PropertyName="Text" Expression="'City: ' + [City]" /></ExpressionBindings>
+        </Item1>
+      </Controls>
+    </Item3>
+    <Item4 Ref="14" ControlType="DetailBand" Name="Detail" HeightF="25">
+      <Controls>
+        <Item1 Ref="15" ControlType="XRTable" Name="row" LocationFloat="0, 0" SizeF="600, 25" Borders="All" BorderColor="Silver">
+          <Rows><Item1 Ref="16" ControlType="XRTableRow" Name="r1" Weight="1"><Cells>
+            <Item1 Ref="17" ControlType="XRTableCell" Name="c1" Weight="2"><ExpressionBindings><Item1 Ref="18" EventName="BeforePrint" PropertyName="Text" Expression="[Product]" /></ExpressionBindings></Item1>
+            <Item2 Ref="19" ControlType="XRTableCell" Name="c2" Weight="1" TextFormatString="{0:N2}" TextAlignment="TopRight"><ExpressionBindings><Item1 Ref="20" EventName="BeforePrint" PropertyName="Text" Expression="[LineTotal]" /></ExpressionBindings></Item2>
+          </Cells></Item1></Rows>
+        </Item1>
+        <Item2 Ref="21" ControlType="XRBarCode" Name="code" LocationFloat="610, 0" SizeF="117, 25" ShowText="false">
+          <Symbology Ref="22" ControlType="DevExpress.XtraPrinting.BarCode.Code128Generator, DevExpress.Printing.v23.2.Core" />
+          <ExpressionBindings><Item1 Ref="23" EventName="BeforePrint" PropertyName="Text" Expression="[Code]" /></ExpressionBindings>
+        </Item2>
+      </Controls>
+    </Item4>
+    <Item5 Ref="24" ControlType="GroupFooterBand" Name="CityFooter" HeightF="30" Level="0">
+      <Controls>
+        <Item1 Ref="25" ControlType="XRLabel" Name="cityTotal" LocationFloat="400, 0" SizeF="200, 23" TextFormatString="Total: {0:C2}">
+          <Summary Ref="26" Running="Group" />
+          <ExpressionBindings><Item1 Ref="27" EventName="BeforePrint" PropertyName="Text" Expression="sumSum([LineTotal])" /></ExpressionBindings>
+        </Item1>
+      </Controls>
+    </Item5>
+    <Item6 Ref="28" ControlType="DetailReportBand" Name="Returns" DataMember="Orders.Returns" Level="0">
+      <Bands><Item1 Ref="29" ControlType="DetailBand" Name="ReturnRow" HeightF="20"><Controls>
+        <Item1 Ref="30" ControlType="XRLabel" Name="reason" LocationFloat="20, 0" SizeF="300, 20"><ExpressionBindings><Item1 Ref="31" EventName="BeforePrint" PropertyName="Text" Expression="[Reason]" /></ExpressionBindings></Item1>
+      </Controls></Item1></Bands>
+    </Item6>
+    <Item7 Ref="32" ControlType="BottomMarginBand" Name="BottomMargin" HeightF="60" />
+    <Item8 Ref="33" ControlType="XRChart" Name="chart" />
+  </Bands>
+</XtraReportsLayoutSerializer>

@@ -54,6 +54,7 @@ backend required**.
 
 - [Getting started](docs/getting-started.md)
 - [Designing reports](docs/designing.md) — sections, inner lists, labels, tables, charts
+- [Moving reports from other tools](docs/migrating.md) — open RDLC/RDL and DevExpress REPX files
 - [Formulas](docs/expressions.md)
 - [Data sources](docs/data-sources.md)
 - [Data backend](docs/backend.md) — protocol and samples

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { csvToObjects, DefinitionVersionError, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
+import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT, StudioLanguage } from './studio-text';
 import { TEMPLATES } from './templates';
@@ -62,6 +62,8 @@ export class AppComponent {
   protected readonly dataDialogOpen = signal(false);
   protected readonly dataDraft = signal('');
   protected readonly message = signal<string | null>(null);
+  /** What an imported RDLC/REPX file could not carry over, shown under the message. */
+  protected readonly importWarnings = signal<string[]>([]);
   protected readonly galleryOpen = signal(false);
   /** First page of every template, laid out by the real engine, for the gallery. */
   protected readonly thumbnails = signal<Record<string, LayoutPage>>({});
@@ -178,9 +180,13 @@ export class AppComponent {
     input.value = '';
     if (!file) return;
     try {
-      this.report.set(migrateDefinition(JSON.parse(await file.text())));
-      this.message.set(null);
+      const { report, warnings } = importReport(await file.text(), file.name);
+      this.report.set(report);
+      this.data.set(undefined);
+      this.importWarnings.set(warnings);
+      this.message.set(warnings.length ? this.text().importedWith.replace('{0}', file.name) : null);
     } catch (e) {
+      this.importWarnings.set([]);
       this.message.set(e instanceof DefinitionVersionError ? e.message : this.text().openFailed);
     }
   }

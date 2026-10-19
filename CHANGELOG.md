@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Import: open Microsoft RDLC/RDL (Visual Studio, SSRS, Report Builder) and DevExpress REPX layouts
+  and convert them — paper, bands, text, tables, lines, shapes, images, barcodes, page info,
+  groups, detail reports, styles, calculated fields, parameters and expressions — with a plain list
+  of what could not be carried over (`importReport`, `importRdlc`, `importRepx`; Studio: Open).
+  See [Moving reports from other tools](docs/migrating.md); sample files in `samples/import`.
 - Sample backends for **PHP** (plain PHP 8.2+, PDO, no framework or Composer packages) and **Go**
   (one static binary; SQLite in pure Go, PostgreSQL via pgx). Both pass the protocol conformance
   suite against SQLite and PostgreSQL in CI and follow the same security rules as the others:

@@ -13,7 +13,7 @@
   </label>
   <button type="button" (click)="openDataDialog()">{{ t.data }}</button>
   <label class="file">
-    <input type="file" accept=".json,application/json" (change)="open($event)" />
+    <input type="file" accept=".json,.rdlc,.rdl,.repx,application/json" (change)="open($event)" [title]="t.openHint" />
     {{ t.open }}
   </label>
   <button type="button" (click)="save()">{{ t.save }}</button>
@@ -33,7 +33,16 @@
 </header>
 
 @if (message(); as m) {
-  <div class="message" role="alert">{{ m }}</div>
+  <div class="message" role="alert">
+    {{ m }}
+    @if (importWarnings().length) {
+      <ul>
+        @for (w of importWarnings(); track $index) {
+          <li>{{ w }}</li>
+        }
+      </ul>
+    }
+  </div>
 }
 
 <we-report-designer class="designer" [(report)]="report" [data]="data()" [locale]="locale()" />
