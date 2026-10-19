@@ -290,6 +290,7 @@ export const weReportLocaleEs: WeReportLocale = {
   nextItem: 'Elemento siguiente / anterior',
   rubberBand: 'Seleccionar varios: arrastrar en un hueco',
   noSnap: 'Mantener al arrastrar: sin ajuste',
+  dragCopy: 'Arrastrar con Ctrl pulsado para copiar',
   addByClick: 'Pulse un elemento (o doble clic en un campo) para añadirlo a la sección elegida.',
   resizePanel: 'Arrastrar para cambiar el tamaño, doble clic para ocultar',
   alignJustify: 'Justificar',

@@ -276,6 +276,7 @@ export interface WeReportLocale {
   nextItem: string;
   rubberBand: string;
   noSnap: string;
+  dragCopy: string;
   addByClick: string;
   resizePanel: string;
   alignJustify: string;
@@ -627,6 +628,7 @@ export const weReportLocaleEn: WeReportLocale = {
   nextItem: 'Next / previous item',
   rubberBand: 'Select several: drag on an empty spot',
   noSnap: 'Hold while dragging: no snapping',
+  dragCopy: 'Drag with Ctrl held to copy',
   addByClick: 'Click an item (or double-click a field) to add it to the selected section.',
   resizePanel: 'Drag to resize, double-click to hide',
   alignJustify: 'Justify',
@@ -1010,6 +1012,7 @@ export const weReportLocaleTr: WeReportLocale = {
   nextItem: 'Sonraki / önceki öğe',
   rubberBand: 'Birden çok seç: boş yerde sürükle',
   noSnap: 'Sürüklerken basılı tut: yapışma yok',
+  dragCopy: 'Ctrl basılı sürükleyince kopyalar',
   addByClick: 'Bir öğeye tıklayın (veya bir alana çift tıklayın): seçili bölüme eklenir.',
   resizePanel: 'Boyutlandırmak için sürükleyin, gizlemek için çift tıklayın',
   alignJustify: 'İki yana yasla',

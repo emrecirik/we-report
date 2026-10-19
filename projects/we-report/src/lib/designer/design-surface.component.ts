@@ -57,6 +57,8 @@ interface DragOp {
   originals: Map<string, Rect>;
   bandHeight?: number;
   additive?: boolean;
+  /** Ctrl-click on a selected item: unselect it only if the pointer did not drag (Ctrl+drag copies). */
+  toggleOnClick?: boolean;
   moved: boolean;
 }
 
@@ -870,10 +872,12 @@ export class DesignSurfaceComponent implements OnDestroy {
     e.stopPropagation();
     e.preventDefault();
     const additive = e.shiftKey || e.ctrlKey || e.metaKey;
-    this.state.select(c.id, additive);
+    const sel = this.state.selection();
+    const toggleOnClick = (e.ctrlKey || e.metaKey) && sel.kind === 'controls' && sel.ids.includes(c.id);
+    if (!toggleOnClick) this.state.select(c.id, additive);
     const ids = this.state.selection().kind === 'controls' ? (this.state.selection() as { ids: string[] }).ids : [];
     if (!ids.includes(c.id)) return;
-    this.begin(e, { kind: 'move', bandId: band.id, primaryId: c.id, originals: this.rectsOf(ids), additive });
+    this.begin(e, { kind: 'move', bandId: band.id, primaryId: c.id, originals: this.rectsOf(ids), additive, toggleOnClick });
   }
 
   protected onHandlePointerDown(e: PointerEvent, c: ReportControl, band: Band, handle: Handle): void {
@@ -1001,6 +1005,21 @@ export class DesignSurfaceComponent implements OnDestroy {
       if (!op.moved && !op.baseIds?.length) this.state.selection.set({ kind: 'band', id: op.bandId });
       this.marquee.set(null);
       return;
+    }
+    if (op?.kind === 'move' && !op.moved && op.toggleOnClick) {
+      this.state.select(op.primaryId!, true);
+      return;
+    }
+    // Ctrl+drag copies: the originals stay where they were, the dragged items are the copies.
+    if (op?.kind === 'move' && op.moved && (e.ctrlKey || e.metaKey)) {
+      this.state.update((d) => {
+        const band = d.bands.find((b) => b.id === op.bandId)!;
+        const taken = new Set<string>();
+        const copies = band.controls
+          .filter((c) => op.originals.has(c.id))
+          .map((c) => ({ ...structuredClone(c), id: this.state.newId(c.type, taken), ...op.originals.get(c.id)! }));
+        band.controls.unshift(...copies);
+      }, op.key);
     }
     // A click (no drag) inside a multi-selection narrows it to the clicked control.
     if (op?.kind === 'move' && !op.moved && !op.additive && op.originals.size > 1) {

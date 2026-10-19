@@ -299,6 +299,13 @@ export class WeReportDesignerComponent {
     return sel.kind === 'controls' && sel.ids.includes(id);
   }
 
+  protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+  protected pickZoom(value: string): void {
+    if (value === 'width') this.fitWidth();
+    else if (value) this.setZoom(Number(value));
+  }
+
   protected fitWidth(): void {
     const el = this.canvas()?.nativeElement;
     if (!el) return;

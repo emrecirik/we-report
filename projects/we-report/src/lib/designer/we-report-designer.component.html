@@ -15,7 +15,13 @@
     <button type="button" class="wd__icon" [disabled]="state.selection().kind !== 'controls'" (click)="state.deleteSelection()" [title]="s.delete + ' (Del)'" [attr.aria-label]="s.delete" [innerHTML]="'trash' | weReportIcon"></button>
     <span class="wd__sep"></span>
     <button type="button" class="wd__icon" (click)="setZoom(zoomLevel() - 0.1)" [title]="s.zoomOut" [attr.aria-label]="s.zoomOut" [innerHTML]="'zoomOut' | weReportIcon"></button>
-    <span class="wd__zoom">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
+    <select class="wd__zoom" (change)="pickZoom($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="s.zoomIn">
+      <option value="" selected>{{ (zoomLevel() * 100).toFixed(0) }}%</option>
+      @for (z of zoomSteps; track z) {
+        <option [value]="z">{{ z * 100 }}%</option>
+      }
+      <option value="width">{{ s.fitWidth }}</option>
+    </select>
     <button type="button" class="wd__icon" (click)="setZoom(zoomLevel() + 0.1)" [title]="s.zoomIn" [attr.aria-label]="s.zoomIn" [innerHTML]="'zoomIn' | weReportIcon"></button>
     <button type="button" class="wd__icon" (click)="fitWidth()" [title]="s.fitWidth" [attr.aria-label]="s.fitWidth" [innerHTML]="'fitWidth' | weReportIcon"></button>
     <span class="wd__sep"></span>
@@ -260,6 +266,7 @@
       <dt>Tab · Shift+Tab</dt><dd>{{ s.nextItem }}</dd>
       <dt>Ctrl+= · Ctrl+- · Ctrl+0</dt><dd>{{ s.zoomIn }} · {{ s.zoomOut }} · {{ s.fitWidth }}</dd>
       <dt>Alt</dt><dd>{{ s.noSnap }}</dd>
+      <dt>Ctrl + ⇱</dt><dd>{{ s.dragCopy }}</dd>
       <dt>⬚</dt><dd>{{ s.rubberBand }}</dd>
       <dt>F1</dt><dd>{{ s.keyboardShortcuts }}</dd>
     </dl>

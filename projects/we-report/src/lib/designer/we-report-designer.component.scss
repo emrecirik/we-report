@@ -136,10 +136,19 @@ button {
 }
 
 .wd__zoom {
-  min-width: 44px;
-  text-align: center;
+  height: 26px;
+  border: 0;
+  border-radius: var(--we-report-control-radius, 7px);
+  padding: 0 4px;
+  background: transparent;
+  font: inherit;
   font-variant-numeric: tabular-nums;
   color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+  cursor: pointer;
+}
+
+.wd__zoom:hover {
+  background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
 }
 
 .wd__toggle {

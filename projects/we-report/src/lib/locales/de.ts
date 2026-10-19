@@ -290,6 +290,7 @@ export const weReportLocaleDe: WeReportLocale = {
   nextItem: 'Nächstes / vorheriges Element',
   rubberBand: 'Mehrere auswählen: auf freier Fläche ziehen',
   noSnap: 'Beim Ziehen halten: kein Einrasten',
+  dragCopy: 'Mit gedrückter Strg-Taste ziehen, um zu kopieren',
   addByClick: 'Element anklicken (oder Feld doppelklicken), um es zum gewählten Abschnitt hinzuzufügen.',
   resizePanel: 'Ziehen zum Ändern, Doppelklick zum Ausblenden',
   alignJustify: 'Blocksatz',

@@ -290,6 +290,7 @@ export const weReportLocaleFr: WeReportLocale = {
   nextItem: 'Élément suivant / précédent',
   rubberBand: 'Sélection multiple : glisser sur un espace vide',
   noSnap: 'Maintenir en glissant : sans magnétisme',
+  dragCopy: 'Glisser avec Ctrl enfoncée pour copier',
   addByClick: 'Cliquez sur un élément (ou double-cliquez sur un champ) pour l’ajouter à la section choisie.',
   resizePanel: 'Glisser pour redimensionner, double-cliquer pour masquer',
   alignJustify: 'Justifier',

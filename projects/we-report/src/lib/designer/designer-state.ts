@@ -115,10 +115,12 @@ export class DesignerState {
   }
 
   /** A new id not used by any band or control. */
-  newId(prefix: string): string {
+  /** A free id; pass the same `taken` set when making several ids before the report changes. */
+  newId(prefix: string, taken = new Set<string>()): string {
     const used = new Set(this.report().bands.flatMap((b) => [b.id, ...b.controls.map((c) => c.id)]));
     let n = 1;
-    while (used.has(`${prefix}${n}`)) n++;
+    while (used.has(`${prefix}${n}`) || taken.has(`${prefix}${n}`)) n++;
+    taken.add(`${prefix}${n}`);
     return `${prefix}${n}`;
   }
 
@@ -167,10 +169,11 @@ export class DesignerState {
   duplicateSelection(): void {
     const controls = this.selectedControls();
     if (!controls.length) return;
+    const taken = new Set<string>();
     const copies: { bandId: string; control: ReportControl }[] = [];
     for (const c of controls) {
       const band = this.findBandOf(c.id)!;
-      copies.push({ bandId: band.id, control: { ...structuredClone(c), id: this.newId(c.type), x: c.x + 3, y: c.y + 3 } });
+      copies.push({ bandId: band.id, control: { ...structuredClone(c), id: this.newId(c.type, taken), x: c.x + 3, y: c.y + 3 } });
     }
     this.update((d) => copies.forEach(({ bandId, control }) => d.bands.find((b) => b.id === bandId)!.controls.push(control)));
     this.selection.set({ kind: 'controls', ids: copies.map((c) => c.control.id) });

@@ -57,6 +57,13 @@ describe('DesignerState', () => {
     expect(state.selection().kind).toBe('none');
   });
 
+  it('gives every duplicated item its own id', () => {
+    state.addControls('detail', [text('text1'), text('text2')]);
+    state.selection.set({ kind: 'controls', ids: ['text1', 'text2'] });
+    state.duplicateSelection();
+    expect(state.report().bands[1].controls.map((c) => c.id)).toEqual(['text1', 'text2', 'text3', 'text4']);
+  });
+
   it('removes a group footer together with its header and prunes selection on undo', () => {
     state.update((d) => {
       d.bands.splice(1, 0, { id: 'g', kind: 'groupHeader', height: 8, controls: [] });
