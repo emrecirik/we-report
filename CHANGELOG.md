@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Formula editor: suggestions while typing — functions with their explanation, `[` for fields and
+  parameters; arrows to choose, Enter or Tab to insert.
 - Items can *extend to the bottom when the section grows* (`stretch`), so cell borders and column
   lines stay aligned next to a text that grows (Advanced → Behaviour).
 - Formulas: `RowNumber()` — 1, 2, 3 … for each row, restarting in every group and inner list.
