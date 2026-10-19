@@ -1,9 +1,10 @@
 # we-report backend — Go
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml). SQLite ([modernc.org/sqlite](https://gitlab.com/cznic/sqlite),
+[we-report data protocol](../../../protocol/openapi.yaml) **1.1** (paging with `offset` and `total`,
+`distinct`, `contains` / `startsWith`, saved grid layouts under `/v1/layouts/{key}`). SQLite ([modernc.org/sqlite](https://gitlab.com/cznic/sqlite),
 pure Go — no C compiler needed) and PostgreSQL ([pgx](https://github.com/jackc/pgx)). Four files:
-`main.go` (settings, access, endpoints), `query.go`, `databases.go`, `fetch_guard.go`.
+`main.go` (settings, access, endpoints, layouts), `query.go`, `databases.go`, `fetch_guard.go`.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)
 or need secret keys. JSON, CSV and open web services work without one.
@@ -39,7 +40,9 @@ also opened read-only (`mode=ro`); PostgreSQL queries run in a `READ ONLY` trans
 ## Settings, authentication, security
 
 Same environment variables and behaviour as the other samples — see the
-[Node sample](../node/README.md#settings). Authentication lives in `access()` in `main.go`; without
+[Node sample](../node/README.md#settings).
+Saved grid layouts are stored one JSON file per key in `WE_REPORT_LAYOUTS_DIR` (default
+`<os temp>/we-report-layouts`); demo mode turns them off. Authentication lives in `access()` in `main.go`; without
 `WE_REPORT_AUTH_TOKEN` the backend answers only local callers that address it as a local host
 (DNS-rebinding safe), and it refuses to listen beyond `127.0.0.1` without a token. The web service
 proxy resolves the host once, refuses internal addresses (IPv4/IPv6, IPv4-mapped, NAT64, numeric

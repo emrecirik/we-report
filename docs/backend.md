@@ -10,6 +10,7 @@ any language — the contract is [`protocol/openapi.yaml`](../protocol/openapi.y
 | `GET /v1/connections` | Connection ids and names (never connection strings) |
 | `GET /v1/connections/{id}/schema` | Tables and typed columns |
 | `POST /v1/connections/{id}/query` | A [structured query](../protocol/schemas/query.json) (or free SQL if allowed) with parameters |
+| `GET/PUT/DELETE /v1/layouts/{key}` *(1.1)* | Saved grid layouts, views and sheets for we-grid — one JSON object per key, off in demo mode |
 | `POST /v1/webservice/fetch` | Fetches a web service for the report, refusing internal addresses |
 
 ## Ready-made backends
@@ -26,6 +27,11 @@ any language — the contract is [`protocol/openapi.yaml`](../protocol/openapi.y
 Each one runs in about three commands, ships a Dockerfile, and serves a fictional sample shop
 database when no connection is configured. Every one passes the same
 [conformance suite](../tools/protocol-conformance/run.mjs) in CI, against SQLite and PostgreSQL.
+
+Protocol 1.1 adds what a data grid needs — query `offset`, `distinct`, case-insensitive
+`contains` / `startsWith`, `count: true` → `total` — and the layouts endpoint, so the same backend
+serves [we-grid-angular](https://github.com/emrecirik/we-grid)'s server-side grids and saved
+layouts. Implementer notes: [`protocol/GRID-1.1-IMPLEMENTERS.md`](../protocol/GRID-1.1-IMPLEMENTERS.md).
 
 ## Security (all samples)
 

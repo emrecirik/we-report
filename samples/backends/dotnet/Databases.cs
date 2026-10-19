@@ -11,7 +11,10 @@ public interface IDialect
 {
     string Quote(string name);
     string Placeholder(int index);
-    string Select(string columns, string table, string where, string orderBy, int top);
+    /// <summary>The table name as it appears after FROM.</summary>
+    string Table(string name);
+    /// <summary>Adds order, row limit and offset to <paramref name="select"/> (which may be SELECT DISTINCT).</summary>
+    string Page(string select, string orderBy, int top, int offset, bool distinct);
     string WrapLimit(string sql, int top);
     Task<IReadOnlyList<TableInfo>> SchemaAsync(CancellationToken ct);
     Task<List<Dictionary<string, object?>>> QueryAsync(BuiltQuery query, int timeoutSeconds, CancellationToken ct);
@@ -23,8 +26,9 @@ public abstract class Database(ConnectionConfig config) : IDialect
 
     public virtual string Quote(string name) => "\"" + name.Replace("\"", "\"\"") + "\"";
     public string Placeholder(int index) => "@p" + index;
-    public virtual string Select(string columns, string table, string where, string orderBy, int top) =>
-        $"SELECT {columns} FROM {table}{where}{orderBy} LIMIT {top}";
+    public virtual string Table(string name) => Quote(name);
+    public virtual string Page(string select, string orderBy, int top, int offset, bool distinct) =>
+        $"{select}{orderBy} LIMIT {top}" + (offset > 0 ? $" OFFSET {offset}" : "");
     public virtual string WrapLimit(string sql, int top) => $"SELECT * FROM ({sql}) AS we_report_q LIMIT {top}";
 
     protected abstract DbConnection Open();
@@ -179,8 +183,10 @@ public sealed class SqlServerDatabase(ConnectionConfig c) : Database(c)
     string SchemaName => Config.Schema ?? "dbo";
 
     public override string Quote(string name) => "[" + name.Replace("]", "]]") + "]";
-    public override string Select(string columns, string table, string where, string orderBy, int top) =>
-        $"SELECT TOP ({top}) {columns} FROM {Quote(SchemaName)}.{table}{where}{orderBy}";
+    public override string Table(string name) => $"{Quote(SchemaName)}.{Quote(name)}";
+    // OFFSET … FETCH needs an ORDER BY; a DISTINCT query may only order by what it selects, hence 1.
+    public override string Page(string select, string orderBy, int top, int offset, bool distinct) =>
+        $"{select}{(orderBy != "" ? orderBy : distinct ? " ORDER BY 1" : " ORDER BY (SELECT NULL)")} OFFSET {offset} ROWS FETCH NEXT {top} ROWS ONLY";
     // shortcut: SQL Server rejects ORDER BY inside a derived table without TOP; free SQL with ORDER BY
     // needs its own TOP. Parse the statement if that becomes a common complaint.
     public override string WrapLimit(string sql, int top) => $"SELECT TOP ({top}) * FROM ({sql}) AS we_report_q";

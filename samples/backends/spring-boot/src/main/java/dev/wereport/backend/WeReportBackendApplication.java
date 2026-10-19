@@ -48,7 +48,7 @@ public class WeReportBackendApplication {
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/v1/**")
             .allowedOrigins(CONFIG.corsOrigins().toArray(String[]::new))
-            .allowedMethods("GET", "POST")
+            .allowedMethods("GET", "POST", "PUT", "DELETE")
             .allowedHeaders("Content-Type", "Authorization")
             .maxAge(600);
       }

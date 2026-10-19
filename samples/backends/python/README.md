@@ -1,7 +1,8 @@
 # we-report backend — Python (FastAPI)
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml). SQLite (standard library) and PostgreSQL
+[we-report data protocol](../../../protocol/openapi.yaml) 1.1 (grid paging, distinct, `contains` /
+`startsWith`, `total` counts and saved layouts). SQLite (standard library) and PostgreSQL
 (psycopg). Four small files: `main.py` (endpoints), `query.py`, `databases.py`, `fetch_guard.py`.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)
@@ -38,7 +39,9 @@ run in a `READ ONLY` transaction with a `statement_timeout` and are always rolle
 ## Settings, authentication, security
 
 Same environment variables and behaviour as the other samples — see the
-[Node sample](../node/README.md#settings). Authentication lives in the `access` middleware in
+[Node sample](../node/README.md#settings). Saved grid layouts (`/v1/layouts/{key}`) are stored as one
+JSON file per key in `WE_REPORT_LAYOUTS_DIR` (default `<temp>/we-report-layouts`); they are off in
+demo mode. Authentication lives in the `access` middleware in
 `main.py`. The web service proxy resolves the host once, checks every address and connects to the
 checked IP (TLS still verifies the real hostname), so DNS rebinding cannot bypass it.
 

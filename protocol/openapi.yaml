@@ -84,8 +84,8 @@ paths:
       - name: key
         in: path
         required: true
-        description: Letters, digits and `_ . : -`, 1-128 characters, not starting with a dot.
-        schema: { type: string, pattern: '^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,127}$' }
+        description: Letters, digits and `_ . : -`, 1-100 characters, not starting with a dot.
+        schema: { type: string, pattern: '^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,99}$' }
     get:
       summary: (1.1) A saved layout, view set or sheet — the JSON exactly as it was stored
       responses:

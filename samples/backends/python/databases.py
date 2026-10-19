@@ -55,8 +55,8 @@ class Sqlite:
     quote = staticmethod(quote_double)
 
     @staticmethod
-    def select(columns: str, table: str, where: str, order: str, top: int) -> str:
-        return f"SELECT {columns} FROM {table}{where}{order} LIMIT {top}"
+    def select(columns: str, table: str, where: str, order: str, top: int, offset: int) -> str:
+        return f"SELECT {columns} FROM {table}{where}{order} LIMIT {top}" + (f" OFFSET {offset}" if offset else "")
 
     @staticmethod
     def wrap(sql: str, top: int) -> str:

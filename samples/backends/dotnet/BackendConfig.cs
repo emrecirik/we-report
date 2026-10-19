@@ -27,6 +27,8 @@ public sealed class BackendConfig
     public required HashSet<string> FetchAllowHosts { get; init; }
     public required int RateLimitPerMinute { get; init; }
     public required IReadOnlyList<ConnectionConfig> Connections { get; init; }
+    /// <summary>Saved grid layouts and sheets (protocol 1.1), one JSON file per key; unused in demo mode.</summary>
+    public required string LayoutsDir { get; init; }
 
     public bool IsLoopback => Host is "127.0.0.1" or "::1" or "localhost";
 
@@ -47,6 +49,7 @@ public sealed class BackendConfig
             FetchAllowHosts = List(c["WE_REPORT_FETCH_ALLOW_HOSTS"]).Select(h => h.ToLowerInvariant()).ToHashSet(),
             RateLimitPerMinute = int.TryParse(c["WE_REPORT_RATE_LIMIT"], out var r) ? r : demo ? 60 : 600,
             Connections = LoadConnections(c, demo),
+            LayoutsDir = string.IsNullOrEmpty(c["WE_REPORT_LAYOUTS_DIR"]) ? Path.Combine(Path.GetTempPath(), "we-report-layouts") : c["WE_REPORT_LAYOUTS_DIR"]!,
         };
     }
 
