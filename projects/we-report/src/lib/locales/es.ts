@@ -393,6 +393,7 @@ export const weReportLocaleEs: WeReportLocale = {
     Day: 'Día del mes.',
     AddDays: 'Una fecha desplazada unos días, p. ej. un vencimiento.',
     Sum: 'Total de las filas del ámbito (grupo, página o informe).',
+    RowNumber: 'Posición de la fila: 1, 2, 3 … (se reinicia en cada grupo).',
     Count: 'Número de filas del ámbito.',
     Avg: 'Promedio de las filas del ámbito.',
     Min: 'Valor más pequeño del ámbito (o de dos valores).',

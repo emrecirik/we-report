@@ -37,6 +37,7 @@ Arithmetic with an empty value gives an empty value; dividing by zero is an erro
 | `Today()`, `Now()` | | The print time |
 | `Year`, `Month`, `Day`, `AddDays(d, n)` | `AddDays([^.date], 30)` | |
 | `Sum`, `Count`, `Avg`, `Min`, `Max` | `Sum([Qty] * [Price])` | Over the rows in scope |
+| `RowNumber()` | `RowNumber()` | `1`, `2`, `3` … — restarts in every group and inner list |
 | `AmountInWords(n, currency?)` | `AmountInWords(Sum([Total]))` | `Bin İki Yüz Elli Türk Lirası Elli Kuruş` (`tr-TR`, TRY) · `twelve dollars and five cents` (other locales); the configured currency when omitted |
 | `NumberToWords(n)` | `NumberToWords(1234)` | `Bin İki Yüz Otuz Dört` / `one thousand two hundred thirty-four` |
 

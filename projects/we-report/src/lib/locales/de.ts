@@ -393,6 +393,7 @@ export const weReportLocaleDe: WeReportLocale = {
     Day: 'Tag des Monats.',
     AddDays: 'Ein um Tage verschobenes Datum, z. B. ein Fälligkeitsdatum.',
     Sum: 'Summe über die Zeilen im Bereich (Gruppe, Seite oder Bericht).',
+    RowNumber: 'Position der Zeile: 1, 2, 3 … (beginnt in jeder Gruppe neu).',
     Count: 'Anzahl der Zeilen im Bereich.',
     Avg: 'Durchschnitt über die Zeilen im Bereich.',
     Min: 'Kleinster Wert im Bereich (oder von zwei Werten).',

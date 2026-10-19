@@ -393,6 +393,7 @@ export const weReportLocaleFr: WeReportLocale = {
     Day: 'Jour du mois.',
     AddDays: 'Une date décalée d’un nombre de jours, ex. une échéance.',
     Sum: 'Total des lignes concernées (groupe, page ou rapport).',
+    RowNumber: 'Position de la ligne : 1, 2, 3 … (recommence dans chaque groupe).',
     Count: 'Nombre de lignes concernées.',
     Avg: 'Moyenne des lignes concernées.',
     Min: 'Plus petite valeur des lignes concernées (ou de deux valeurs).',

@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "name": "Sevk irsaliyesi",
+  "page": {
+    "paper": "A4",
+    "orientation": "portrait",
+    "margins": { "top": 15, "right": 15, "bottom": 12, "left": 15 },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": { "fontFamily": "Noto Sans", "fontSize": 9, "color": "#1f2328", "padding": 0.8 },
+    "brand": { "fontSize": 13, "bold": true, "color": "#0f766e" },
+    "title": { "fontSize": 18, "bold": true, "color": "#0f766e", "textAlign": "right" },
+    "muted": { "fontSize": 8, "color": "#6b7280" },
+    "label": { "fontSize": 8, "color": "#6b7280", "bold": true },
+    "th": { "fontSize": 8, "bold": true, "color": "#0f766e", "verticalAlign": "middle", "padding": 1.2, "border": { "width": 0.4, "color": "#0f766e", "sides": { "top": false, "right": false, "bottom": true, "left": false } } },
+    "cell": { "verticalAlign": "middle", "padding": 1.2, "border": { "width": 0.1, "color": "#d1d5db", "sides": { "top": false, "right": false, "bottom": true, "left": false } } },
+    "num": { "verticalAlign": "middle", "padding": 1.2, "textAlign": "right", "border": { "width": 0.1, "color": "#d1d5db", "sides": { "top": false, "right": false, "bottom": true, "left": false } } },
+    "sign": { "fontSize": 8, "color": "#6b7280", "textAlign": "center", "border": { "width": 0.3, "color": "#1f2328", "sides": { "top": true, "right": false, "bottom": false, "left": false } } }
+  },
+  "dataSources": [{ "id": "invoice", "name": "Sevkiyat", "kind": "json", "data": null }],
+  "dataMember": { "dataSourceId": "invoice", "path": "lines" },
+  "bands": [
+    {
+      "id": "pageHeader",
+      "kind": "pageHeader",
+      "height": 16,
+      "controls": [
+        { "id": "company", "type": "text", "x": 0, "y": 0, "width": 110, "height": 7, "style": "brand", "text": { "expression": "[^.seller.name]" } },
+        { "id": "companyAddr", "type": "text", "x": 0, "y": 7, "width": 120, "height": 8, "style": "muted", "text": { "expression": "[^.seller.address] + ' · ' + [^.seller.taxOffice] + ' V.D. ' + [^.seller.taxNo]" } },
+        { "id": "title", "type": "text", "x": 115, "y": 0, "width": 65, "height": 10, "style": "title", "text": "SEVK İRSALİYESİ" },
+        { "id": "rule", "type": "line", "x": 0, "y": 15, "width": 180, "height": 1, "direction": "horizontal", "lineWidth": 0.4, "color": "#0f766e" }
+      ]
+    },
+    {
+      "id": "reportHeader",
+      "kind": "reportHeader",
+      "height": 48,
+      "controls": [
+        { "id": "box", "type": "shape", "x": 0, "y": 3, "width": 105, "height": 32, "shape": "roundedRectangle", "cornerRadius": 2, "styleOverrides": { "backgroundColor": "#f0fdfa", "border": { "width": 0.2, "color": "#99f6e4", "sides": { "top": true, "right": true, "bottom": true, "left": true } } } },
+        { "id": "shipTo", "type": "text", "x": 3, "y": 5, "width": 60, "height": 5, "style": "label", "text": "TESLİM ALAN" },
+        { "id": "custName", "type": "text", "x": 3, "y": 10, "width": 99, "height": 6, "styleOverrides": { "bold": true, "fontSize": 11 }, "text": { "expression": "[^.customer.name]" } },
+        { "id": "custAddr", "type": "text", "x": 3, "y": 16, "width": 99, "height": 12, "text": { "expression": "[^.customer.address] + '\n' + [^.customer.city]" }, "canGrow": true },
+        { "id": "noLbl", "type": "text", "x": 115, "y": 4, "width": 30, "height": 6, "style": "label", "text": "İrsaliye No" },
+        { "id": "no", "type": "text", "x": 145, "y": 4, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right", "bold": true }, "text": { "expression": "Replace([^.number], 'WR', 'IRS')" } },
+        { "id": "dateLbl", "type": "text", "x": 115, "y": 11, "width": 30, "height": 6, "style": "label", "text": "Düzenleme" },
+        { "id": "date", "type": "text", "x": 145, "y": 11, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right" }, "text": { "expression": "[^.date]" }, "format": "dd.MM.yyyy" },
+        { "id": "shipLbl", "type": "text", "x": 115, "y": 18, "width": 30, "height": 6, "style": "label", "text": "Sevk tarihi" },
+        { "id": "ship", "type": "text", "x": 145, "y": 18, "width": 35, "height": 6, "styleOverrides": { "textAlign": "right" }, "text": { "expression": "AddDays([^.date], 1)" }, "format": "dd.MM.yyyy" },
+        { "id": "qr", "type": "barcode", "x": 160, "y": 25, "width": 20, "height": 20, "symbology": "qrcode", "value": { "expression": "'https://example.com/irsaliye/' + [^.number]" }, "showText": false },
+        { "id": "hNo", "type": "text", "x": 0, "y": 40, "width": 10, "height": 8, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "#" },
+        { "id": "hCode", "type": "text", "x": 10, "y": 40, "width": 25, "height": 8, "style": "th", "text": "Kod" },
+        { "id": "hProduct", "type": "text", "x": 35, "y": 40, "width": 105, "height": 8, "style": "th", "text": "Ürün" },
+        { "id": "hQty", "type": "text", "x": 140, "y": 40, "width": 22, "height": 8, "style": "th", "styleOverrides": { "textAlign": "right" }, "text": "Miktar" },
+        { "id": "hUnit", "type": "text", "x": 162, "y": 40, "width": 18, "height": 8, "style": "th", "text": "Birim" }
+      ]
+    },
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 7,
+      "controls": [
+        { "id": "rowNo", "type": "text", "x": 0, "y": 0, "width": 10, "height": 7, "style": "num", "text": { "expression": "RowNumber()" } },
+        { "id": "code", "type": "text", "x": 10, "y": 0, "width": 25, "height": 7, "style": "cell", "text": { "expression": "[code]" } },
+        { "id": "product", "type": "text", "x": 35, "y": 0, "width": 105, "height": 7, "style": "cell", "text": { "expression": "[product]" }, "canGrow": true },
+        { "id": "qty", "type": "text", "x": 140, "y": 0, "width": 22, "height": 7, "style": "num", "text": { "expression": "[qty]" }, "format": "n0" },
+        { "id": "unit", "type": "text", "x": 162, "y": 0, "width": 18, "height": 7, "style": "cell", "text": "Adet" }
+      ]
+    },
+    {
+      "id": "reportFooter",
+      "kind": "reportFooter",
+      "height": 52,
+      "controls": [
+        { "id": "countLbl", "type": "text", "x": 100, "y": 2, "width": 40, "height": 6, "style": "label", "styleOverrides": { "textAlign": "right" }, "text": "Kalem / toplam miktar" },
+        { "id": "count", "type": "text", "x": 140, "y": 2, "width": 40, "height": 6, "styleOverrides": { "textAlign": "right", "bold": true }, "text": { "expression": "Format(Count(), 'n0') + ' / ' + Format(Sum([qty]), 'n0')" } },
+        { "id": "note", "type": "text", "x": 0, "y": 11, "width": 180, "height": 10, "style": "muted", "canGrow": true, "text": "Mallar sağlam ve eksiksiz teslim alınmıştır. Bu irsaliye we-report ile oluşturulmuştur; tüm bilgiler örnektir." },
+        { "id": "signShip", "type": "text", "x": 0, "y": 44, "width": 55, "height": 6, "style": "sign", "text": "Teslim eden" },
+        { "id": "signDriver", "type": "text", "x": 62.5, "y": 44, "width": 55, "height": 6, "style": "sign", "text": "Taşıyan" },
+        { "id": "signRecv", "type": "text", "x": 125, "y": 44, "width": 55, "height": 6, "style": "sign", "text": "Teslim alan" }
+      ]
+    },
+    {
+      "id": "pageFooter",
+      "kind": "pageFooter",
+      "height": 7,
+      "controls": [
+        { "id": "pageNo", "type": "pageInfo", "x": 120, "y": 2, "width": 60, "height": 5, "style": "muted", "styleOverrides": { "textAlign": "right" }, "info": "pageNofM", "format": "Sayfa {0} / {1}" }
+      ]
+    }
+  ]
+}
