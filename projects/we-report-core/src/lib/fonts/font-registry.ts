@@ -31,6 +31,29 @@ export class LoadedFont {
     this.font = fontkit.create(bytes);
   }
 
+  /**
+   * Glyph outlines of `text` as SVG path data. Points are in mm with x to the right of the start
+   * of the baseline and y downwards, passed through `map` (e.g. a rotation) before writing.
+   */
+  outline(text: string, sizePt: number, map: (x: number, y: number) => [number, number]): string {
+    const scale = (sizePt * PT_TO_MM) / this.font.unitsPerEm;
+    let pen = 0;
+    let d = '';
+    for (const glyph of this.font.layout(text).glyphs) {
+      for (const [, command, args] of glyph.path.toSVG().matchAll(/([MLQCZ])([^MLQCZ]*)/gi)) {
+        const nums = args.match(/-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi)?.map(Number) ?? [];
+        d += command.toUpperCase();
+        for (let i = 0; i + 1 < nums.length; i += 2) {
+          const [x, y] = map((pen + nums[i]) * scale, -nums[i + 1] * scale);
+          d += `${Math.round(x * 1000) / 1000} ${Math.round(y * 1000) / 1000} `;
+        }
+      }
+      // Same advances as widthOf, so a measured width matches the drawn outline.
+      pen += glyph.advanceWidth;
+    }
+    return d.trim();
+  }
+
   /** Stable id for this face, used by renderers (`Noto Sans|bold`). */
   get key(): string {
     return `${this.family}|${this.variant}`;
@@ -39,6 +62,11 @@ export class LoadedFont {
   /** Distance from the top of a line to its baseline, in mm. */
   ascent(sizePt: number): number {
     return (this.font.ascent / this.font.unitsPerEm) * sizePt * PT_TO_MM;
+  }
+
+  /** Height of capital letters in mm. */
+  capHeight(sizePt: number): number {
+    return (this.font.capHeight / this.font.unitsPerEm) * sizePt * PT_TO_MM;
   }
 
   lineHeight(sizePt: number): number {

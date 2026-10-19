@@ -1,5 +1,6 @@
 import { resolveReportData } from '../data/data-source';
 import { resolveParameters } from '../data/web-service';
+import { DEFAULT_WATERMARK_COLOR } from '../definition/blank-report';
 import { PageGeometry, resolvePageGeometry } from '../definition/page';
 import {
   Band,
@@ -273,12 +274,40 @@ class LayoutRun {
         for (const item of r.items) items.push(translate(item, margins.left, top));
         for (const render of r.deferred) for (const item of render(info)) items.push(translate(item, margins.left, top));
       };
+      items.push(...this.watermark(scope, width, pageHeight));
       place(pageHeader, margins.top);
       items.push(...state.items);
       for (const d of state.deferred) for (const item of d.render(info)) items.push(translate(item, margins.left, d.y));
       place(pageFooter, contentHeight === null ? margins.top + state.endY : margins.top + contentHeight - footerHeight);
       return { width, height: pageHeight, items };
     });
+  }
+
+  /** The watermark centred on the page, rotated, drawn first so the content sits on top. */
+  private watermark(scope: Scope, pageWidth: number, pageHeight: number): LayoutItem[] {
+    const w = this.def.watermark;
+    if (!w) return [];
+    const value = this.bind(w.text, scope, 'watermark');
+    const text = value === null || value === undefined || value === ERROR_TEXT ? '' : String(value);
+    if (!text.trim()) return [];
+    const base = resolveStyle(this.def);
+    const font = this.options.fonts.resolve(base.fontFamily, true, false);
+    const angle = ((w.angle ?? 45) * Math.PI) / 180;
+    // Fit 70% of the diagonal it runs along unless a size is given.
+    const reach = Math.min(Math.abs(pageWidth / Math.cos(angle)) || Infinity, Math.abs(pageHeight / Math.sin(angle)) || Infinity);
+    const size = w.fontSize ?? Math.min(200, (100 * reach * 0.7) / Math.max(1, font.widthOf(text, 100)));
+    const textWidth = font.widthOf(text, size);
+    const middle = font.capHeight(size) / 2;
+    const cos = Math.cos(-angle);
+    const sin = Math.sin(-angle);
+    const cx = pageWidth / 2;
+    const cy = pageHeight / 2;
+    const d = font.outline(text, size, (x, y) => {
+      const lx = x - textWidth / 2;
+      const ly = y + middle;
+      return [cx + lx * cos - ly * sin, cy + lx * sin + ly * cos];
+    });
+    return [{ kind: 'path', x: 0, y: 0, width: pageWidth, height: pageHeight, viewBox: { width: pageWidth, height: pageHeight }, paths: [{ d, fill: w.color ?? DEFAULT_WATERMARK_COLOR }] }];
   }
 
   // ── Bands and controls ──────────────────────────────────────────────────────
@@ -414,7 +443,7 @@ class LayoutRun {
     for (const row of scope.rows) {
       const rowScope = { row, rows: scope.rows };
       const category = this.eval(c.category.expression, rowScope, c.id);
-      const label = category instanceof Date ? formatValue(category, 'dd.MM.yyyy', options) : String(category ?? '');
+      const label = category instanceof Date ? formatValue(category, undefined, options) : String(category ?? '');
       const value = Number(this.eval(c.value.expression, rowScope, c.id));
       if (!groups.has(label)) groups.set(label, []);
       // Count counts rows, whatever the value formula returns.

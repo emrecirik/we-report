@@ -138,10 +138,10 @@ function axes(c: ChartControl, points: ChartPoint[], area: Box, small: ResolvedS
   ticks.forEach((t, i) => {
     const p = toPos(t);
     if (horizontal) {
-      items.push({ kind: 'line', x1: p, y1: plot.y, x2: p, y2: plot.y + plot.height, color: DEFAULT_CHART_GRID_COLOR, width: 0.1 });
+      items.push({ kind: 'line', x1: p, y1: plot.y, x2: p, y2: plot.y + plot.height, color: c.gridColor ?? DEFAULT_CHART_GRID_COLOR, width: 0.1 });
       items.push(...env.text(tickLabels[i], center, { x: p - 10, y: plot.y + plot.height + 1, width: 20, height: lh }));
     } else {
-      items.push({ kind: 'line', x1: plot.x, y1: p, x2: plot.x + plot.width, y2: p, color: DEFAULT_CHART_GRID_COLOR, width: 0.1 });
+      items.push({ kind: 'line', x1: plot.x, y1: p, x2: plot.x + plot.width, y2: p, color: c.gridColor ?? DEFAULT_CHART_GRID_COLOR, width: 0.1 });
       items.push(...env.text(tickLabels[i], right, { x: area.x, y: p - lh / 2, width: leftWidth - 1, height: lh }));
     }
   });

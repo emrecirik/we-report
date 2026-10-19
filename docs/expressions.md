@@ -37,10 +37,19 @@ Arithmetic with an empty value gives an empty value; dividing by zero is an erro
 | `Today()`, `Now()` | | The print time |
 | `Year`, `Month`, `Day`, `AddDays(d, n)` | `AddDays([^.date], 30)` | |
 | `Sum`, `Count`, `Avg`, `Min`, `Max` | `Sum([Qty] * [Price])` | Over the rows in scope |
+| `AmountInWords(n, currency?)` | `AmountInWords(Sum([Total]))` | `Bin İki Yüz Elli Türk Lirası Elli Kuruş` (`tr-TR`, TRY) · `twelve dollars and five cents` (other locales); the configured currency when omitted |
+| `NumberToWords(n)` | `NumberToWords(1234)` | `Bin İki Yüz Otuz Dört` / `one thousand two hundred thirty-four` |
 
 Aggregates work over the group in group headers/footers, the page in page headers/footers, and
 all rows in report headers/footers. `Count()` counts rows; `Min(a, b)`/`Max(a, b)` with two
 arguments compare two values.
+
+## Conditional formatting
+
+Every item can carry rules: *when the formula is true, use this colour, background or bold*.
+The designer builds the formula from three choices (field, comparison, value), e.g.
+`[Amount] < 0` or `Contains([Name], 'Ltd')`; any formula works in Advanced mode. Rules apply in
+order, a later rule wins on the same property.
 
 ## Formats ("Show as")
 

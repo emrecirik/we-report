@@ -153,8 +153,10 @@ export interface ChartControl extends ControlBase {
   showLegend?: boolean;
   /** Format of the value labels and axis, e.g. `n0`, `c2`. */
   format?: string;
-  /** Series colours; the report's chart palette when omitted. */
+  /** Series colours; the default palette (`DEFAULT_CHART_PALETTE`) when omitted. */
   colors?: string[];
+  /** Colour of the grid lines; `DEFAULT_CHART_GRID_COLOR` when omitted. */
+  gridColor?: string;
 }
 
 export type ReportControl =
@@ -272,6 +274,17 @@ export interface ReportParameter {
   defaultValue?: string | number | boolean | null;
 }
 
+/** Large text across every page behind the content, e.g. "DRAFT" or "PAID". */
+export interface Watermark {
+  /** Fixed text, or a formula (e.g. `Iif([^.paid], 'PAID', '')`); empty text draws nothing. */
+  text: Bindable<string>;
+  color?: string;
+  /** Points; fitted to the page diagonal when omitted. */
+  fontSize?: number;
+  /** Degrees, counter-clockwise; default 45. */
+  angle?: number;
+}
+
 export interface ReportDefinition {
   $schema?: string;
   version: number;
@@ -282,5 +295,6 @@ export interface ReportDefinition {
   parameters?: ReportParameter[];
   /** Id of the data source the detail band repeats over, plus an optional path to the rows. */
   dataMember?: { dataSourceId: string; path?: string };
+  watermark?: Watermark;
   bands: Band[];
 }

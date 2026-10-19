@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+- Charts: a `chart` control (column, bar, line, pie, doughnut) that groups the rows of its section
+  by a field and sums, counts, averages or takes the min/max of a value; value labels, legend with
+  percentages, title, number format, own colours and grid colour. Drawn from the same primitives
+  as everything else, so the preview and the PDF are identical.
+- Conditional formatting: `formatting` rules on every item ("when `[Amount] < 0`, red and bold"),
+  built in the designer without typing a formula.
+- Watermark: large text behind every page (`watermark`), fixed or from data (e.g. `PAID` only for
+  paid invoices), rotated 45° or straight.
+- Formulas: `AmountInWords` and `NumberToWords` (Turkish and English).
+- Designer: Arrange section (align edges/centres, space evenly, same width/height, bring to
+  front/send to back), right-click menu, cut/copy/paste (also between designers) and select all
+  with the usual shortcuts, an Outline tab listing every item by section, a top ruler with margins
+  and the selection's extent, fit-to-width and Ctrl+wheel zoom.
+- Definition: all additions are optional, so existing `*.wrpt.json` files load unchanged (still
+  version 1). A report using charts opened with 0.1.0 shows no chart.
+
 ## 0.1.0 — 2026-10-19
 
 First public release.

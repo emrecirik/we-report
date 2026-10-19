@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, evaluate, formatValue, isExpression, ReportControl, ReportControlType, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { Band, DEFAULT_WATERMARK_COLOR, evaluate, formatValue, isExpression, ReportControl, ReportControlType, resolvePageGeometry, resolveStyle } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -77,6 +77,9 @@ interface DragOp {
       }
     </svg>
     <div class="ds__page" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()" [style.--ds-margin-right.mm]="state.report().page.margins.right * zoom()">
+      @if (watermarkText(); as wm) {
+        <div class="ds__watermark" aria-hidden="true" [style.color]="state.report().watermark?.color ?? defaultWatermarkColor" [style.font-size.mm]="geometry().width * zoom() * 0.12" [style.transform]="'translate(-50%, -50%) rotate(' + -(state.report().watermark?.angle ?? 45) + 'deg)'">{{ wm }}</div>
+      }
       @for (band of state.report().bands; track band.id) {
         <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)">
           <button type="button" class="ds__band-label" [title]="bandLabel(band)" (click)="selectBand(band.id)">
@@ -202,6 +205,18 @@ interface DragOp {
       background: var(--we-report-page-bg, #fff);
       box-shadow: var(--we-report-page-shadow, 0 1px 3px rgba(0, 0, 0, 0.2));
       border-radius: 2px;
+    }
+    .ds__page {
+      position: relative;
+    }
+    .ds__watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
     }
     .ds__band {
       position: relative;
@@ -773,6 +788,14 @@ export class DesignSurfaceComponent implements OnDestroy {
     const x = this.snapToGrid((e.clientX - rect.left) / scale, true);
     const y = this.snapToGrid((e.clientY - rect.top) / scale, true);
     this.dropAt(data, band, x, y);
+  }
+
+  protected readonly defaultWatermarkColor = DEFAULT_WATERMARK_COLOR;
+
+  /** Fixed watermark text, or its formula, shown faintly on the design page. */
+  protected watermarkText(): string {
+    const text = this.state.report().watermark?.text;
+    return text === undefined ? '' : isExpression(text) ? text.expression : text;
   }
 
   protected chartLabel(c: ReportControl): string {

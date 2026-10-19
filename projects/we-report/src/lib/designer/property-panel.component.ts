@@ -7,6 +7,7 @@ import {
   ChartAggregate,
   ChartType,
   FormattingRule,
+  Watermark,
   isExpression,
   PAPER_SIZES,
   ReportControl,
@@ -99,6 +100,15 @@ export class PropertyPanelComponent {
 
   protected setReport<K extends 'name'>(key: K, value: string): void {
     this.state.update((d) => (d[key] = value), `report-${key}`);
+  }
+
+  /** Empty text removes the watermark. */
+  protected setWatermark(patch: Partial<Watermark>): void {
+    this.state.update((d) => {
+      const next = { text: '', ...d.watermark, ...patch } as Watermark;
+      const empty = isExpression(next.text) ? !next.text.expression.trim() : !next.text.trim();
+      d.watermark = empty ? undefined : next;
+    }, 'watermark');
   }
 
   protected setPaper(paper: string): void {

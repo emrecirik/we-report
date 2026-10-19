@@ -62,7 +62,7 @@ export function numberToWords(value: number, locale?: string): string {
 }
 
 /** An amount with its currency in words, e.g. 1250.5 TRY → "Bin İki Yüz Elli Türk Lirası Elli Kuruş". */
-export function amountInWords(value: number, locale?: string, currency = 'TRY'): string {
+export function amountInWords(value: number, locale?: string, currency = 'USD'): string {
   const tr = isTurkish(locale);
   const cents = Math.round(Math.abs(value) * 100);
   const major = Math.floor(cents / 100);

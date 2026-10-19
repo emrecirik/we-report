@@ -256,6 +256,9 @@ export interface WeReportLocale {
   showLegend: string;
   chartHint: string;
   conditionalFormatting: string;
+  watermark: string;
+  watermarkHint: string;
+  watermarkAngle: string;
   conditionalHint: string;
   addRule: string;
   ruleWhen: string;
@@ -530,6 +533,9 @@ export const weReportLocaleEn: WeReportLocale = {
   showLegend: 'Show legend',
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
+  watermark: 'Watermark',
+  watermarkHint: 'Large faint text behind every page, e.g. DRAFT or PAID. Can come from data.',
+  watermarkAngle: 'Direction',
   conditionalHint: 'Change the look when a condition is true, e.g. negative amounts in red.',
   addRule: 'Add rule',
   ruleWhen: 'When',
@@ -804,6 +810,9 @@ export const weReportLocaleTr: WeReportLocale = {
   showLegend: 'Açıklamayı göster',
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
+  watermark: 'Filigran',
+  watermarkHint: 'Her sayfanın arkasında büyük, soluk yazı; örneğin TASLAK veya ÖDENDİ. Veriden de gelebilir.',
+  watermarkAngle: 'Yön',
   conditionalHint: 'Bir koşul doğru olduğunda görünümü değiştirin; örneğin eksi tutarlar kırmızı olsun.',
   addRule: 'Kural ekle',
   ruleWhen: 'Şu durumda',

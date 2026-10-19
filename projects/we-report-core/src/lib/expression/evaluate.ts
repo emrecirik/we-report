@@ -48,7 +48,7 @@ const FUNCTIONS: Record<string, FunctionDef> = {
   amountinwords: {
     min: 1,
     max: 2,
-    fn: ([v, currency], ctx) => amountInWords(num(v, 'AmountInWords'), ctx.locale, currency === undefined ? (ctx.currency ?? 'TRY') : str(currency)),
+    fn: ([v, currency], ctx) => amountInWords(num(v, 'AmountInWords'), ctx.locale, currency === undefined ? (ctx.currency ?? 'USD') : str(currency)),
   },
   len: { min: 1, max: 1, fn: ([v]) => str(v).length },
   upper: { min: 1, max: 1, fn: ([v], ctx) => str(v).toLocaleUpperCase(ctx.locale) },

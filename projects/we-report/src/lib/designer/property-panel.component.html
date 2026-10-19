@@ -57,6 +57,22 @@
       </div>
     </div>
   </section>
+  <section class="pp__section">
+    <h3>{{ s.watermark }}</h3>
+    @let wm = report().watermark;
+    <we-report-bindable-input [value]="wm?.text ?? ''" [fields]="fields()" [strings]="s" (valueChange)="setWatermark({ text: $event })" />
+    <small class="pp__hint">{{ s.watermarkHint }}</small>
+    @if (wm) {
+      <div class="pp__row">
+        <span>{{ s.color }}</span>
+        <input type="color" [value]="wm.color ?? '#e3e6ea'" (input)="setWatermark({ color: $any($event.target).value })" [attr.aria-label]="s.color" />
+      </div>
+      <div class="pp__segmented" role="radiogroup" [attr.aria-label]="s.watermarkAngle">
+        <button type="button" role="radio" [attr.aria-checked]="(wm.angle ?? 45) === 45" [class.pp__on]="(wm.angle ?? 45) === 45" (click)="setWatermark({ angle: undefined })">↗ 45°</button>
+        <button type="button" role="radio" [attr.aria-checked]="wm.angle === 0" [class.pp__on]="wm.angle === 0" (click)="setWatermark({ angle: 0 })">→ 0°</button>
+      </div>
+    }
+  </section>
   @if (advanced() && report().dataMember) {
     <section class="pp__section">
       <h3>{{ s.groupData }}</h3>

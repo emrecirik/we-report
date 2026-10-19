@@ -211,4 +211,23 @@ describe('layout engine', () => {
     expect(niceScale(-12, 40)).toEqual({ min: -20, max: 40, step: 20 });
     expect(niceScale(0, 0).max).toBeGreaterThan(0);
   });
+
+  it('draws the watermark behind the content of every page, centred on the page', () => {
+    const report = listReport(Array.from({ length: 40 }, (_, i) => ({ Name: `Row ${i}`, Paid: true })));
+    report.watermark = { text: { expression: "Iif([Paid], 'PAID', '')" } };
+    const doc = layoutReport(report, { fonts, now: NOW });
+    expect(doc.pages.length).toBe(2);
+    for (const page of doc.pages) {
+      const mark = page.items[0] as PathItem;
+      expect(mark.kind).toBe('path');
+      const nums = mark.paths[0].d.match(/-?[\d.]+/g)!.map(Number);
+      const xs = nums.filter((_, k) => k % 2 === 0);
+      const ys = nums.filter((_, k) => k % 2 === 1);
+      // Rotated 45°, the text is centred on the page (on its advance width, so within the side bearings).
+      expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(105, -1);
+      expect((Math.min(...ys) + Math.max(...ys)) / 2).toBeCloseTo(148.5, -1);
+    }
+    report.watermark.text = '';
+    expect(layoutReport(report, { fonts, now: NOW }).pages[0].items[0].kind).not.toBe('path');
+  });
 });
