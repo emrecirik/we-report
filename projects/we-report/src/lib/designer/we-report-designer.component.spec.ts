@@ -36,6 +36,36 @@ describe('WeReportDesignerComponent', () => {
     expect(labels).toEqual(['Sayfa başlığı', 'Detay (her satır için tekrarlanır)', 'Sayfa altlığı']);
   });
 
+  it('builds a grouped, sorted list from the report wizard', () => {
+    create(createBlankReport(), [
+      { city: 'B', name: 'x', amount: 2, paid: true },
+      { city: 'A', name: 'y', amount: 1, paid: false },
+    ]);
+    el().querySelector<HTMLButtonElement>('.wd__magic')!.click();
+    fixture.detectChanges();
+    const selects = el().querySelectorAll<HTMLSelectElement>('.wd__wizard select');
+    const choose = (select: HTMLSelectElement, value: string) => {
+      select.value = value;
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+    };
+    choose(selects[0], 'city');
+    choose(selects[1], 'amount');
+    choose(selects[2], 'desc');
+    const create_ = el().querySelector<HTMLButtonElement>('.wd__wizard .wd__primary')!;
+    expect(create_.disabled).toBeFalse();
+    create_.click();
+    fixture.detectChanges();
+    expect(el().querySelector('.wd__wizard')).toBeNull();
+    const bands = state.report().bands;
+    expect(bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'groupFooter', 'reportFooter', 'pageFooter']);
+    expect(bands.find((b) => b.kind === 'groupHeader')!.groupBy).toEqual({ expression: '[city]' });
+    expect(bands.find((b) => b.kind === 'detail')!.sortBy).toEqual([{ expression: '[amount]', descending: true }]);
+    // Undo brings the blank report back in one step.
+    state.undo();
+    expect(state.report().bands.map((b) => b.kind)).toEqual(['pageHeader', 'detail', 'pageFooter']);
+  });
+
   it('emits every edit through the two-way report binding', () => {
     const report = createBlankReport();
     create(report);

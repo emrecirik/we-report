@@ -306,7 +306,7 @@
     <p class="wd__wizard-hint">{{ s.autoDesignHint }}</p>
     <div class="wd__wizard-actions">
       <button type="button" class="wd__text-btn" (click)="wizard.set(null)">{{ s.cancel }}</button>
-      <button type="button" class="wd__primary" (click)="runWizard()">{{ s.createReport }}</button>
+      <button type="button" class="wd__primary" [disabled]="!wizardReady()" (click)="runWizard()">{{ s.createReport }}</button>
     </div>
   </div>
 }

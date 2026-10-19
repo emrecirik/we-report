@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Designer: the report wizard focuses its first field and its Create button is off until a column
+  or a grouping is chosen; Ctrl+S while typing on the page keeps the text and reaches the app's save.
+
 ## 0.5.0 — 2026-10-20
 
 - Designer, desktop comfort: type on the page (double-click, F2 or just start typing on a selected

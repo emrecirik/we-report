@@ -897,6 +897,11 @@ export class DesignSurfaceComponent implements OnDestroy {
 
   /** Enter keeps the text, Shift+Enter starts a new line, Escape leaves it as it was. */
   protected onEditorKey(e: KeyboardEvent): void {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      // Save shortcuts of the host app keep working: keep the typed text first, then let it through.
+      (e.target as HTMLTextAreaElement).blur();
+      return;
+    }
     e.stopPropagation();
     if (e.key === 'Escape') {
       e.preventDefault();

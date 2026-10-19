@@ -92,6 +92,7 @@ export class WeReportDesignerComponent {
   /** Right-click menu: screen position and the band it was opened on. */
   protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean; at?: { x: number; y: number } } | null>(null);
   private readonly canvas = viewChild<ElementRef<HTMLElement>>('canvas');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly surface = viewChild(DesignSurfaceComponent);
   protected readonly shortcutsOpen = signal(false);
   /** Side panel widths in px; 0 hides a panel. Remembered in this browser. */
@@ -486,7 +487,12 @@ export class WeReportDesignerComponent {
       totals: true,
       orientation: '',
     });
+    // Focus the dialog so Escape and Enter work at once.
+    setTimeout(() => this.host.nativeElement.querySelector<HTMLInputElement>('.wd__wizard input')?.select());
   }
+
+  /** At least one column (or a grouping) to build from. */
+  protected readonly wizardReady = computed(() => !!this.wizard()?.fields.some((f) => f.on) || !!this.wizard()?.groupBy);
 
   protected updateWizard(change: Partial<NonNullable<ReturnType<typeof this.wizard>>>): void {
     const w = this.wizard();
