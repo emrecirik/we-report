@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Label sheets: the detail section can print rows side by side (`columns: { count, gap }`), filling
+  across, then down, then the next sheet. Ready layouts for common A4 and Letter label sheets
+  (`LABEL_SHEETS`, `applyLabelSheet`) set the paper, margins and label size in one step; the
+  designer shades where the other labels go.
+- Studio: a shelf-label template (A4, 21 per sheet) with product, price and barcode.
+
 ## 0.2.0 — 2026-10-19
 
 - Languages: the designer and viewer now speak German (`weReportLocaleDe`), French

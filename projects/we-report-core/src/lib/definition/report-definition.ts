@@ -198,6 +198,11 @@ export interface Band {
   pageBreakBefore?: boolean;
   pageBreakAfter?: boolean;
   backgroundColor?: string;
+  /**
+   * detail only: print rows side by side, e.g. labels. The band's controls fit one column, which
+   * is `(content width - gap × (count - 1)) / count` wide; rows fill across, then down.
+   */
+  columns?: { count: number; gap?: number };
 }
 
 export interface JsonDataSource {

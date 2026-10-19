@@ -211,10 +211,21 @@ class LayoutRun {
     let fresh = true;
     let breakPending = false;
     const repeating: (RenderedBand | null)[] = [];
+    // Multi-column detail: the current row of cells, its top and its tallest cell.
+    let column = 0;
+    let rowTop = 0;
+    let rowHeight = 0;
+    const endRow = () => {
+      if (column === 0) return;
+      y = rowTop + rowHeight;
+      page.endY = y;
+      column = 0;
+      rowHeight = 0;
+    };
 
-    const put = (r: RenderedBand) => {
+    const put = (r: RenderedBand, dx = 0) => {
       const dy = margins.top + y;
-      for (const item of r.items) page.items.push(translate(item, margins.left, dy));
+      for (const item of r.items) page.items.push(translate(item, margins.left + dx, dy));
       for (const render of r.deferred) page.deferred.push({ y: dy, render });
       if (r.band.kind === 'detail' && r.scope.row !== undefined) page.rows.push(r.scope.row);
       y += r.height;
@@ -223,6 +234,8 @@ class LayoutRun {
     const startPage = () => {
       page = { items: [], rows: [], deferred: [], endY: 0 };
       pages.push(page);
+      column = 0;
+      rowHeight = 0;
       y = headerHeight;
       for (const r of repeating) if (r) put(r);
       fresh = true;
@@ -248,12 +261,27 @@ class LayoutRun {
         continue;
       }
       const r = entry.rendered;
-      if (breakPending || (r.band.pageBreakBefore && !fresh) || (!fresh && y + r.height > bodyBottom)) {
+      const columns = r.band.kind === 'detail' ? Math.max(1, Math.floor(r.band.columns?.count ?? 1)) : 1;
+      if (columns === 1) endRow();
+      // Later cells of a row sit beside the first one, which already decided the page.
+      if (column === 0 && (breakPending || (r.band.pageBreakBefore && !fresh) || (!fresh && y + r.height > bodyBottom))) {
         if (entry.groupLevel !== undefined) repeating.length = entry.groupLevel;
         startPage();
       }
-      // shortcut: a band taller than the page is placed anyway and overflows; split bands when needed.
-      put(r);
+      if (columns > 1) {
+        const gap = r.band.columns?.gap ?? 0;
+        const cellWidth = (this.geometry.contentWidth - gap * (columns - 1)) / columns;
+        if (column === 0) rowTop = y;
+        y = rowTop;
+        put(r, column * (cellWidth + gap));
+        rowHeight = Math.max(rowHeight, r.height);
+        y = rowTop;
+        page.endY = rowTop + rowHeight;
+        if (++column === columns) endRow();
+      } else {
+        // shortcut: a band taller than the page is placed anyway and overflows; split bands when needed.
+        put(r);
+      }
       fresh = false;
       if (entry.groupLevel !== undefined) {
         repeating.length = entry.groupLevel;
@@ -261,6 +289,7 @@ class LayoutRun {
       }
       if (r.band.pageBreakAfter) breakPending = true;
     }
+    endRow();
 
     const count = pages.length;
     const width = this.geometry.width;

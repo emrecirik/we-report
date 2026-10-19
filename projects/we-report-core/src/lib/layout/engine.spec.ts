@@ -7,6 +7,7 @@ import { renderPdf } from '../render/pdf';
 import { layoutReport } from './engine';
 import { LayoutPage, PathItem, RectItem, TextItem } from './layout-types';
 import { niceScale } from './chart';
+import { applyLabelSheet, LABEL_SHEETS } from '../definition/label-sheets';
 import { wrapText } from './text-wrap';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
@@ -256,5 +257,37 @@ describe('layout engine', () => {
     report.locale = 'de-DE';
     report.currency = 'EUR';
     expect(text(report).some((t) => /^1\.234,50\s€$/.test(t))).toBeTrue();
+  });
+
+  it('prints a label sheet: labels across, then down, then on the next sheet', () => {
+    const report = listReport(Array.from({ length: 25 }, (_, i) => ({ Name: `L${i + 1}` })));
+    const sheet = LABEL_SHEETS.find((l) => l.id === 'L7160')!;
+    applyLabelSheet(report, sheet);
+    expect(report.bands.map((b) => b.kind)).toEqual(['detail']);
+    expect(report.page.margins).toEqual({ top: 15.15, left: 7.21, right: 7.21, bottom: 15.15 });
+    const doc = layoutReport(report, { fonts, now: NOW });
+    expect(doc.pages.length).toBe(2);
+    const labels = (page: LayoutPage) => page.items.filter((i): i is TextItem => i.kind === 'text');
+    const first = labels(doc.pages[0]);
+    expect(first.length).toBe(21);
+    const at = (n: string) => first.find((t) => t.lines[0].text === n)!;
+    expect(at('L1').x).toBeCloseTo(7.21, 5);
+    expect(at('L2').x).toBeCloseTo(7.21 + 63.5 + 2.54, 5);
+    expect(at('L4').x).toBeCloseTo(7.21, 5);
+    expect(at('L4').y - at('L1').y).toBeCloseTo(38.1, 5);
+    expect(at('L21').y - at('L1').y).toBeCloseTo(6 * 38.1, 5);
+    expect(labels(doc.pages[1]).map((t) => t.lines[0].text)).toEqual(['L22', 'L23', 'L24', 'L25']);
+  });
+
+  it('starts the section after a multi-column detail below its last, unfinished row', () => {
+    const report = listReport([{ Name: 'a' }, { Name: 'b' }, { Name: 'c' }]);
+    report.bands[1].columns = { count: 2 };
+    report.bands.splice(2, 0, { id: 'rf', kind: 'reportFooter', height: 6, controls: [{ id: 'end', type: 'text', x: 0, y: 0, width: 50, height: 6, text: 'END' }] });
+    const items = layoutReport(report, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text');
+    const y = (n: string) => items.find((t) => t.lines[0]?.text === n)!.y;
+    expect(y('b')).toBeCloseTo(y('a'), 5);
+    expect(y('c') - y('a')).toBeCloseTo(8, 5);
+    // The row is 8 mm with its text 1 mm down; the footer's text sits at its top.
+    expect(y('END') - y('c')).toBeCloseTo(7, 5);
   });
 });

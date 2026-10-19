@@ -123,6 +123,29 @@
       </span>
     </label>
   </section>
+  @if (b.kind === 'detail') {
+    <section class="pp__section">
+      <h3>{{ s.labelSheet }}</h3>
+      <select (change)="applyLabelSheet($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="s.labelSheet">
+        <option value="" selected>{{ s.labelSheetChoose }}</option>
+        @for (l of labelSheets; track l.id) {
+          <option [value]="l.id">{{ labelSheetName(l) }}</option>
+        }
+      </select>
+      <small class="pp__hint">{{ s.labelSheetHint }}</small>
+      <div class="pp__grid">
+        <label class="pp__row pp__row--stack">
+          <span>{{ s.columnsCount }}</span>
+          <input type="number" min="1" max="12" step="1" [value]="b.columns?.count ?? 1" (input)="setColumns('count', $any($event.target).value)" />
+        </label>
+        <label class="pp__row pp__row--stack">
+          <span>{{ s.columnGap }}</span>
+          <input type="number" min="0" step="0.5" [value]="num(b.columns?.gap ?? 0)" (input)="setColumns('gap', $any($event.target).value)" />
+        </label>
+      </div>
+      <small class="pp__hint">{{ s.columnsHint }}</small>
+    </section>
+  }
   @if (b.kind === 'groupHeader') {
     <section class="pp__section">
       <h3>{{ s.groupBy }}</h3>

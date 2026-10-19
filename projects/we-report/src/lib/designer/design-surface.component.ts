@@ -156,6 +156,11 @@ interface DragOp {
                 }
               </div>
             }
+            @if (columnShade(band); as shade) {
+              <div class="ds__columns" [style.left.mm]="shade.left * zoom()" aria-hidden="true">
+                <span>{{ strings().repeatsAcross.replace('{0}', '' + shade.count) }}</span>
+              </div>
+            }
             @for (g of guidesFor(band.id); track $index) {
               <div class="ds__guide" [class.ds__guide--v]="g.orientation === 'v'" [style.left.mm]="g.orientation === 'v' ? g.at * zoom() : null" [style.top.mm]="g.orientation === 'h' ? g.at * zoom() : null"></div>
             }
@@ -262,6 +267,21 @@ interface DragOp {
     .ds__band-body {
       position: relative;
       background-image: radial-gradient(circle, var(--we-report-margin-guide, rgba(0, 122, 255, 0.18)) 0.7px, transparent 0.7px);
+    }
+    /* Where the other columns of a multi-column detail print: not editable, just shown. */
+    .ds__columns {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px dashed var(--we-report-selection, #007aff);
+      background: repeating-linear-gradient(-45deg, var(--we-report-selection-fill, rgba(0, 122, 255, 0.07)) 0 6px, transparent 6px 12px);
+      color: var(--we-report-accent, #007aff);
+      font: 500 11px var(--we-report-font-family, system-ui, sans-serif);
+      pointer-events: none;
     }
     .ds__band-resize {
       position: absolute;
@@ -792,6 +812,14 @@ export class DesignSurfaceComponent implements OnDestroy {
   }
 
   protected readonly defaultWatermarkColor = DEFAULT_WATERMARK_COLOR;
+
+  /** For a multi-column detail: where the first column ends (mm) and how many columns print. */
+  protected columnShade(band: Band): { left: number; count: number } | null {
+    const count = band.kind === 'detail' ? Math.floor(band.columns?.count ?? 1) : 1;
+    if (count < 2) return null;
+    const gap = band.columns?.gap ?? 0;
+    return { left: (this.geometry().contentWidth - gap * (count - 1)) / count, count };
+  }
 
   /** Fixed watermark text, or its formula, shown faintly on the design page. */
   protected watermarkText(): string {

@@ -257,6 +257,14 @@ export interface WeReportLocale {
   chartHint: string;
   conditionalFormatting: string;
   watermark: string;
+  labelSheet: string;
+  labelSheetChoose: string;
+  labelSheetHint: string;
+  labelsCount: string;
+  columnsCount: string;
+  columnGap: string;
+  columnsHint: string;
+  repeatsAcross: string;
   reportLocale: string;
   reportLocaleRegion: string;
   reportCurrency: string;
@@ -554,6 +562,14 @@ export const weReportLocaleEn: WeReportLocale = {
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
+  labelSheet: 'Label sheet',
+  labelSheetChoose: 'Choose a sheet…',
+  labelSheetHint: 'Sets the paper, margins and label size. Page and report headers/footers are removed; undo brings them back.',
+  labelsCount: '{0} labels',
+  columnsCount: 'Side by side',
+  columnGap: 'Gap between (mm)',
+  columnsHint: 'Prints rows next to each other, e.g. labels or cards. Design one; the shaded area shows where the others go.',
+  repeatsAcross: 'Repeats ×{0}',
   reportLocale: 'Language and region',
   reportLocaleRegion: 'Numbers and dates',
   reportCurrency: 'Currency',
@@ -883,6 +899,14 @@ export const weReportLocaleTr: WeReportLocale = {
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
+  labelSheet: 'Etiket kağıdı',
+  labelSheetChoose: 'Bir kağıt seçin…',
+  labelSheetHint: 'Kağıdı, kenar boşluklarını ve etiket boyutunu ayarlar. Sayfa ve rapor başlık/altlıkları kaldırılır; geri al ile geri gelir.',
+  labelsCount: '{0} etiket',
+  columnsCount: 'Yan yana',
+  columnGap: 'Aradaki boşluk (mm)',
+  columnsHint: 'Satırları yan yana basar; örneğin etiket veya kart. Birini tasarlayın; gölgeli alan diğerlerinin yerini gösterir.',
+  repeatsAcross: '×{0} tekrarlanır',
   reportLocale: 'Dil ve bölge',
   reportLocaleRegion: 'Sayı ve tarihler',
   reportCurrency: 'Para birimi',

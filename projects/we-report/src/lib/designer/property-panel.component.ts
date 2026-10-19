@@ -9,6 +9,9 @@ import {
   FormattingRule,
   Watermark,
   isExpression,
+  LabelSheet,
+  LABEL_SHEETS,
+  applyLabelSheet,
   PAPER_SIZES,
   ReportControl,
   ReportStyle,
@@ -97,6 +100,7 @@ export class PropertyPanelComponent {
   protected readonly alignActions = ALIGN_ACTIONS;
   protected readonly chartTypes = CHART_TYPES;
   protected readonly cultures = CULTURES;
+  protected readonly labelSheets = LABEL_SHEETS;
   protected readonly currencies = CURRENCIES;
   protected readonly aggregates = AGGREGATES;
   protected readonly conditionOps = CONDITION_OPS;
@@ -182,6 +186,29 @@ export class PropertyPanelComponent {
   protected toggleBand(key: 'keepTogether' | 'repeatOnEveryPage' | 'pageBreakBefore' | 'pageBreakAfter', value: boolean): void {
     const band = this.band();
     if (band) this.state.updateBand(band.id, (b) => (b[key] = value || undefined));
+  }
+
+  protected labelSheetName(l: LabelSheet): string {
+    const count = this.strings().labelsCount.replace('{0}', String(l.columns * l.rows));
+    return `${l.paper} · ${count} · ${l.labelWidth} × ${l.labelHeight} mm (${l.id})`;
+  }
+
+  protected applyLabelSheet(id: string): void {
+    const sheet = LABEL_SHEETS.find((l) => l.id === id);
+    if (!sheet) return;
+    this.state.update((d) => applyLabelSheet(d, sheet));
+    this.state.selection.set({ kind: 'band', id: this.state.report().bands[0].id });
+  }
+
+  /** Detail columns; one column removes the setting. */
+  protected setColumns(key: 'count' | 'gap', value: string): void {
+    const band = this.band();
+    if (!band) return;
+    this.state.updateBand(band.id, (b) => {
+      const next = { count: 1, gap: 0, ...b.columns, [key]: Math.max(key === 'count' ? 1 : 0, Number(value) || 0) };
+      next.count = Math.min(12, Math.floor(next.count));
+      b.columns = next.count > 1 ? next : undefined;
+    }, `band-columns-${key}`);
   }
 
   protected removeBand(): void {

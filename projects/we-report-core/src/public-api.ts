@@ -4,6 +4,7 @@
 
 export * from './lib/units';
 export * from './lib/paper-sizes';
+export * from './lib/definition/label-sheets';
 export * from './lib/format';
 export * from './lib/definition/report-definition';
 export * from './lib/definition/blank-report';
