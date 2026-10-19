@@ -36,9 +36,9 @@ export class DesignerState {
   readonly selection = signal<Selection>({ kind: 'none' });
   readonly canUndo = signal(false);
   readonly canRedo = signal(false);
-  /** The first data row and its scope, for live values in the design and the formula editor. */
   /** The table cell last clicked; the inspector edits it while its table is selected. */
   readonly tableCell = signal<TableCellRef | null>(null);
+  /** The first data row and its scope, for live values in the design and the formula editor. */
   readonly sample = signal<{ row: unknown; rows: readonly unknown[]; parent: unknown } | null>(null);
 
   readonly selectedControls = computed(() => {

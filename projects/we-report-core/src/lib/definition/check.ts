@@ -2,7 +2,7 @@ import { parseExpression, ExpressionError, ExpressionNode } from '../expression/
 import { resolvePageGeometry } from './page';
 import { Bindable, isExpression, ReportControl, ReportDefinition } from './report-definition';
 
-export type ReportIssueCode = 'outsidePage' | 'formulaError' | 'unknownField' | 'emptyFormula' | 'overlap';
+export type ReportIssueCode = 'outsidePage' | 'outsideColumn' | 'formulaError' | 'unknownField' | 'emptyFormula' | 'overlap';
 
 /** A design problem the designer can explain and often fix. Messages are localized by `code`. */
 export interface ReportIssue {
@@ -71,11 +71,15 @@ export function checkReport(def: ReportDefinition, rowFields?: string[], parentF
   const inner = innerFields && new Set(innerFields);
 
   for (const band of def.bands) {
+    const count = band.kind === 'detail' ? Math.max(1, Math.floor(band.columns?.count ?? 1)) : 1;
+    const columnWidth = count > 1 ? (width - (band.columns?.gap ?? 0) * (count - 1)) / count : Infinity;
     // Inside an inner list a field is an item's, and `^.` reads the detail row around it.
     const own = band.kind.startsWith('sub') ? inner : rows;
     const outer = band.kind.startsWith('sub') ? rows : parent;
     for (const c of band.controls) {
       if (c.x + c.width > width + 0.01) issues.push({ code: 'outsidePage', severity: 'error', bandId: band.id, controlId: c.id });
+      // Side-by-side rows: an item wider than its column runs into the next label.
+      else if (c.x + c.width > columnWidth + 0.01) issues.push({ code: 'outsideColumn', severity: 'warning', bandId: band.id, controlId: c.id });
       for (const b of bindings(c)) {
         if (!isExpression(b)) continue;
         if (!b.expression.trim()) {

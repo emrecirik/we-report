@@ -574,18 +574,21 @@ export class DesignSurfaceComponent implements OnDestroy {
     return out;
   }
 
-  /** Inside an inner list the sample is the first item of the first row's list, around that row. */
+  /** Inside an inner list the sample is the first item of the first row that has items, around that row. */
   private sampleFor(band: Band | undefined): DesignSample | null {
     const sample = this.sample();
     if (!sample || !band?.kind.startsWith('sub')) return sample;
     const path = this.state.report().bands.find((b) => b.kind === 'subDetail')?.rowsPath;
     if (!path) return null;
-    try {
-      const items = evaluate(`[${path}]`, { row: sample.row });
-      return Array.isArray(items) && items.length ? { row: items[0], rows: items, parent: sample.row } : null;
-    } catch {
-      return null;
+    for (const row of sample.rows.length ? sample.rows : [sample.row]) {
+      try {
+        const items = evaluate(`[${path}]`, { row });
+        if (Array.isArray(items) && items.length) return { row: items[0], rows: items, parent: row };
+      } catch {
+        return null;
+      }
     }
+    return null;
   }
 
   protected isCellSelected(controlId: string, row: number, cell: number): boolean {

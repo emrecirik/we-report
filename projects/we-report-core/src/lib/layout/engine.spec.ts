@@ -10,6 +10,7 @@ import { niceScale } from './chart';
 import { barcodeItem } from './barcode';
 import { applyLabelSheet, LABEL_SHEETS } from '../definition/label-sheets';
 import { checkReport } from '../definition/check';
+import { reportTable } from '../render/xlsx';
 import { wrapText } from './text-wrap';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
@@ -357,5 +358,50 @@ describe('layout engine', () => {
     // Inner fields are judged against the item, `^.` against the row around it.
     expect(checkReport(report, ['Name', 'orders'], [], [], ['no', 'amount']).filter((i) => i.code === 'unknownField')).toEqual([]);
     expect(checkReport(report, ['Name'], [], [], ['no']).map((i) => i.detail)).toContain('amount');
+  });
+
+  it('fits exactly rows × columns labels on every sheet layout', () => {
+    for (const sheet of LABEL_SHEETS) {
+      const per = sheet.rows * sheet.columns;
+      const report = listReport(Array.from({ length: per + 1 }, (_, i) => ({ Name: `L${i}` })));
+      applyLabelSheet(report, sheet);
+      const doc = layoutReport(report, { fonts, now: NOW });
+      expect(doc.pages.map((p) => texts(p).length)).withContext(sheet.id).toEqual([per, 1]);
+    }
+  });
+
+  it('keeps groups when a label sheet is applied and warns about items wider than a label', () => {
+    const report = listReport([{ Name: 'a' }]);
+    report.bands.splice(1, 0, { id: 'g', kind: 'groupHeader', height: 5, groupBy: { expression: '[Name]' }, controls: [] });
+    applyLabelSheet(report, LABEL_SHEETS[0]);
+    expect(report.bands.map((b) => b.kind)).toEqual(['groupHeader', 'detail']);
+    const detail = report.bands[1];
+    detail.controls[0].width = 70; // the label is 63.5 mm wide
+    expect(checkReport(report).map((i) => i.code)).toContain('outsideColumn');
+  });
+
+  it('moves an inner list header to the next page together with its first item', () => {
+    // 30 rows of 8 mm leave 2 mm of the page body: room for the 1.5 mm header, not for its item.
+    const rows: Record<string, unknown>[] = Array.from({ length: 29 }, (_, i) => ({ Name: `R${i}`, items: [] }));
+    rows.push({ Name: 'Last', items: [{ v: 1 }] });
+    const report = listReport(rows);
+    const text = (id: string, expression: string, height = 4) => ({ id, type: 'text' as const, x: 0, y: 0, width: 50, height, text: { expression } });
+    report.bands.splice(2, 0,
+      { id: 'sh', kind: 'subHeader', height: 1.5, controls: [text('h', "'HEAD'", 1.5)] },
+      { id: 'sd', kind: 'subDetail', height: 4, rowsPath: 'items', controls: [text('d', "'ITEM ' + [v]")] },
+    );
+    const doc = layoutReport(report, { fonts, now: NOW });
+    const second = texts(doc.pages[1]);
+    expect(texts(doc.pages[0])).not.toContain('HEAD');
+    expect(second.slice(1, 3)).toEqual(['HEAD', 'ITEM 1']);
+  });
+
+  it('exports table cells of the detail band as spreadsheet columns', () => {
+    const report = listReport([{ Name: 'a', Qty: 2 }]);
+    report.bands[0].controls = [{ id: 'th', type: 'table', x: 0, y: 0, width: 60, height: 6, columns: [30, 30], rows: [{ height: 6, cells: [{ text: 'Name' }, { text: 'Qty' }] }] }];
+    report.bands[1].controls = [{ id: 'td', type: 'table', x: 0, y: 0, width: 60, height: 6, columns: [30, 30], rows: [{ height: 6, cells: [{ text: { expression: '[Name]' } }, { text: { expression: '[Qty]' }, format: 'n0' }] }] }];
+    const table = reportTable(report, { now: NOW });
+    expect(table.headers).toEqual(['Name', 'Qty']);
+    expect(table.rows).toEqual([['a', 2]]);
   });
 });

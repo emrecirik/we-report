@@ -235,6 +235,7 @@ export interface WeReportLocale {
   issueUnknownField: string;
   issueEmptyFormula: string;
   issueOverlap: string;
+  issueOutsideColumn: string;
   fixIt: string;
   noProblems: string;
   chartType: string;
@@ -560,6 +561,7 @@ export const weReportLocaleEn: WeReportLocale = {
   issueUnknownField: 'uses “{0}”, which is not in the data',
   issueEmptyFormula: 'has an empty formula',
   issueOverlap: 'overlaps {0}',
+  issueOutsideColumn: 'goes past its column into the next label',
   fixIt: 'Fix',
   noProblems: 'No problems found.',
   chartType: 'Chart type',
@@ -917,6 +919,7 @@ export const weReportLocaleTr: WeReportLocale = {
   issueUnknownField: 'verilerde olmayan “{0}” alanını kullanıyor',
   issueEmptyFormula: 'formülü boş',
   issueOverlap: '{0} ile üst üste biniyor',
+  issueOutsideColumn: 'sütununu aşıp yandaki etikete taşıyor',
   fixIt: 'Düzelt',
   noProblems: 'Sorun bulunamadı.',
   chartType: 'Grafik türü',

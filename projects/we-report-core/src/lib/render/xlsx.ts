@@ -30,13 +30,36 @@ function excelFormat(format: string | undefined): string | undefined {
   return undefined;
 }
 
+/** Text controls of a band, with every table cell as a text at its place in the band. */
+function textItems(band: Band): TextControl[] {
+  return band.controls.flatMap((c): TextControl[] => {
+    if (c.type === 'text') return [c];
+    if (c.type !== 'table') return [];
+    const out: TextControl[] = [];
+    let y = c.y;
+    for (const row of c.rows) {
+      let column = 0;
+      let x = c.x;
+      for (const cell of row.cells) {
+        const span = Math.max(1, Math.min(cell.colSpan ?? 1, c.columns.length - column));
+        const width = c.columns.slice(column, column + span).reduce((a, b) => a + b, 0);
+        if (column < c.columns.length) out.push({ id: `${c.id}`, type: 'text', x, y, width, height: row.height, text: cell.text, format: cell.format });
+        x += width;
+        column += span;
+      }
+      y += row.height;
+    }
+    return out;
+  });
+}
+
 /**
  * The report's data as a table, for spreadsheets: one column per text control of the detail band
  * (left to right), headed by the caption printed above it, with typed values (numbers, dates).
  */
 export function reportTable(definition: ReportDefinition, options: TableExportOptions): TableExport {
   const detail = definition.bands.find((b) => b.kind === 'detail');
-  const cells = (detail?.controls.filter((c): c is TextControl => c.type === 'text') ?? []).sort((a, b) => a.x - b.x);
+  const cells = (detail ? textItems(detail) : []).sort((a, b) => a.x - b.x);
   // Closest to the detail band first: the innermost group header, then report header, then page header.
   const captions = [
     ...definition.bands.filter((b) => b.kind === 'groupHeader').reverse(),
@@ -68,9 +91,9 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
 function captionAbove(cell: TextControl, bands: Band[]): string | undefined {
   const centre = cell.x + cell.width / 2;
   for (const band of bands) {
-    const hits = band.controls.filter(
-      (c): c is TextControl =>
-        c.type === 'text' && typeof c.text === 'string' && c.text.trim() !== '' && c.x <= centre && centre <= c.x + c.width && c.width <= cell.width * 1.5,
+    const hits = textItems(band).filter(
+      (c) =>
+        typeof c.text === 'string' && c.text.trim() !== '' && c.x <= centre && centre <= c.x + c.width && c.width <= cell.width * 1.5,
     );
     if (hits.length) return hits.reduce((a, b) => (b.y > a.y ? b : a)).text as string;
   }

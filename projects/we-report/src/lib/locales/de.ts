@@ -249,6 +249,7 @@ export const weReportLocaleDe: WeReportLocale = {
   issueUnknownField: 'verwendet „{0}“, das nicht in den Daten ist',
   issueEmptyFormula: 'hat eine leere Formel',
   issueOverlap: 'überlappt {0}',
+  issueOutsideColumn: 'ragt über seine Spalte ins nächste Etikett',
   fixIt: 'Beheben',
   noProblems: 'Keine Probleme gefunden.',
   chartType: 'Diagrammtyp',

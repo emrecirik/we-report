@@ -34,7 +34,7 @@ const round = (v: number) => Math.round(v * 100) / 100;
 /**
  * Turns a report into a label sheet: paper and margins so the detail section is exactly one label,
  * repeated across in `columns`. Page and report headers/footers are removed (labels have none);
- * the detail section and its contents are kept. Mutates `def`.
+ * the detail section, groups and inner lists stay. Mutates `def`.
  */
 export function applyLabelSheet(def: ReportDefinition, sheet: LabelSheet): void {
   const paper = PAPER_SIZES.find((p) => p.id === sheet.paper)!;
@@ -54,5 +54,6 @@ export function applyLabelSheet(def: ReportDefinition, sheet: LabelSheet): void 
   const detail = def.bands.find((b) => b.kind === 'detail') ?? { id: 'detail', kind: 'detail' as const, height: 0, controls: [] };
   detail.height = round(sheet.labelHeight + sheet.gapY);
   detail.columns = { count: sheet.columns, gap: sheet.gapX };
-  def.bands = [detail];
+  if (!def.bands.includes(detail)) def.bands.push(detail);
+  def.bands = def.bands.filter((b) => !b.kind.startsWith('page') && !b.kind.startsWith('report'));
 }

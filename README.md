@@ -53,6 +53,7 @@ backend required**.
 ## Documentation
 
 - [Getting started](docs/getting-started.md)
+- [Designing reports](docs/designing.md) — sections, inner lists, labels, tables, charts
 - [Formulas](docs/expressions.md)
 - [Data sources](docs/data-sources.md)
 - [Data backend](docs/backend.md) — protocol and samples

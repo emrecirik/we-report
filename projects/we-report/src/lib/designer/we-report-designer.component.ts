@@ -256,6 +256,7 @@ export class WeReportDesignerComponent {
       unknownField: s.issueUnknownField,
       emptyFormula: s.issueEmptyFormula,
       overlap: s.issueOverlap,
+      outsideColumn: s.issueOutsideColumn,
     }[issue.code];
     return text.replace('{0}', issue.detail ?? '');
   }

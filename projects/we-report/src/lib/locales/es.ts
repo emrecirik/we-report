@@ -249,6 +249,7 @@ export const weReportLocaleEs: WeReportLocale = {
   issueUnknownField: 'usa «{0}», que no está en los datos',
   issueEmptyFormula: 'tiene una fórmula vacía',
   issueOverlap: 'se superpone con {0}',
+  issueOutsideColumn: 'sobrepasa su columna y entra en la etiqueta siguiente',
   fixIt: 'Corregir',
   noProblems: 'No se encontraron problemas.',
   chartType: 'Tipo de gráfico',

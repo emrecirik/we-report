@@ -199,7 +199,18 @@ class LayoutRun {
     }
   }
 
-  /** The inner list of one detail row: its header, a band per item, its footer. Nothing when empty. */
+  /** Width of one column of a band: the content width, or a cell of a multi-column detail. */
+  private cellWidth(band: Band): number {
+    const count = band.kind === 'detail' ? Math.max(1, Math.floor(band.columns?.count ?? 1)) : 1;
+    const gap = band.columns?.gap ?? 0;
+    return (this.geometry.contentWidth - gap * (count - 1)) / count;
+  }
+
+  /**
+   * The inner list of one detail row: its header, a band per item, its footer. Nothing when empty.
+   * The header stays with the first item on one page.
+   * shortcut: the header is not repeated when the list continues on the next page.
+   */
   private emitInnerList(entries: Entry[], row: unknown): void {
     const bands = this.def.bands;
     const sub = bands.find((b) => b.kind === 'subDetail');
@@ -209,8 +220,18 @@ class LayoutRun {
     if (!items.length) return;
     const header = bands.find((b) => b.kind === 'subHeader');
     const footer = bands.find((b) => b.kind === 'subFooter');
-    if (header) entries.push({ type: 'band', rendered: this.renderBand(header, { row: items[0], rows: items, parent: row }) });
-    for (const item of items) entries.push({ type: 'band', rendered: this.renderBand(sub, { row: item, rows: items, parent: row }) });
+    const scope = (item: unknown) => ({ row: item, rows: items, parent: row });
+    if (header) {
+      // A keep-together block of the header and the first item (level past every group: no repeats touched).
+      const level = bands.filter((b) => b.kind === 'groupHeader').length;
+      const start = entries.length;
+      entries.push({ type: 'groupStart', level, keepTogether: true, end: -1 });
+      entries.push({ type: 'band', rendered: this.renderBand(header, scope(items[0])) });
+      entries.push({ type: 'band', rendered: this.renderBand(sub, scope(items[0])) });
+      entries.push({ type: 'groupEnd', level });
+      (entries[start] as Extract<Entry, { type: 'groupStart' }>).end = entries.length - 1;
+    }
+    for (const item of header ? items.slice(1) : items) entries.push({ type: 'band', rendered: this.renderBand(sub, scope(item)) });
     if (footer) entries.push({ type: 'band', rendered: this.renderBand(footer, { row: items[items.length - 1], rows: items, parent: row }) });
   }
 
@@ -221,7 +242,8 @@ class LayoutRun {
     const contentHeight = this.geometry.contentHeight;
     const headerHeight = pageHeader?.height ?? 0;
     const footerHeight = pageFooter?.height ?? 0;
-    const bodyBottom = contentHeight === null ? Infinity : contentHeight - footerHeight;
+    // Lengths add up with float drift (228.6 + 25.4 = 254.00000000000003): allow a hair.
+    const bodyBottom = contentHeight === null ? Infinity : contentHeight - footerHeight + 0.01;
 
     interface PageState {
       items: LayoutItem[];
@@ -293,11 +315,12 @@ class LayoutRun {
         startPage();
       }
       if (columns > 1) {
+        // shortcut: the first cell of a row decides the page break; a taller can-grow cell later in
+        // the row may overlap the page footer. Measure the whole row first if that becomes a need.
         const gap = r.band.columns?.gap ?? 0;
-        const cellWidth = (this.geometry.contentWidth - gap * (columns - 1)) / columns;
         if (column === 0) rowTop = y;
         y = rowTop;
-        put(r, column * (cellWidth + gap));
+        put(r, column * (this.cellWidth(r.band) + gap));
         rowHeight = Math.max(rowHeight, r.height);
         y = rowTop;
         page.endY = rowTop + rowHeight;
@@ -378,7 +401,7 @@ class LayoutRun {
       height = Math.max(height, control.y + result.height);
     }
     if (band.backgroundColor) {
-      items.unshift({ kind: 'rect', x: 0, y: 0, width: this.geometry.contentWidth, height, fill: band.backgroundColor });
+      items.unshift({ kind: 'rect', x: 0, y: 0, width: this.cellWidth(band), height, fill: band.backgroundColor });
     }
     return { band, scope, height, items, deferred };
   }

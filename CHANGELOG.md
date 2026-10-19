@@ -17,6 +17,10 @@
   designer shades where the other labels go.
 - Barcodes: the digits under a linear barcode keep their shape when the bars are stretched to a
   wide or short box.
+- Fixes: rows that fit a page exactly no longer move to the next page (float drift; two label
+  sheets lost their last row); a multi-column section's background is one column wide; applying a
+  label sheet keeps groups and inner lists; Excel export includes table cells.
+- Docs: [Designing reports](docs/designing.md).
 - Studio: a shelf-label template (A4, 21 per sheet) with product, price and barcode.
 
 ## 0.2.0 — 2026-10-19

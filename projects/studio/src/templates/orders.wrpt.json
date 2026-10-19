@@ -235,7 +235,8 @@
           "height": 5,
           "text": {
             "expression": "[orderNo]"
-          }
+          },
+          "format": "d"
         },
         {
           "id": "date",
