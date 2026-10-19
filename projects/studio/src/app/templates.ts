@@ -1,4 +1,5 @@
 import { createBlankReport, migrateDefinition, ReportDefinition } from 'we-report-core';
+import certificate from '../templates/certificate.wrpt.json';
 import invoiceData from '../templates/invoice.data.json';
 import invoice from '../templates/invoice.wrpt.json';
 import labels from '../templates/labels.wrpt.json';
@@ -53,6 +54,12 @@ export const TEMPLATES: StudioTemplate[] = [
     description: { tr: 'Sürekli rulo, içeriğe göre uzar', en: 'Continuous roll that grows with the content' },
     report: () => migrateDefinition(structuredClone(receipt)),
     data: receiptData,
+  },
+  {
+    id: 'certificate',
+    name: { tr: 'Başarı belgesi', en: 'Certificate' },
+    description: { tr: 'Parametrelerle doldurulan tek sayfa: ad, eğitim, tarih', en: 'One page filled from parameters: name, course, date' },
+    report: () => migrateDefinition(structuredClone(certificate)),
   },
   {
     id: 'blank',

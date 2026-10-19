@@ -20,6 +20,7 @@
   takes `GenerateOptions { groupBy, sortBy, sortDescending, totals, orientation }`).
 - Generated lists: yes/no columns print as tick boxes; camelCase identifiers (`orderNo`,
   `customerId`) are no longer summed and print without thousands separators.
+- Studio: certificate template (one page filled from parameters); Ctrl+S saves, Ctrl+O opens.
 - Fix: duplicating several items of the same kind gave them the same id.
 
 ## 0.4.0 — 2026-10-19

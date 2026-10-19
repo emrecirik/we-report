@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "name": "Başarı belgesi",
+  "page": { "paper": "A4", "orientation": "landscape", "margins": { "top": 12, "right": 12, "bottom": 12, "left": 12 }, "displayUnit": "mm" },
+  "styles": {
+    "default": { "fontFamily": "Noto Sans", "fontSize": 11, "color": "#2b2b2b", "textAlign": "center" },
+    "title": { "fontSize": 30, "bold": true, "color": "#1f3a5f" },
+    "name": { "fontSize": 26, "bold": true, "italic": true, "color": "#8a6a35" },
+    "muted": { "fontSize": 9, "color": "#6b6b6b" }
+  },
+  "dataSources": [],
+  "parameters": [
+    { "name": "recipient", "type": "string", "label": "Ad soyad", "defaultValue": "Şükran Öğüt" },
+    { "name": "course", "type": "string", "label": "Eğitim", "defaultValue": "Raporlama ve veri görselleştirme" },
+    { "name": "hours", "type": "number", "label": "Süre (saat)", "defaultValue": 24 },
+    { "name": "date", "type": "date", "label": "Tarih", "defaultValue": "2026-10-19" },
+    { "name": "signer", "type": "string", "label": "İmzalayan", "defaultValue": "Deniz Uluova" },
+    { "name": "certNo", "type": "string", "label": "Belge no", "defaultValue": "WR-2026-0042" }
+  ],
+  "bands": [
+    {
+      "id": "reportHeader", "kind": "reportHeader", "height": 186,
+      "controls": [
+        { "id": "frame", "type": "shape", "x": 0, "y": 0, "width": 273, "height": 186, "shape": "roundedRectangle", "cornerRadius": 3, "styleOverrides": { "border": { "width": 1.4, "color": "#b08d57", "sides": { "top": true, "right": true, "bottom": true, "left": true } } } },
+        { "id": "frameInner", "type": "shape", "x": 4, "y": 4, "width": 265, "height": 178, "shape": "roundedRectangle", "cornerRadius": 2, "styleOverrides": { "border": { "width": 0.3, "color": "#b08d57", "sides": { "top": true, "right": true, "bottom": true, "left": true } } } },
+        { "id": "seal", "type": "shape", "x": 129.5, "y": 14, "width": 14, "height": 14, "shape": "ellipse", "styleOverrides": { "backgroundColor": "#f3ead8", "border": { "width": 0.6, "color": "#b08d57", "sides": { "top": true, "right": true, "bottom": true, "left": true } } } },
+        { "id": "title", "type": "text", "x": 20, "y": 32, "width": 233, "height": 14, "style": "title", "text": "BAŞARI BELGESİ" },
+        { "id": "intro", "type": "text", "x": 20, "y": 54, "width": 233, "height": 7, "text": "Bu belge" },
+        { "id": "recipient", "type": "text", "x": 20, "y": 64, "width": 233, "height": 14, "style": "name", "text": { "expression": "[?recipient]" } },
+        { "id": "nameRule", "type": "line", "x": 66, "y": 80, "width": 141, "height": 1, "direction": "horizontal", "lineWidth": 0.3, "color": "#b08d57" },
+        { "id": "reason", "type": "text", "x": 40, "y": 86, "width": 193, "height": 14, "canGrow": true, "text": { "expression": "Format([?hours], 'n0') + ' saatlik ' + [?course] + ' eğitimini başarıyla tamamladığı için verilmiştir.'" } },
+        { "id": "date", "type": "text", "x": 25, "y": 138, "width": 70, "height": 7, "text": { "expression": "[?date]" }, "format": "d MMMM yyyy" },
+        { "id": "dateRule", "type": "line", "x": 25, "y": 146, "width": 70, "height": 1, "direction": "horizontal", "lineWidth": 0.3, "color": "#2b2b2b" },
+        { "id": "dateLabel", "type": "text", "x": 25, "y": 148, "width": 70, "height": 5, "style": "muted", "text": "Tarih" },
+        { "id": "signer", "type": "text", "x": 178, "y": 138, "width": 70, "height": 7, "text": { "expression": "[?signer]" } },
+        { "id": "signRule", "type": "line", "x": 178, "y": 146, "width": 70, "height": 1, "direction": "horizontal", "lineWidth": 0.3, "color": "#2b2b2b" },
+        { "id": "signLabel", "type": "text", "x": 178, "y": 148, "width": 70, "height": 5, "style": "muted", "text": "İmza" },
+        { "id": "qr", "type": "barcode", "x": 124.5, "y": 128, "width": 24, "height": 24, "symbology": "qrcode", "value": { "expression": "'https://example.com/belge/' + [?certNo]" }, "showText": false },
+        { "id": "certNo", "type": "text", "x": 86.5, "y": 155, "width": 100, "height": 5, "style": "muted", "text": { "expression": "'Belge no: ' + [?certNo] + ' · örnek belgedir'" } }
+      ]
+    }
+  ]
+}
