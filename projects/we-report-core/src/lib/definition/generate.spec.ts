@@ -15,8 +15,9 @@ describe('generateListReport', () => {
     const report = generateListReport(createBlankReport(), inferSchema(rows), labels);
     const detail = report.bands.find((b) => b.kind === 'detail')!;
     const cells = detail.controls.filter((c) => c.type === 'text');
-    expect(cells.map((c) => (c.type === 'text' && typeof c.text !== 'string' ? c.text.expression : ''))).toEqual(['[id]', '[customer]', '[orderDate]', '[amount]', '[paid]']);
-    const last = cells[cells.length - 1];
+    expect(cells.map((c) => (c.type === 'text' && typeof c.text !== 'string' ? c.text.expression : ''))).toEqual(['[id]', '[customer]', '[orderDate]', '[amount]']);
+    expect(detail.controls.find((c) => c.type === 'checkbox')).toBeDefined(); // booleans print as a tick box
+    const last = detail.controls.filter((c) => c.type !== 'line').at(-1)!;
     expect(last.x + last.width).toBeCloseTo(resolvePageGeometry(report.page).contentWidth, 6);
     expect(cells.find((c) => c.id === 'cell3')!.type === 'text' && (cells[2] as { format?: string }).format).toBe('dd.MM.yyyy');
   });
@@ -43,10 +44,10 @@ describe('generateListReport', () => {
   });
 
   it('treats identifier columns as plain values and whole numbers without decimals', () => {
-    const data = [{ 'Sipariş No': 1000, qty: 3, price: 2.5 }, { 'Sipariş No': 1001, qty: 4, price: 3 }];
+    const data = [{ 'Sipariş No': 1000, orderNo: 7, qty: 3, price: 2.5 }, { 'Sipariş No': 1001, orderNo: 8, qty: 4, price: 3 }];
     const report = generateListReport(createBlankReport(), inferSchema(data), labels, '', data);
     const formats = report.bands.find((b) => b.kind === 'detail')!.controls.filter((c) => c.type === 'text').map((c) => (c as { format?: string }).format);
-    expect(formats).toEqual([undefined, 'n0', 'n2']);
+    expect(formats).toEqual(['d', 'd', 'n0', 'n2']);
     const totals = report.bands.find((b) => b.kind === 'reportFooter')!.controls.map((c) => (c.type === 'text' && typeof c.text !== 'string' ? c.text.expression : c.id));
     expect(totals).toEqual(['totalLabel', 'Sum([qty])', 'Sum([price])']);
   });

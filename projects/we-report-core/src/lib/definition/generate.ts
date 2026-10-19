@@ -30,7 +30,10 @@ export function captionFor(name: string): string {
 }
 
 // Identifier columns are shown as they are and never summed: "id", "customer_id", "Sipariş No", "Kod" …
-const ID_LIKE = /(^|[\s_\-.])(id|no|nr|code|kod|number|numara|numarası)$|[a-z]Id$/i;
+const ID_LIKE = /(^|[\s_\-.])(id|no|nr|code|kod|number|numara|numarası)$/i;
+// camelCase identifiers: "customerId", "orderNo" (case-sensitive, so "casino" is not one).
+const CAMEL_ID = /[a-z](Id|ID|No|Nr|Code|Number)$/;
+const idLike = (name: string) => ID_LIKE.test(name) || CAMEL_ID.test(name);
 const MAX_COLUMNS = 12;
 
 /** Relative column width by data type: text needs the most room. */
@@ -68,7 +71,7 @@ export function generateListReport(
   });
 
   const numeric = (f: FieldSchema) => f.type === 'number';
-  const summable = (f: FieldSchema) => numeric(f) && !ID_LIKE.test(f.name);
+  const summable = (f: FieldSchema) => numeric(f) && !idLike(f.name);
   // Whole-number columns (quantities, counts) get no decimals; the sample rows decide.
   const wholeNumbers = (f: FieldSchema) =>
     rows.length > 0 && rows.every((r) => {
@@ -76,7 +79,7 @@ export function generateListReport(
       return v === null || v === undefined || Number.isInteger(v);
     });
   const formatOf = (f: FieldSchema) =>
-    f.type === 'date' ? 'dd.MM.yyyy' : f.type === 'number' && !ID_LIKE.test(f.name) ? (wholeNumbers(f) ? 'n0' : 'n2') : undefined;
+    f.type === 'date' ? 'dd.MM.yyyy' : f.type !== 'number' ? undefined : idLike(f.name) ? 'd' : wholeNumbers(f) ? 'n0' : 'n2';
   const field = (f: FieldSchema) => `[${parentPrefix}${f.name}]`;
 
   const headerCells: ReportControl[] = layout.map(({ field: f, x, width: w }, i) => ({
@@ -90,19 +93,24 @@ export function generateListReport(
     styleOverrides: numeric(f) ? { textAlign: 'right' } : undefined,
     text: captionFor(f.name),
   }));
-  const detailCells: ReportControl[] = layout.map(({ field: f, x, width: w }, i) => ({
-    id: `cell${i + 1}`,
-    type: 'text',
-    x,
-    y: 0,
-    width: w,
-    height: 6,
-    style: 'cell',
-    styleOverrides: numeric(f) ? { textAlign: 'right' } : undefined,
-    text: { expression: field(f) },
-    format: formatOf(f),
-    canGrow: f.type === 'string' ? true : undefined,
-  }));
+  const detailCells: ReportControl[] = layout.map(({ field: f, x, width: w }, i): ReportControl =>
+    // Yes/no values print as a tick box.
+    f.type === 'boolean'
+      ? { id: `cell${i + 1}`, type: 'checkbox', x, y: 0.5, width: w, height: 5, checked: { expression: field(f) } }
+      : {
+          id: `cell${i + 1}`,
+          type: 'text',
+          x,
+          y: 0,
+          width: w,
+          height: 6,
+          style: 'cell',
+          styleOverrides: numeric(f) ? { textAlign: 'right' } : undefined,
+          text: { expression: field(f) },
+          format: formatOf(f),
+          canGrow: f.type === 'string' ? true : undefined,
+        },
+  );
   const totalsRow = (prefix: string): ReportControl[] => {
     const cells: ReportControl[] = layout.filter(({ field: f }) => summable(f)).map(({ field: f, x, width: w }, i) => ({
       id: `${prefix}${i + 1}`,

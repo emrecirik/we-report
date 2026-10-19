@@ -16,6 +16,8 @@
 - Report wizard: "Design from data" now asks which columns to show, what to group by, whether to
   print totals and which paper orientation to use, then builds the list (`generateListReport`
   takes `GenerateOptions { groupBy, totals, orientation }`).
+- Generated lists: yes/no columns print as tick boxes; camelCase identifiers (`orderNo`,
+  `customerId`) are no longer summed and print without thousands separators.
 - Fix: duplicating several items of the same kind gave them the same id.
 
 ## 0.4.0 — 2026-10-19
