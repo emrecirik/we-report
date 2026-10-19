@@ -18,9 +18,11 @@ import {
   ReportControl,
   ReportStyle,
   resolveStyle,
+  formatValue,
 } from 'we-report-core';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WeReportIcons } from '../we-report-icons';
+import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportLocale } from '../we-report-locale';
 import { BindableInputComponent } from './bindable-input.component';
 import { DesignerField } from './designer-fields';
@@ -102,6 +104,16 @@ export class PropertyPanelComponent {
   protected readonly papers = PAPER_SIZES;
   protected readonly symbologies = BARCODE_SYMBOLOGIES;
   protected readonly formats = FORMATS;
+  private readonly config = inject(WE_REPORT_CONFIG);
+  /** " · 1.234,50" after each format's name, written the way this report will print it. */
+  protected readonly formatSamples = computed(() => {
+    const r = this.report();
+    const options = { locale: r.locale || this.config.locale || 'en-US', currency: r.currency || this.config.currency || 'USD' };
+    const when = new Date(2026, 9, 19, 14, 30);
+    return Object.fromEntries(
+      FORMATS.map((f) => [f.value, f.value ? ' · ' + formatValue(f.value.startsWith('d') ? when : f.value.startsWith('p') ? 0.25 : 1234.5, f.value, options) : '']),
+    ) as Record<string, string>;
+  });
   protected readonly alignActions = ALIGN_ACTIONS;
   protected readonly chartTypes = CHART_TYPES;
   protected readonly cultures = CULTURES;

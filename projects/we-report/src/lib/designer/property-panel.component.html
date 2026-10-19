@@ -262,7 +262,7 @@
             <span>{{ s.format }}</span>
             <select (change)="set('format', $any($event.target).value)">
               @for (f of formats; track f.value) {
-                <option [value]="f.value" [selected]="(c.format ?? '') === f.value">{{ $any(s)[f.key] }}</option>
+                <option [value]="f.value" [selected]="(c.format ?? '') === f.value">{{ $any(s)[f.key] }}{{ formatSamples()[f.value] }}</option>
               }
               @if (formatIsCustom()) {
                 <option [value]="c.format" selected>{{ c.format }}</option>
@@ -407,7 +407,7 @@
               <span>{{ s.format }}</span>
               <select (change)="setCell({ format: $any($event.target).value || undefined })">
                 @for (f of formats; track f.value) {
-                  <option [value]="f.value" [selected]="(cellInfo.cell.format ?? '') === f.value">{{ s[f.key] }}</option>
+                  <option [value]="f.value" [selected]="(cellInfo.cell.format ?? '') === f.value">{{ s[f.key] }}{{ formatSamples()[f.value] }}</option>
                 }
               </select>
             </label>
@@ -483,7 +483,7 @@
             <span>{{ s.format }}</span>
             <select (change)="set('format', $any($event.target).value)">
               @for (f of formats; track f.value) {
-                <option [value]="f.value" [selected]="(c.format ?? '') === f.value">{{ s[f.key] }}</option>
+                <option [value]="f.value" [selected]="(c.format ?? '') === f.value">{{ s[f.key] }}{{ formatSamples()[f.value] }}</option>
               }
             </select>
           </label>
