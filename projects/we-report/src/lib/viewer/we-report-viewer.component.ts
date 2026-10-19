@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FontRegistry, LayoutDocument, LayoutProblem, layoutReport, loadReportData, renderPdf, ReportDefinition, ReportParameter, reportTable, writeXlsx } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
@@ -16,10 +16,34 @@ import { WeReportPageComponent } from './we-report-page.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="we-report-viewer__toolbar" role="toolbar">
-      <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() - 0.1)" [attr.aria-label]="strings().zoomOut" [title]="strings().zoomOut" [innerHTML]="'zoomOut' | weReportIcon"></button>
-      <span class="we-report-viewer__zoom">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
-      <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() + 0.1)" [attr.aria-label]="strings().zoomIn" [title]="strings().zoomIn" [innerHTML]="'zoomIn' | weReportIcon"></button>
-      <span class="we-report-viewer__pages">{{ pageLabel() }}</span>
+      <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() - 0.1)" [attr.aria-label]="strings().zoomOut" [title]="strings().zoomOut + ' (Ctrl+-)'" [innerHTML]="'zoomOut' | weReportIcon"></button>
+      <select class="we-report-viewer__zoomsel" (change)="pickZoom($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="strings().zoomIn">
+        <option value="" selected>{{ (zoomLevel() * 100).toFixed(0) }}%</option>
+        @for (z of zoomSteps; track z) {
+          <option [value]="z">{{ z * 100 }}%</option>
+        }
+        <option value="width">{{ strings().fitWidth }}</option>
+        <option value="page">{{ strings().fitPage }}</option>
+      </select>
+      <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() + 0.1)" [attr.aria-label]="strings().zoomIn" [title]="strings().zoomIn + ' (Ctrl+=)'" [innerHTML]="'zoomIn' | weReportIcon"></button>
+      @if (pageTotal() > 1) {
+        <span class="we-report-viewer__sep"></span>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(1)" [title]="strings().firstPage + ' (Home)'" [attr.aria-label]="strings().firstPage">⏮</button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)" [title]="strings().previousPage + ' (PgUp)'" [attr.aria-label]="strings().previousPage">◀</button>
+        <input class="we-report-viewer__pagebox" type="number" min="1" [max]="pageTotal()" [value]="currentPage()" (change)="goToPage(+$any($event.target).value)" [attr.aria-label]="strings().pageNumber" />
+        <span class="we-report-viewer__pages">{{ strings().pageOf.replace('{0}', '' + pageTotal()) }}</span>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() >= pageTotal()" (click)="goToPage(currentPage() + 1)" [title]="strings().nextPage + ' (PgDn)'" [attr.aria-label]="strings().nextPage">▶</button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() >= pageTotal()" (click)="goToPage(pageTotal())" [title]="strings().lastPage + ' (End)'" [attr.aria-label]="strings().lastPage">⏭</button>
+      } @else {
+        <span class="we-report-viewer__pages">{{ pageLabel() }}</span>
+      }
+      <span class="we-report-viewer__sep"></span>
+      <input #searchBox class="we-report-viewer__search" type="search" [placeholder]="strings().search + ' (Ctrl+F)'" [value]="query()" (input)="setQuery($any($event.target).value)" (keydown.enter)="nextMatch($any($event).shiftKey ? -1 : 1)" [attr.aria-label]="strings().search" />
+      @if (query().trim()) {
+        <span class="we-report-viewer__pages">{{ matches().length ? strings().matches.replace('{0}', '' + (matchIndex() + 1)).replace('{1}', '' + matches().length) : strings().noMatches }}</span>
+        <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(-1)" [attr.aria-label]="strings().previousPage">▲</button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(1)" [attr.aria-label]="strings().nextPage">▼</button>
+      }
       <span class="we-report-viewer__spacer"></span>
       <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="print()" [disabled]="!document()">
         <span [innerHTML]="'print' | weReportIcon"></span>{{ strings().print }}
@@ -74,10 +98,18 @@ import { WeReportPageComponent } from './we-report-page.component';
         </ul>
       </details>
     }
-    <div class="we-report-viewer__scroll">
+    <div #scroller class="we-report-viewer__scroll" tabindex="0" (scroll)="onScroll()">
       @if (document(); as doc) {
-        @for (page of doc.pages; track $index) {
-          <we-report-page class="we-report-viewer__page" [page]="page" [zoom]="zoomLevel()" />
+        @for (page of doc.pages; track $index; let p = $index) {
+          <we-report-page
+            class="we-report-viewer__page"
+            [attr.data-page]="p + 1"
+            [page]="page"
+            [zoom]="zoomLevel()"
+            [highlight]="query()"
+            [locale]="config.locale"
+            [current]="currentHit()?.page === p ? currentHit() : null"
+          />
         }
       } @else if (!error()) {
         <div class="we-report-viewer__loading">{{ strings().loading }}</div>
@@ -155,6 +187,41 @@ import { WeReportPageComponent } from './we-report-page.component';
       margin-left: 8px;
       font-variant-numeric: tabular-nums;
       color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+    }
+    .we-report-viewer__sep {
+      width: 0.5px;
+      height: 20px;
+      margin: 0 6px;
+      background: var(--we-report-separator, rgba(60, 60, 67, 0.14));
+    }
+    .we-report-viewer__zoomsel,
+    .we-report-viewer__pagebox,
+    .we-report-viewer__search {
+      height: 28px;
+      box-sizing: border-box;
+      border: 0;
+      border-radius: var(--we-report-control-radius, 7px);
+      padding: 0 8px;
+      background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
+      color: inherit;
+      font: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+    .we-report-viewer__zoomsel:focus,
+    .we-report-viewer__pagebox:focus,
+    .we-report-viewer__search:focus {
+      outline: none;
+      box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
+    }
+    .we-report-viewer__pagebox {
+      width: 56px;
+      text-align: center;
+    }
+    .we-report-viewer__search {
+      width: 180px;
+    }
+    .we-report-viewer__scroll:focus {
+      outline: none;
     }
     .we-report-viewer__spacer {
       flex: 1;
@@ -252,7 +319,7 @@ export class WeReportViewerComponent {
   readonly problems = output<LayoutProblem[]>();
   readonly rendered = output<LayoutDocument>();
 
-  private readonly config = inject(WE_REPORT_CONFIG);
+  protected readonly config = inject(WE_REPORT_CONFIG);
   private readonly fontsService = inject(WeReportFontsService);
   private readonly backend = inject(WeReportBackendService);
   private readonly dom = inject(DOCUMENT);
@@ -293,6 +360,113 @@ export class WeReportViewerComponent {
       const params = this.appliedParams();
       untracked(() => this.layout(report, data, now, params));
     }, { allowSignalWrites: true });
+  }
+
+  protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  protected readonly currentPage = signal(1);
+  protected readonly pageTotal = computed(() => this.document()?.pages.length ?? 0);
+  protected readonly query = signal('');
+  protected readonly matchIndex = signal(0);
+  private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+  private readonly searchBox = viewChild<ElementRef<HTMLInputElement>>('searchBox');
+
+  /** Every line containing the search text: page, item and line index, in reading order. */
+  protected readonly matches = computed(() => {
+    const q = this.query().trim().toLocaleLowerCase(this.config.locale);
+    const doc = this.document();
+    if (!q || !doc) return [];
+    const out: { page: number; item: number; line: number }[] = [];
+    doc.pages.forEach((page, p) =>
+      page.items.forEach((item, i) => {
+        if (item.kind !== 'text') return;
+        item.lines.forEach((line, l) => {
+          if (line.text.toLocaleLowerCase(this.config.locale).includes(q)) out.push({ page: p, item: i, line: l });
+        });
+      }),
+    );
+    return out;
+  });
+  protected readonly currentHit = computed(() => this.matches()[this.matchIndex()] ?? null);
+
+  protected setQuery(value: string): void {
+    this.query.set(value);
+    this.matchIndex.set(0);
+    queueMicrotask(() => this.revealHit());
+  }
+
+  protected nextMatch(step: 1 | -1): void {
+    const n = this.matches().length;
+    if (!n) return;
+    this.matchIndex.set((this.matchIndex() + step + n) % n);
+    queueMicrotask(() => this.revealHit());
+  }
+
+  private revealHit(): void {
+    const hit = this.currentHit();
+    if (!hit) return;
+    // Rendered after this change: wait a frame, then bring the line into view.
+    requestAnimationFrame(() => {
+      const page = this.scroller()?.nativeElement.querySelector(`[data-page="${hit.page + 1}"]`);
+      const rect = page?.querySelector(`[data-hit="${hit.item}-${hit.line}"]`) ?? page;
+      rect?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }
+
+  protected goToPage(n: number): void {
+    const target = Math.min(Math.max(1, Math.round(n) || 1), this.pageTotal());
+    this.scroller()?.nativeElement.querySelector(`[data-page="${target}"]`)?.scrollIntoView({ block: 'start' });
+    this.currentPage.set(target);
+  }
+
+  /** The page whose top is nearest the top of the view is the current page. */
+  protected onScroll(): void {
+    const box = this.scroller()?.nativeElement;
+    if (!box) return;
+    const top = box.getBoundingClientRect().top;
+    let best = 1;
+    box.querySelectorAll<HTMLElement>('[data-page]').forEach((el) => {
+      if (el.getBoundingClientRect().top - top <= box.clientHeight / 3) best = Number(el.dataset['page']);
+    });
+    this.currentPage.set(best);
+  }
+
+  protected pickZoom(value: string): void {
+    const box = this.scroller()?.nativeElement;
+    const page = this.document()?.pages[0];
+    if ((value === 'width' || value === 'page') && box && page) {
+      const pxPerMm = 96 / 25.4;
+      const byWidth = (box.clientWidth - 64) / (page.width * pxPerMm);
+      const byHeight = (box.clientHeight - 64) / (page.height * pxPerMm);
+      this.setZoom(value === 'width' ? byWidth : Math.min(byWidth, byHeight));
+    } else if (value) {
+      this.setZoom(Number(value));
+    }
+  }
+
+  @HostListener('keydown', ['$event'])
+  protected onKeydown(e: KeyboardEvent): void {
+    const mod = e.ctrlKey || e.metaKey;
+    const typing = (e.target as HTMLElement).closest('input, textarea, select');
+    if (mod && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      this.searchBox()?.nativeElement.focus();
+      this.searchBox()?.nativeElement.select();
+    } else if (mod && e.key.toLowerCase() === 'p') {
+      e.preventDefault();
+      void this.print();
+    } else if (mod && (e.key === '=' || e.key === '+')) {
+      e.preventDefault();
+      this.setZoom(this.zoomLevel() + 0.1);
+    } else if (mod && e.key === '-') {
+      e.preventDefault();
+      this.setZoom(this.zoomLevel() - 0.1);
+    } else if (!typing && (e.key === 'PageDown' || e.key === 'PageUp')) {
+      e.preventDefault();
+      this.goToPage(this.currentPage() + (e.key === 'PageDown' ? 1 : -1));
+    } else if (!typing && (e.key === 'Home' || e.key === 'End')) {
+      e.preventDefault();
+      this.goToPage(e.key === 'Home' ? 1 : this.pageTotal());
+    }
   }
 
   protected setZoom(value: number): void {

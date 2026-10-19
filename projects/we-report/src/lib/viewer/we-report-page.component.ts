@@ -20,7 +20,7 @@ const PT_TO_MM = 25.4 / 72;
       [style.width.mm]="page().width * zoom()"
       [style.height.mm]="page().height * zoom()"
     >
-      @for (item of page().items; track $index) {
+      @for (item of page().items; track $index; let i = $index) {
         @switch (item.kind) {
           @case ('rect') {
             <rect
@@ -58,7 +58,19 @@ const PT_TO_MM = 25.4 / 72;
           }
           @case ('text') {
             <svg [attr.x]="item.x" [attr.y]="item.y" [attr.width]="item.width" [attr.height]="item.height" overflow="hidden">
-              @for (line of text(item).lines; track $index) {
+              @for (line of text(item).lines; track $index; let l = $index) {
+                @if (isHit(line.text)) {
+                  <rect
+                    class="we-report-page__hit"
+                    [class.we-report-page__hit--current]="current()?.item === i && current()?.line === l"
+                    [attr.data-hit]="i + '-' + l"
+                    [attr.x]="line.x - item.x - 0.4"
+                    [attr.y]="line.baseline - item.y - text(item).size * ptToMm * 0.85"
+                    [attr.width]="line.width + 0.8"
+                    [attr.height]="text(item).size * ptToMm * 1.15"
+                    rx="0.4"
+                  />
+                }
                 <text
                   class="we-report-page__text"
                   [attr.x]="line.x - item.x"
@@ -105,6 +117,13 @@ const PT_TO_MM = 25.4 / 72;
       background: var(--we-report-page-bg, #fff);
       box-shadow: var(--we-report-page-shadow, 0 1px 3px rgba(0, 0, 0, 0.2));
     }
+    .we-report-page__hit {
+      fill: var(--we-report-search-highlight, rgba(255, 204, 0, 0.45));
+    }
+    .we-report-page__hit--current {
+      stroke: var(--we-report-accent, #007aff);
+      stroke-width: 0.4;
+    }
     .we-report-page__text {
       white-space: pre;
       font-kerning: none;
@@ -114,8 +133,18 @@ const PT_TO_MM = 25.4 / 72;
 export class WeReportPageComponent {
   readonly page = input.required<LayoutPage>();
   readonly zoom = input(1);
+  /** Lines containing this text are highlighted (case-insensitive). */
+  readonly highlight = input('');
+  /** The match the viewer is showing now, drawn stronger. */
+  readonly current = input<{ item: number; line: number } | null>(null);
+  readonly locale = input<string | undefined>(undefined);
 
   protected readonly ptToMm = PT_TO_MM;
+
+  protected isHit(text: string): boolean {
+    const q = this.highlight().trim();
+    return !!q && text.toLocaleLowerCase(this.locale()).includes(q.toLocaleLowerCase(this.locale()));
+  }
 
   protected text(item: unknown): TextItem {
     return item as TextItem;

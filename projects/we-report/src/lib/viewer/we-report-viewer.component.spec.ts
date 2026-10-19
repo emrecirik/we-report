@@ -44,7 +44,16 @@ describe('WeReportViewerComponent', () => {
     const texts = Array.from(pages[0].querySelectorAll('text')).map((t) => (t as SVGTextElement).textContent);
     expect(texts[0]).toBe('Satır 1');
     expect(texts).toContain('1 / 3');
-    expect(fixture.nativeElement.querySelector('.we-report-viewer__pages').textContent).toBe('3 sayfa');
+    expect(fixture.nativeElement.querySelector('.we-report-viewer__pagebox').value).toBe('1');
+    expect(fixture.nativeElement.querySelector('.we-report-viewer__pages').textContent).toBe('/ 3');
+
+    // Find in report: every line containing the text is highlighted, case-insensitively.
+    const search = fixture.nativeElement.querySelector('.we-report-viewer__search') as HTMLInputElement;
+    search.value = 'SATIR 1';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.we-report-page__hit').length).toBeGreaterThan(0);
+    expect(fixture.nativeElement.querySelectorAll('.we-report-page__hit--current').length).toBe(1);
   });
 
   it('uses the prefixed font family so an installed font cannot replace the measured one', async () => {

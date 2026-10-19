@@ -258,6 +258,15 @@ export interface WeReportLocale {
   chartHint: string;
   conditionalFormatting: string;
   watermark: string;
+  firstPage: string;
+  previousPage: string;
+  nextPage: string;
+  lastPage: string;
+  pageOf: string;
+  search: string;
+  matches: string;
+  noMatches: string;
+  fitPage: string;
   keyboardShortcuts: string;
   editText: string;
   editFormula: string;
@@ -600,6 +609,15 @@ export const weReportLocaleEn: WeReportLocale = {
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
+  firstPage: 'First page',
+  previousPage: 'Previous page',
+  nextPage: 'Next page',
+  lastPage: 'Last page',
+  pageOf: 'of {0}',
+  search: 'Find in report',
+  matches: '{0} of {1}',
+  noMatches: 'No matches',
+  fitPage: 'Whole page',
   keyboardShortcuts: 'Keyboard shortcuts',
   editText: 'Edit the text',
   editFormula: 'Edit the formula…',
@@ -974,6 +992,15 @@ export const weReportLocaleTr: WeReportLocale = {
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
+  firstPage: 'İlk sayfa',
+  previousPage: 'Önceki sayfa',
+  nextPage: 'Sonraki sayfa',
+  lastPage: 'Son sayfa',
+  pageOf: '/ {0}',
+  search: 'Raporda ara',
+  matches: '{0} / {1}',
+  noMatches: 'Bulunamadı',
+  fitPage: 'Tüm sayfa',
   keyboardShortcuts: 'Klavye kısayolları',
   editText: 'Metni düzenle',
   editFormula: 'Formülü düzenle…',
