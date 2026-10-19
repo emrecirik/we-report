@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-10-20
 
 - Designer, desktop comfort: type on the page (double-click, F2 or just start typing on a selected
   text or table cell), formulas open the formula editor; rubber-band selection; distances to the nearest items while moving; Ctrl+drag copies;

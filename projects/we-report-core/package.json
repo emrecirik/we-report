@@ -1,6 +1,6 @@
 {
   "name": "we-report-core",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Framework-free report engine for we-report: report definition model, expression language, layout/pagination and PDF/Excel/HTML rendering. Runs in the browser and Node.",
   "license": "MIT",
   "author": "Emre CIRIK",
