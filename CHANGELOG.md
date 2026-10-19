@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Sample backends for **PHP** (plain PHP 8.2+, PDO, no framework or Composer packages) and **Go**
+  (one static binary; SQLite in pure Go, PostgreSQL via pgx). Both pass the protocol conformance
+  suite against SQLite and PostgreSQL in CI and follow the same security rules as the others:
+  local-only without a token, read-only queries with timeouts and row limits, free SQL off by
+  default, 1 MB request bodies, and an SSRF-guarded web-service proxy pinned to checked addresses.
+
 ## 0.3.0 — 2026-10-19
 
 - Inner lists (master–detail): new `subHeader`, `subDetail` (with `rowsPath`) and `subFooter`

@@ -26,7 +26,7 @@ backend required**.
 - **Plain language.** "Grow to fit text", "Keep group on one page", "Show only when" — a Basic mode
   that hides everything a first report does not need.
 - **Any backend, or none.** Everything runs in the browser. For live databases there is a small,
-  documented protocol and ready-made backends for **.NET, Spring Boot, Node.js and Python**.
+  documented protocol and ready-made backends for **.NET, Spring Boot, Node.js, Python, PHP and Go**.
 - **Yours.** Your fonts embedded in PDFs, your colours (designer theme and report styles), English
   and Turkish out of the box, free forever.
 

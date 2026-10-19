@@ -20,6 +20,8 @@ any language — the contract is [`protocol/openapi.yaml`](../protocol/openapi.y
 | .NET (ASP.NET Core) | [`samples/backends/dotnet`](../samples/backends/dotnet) | SQL Server, PostgreSQL, SQLite |
 | Java (Spring Boot) | [`samples/backends/spring-boot`](../samples/backends/spring-boot) | SQL Server, PostgreSQL, SQLite |
 | Python (FastAPI) | [`samples/backends/python`](../samples/backends/python) | PostgreSQL, SQLite |
+| PHP (no framework, PDO) | [`samples/backends/php`](../samples/backends/php) | PostgreSQL, SQLite |
+| Go (single binary) | [`samples/backends/go`](../samples/backends/go) | PostgreSQL, SQLite (pure Go) |
 
 Each one runs in about three commands, ships a Dockerfile, and serves a fictional sample shop
 database when no connection is configured. Every one passes the same
