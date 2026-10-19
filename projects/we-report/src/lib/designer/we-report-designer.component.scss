@@ -730,6 +730,12 @@ button {
   gap: 8px;
 }
 
+.wd__wizard-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
 .wd__wizard-fields {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

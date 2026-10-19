@@ -279,6 +279,21 @@
         }
       </select>
     </label>
+    <div class="wd__wizard-row">
+      <span>{{ s.sortRows }}</span>
+      <span class="wd__wizard-pair">
+        <select (change)="updateWizard({ sortBy: $any($event.target).value })" [attr.aria-label]="s.sortRows">
+          <option value="" [selected]="!w.sortBy">{{ s.dataOrder }}</option>
+          @for (f of w.fields; track f.name) {
+            <option [value]="f.name" [selected]="f.name === w.sortBy">{{ f.name }}</option>
+          }
+        </select>
+        <select [disabled]="!w.sortBy" (change)="updateWizard({ sortDescending: $any($event.target).value === 'desc' })" [attr.aria-label]="s.sortRows">
+          <option value="asc" [selected]="!w.sortDescending">{{ s.sortAsc }}</option>
+          <option value="desc" [selected]="w.sortDescending">{{ s.sortDesc }}</option>
+        </select>
+      </span>
+    </div>
     <label class="wd__wizard-row">
       <span>{{ s.orientation }}</span>
       <select (change)="updateWizard({ orientation: $any($event.target).value })">

@@ -15,6 +15,9 @@ export interface GenerateOptions {
   groupBy?: string;
   /** Totals of numeric columns at the end (and per group). Default true. */
   totals?: boolean;
+  /** Rows are sorted by this field (inside their group). */
+  sortBy?: string;
+  sortDescending?: boolean;
   /** Default: landscape when there are more than seven columns. */
   orientation?: 'portrait' | 'landscape';
 }
@@ -147,6 +150,7 @@ export function generateListReport(
       id: 'detail',
       kind: 'detail',
       height: 6,
+      sortBy: options.sortBy ? [{ expression: `[${parentPrefix}${options.sortBy}]`, descending: options.sortDescending || undefined }] : undefined,
       controls: [...detailCells, { id: 'rowRule', type: 'line', x: 0, y: 5.6, width, height: 0.8, direction: 'horizontal', lineWidth: 0.1, color: '#e5e7eb' }],
     },
   ];

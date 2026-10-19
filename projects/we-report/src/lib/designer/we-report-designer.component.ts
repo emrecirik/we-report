@@ -459,6 +459,8 @@ export class WeReportDesignerComponent {
     title: string;
     fields: { name: string; on: boolean }[];
     groupBy: string;
+    sortBy: string;
+    sortDescending: boolean;
     totals: boolean;
     orientation: '' | 'portrait' | 'landscape';
   } | null>(null);
@@ -474,6 +476,8 @@ export class WeReportDesignerComponent {
       title: name && name !== 'Report' ? name : this.strings().newReportTitle,
       fields: fields.map((f, i) => ({ name: f.name, on: i < 12 })),
       groupBy: '',
+      sortBy: '',
+      sortDescending: false,
       totals: true,
       orientation: '',
     });
@@ -502,6 +506,8 @@ export class WeReportDesignerComponent {
     this.state.update((d) => {
       const generated = generateListReport(d, fields, { title: w.title, total: s.totalLabel, pageOf: s.pageOfFormat }, '', rows ?? [], {
         groupBy: w.groupBy || undefined,
+        sortBy: w.sortBy || undefined,
+        sortDescending: w.sortDescending,
         totals: w.totals,
         orientation: w.orientation || undefined,
       });

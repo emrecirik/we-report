@@ -71,6 +71,9 @@ describe('generateListReport', () => {
     expect(texts).toContain('6');
     expect(doc.problems).toEqual([]);
 
+    const sorted = generateListReport(createBlankReport(), inferSchema(data), labels, '', data, { sortBy: 'amount', sortDescending: true });
+    expect(sorted.bands.find((b) => b.kind === 'detail')!.sortBy).toEqual([{ expression: '[amount]', descending: true }]);
+
     const plain = generateListReport(createBlankReport(), inferSchema(data), labels, '', data, { totals: false });
     expect(plain.bands.some((b) => b.kind === 'reportFooter')).toBeFalse();
   });
