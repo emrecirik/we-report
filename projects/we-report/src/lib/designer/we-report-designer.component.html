@@ -243,6 +243,7 @@
       <button type="button" role="menuitem" (click)="menu(editSelected.bind(this))"><span [innerHTML]="'edit' | weReportIcon"></span>{{ s.editText }}<kbd>F2</kbd></button>
       @if (totalTarget()) {
         <button type="button" role="menuitem" (click)="menu(addTotal.bind(this))"><span [innerHTML]="'sum' | weReportIcon"></span>{{ s.addTotal }}</button>
+        <button type="button" role="menuitem" (click)="menu(groupByValue.bind(this))"><span [innerHTML]="'outline' | weReportIcon"></span>{{ s.groupByThis }}</button>
       }
       <button type="button" role="menuitem" (click)="menu(state.duplicateSelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.duplicate }}<kbd>Ctrl+D</kbd></button>
       <hr />

@@ -284,6 +284,7 @@ export interface WeReportLocale {
   wizardTotals: string;
   automatic: string;
   createReport: string;
+  groupByThis: string;
   addTotal: string;
   filterFields: string;
   previousMatch: string;
@@ -656,6 +657,7 @@ export const weReportLocaleEn: WeReportLocale = {
   wizardTotals: 'Totals of number columns',
   automatic: 'Automatic',
   createReport: 'Create report',
+  groupByThis: 'Group rows by this value',
   addTotal: 'Add a total of this column',
   filterFields: 'Find a field',
   previousMatch: 'Previous match',
@@ -1060,6 +1062,7 @@ export const weReportLocaleTr: WeReportLocale = {
   wizardTotals: 'Sayı sütunlarının toplamı',
   automatic: 'Otomatik',
   createReport: 'Raporu oluştur',
+  groupByThis: 'Satırları bu değere göre grupla',
   addTotal: 'Bu sütunun toplamını ekle',
   filterFields: 'Alan ara',
   previousMatch: 'Önceki eşleşme',

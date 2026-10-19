@@ -52,6 +52,18 @@ describe('WeReportDesignerComponent', () => {
     expect(state.report().bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'groupFooter', 'reportFooter', 'pageFooter']);
   });
 
+  it('groups rows by the value of the selected detail item', () => {
+    const report = createBlankReport();
+    report.bands[1].controls.push({ id: 'city', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[city]' } });
+    create(report, [{ city: 'a' }]);
+    state.selection.set({ kind: 'controls', ids: ['city'] });
+    (fixture.componentInstance as unknown as { groupByValue(): void }).groupByValue();
+    const header = state.report().bands.find((b) => b.kind === 'groupHeader')!;
+    expect(header.groupBy).toEqual({ expression: '[city]' });
+    expect(header.controls.map((c) => (c.type === 'text' ? c.text : null))).toEqual([{ expression: '[city]' }]);
+    expect(state.report().bands.some((b) => b.kind === 'groupFooter' && b.groupHeaderId === header.id)).toBeTrue();
+  });
+
   it('builds a grouped, sorted list from the report wizard', () => {
     create(createBlankReport(), [
       { city: 'B', name: 'x', amount: 2, paid: true },

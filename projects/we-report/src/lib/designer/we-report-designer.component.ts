@@ -367,6 +367,11 @@ export class WeReportDesignerComponent {
     return this.state.selectedBand()?.kind === 'detail' || this.state.report().bands.find((b) => b.controls.includes(c))?.kind === 'detail' ? c : null;
   });
 
+  protected groupByValue(): void {
+    const c = this.totalTarget();
+    if (c?.type === 'text' && isExpression(c.text)) this.addBand('groupHeader', c.text.expression);
+  }
+
   /** Puts `Sum(...)` of the selected column under it in every group footer and the report footer. */
   protected addTotal(): void {
     const c = this.totalTarget();
@@ -484,14 +489,19 @@ export class WeReportDesignerComponent {
     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copy';
   }
 
-  protected addBand(kind: BandKind): void {
+  protected addBand(kind: BandKind, groupBy?: string): void {
     this.bandMenuOpen.set(false);
     const id = this.state.newId(kind);
     this.state.update((d) => {
       if (kind === 'groupHeader') {
-        const field = this.allFields().find((f) => !f.parent);
+        const expression = groupBy ?? this.allFields().find((f) => !f.parent)?.expression ?? '';
+        const width = resolvePageGeometry(d.page).contentWidth;
+        // A group made from a value shows that value as its heading.
+        const heading: ReportControl[] = groupBy
+          ? [{ id: `${id}Value`, type: 'text', x: 0, y: 1, width: Math.min(120, width), height: 6, text: { expression }, styleOverrides: { bold: true } }]
+          : [];
         // Pushed last, so after the stable sort it is the innermost group header…
-        d.bands.push({ id, kind, height: 8, groupBy: { expression: field?.expression ?? '' }, controls: [] });
+        d.bands.push({ id, kind, height: 8, groupBy: { expression }, controls: heading });
         // …and its footer, placed right after the detail band, the innermost footer.
         const detailIndex = d.bands.findIndex((b) => b.kind === 'detail');
         d.bands.splice(detailIndex + 1, 0, { id: `${id}Footer`, kind: 'groupFooter', groupHeaderId: id, height: 8, controls: [] });
