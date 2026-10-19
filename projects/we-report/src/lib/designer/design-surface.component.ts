@@ -803,6 +803,17 @@ export class DesignSurfaceComponent implements OnDestroy {
     });
   }
 
+  /** Enter or Escape pressed before the editor had focus: keep or drop what was typed. */
+  finishEditing(keep: boolean): void {
+    const editing = this.state.editing();
+    if (!editing) return;
+    const editor = this.host.nativeElement.querySelector<HTMLTextAreaElement>('.ds__editor');
+    const text = editor?.value ?? this.editSeed() ?? '';
+    this.state.editing.set(null);
+    if (keep) this.setText(editing.controlId, editing.row, editing.cell, text);
+    this.host.nativeElement.focus({ preventScroll: true });
+  }
+
   /** Keys typed before the editor has focus (fast typists) are not lost. */
   appendToEdit(key: string): void {
     if (this.editSeed() !== null) this.editSeed.update((s) => s + key);

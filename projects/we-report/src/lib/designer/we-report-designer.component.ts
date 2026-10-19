@@ -429,7 +429,8 @@ export class WeReportDesignerComponent {
     // Text is being typed on the page and its editor is about to take focus.
     if (this.state.editing() && !typing) {
       e.preventDefault();
-      if (e.key.length === 1 && !mod) this.surface()?.appendToEdit(e.key);
+      if (e.key === 'Enter' || e.key === 'Escape') this.surface()?.finishEditing(e.key === 'Enter');
+      else if (e.key.length === 1 && !mod) this.surface()?.appendToEdit(e.key);
       return;
     }
     if (mod && e.key.toLowerCase() === 'z' && !typing) {
