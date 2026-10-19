@@ -278,13 +278,16 @@ export class PropertyPanelComponent {
     const column = at?.column ?? c.columns.length - 1;
     this.state.updateControls([c.id], (t, band) => {
       if (t.type !== 'table') return;
+      // A section exactly as tall as the table follows it when rows go away.
+      const fitted = Math.abs(band.height - (t.y + t.height)) < 0.01;
       if (op === 'insertRow') insertRow(t, row);
       else if (op === 'insertColumn') insertColumn(t, column);
       else if (op === 'deleteRow') deleteRow(t, row);
       else if (op === 'deleteColumn') deleteColumn(t, column);
       else if (op === 'mergeRight' && at) mergeRight(t, at.row, at.index);
       else if (op === 'splitCell' && at) splitCell(t, at.row, at.index);
-      band.height = Math.max(band.height, t.y + t.height);
+      const bottom = Math.max(t.y + t.height, ...band.controls.filter((x) => x !== t).map((x) => x.y + x.height));
+      band.height = fitted ? Math.max(2, bottom) : Math.max(band.height, t.y + t.height);
     });
     // A removed row or cell leaves no selection behind.
     const t = this.control();
