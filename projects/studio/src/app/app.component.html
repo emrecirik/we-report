@@ -13,10 +13,10 @@
   </label>
   <button type="button" (click)="openDataDialog()">{{ t.data }}</button>
   <label class="file">
-    <input type="file" accept=".json,.rdlc,.rdl,.repx,application/json" (change)="open($event)" [title]="t.openHint" />
+    <input #openInput type="file" accept=".json,.rdlc,.rdl,.repx,application/json" (change)="open($event)" [title]="t.openHint + ' (Ctrl+O)'" />
     {{ t.open }}
   </label>
-  <button type="button" (click)="save()">{{ t.save }}</button>
+  <button type="button" (click)="save()" title="Ctrl+S">{{ t.save }}</button>
   <span class="spacer"></span>
   <a class="badge" href="https://www.npmjs.com/package/we-report-angular" target="_blank" rel="noopener" title="npm">
     <img src="https://img.shields.io/npm/v/we-report-angular.svg?label=npm" alt="npm version" height="20" />

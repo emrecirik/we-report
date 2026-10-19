@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT, StudioLanguage } from './studio-text';
@@ -190,6 +190,22 @@ export class AppComponent {
     } else if (/\.(json|csv|tsv|txt)$/i.test(file.name) || /json|csv|text/.test(file.type)) {
       this.dataDraft.set(await file.text());
       this.applyData();
+    }
+  }
+
+  private readonly openInput = viewChild<ElementRef<HTMLInputElement>>('openInput');
+
+  /** Desktop shortcuts: Ctrl+S saves the report file, Ctrl+O opens one. */
+  @HostListener('window:keydown', ['$event'])
+  protected onKeydown(e: KeyboardEvent): void {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    const key = e.key.toLowerCase();
+    if (key === 's') {
+      e.preventDefault();
+      this.save();
+    } else if (key === 'o') {
+      e.preventDefault();
+      this.openInput()?.nativeElement.click();
     }
   }
 
