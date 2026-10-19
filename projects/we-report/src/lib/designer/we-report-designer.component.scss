@@ -247,7 +247,7 @@ button {
 .wd__body {
   flex: 1;
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr) 288px;
+  grid-template-columns: 232px 6px minmax(0, 1fr) 6px 288px;
   min-height: 0;
 }
 
@@ -259,7 +259,6 @@ button {
 
 .wd__left {
   padding: 14px 12px 28px;
-  border-right: 0.5px solid var(--we-report-separator, rgba(60, 60, 67, 0.14));
 
   h2 {
     margin: 4px 4px 2px;
@@ -275,8 +274,9 @@ button {
   }
 }
 
+.wd__left,
 .wd__right {
-  border-left: 0.5px solid var(--we-report-separator, rgba(60, 60, 67, 0.14));
+  min-width: 0;
 }
 
 .wd__hint {
@@ -664,4 +664,85 @@ button {
 .wd__status-sel {
   color: var(--we-report-fg, #1d1d1f);
   font-weight: 500;
+}
+
+// ── Panel splitters, shortcuts sheet ───────────────────────────────────────
+
+.wd__splitter {
+  position: relative;
+  cursor: col-resize;
+  background: var(--we-report-panel-bg, #fbfbfd);
+  touch-action: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 0.5px;
+    background: var(--we-report-separator, rgba(60, 60, 67, 0.14));
+  }
+
+  &:hover::after {
+    width: 2px;
+    margin-left: -1px;
+    background: var(--we-report-accent, #007aff);
+  }
+}
+
+.wd__tool:focus-visible {
+  outline: none;
+  box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
+}
+
+.wd__sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: var(--we-report-backdrop, rgba(0, 0, 0, 0.22));
+}
+
+.wd__sheet {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 151;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: var(--we-report-panel-bg, #fbfbfd);
+  box-shadow: var(--we-report-popover-shadow, 0 8px 24px rgba(0, 0, 0, 0.14));
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+}
+
+.wd__keys {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0 0 14px;
+
+  dt {
+    font: 12px ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    color: var(--we-report-accent, #007aff);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.wd__collapsed {
+  visibility: hidden;
+  padding: 0 !important;
+  overflow: hidden !important;
 }

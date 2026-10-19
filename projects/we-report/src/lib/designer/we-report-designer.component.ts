@@ -12,6 +12,27 @@ import { DesignerState } from './designer-state';
 import { PropertyPanelComponent } from './property-panel.component';
 import { DataSourcesDialogComponent } from './data-sources-dialog.component';
 
+const WIDTH_KEY = 'we-report-designer.panels';
+
+/** Panel widths are a per-browser convenience; storage may be unavailable. */
+function readWidth(side: 'left' | 'right', fallback: number): number {
+  try {
+    const saved = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}')[side];
+    return typeof saved === 'number' && (saved === 0 || (saved >= 160 && saved <= 480)) ? saved : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeWidth(side: 'left' | 'right', width: number): void {
+  try {
+    const all = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}');
+    localStorage.setItem(WIDTH_KEY, JSON.stringify({ ...all, [side]: width }));
+  } catch {
+    /* not remembered */
+  }
+}
+
 const BAND_ORDER: Record<BandKind, number> = {
   pageHeader: 0,
   reportHeader: 1,
@@ -72,6 +93,10 @@ export class WeReportDesignerComponent {
   protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean } | null>(null);
   private readonly canvas = viewChild<ElementRef<HTMLElement>>('canvas');
   private readonly surface = viewChild(DesignSurfaceComponent);
+  protected readonly shortcutsOpen = signal(false);
+  /** Side panel widths in px; 0 hides a panel. Remembered in this browser. */
+  protected readonly leftWidth = signal(readWidth('left', 232));
+  protected readonly rightWidth = signal(readWidth('right', 288));
   protected readonly fontSizes = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
   protected readonly textAligns: { value: TextAlign; icon: keyof WeReportIcons; label: 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' }[] = [
     { value: 'left', icon: 'textLeft', label: 'alignLeft' },
@@ -113,8 +138,74 @@ export class WeReportDesignerComponent {
     return String(Math.round(v * 10) / 10);
   }
 
+  /** Where a click-added item goes: the selected section, the selected item's section, else the detail rows. */
+  private targetBand(): Band | undefined {
+    const bands = this.state.report().bands;
+    const sel = this.state.selection();
+    if (sel.kind === 'band') return bands.find((b) => b.id === sel.id);
+    if (sel.kind === 'controls') return this.state.findBandOf(sel.ids[0]);
+    return bands.find((b) => b.kind === 'detail') ?? bands[0];
+  }
+
+  /** Adds a toolbox item or a field without dragging: under (or, for rows, beside) what is there. */
+  protected addByClick(data: DesignerDragData): void {
+    const band = this.targetBand();
+    const surface = this.surface();
+    if (!band || !surface) return;
+    const width = resolvePageGeometry(this.state.report().page).contentWidth;
+    const right = Math.max(0, ...band.controls.map((c) => c.x + c.width));
+    const bottom = Math.max(0, ...band.controls.map((c) => c.y + c.height));
+    // Detail rows grow sideways (a new column); other sections grow downwards.
+    const beside = band.kind === 'detail' && data.kind === 'field' && right + 42 <= width;
+    surface.dropAt(data, band, beside ? Math.round(right + 2) : 0, beside ? 0 : Math.round(bottom + (band.controls.length ? 1 : 0)));
+  }
+
+  protected onToolClick(item: { type: ReportControlType; variant?: string }): void {
+    this.addByClick({ kind: 'control', type: item.type, variant: item.variant });
+  }
+
+  protected onFieldDblClick(field: DesignerField): void {
+    this.addByClick({ kind: 'field', path: field.path, parent: field.parent, format: formatFor({ name: field.path, type: field.type }) });
+  }
+
+  /** Dragging a panel edge; a double-click hides the panel or brings it back. */
+  protected startResize(e: PointerEvent, side: 'left' | 'right'): void {
+    e.preventDefault();
+    const target = side === 'left' ? this.leftWidth : this.rightWidth;
+    const start = e.clientX;
+    const from = target();
+    const move = (m: PointerEvent) => {
+      const delta = side === 'left' ? m.clientX - start : start - m.clientX;
+      target.set(Math.round(Math.min(480, Math.max(160, from + delta))));
+    };
+    const up = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      writeWidth(side, target());
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  }
+
+  protected togglePanel(side: 'left' | 'right'): void {
+    const target = side === 'left' ? this.leftWidth : this.rightWidth;
+    target.set(target() ? 0 : side === 'left' ? 232 : 288);
+    writeWidth(side, target());
+  }
+
+  protected editSelected(): void {
+    const c = this.state.selectedControls()[0];
+    if (c) this.surface()?.startEditing(c);
+  }
+
   protected format<K extends keyof ReportStyle>(key: K, value: ReportStyle[K] | undefined): void {
     this.state.applyStyle(key, value);
+  }
+
+  private typeStartsEditing(): boolean {
+    const controls = this.state.selectedControls();
+    const c = controls.length === 1 ? controls[0] : undefined;
+    return c?.type === 'text' && !isExpression(c.text);
   }
 
   protected toggleFormat(key: 'bold' | 'italic' | 'underline'): void {
@@ -354,6 +445,13 @@ export class WeReportDesignerComponent {
     } else if (mod && e.key === '-' && !typing) {
       e.preventDefault();
       this.setZoom(this.zoomLevel() - 0.1);
+    } else if (e.key === 'F1') {
+      e.preventDefault();
+      this.shortcutsOpen.set(!this.shortcutsOpen());
+    } else if (!typing && !mod && !e.altKey && e.key.length === 1 && e.key !== ' ' && this.typeStartsEditing()) {
+      // Typing on a selected text replaces it, as in a spreadsheet.
+      e.preventDefault();
+      this.surface()?.startEditing(this.state.selectedControls()[0], undefined, undefined, e.key);
     } else if (e.key === 'Tab' && !typing && !mod) {
       e.preventDefault();
       this.state.selectNext(e.shiftKey ? -1 : 1);

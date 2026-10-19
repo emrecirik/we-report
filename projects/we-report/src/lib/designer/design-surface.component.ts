@@ -498,10 +498,14 @@ export class DesignSurfaceComponent implements OnDestroy {
   protected readonly marquee = signal<{ bandId: string; x: number; y: number; width: number; height: number } | null>(null);
   /** A bound item whose formula is open in the editor. */
   protected readonly formulaEdit = signal<{ controlId: string; row?: number; cell?: number; expression: string } | null>(null);
+  /** A key typed on a selected text: editing starts with it instead of the old text. */
+  private readonly editSeed = signal<string | null>(null);
   /** The text an in-place editor starts with. */
   protected readonly editText = computed(() => {
     const e = this.state.editing();
     if (!e) return '';
+    const seed = this.editSeed();
+    if (seed !== null) return seed;
     const c = this.state.selectedControls().find((x) => x.id === e.controlId) ?? this.state.report().bands.flatMap((b) => b.controls).find((x) => x.id === e.controlId);
     const value = c?.type === 'text' ? c.text : c?.type === 'table' && e.row !== undefined && e.cell !== undefined ? c.rows[e.row]?.cells[e.cell]?.text : '';
     return typeof value === 'string' ? value : '';
@@ -771,7 +775,7 @@ export class DesignSurfaceComponent implements OnDestroy {
   }
 
   /** Double-click / F2: fixed text is typed on the page, a formula opens the formula editor. */
-  startEditing(c: ReportControl, row?: number, cell?: number): void {
+  startEditing(c: ReportControl, row?: number, cell?: number, seed?: string): void {
     let value: Bindable<string> | undefined;
     if (c.type === 'text') value = c.text;
     else if (c.type === 'table') {
@@ -788,12 +792,14 @@ export class DesignSurfaceComponent implements OnDestroy {
       this.formulaEdit.set({ controlId: c.id, row, cell, expression: value.expression });
       return;
     }
+    this.editSeed.set(seed ?? null);
     this.state.editing.set({ controlId: c.id, row, cell });
     // The editor exists after this change is rendered.
     setTimeout(() => {
       const editor = this.host.nativeElement.querySelector<HTMLTextAreaElement>('.ds__editor');
       editor?.focus();
-      editor?.select();
+      if (seed === undefined) editor?.select();
+      else editor?.setSelectionRange(editor.value.length, editor.value.length);
     });
   }
 

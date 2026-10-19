@@ -61,6 +61,7 @@
         </div>
       }
     </div>
+    <button type="button" class="wd__icon" (click)="shortcutsOpen.set(true)" [title]="s.keyboardShortcuts + ' (F1)'" [attr.aria-label]="s.keyboardShortcuts">⌨</button>
     <div class="wd__mode" role="radiogroup">
       <button type="button" role="radio" [attr.aria-checked]="!advanced()" [class.wd__mode--on]="!advanced()" (click)="advanced.set(false)">{{ s.basicMode }}</button>
       <button type="button" role="radio" [attr.aria-checked]="advanced()" [class.wd__mode--on]="advanced()" (click)="advanced.set(true)">{{ s.advancedMode }}</button>
@@ -69,18 +70,18 @@
 </div>
 
 @if (tab() === 'design') {
-  <div class="wd__body">
-    <aside class="wd__left">
+  <div class="wd__body" [style.grid-template-columns]="leftWidth() + 'px 6px minmax(0, 1fr) 6px ' + rightWidth() + 'px'">
+    <aside class="wd__left" [class.wd__collapsed]="!leftWidth()">
       <div class="wd__left-tabs" role="tablist">
         <button type="button" role="tab" [attr.aria-selected]="leftTab() === 'add'" [class.wd__left-tab--on]="leftTab() === 'add'" (click)="leftTab.set('add')">{{ s.add }}</button>
         <button type="button" role="tab" [attr.aria-selected]="leftTab() === 'outline'" [class.wd__left-tab--on]="leftTab() === 'outline'" (click)="leftTab.set('outline')">{{ s.explorer }}</button>
       </div>
       @if (leftTab() === 'add') {
         <h2>{{ s.toolbox }}</h2>
-        <p class="wd__hint">{{ s.toolboxHint }}</p>
+        <p class="wd__hint">{{ s.toolboxHint }} {{ s.addByClick }}</p>
         <div class="wd__tools">
           @for (item of toolbox; track $index) {
-            <div class="wd__tool" draggable="true" (dragstart)="onToolDragStart($event, item)" [title]="s.controlNames[item.type]">
+            <div class="wd__tool" draggable="true" role="button" tabindex="0" (dragstart)="onToolDragStart($event, item)" (click)="onToolClick(item)" (keydown.enter)="onToolClick(item)" [title]="s.controlNames[item.type]">
               <span [innerHTML]="iconName(item.icon) | weReportIcon"></span>
               <span>{{ item.variant === 'qrcode' ? 'QR' : s.controlNames[item.type] }}</span>
             </div>
@@ -92,7 +93,7 @@
           <p class="wd__hint">{{ s.fieldsHint }}</p>
           <ul class="wd__fields">
             @for (f of fields().rows; track f.path) {
-              <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+              <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                 <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
               </li>
             }
@@ -101,7 +102,7 @@
             <h3>{{ s.innerFields }}</h3>
             <ul class="wd__fields">
               @for (f of fields().inner; track f.path) {
-                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
                 </li>
               }
@@ -111,7 +112,7 @@
             <h3>{{ s.parentFields }}</h3>
             <ul class="wd__fields">
               @for (f of fields().parent; track f.path) {
-                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
+                <li draggable="true" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
                 </li>
               }
@@ -145,6 +146,7 @@
       }
     </aside>
 
+    <div class="wd__splitter" role="separator" aria-orientation="vertical" [title]="s.resizePanel" (pointerdown)="startResize($event, 'left')" (dblclick)="togglePanel('left')"></div>
     <div class="wd__center">
     @let st = formatStyle();
     <div class="wd__formatbar" role="toolbar" [attr.aria-label]="s.formatBar" [class.wd__formatbar--off]="!st">
@@ -189,7 +191,8 @@
     </main>
     </div>
 
-    <aside class="wd__right">
+    <div class="wd__splitter" role="separator" aria-orientation="vertical" [title]="s.resizePanel" (pointerdown)="startResize($event, 'right')" (dblclick)="togglePanel('right')"></div>
+    <aside class="wd__right" [class.wd__collapsed]="!rightWidth()">
       <we-report-property-panel [strings]="s" [fields]="allFields()" [lists]="fields().lists" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
     </aside>
   </div>
@@ -222,6 +225,7 @@
     }
     <button type="button" role="menuitem" [disabled]="!state.hasClipboard()" (click)="menu(state.paste.bind(state, m.bandId ?? undefined))"><span [innerHTML]="'paste' | weReportIcon"></span>{{ s.paste }}<kbd>Ctrl+V</kbd></button>
     @if (m.onControl) {
+      <button type="button" role="menuitem" (click)="menu(editSelected.bind(this))"><span>✎</span>{{ s.editText }}<kbd>F2</kbd></button>
       <button type="button" role="menuitem" (click)="menu(state.duplicateSelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.duplicate }}<kbd>Ctrl+D</kbd></button>
       <hr />
       <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'front'))"><span [innerHTML]="'bringToFront' | weReportIcon"></span>{{ s.bringToFront }}</button>
@@ -235,5 +239,30 @@
         <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.removeBand }}</button>
       }
     }
+  </div>
+}
+
+@if (shortcutsOpen()) {
+  <div class="wd__sheet-backdrop" (click)="shortcutsOpen.set(false)"></div>
+  <div class="wd__sheet" role="dialog" aria-modal="true" [attr.aria-label]="s.keyboardShortcuts" (keydown.escape)="shortcutsOpen.set(false)">
+    <h2>{{ s.keyboardShortcuts }}</h2>
+    <dl class="wd__keys">
+      <dt>Ctrl+Z · Ctrl+Y</dt><dd>{{ s.undo }} · {{ s.redo }}</dd>
+      <dt>Ctrl+X · Ctrl+C · Ctrl+V</dt><dd>{{ s.cut }} · {{ s.copy }} · {{ s.paste }}</dd>
+      <dt>Ctrl+D</dt><dd>{{ s.duplicate }}</dd>
+      <dt>Delete</dt><dd>{{ s.delete }}</dd>
+      <dt>Ctrl+A</dt><dd>{{ s.selectAll }}</dd>
+      <dt>F2 · Enter · ⧉</dt><dd>{{ s.editText }}</dd>
+      <dt>Ctrl+B · Ctrl+I · Ctrl+U</dt><dd>{{ s.bold }} · {{ s.italic }} · {{ s.underline }}</dd>
+      <dt>← ↑ → ↓ · Shift</dt><dd>{{ s.moveItem }} (1 / 5 mm)</dd>
+      <dt>Alt + ← ↑ → ↓</dt><dd>{{ s.moveFine }}</dd>
+      <dt>Ctrl + ← ↑ → ↓</dt><dd>{{ s.resizeItem }}</dd>
+      <dt>Tab · Shift+Tab</dt><dd>{{ s.nextItem }}</dd>
+      <dt>Ctrl+= · Ctrl+- · Ctrl+0</dt><dd>{{ s.zoomIn }} · {{ s.zoomOut }} · {{ s.fitWidth }}</dd>
+      <dt>Alt</dt><dd>{{ s.noSnap }}</dd>
+      <dt>⬚</dt><dd>{{ s.rubberBand }}</dd>
+      <dt>F1</dt><dd>{{ s.keyboardShortcuts }}</dd>
+    </dl>
+    <button type="button" class="wd__text-btn" (click)="shortcutsOpen.set(false)">{{ s.close }}</button>
   </div>
 }

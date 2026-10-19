@@ -258,6 +258,17 @@ export interface WeReportLocale {
   chartHint: string;
   conditionalFormatting: string;
   watermark: string;
+  keyboardShortcuts: string;
+  editText: string;
+  editFormula: string;
+  moveItem: string;
+  moveFine: string;
+  resizeItem: string;
+  nextItem: string;
+  rubberBand: string;
+  noSnap: string;
+  addByClick: string;
+  resizePanel: string;
   alignJustify: string;
   noSelection: string;
   formatBar: string;
@@ -589,6 +600,17 @@ export const weReportLocaleEn: WeReportLocale = {
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
+  keyboardShortcuts: 'Keyboard shortcuts',
+  editText: 'Edit the text',
+  editFormula: 'Edit the formula…',
+  moveItem: 'Move',
+  moveFine: 'Move by 0.1 mm',
+  resizeItem: 'Make wider / narrower, taller / shorter',
+  nextItem: 'Next / previous item',
+  rubberBand: 'Select several: drag on an empty spot',
+  noSnap: 'Hold while dragging: no snapping',
+  addByClick: 'Click an item (or double-click a field) to add it to the selected section.',
+  resizePanel: 'Drag to resize, double-click to hide',
   alignJustify: 'Justify',
   noSelection: 'Nothing selected',
   formatBar: 'Format',
@@ -952,6 +974,17 @@ export const weReportLocaleTr: WeReportLocale = {
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
+  keyboardShortcuts: 'Klavye kısayolları',
+  editText: 'Metni düzenle',
+  editFormula: 'Formülü düzenle…',
+  moveItem: 'Taşı',
+  moveFine: '0,1 mm taşı',
+  resizeItem: 'Genişlet / daralt, uzat / kısalt',
+  nextItem: 'Sonraki / önceki öğe',
+  rubberBand: 'Birden çok seç: boş yerde sürükle',
+  noSnap: 'Sürüklerken basılı tut: yapışma yok',
+  addByClick: 'Bir öğeye tıklayın (veya bir alana çift tıklayın): seçili bölüme eklenir.',
+  resizePanel: 'Boyutlandırmak için sürükleyin, gizlemek için çift tıklayın',
   alignJustify: 'İki yana yasla',
   noSelection: 'Seçili öğe yok',
   formatBar: 'Biçim',
