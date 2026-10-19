@@ -28,6 +28,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() + 0.1)" [attr.aria-label]="strings().zoomIn" [title]="strings().zoomIn + ' (Ctrl+=)'" [innerHTML]="'zoomIn' | weReportIcon"></button>
       @if (pageTotal() > 1) {
         <span class="we-report-viewer__sep"></span>
+        <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showThumbs()" (click)="showThumbs.set(!showThumbs())" [title]="strings().thumbnails" [attr.aria-label]="strings().thumbnails" [attr.aria-pressed]="showThumbs()">▤</button>
         <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(1)" [title]="strings().firstPage + ' (Home)'" [attr.aria-label]="strings().firstPage">⏮</button>
         <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)" [title]="strings().previousPage + ' (PgUp)'" [attr.aria-label]="strings().previousPage">◀</button>
         <input class="we-report-viewer__pagebox" type="number" min="1" [max]="pageTotal()" [value]="currentPage()" (change)="goToPage(+$any($event.target).value)" [attr.aria-label]="strings().pageNumber" />
@@ -98,6 +99,21 @@ import { WeReportPageComponent } from './we-report-page.component';
         </ul>
       </details>
     }
+    <div class="we-report-viewer__main">
+    @if (showThumbs() && pageTotal() > 1) {
+      <nav class="we-report-viewer__thumbs" [attr.aria-label]="strings().thumbnails">
+        @for (page of document()!.pages; track $index; let p = $index) {
+          <button type="button" class="we-report-viewer__thumb" [class.we-report-viewer__thumb--current]="currentPage() === p + 1" (click)="goToPage(p + 1)" [attr.aria-label]="strings().pageNumber + ' ' + (p + 1)">
+            @defer (on viewport) {
+              <we-report-page [page]="page" [zoom]="thumbZoom" />
+            } @placeholder {
+              <div class="we-report-viewer__thumb-blank" [style.width.mm]="page.width * thumbZoom" [style.height.mm]="page.height * thumbZoom"></div>
+            }
+            <span>{{ p + 1 }}</span>
+          </button>
+        }
+      </nav>
+    }
     <div #scroller class="we-report-viewer__scroll" tabindex="0" (scroll)="onScroll()">
       @if (document(); as doc) {
         @for (page of doc.pages; track $index; let p = $index) {
@@ -114,6 +130,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       } @else if (!error()) {
         <div class="we-report-viewer__loading">{{ strings().loading }}</div>
       }
+    </div>
     </div>
   `,
   styles: `
@@ -225,6 +242,48 @@ import { WeReportPageComponent } from './we-report-page.component';
     }
     .we-report-viewer__spacer {
       flex: 1;
+    }
+    .we-report-viewer__main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+    .we-report-viewer__thumbs {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      overflow: auto;
+      padding: 16px 12px;
+      border-right: 0.5px solid var(--we-report-separator, rgba(60, 60, 67, 0.14));
+      background: var(--we-report-panel-bg, #fbfbfd);
+    }
+    .we-report-viewer__thumb {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      border: 0;
+      padding: 4px;
+      border-radius: 6px;
+      background: none;
+      color: inherit;
+      font: inherit;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .we-report-viewer__thumb--current {
+      background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.12));
+    }
+    .we-report-viewer__thumb we-report-page,
+    .we-report-viewer__thumb-blank {
+      background: var(--we-report-page-bg, #fff);
+      box-shadow: 0 0 0 0.5px var(--we-report-separator, rgba(60, 60, 67, 0.14));
+      pointer-events: none;
+    }
+    .we-report-viewer__btn--on {
+      background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.12));
     }
     .we-report-viewer__scroll {
       flex: 1;
@@ -363,6 +422,8 @@ export class WeReportViewerComponent {
   }
 
   protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  protected readonly showThumbs = signal(false);
+  protected readonly thumbZoom = 0.18;
   protected readonly currentPage = signal(1);
   protected readonly pageTotal = computed(() => this.document()?.pages.length ?? 0);
   protected readonly query = signal('');
