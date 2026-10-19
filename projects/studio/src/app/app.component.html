@@ -2,6 +2,7 @@
 <header class="bar">
   <strong class="brand">we-report <span>Studio</span></strong>
   <small class="tag">{{ t.free }}</small>
+  <button type="button" class="new" (click)="openGallery()">＋ {{ t.newReport }}</button>
   <label class="field">
     {{ t.template }}
     <select (change)="useTemplate($any($event.target).value)">
@@ -39,6 +40,28 @@
     <div class="actions">
       <button type="button" (click)="dataDialogOpen.set(false)">{{ t.cancel }}</button>
       <button type="button" class="primary" (click)="applyData()">{{ t.apply }}</button>
+    </div>
+  </div>
+}
+
+@if (galleryOpen()) {
+  <div class="backdrop" (click)="galleryOpen.set(false)"></div>
+  <div class="gallery" role="dialog" aria-modal="true" [attr.aria-label]="t.galleryTitle">
+    <button type="button" class="gallery__close" (click)="galleryOpen.set(false)" [attr.aria-label]="t.cancel">✕</button>
+    <h2>{{ t.galleryTitle }}</h2>
+    <p>{{ t.gallerySub }}</p>
+    <div class="gallery__grid">
+      @for (tpl of templates; track tpl.id) {
+        <button type="button" class="gallery__card" (click)="chooseTemplate(tpl.id)">
+          <div class="gallery__thumb">
+            @if (thumbnails()[tpl.id]; as page) {
+              <we-report-page [page]="page" [zoom]="0.28" />
+            }
+          </div>
+          <strong>{{ tpl.name[language()] }}</strong>
+          <small>{{ tpl.description[language()] }}</small>
+        </button>
+      }
     </div>
   </div>
 }

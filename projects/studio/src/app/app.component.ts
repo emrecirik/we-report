@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { csvToObjects, DefinitionVersionError, migrateDefinition, ReportDefinition } from 'we-report-core';
-import { WeReportBackendService, WeReportDesignerComponent, weReportLocaleEn, weReportLocaleTr } from 'we-report-angular';
+import { csvToObjects, DefinitionVersionError, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
+import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleEn, weReportLocaleTr, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT } from './studio-text';
 import { TEMPLATES } from './templates';
 
 const BACKEND_KEY = 'we-report-studio.backendUrl';
+const AUTOSAVE_KEY = 'we-report-studio.autosave';
 
 // Storage can be unavailable (private mode, blocked site data): the studio works without it.
 function readStorage(key: string): string | null {
@@ -26,7 +27,7 @@ function writeStorage(key: string, value: string): void {
 @Component({
   selector: 'studio-root',
   standalone: true,
-  imports: [WeReportDesignerComponent],
+  imports: [WeReportDesignerComponent, WeReportPageComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -45,6 +46,11 @@ export class AppComponent {
   protected readonly dataDialogOpen = signal(false);
   protected readonly dataDraft = signal('');
   protected readonly message = signal<string | null>(null);
+  protected readonly galleryOpen = signal(false);
+  /** First page of every template, laid out by the real engine, for the gallery. */
+  protected readonly thumbnails = signal<Record<string, LayoutPage>>({});
+  private readonly fonts = inject(WeReportFontsService);
+  private readonly config = inject(WE_REPORT_CONFIG);
 
   constructor() {
     // The backend address the user typed survives reloads; otherwise the deployed demo backend.
@@ -53,6 +59,52 @@ export class AppComponent {
     const deployed = document.querySelector<HTMLMetaElement>('meta[name="we-report-backend"]')?.content;
     backend.url.set(saved || deployed || '');
     effect(() => writeStorage(BACKEND_KEY, backend.url()));
+
+    // The last design comes back after a reload; a first visit starts at the gallery.
+    const restored = this.restore();
+    if (restored) this.message.set(this.text().restored);
+    else this.openGallery();
+    effect(() => writeStorage(AUTOSAVE_KEY, JSON.stringify({ templateId: this.templateId(), report: this.report() })));
+  }
+
+  private restore(): boolean {
+    try {
+      const saved = JSON.parse(readStorage(AUTOSAVE_KEY) ?? 'null') as { templateId: string; report: unknown } | null;
+      if (!saved?.report) return false;
+      const t = TEMPLATES.find((x) => x.id === saved.templateId);
+      this.templateId.set(t?.id ?? 'blank');
+      this.report.set(migrateDefinition(saved.report));
+      this.data.set(t?.data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  protected openGallery(): void {
+    this.galleryOpen.set(true);
+    if (Object.keys(this.thumbnails()).length) return;
+    this.fonts
+      .ready()
+      .then((fonts) => {
+        const pages: Record<string, LayoutPage> = {};
+        for (const t of TEMPLATES) {
+          try {
+            const doc = layoutReport(t.report(), { fonts, data: t.data, now: new Date(), locale: this.config.locale, currency: this.config.currency });
+            if (doc.pages[0]) pages[t.id] = doc.pages[0];
+          } catch {
+            /* a template that cannot be laid out shows no thumbnail */
+          }
+        }
+        this.thumbnails.set(pages);
+      })
+      .catch(() => undefined);
+  }
+
+  protected chooseTemplate(id: string): void {
+    this.useTemplate(id);
+    this.galleryOpen.set(false);
+    this.message.set(null);
   }
 
   protected useTemplate(id: string): void {

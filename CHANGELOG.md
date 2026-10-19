@@ -15,6 +15,9 @@
   front/send to back), right-click menu, cut/copy/paste (also between designers) and select all
   with the usual shortcuts, an Outline tab listing every item by section, a top ruler with margins
   and the selection's extent, fit-to-width and Ctrl+wheel zoom.
+- Studio: a "New" gallery with live first-page previews of every template (opens on the first
+  visit), automatic saving of the current design in the browser with restore on reload, and a
+  sales template showing charts and conditional formatting.
 - Definition: all additions are optional, so existing `*.wrpt.json` files load unchanged (still
   version 1). A report using charts opened with 0.1.0 shows no chart.
 

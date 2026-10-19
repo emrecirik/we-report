@@ -12,6 +12,10 @@ export const STUDIO_TEXT = {
     dataInvalid: 'Veri okunamadı. Geçerli bir JSON ya da başlık satırı olan bir tablo yapıştırın.',
     openFailed: 'Dosya açılamadı. Bir .wrpt.json rapor dosyası seçin.',
     free: 'Ücretsiz ve açık kaynak',
+    newReport: 'Yeni',
+    galleryTitle: 'Ne hazırlamak istiyorsunuz?',
+    gallerySub: 'Örnek veriyle dolu bir şablonla başlayın; her şeyi sonra değiştirebilirsiniz.',
+    restored: 'Son tasarımınız geri yüklendi.',
   },
   en: {
     template: 'Template',
@@ -26,5 +30,9 @@ export const STUDIO_TEXT = {
     dataInvalid: 'Could not read the data. Paste valid JSON or a table with a header row.',
     openFailed: 'Could not open the file. Choose a .wrpt.json report file.',
     free: 'Free and open source',
+    newReport: 'New',
+    galleryTitle: 'What would you like to make?',
+    gallerySub: 'Start from a template filled with sample data; you can change everything later.',
+    restored: 'Your last design was restored.',
   },
 };

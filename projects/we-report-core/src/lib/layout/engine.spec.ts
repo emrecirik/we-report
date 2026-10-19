@@ -230,4 +230,20 @@ describe('layout engine', () => {
     report.watermark.text = '';
     expect(layoutReport(report, { fonts, now: NOW }).pages[0].items[0].kind).not.toBe('path');
   });
+
+  it('renders charts and a watermark to a valid PDF', async () => {
+    const report = listReport([{ Name: 'a', City: 'X', Amount: 3 }, { Name: 'b', City: 'Y', Amount: 4 }]);
+    report.watermark = { text: 'DRAFT' };
+    report.bands.splice(1, 0, {
+      id: 'rh', kind: 'reportHeader', height: 50,
+      controls: (['column', 'bar', 'line', 'doughnut'] as const).map((chartType, i) => ({
+        id: `c${i}`, type: 'chart' as const, chartType, x: i * 45, y: 0, width: 44, height: 45,
+        category: { expression: '[City]' }, value: { expression: '[Amount]' }, showValues: true, title: chartType,
+      })),
+    });
+    const doc = layoutReport(report, { fonts, now: NOW });
+    expect(doc.problems).toEqual([]);
+    const pdf = await PDFDocument.load(await renderPdf(doc, fonts, { title: 'Charts', date: NOW }));
+    expect(pdf.getPageCount()).toBe(1);
+  });
 });
