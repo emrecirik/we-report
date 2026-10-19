@@ -32,6 +32,8 @@ jobs:
           node-version: 22
           cache: npm
 
+      # npm 10 (Node 22's) crashes on some new-app dependency trees ("reading 'edgesOut'").
+      - run: npm install -g npm@^11.5.1
       - run: npm ci
       - run: npm run build:libs
 
