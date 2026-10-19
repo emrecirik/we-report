@@ -1,30 +1,64 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/emrecirik/we-report/protocol/schemas/query.json",
-  "title": "we-report structured query (v1)",
+  "title": "we-report structured query (v1.1)",
   "description": "What the visual query builder produces. The backend validates every identifier against the introspected schema, quotes it for its dialect and sends every value as a driver parameter.",
   "type": "object",
-  "required": ["table"],
+  "required": [
+    "table"
+  ],
   "additionalProperties": false,
   "properties": {
-    "table": { "type": "string", "minLength": 1 },
+    "table": {
+      "type": "string",
+      "minLength": 1
+    },
     "columns": {
       "description": "Columns to return; all when omitted.",
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "where": {
       "description": "Conditions, combined with AND.",
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["column", "op"],
+        "required": [
+          "column",
+          "op"
+        ],
         "additionalProperties": false,
         "properties": {
-          "column": { "type": "string" },
-          "op": { "enum": ["=", "!=", "<", "<=", ">", ">=", "like", "in", "isNull", "notNull"] },
-          "value": { "description": "A literal value (an array for `in`)." },
-          "param": { "type": "string", "description": "Name of a report parameter whose value is used instead of `value`." }
+          "column": {
+            "type": "string"
+          },
+          "op": {
+            "enum": [
+              "=",
+              "!=",
+              "<",
+              "<=",
+              ">",
+              ">=",
+              "like",
+              "contains",
+              "startsWith",
+              "in",
+              "isNull",
+              "notNull"
+            ],
+            "description": "contains / startsWith (1.1): case-insensitive text match; the backend escapes % and _ in the value, so it is matched literally."
+          },
+          "value": {
+            "description": "A literal value (an array for `in`)."
+          },
+          "param": {
+            "type": "string",
+            "description": "Name of a report parameter whose value is used instead of `value`."
+          }
         }
       }
     },
@@ -32,14 +66,37 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["column"],
+        "required": [
+          "column"
+        ],
         "additionalProperties": false,
         "properties": {
-          "column": { "type": "string" },
-          "dir": { "enum": ["asc", "desc"], "default": "asc" }
+          "column": {
+            "type": "string"
+          },
+          "dir": {
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "default": "asc"
+          }
         }
       }
     },
-    "limit": { "type": "integer", "minimum": 1, "description": "Capped by the backend's own row limit." }
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Capped by the backend's own row limit."
+    },
+    "distinct": {
+      "type": "boolean",
+      "description": "1.1 — SELECT DISTINCT over `columns` (which must then be given). Used for a grid's checklist filter values."
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "1.1 — rows to skip before `limit`, for paging. Use with `orderBy` for a stable order."
+    }
   }
 }
