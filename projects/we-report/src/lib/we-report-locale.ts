@@ -284,6 +284,9 @@ export interface WeReportLocale {
   wizardTotals: string;
   automatic: string;
   createReport: string;
+  previousMatch: string;
+  nextMatch: string;
+  zoomLevel: string;
   sortRows: string;
   dataOrder: string;
   addTextHere: string;
@@ -651,6 +654,9 @@ export const weReportLocaleEn: WeReportLocale = {
   wizardTotals: 'Totals of number columns',
   automatic: 'Automatic',
   createReport: 'Create report',
+  previousMatch: 'Previous match',
+  nextMatch: 'Next match',
+  zoomLevel: 'Zoom',
   sortRows: 'Sort rows by',
   dataOrder: 'Data order',
   addTextHere: 'Add text here',
@@ -1050,6 +1056,9 @@ export const weReportLocaleTr: WeReportLocale = {
   wizardTotals: 'Sayı sütunlarının toplamı',
   automatic: 'Otomatik',
   createReport: 'Raporu oluştur',
+  previousMatch: 'Önceki eşleşme',
+  nextMatch: 'Sonraki eşleşme',
+  zoomLevel: 'Yakınlaştırma',
   sortRows: 'Satırları sırala',
   dataOrder: 'Veri sırası',
   addTextHere: 'Buraya metin ekle',

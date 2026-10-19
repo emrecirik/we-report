@@ -117,7 +117,8 @@ class LayoutRun {
     } else {
       const keys = new Map<unknown, unknown[]>();
       // Group keys first (one per level), then the detail's own sort keys.
-      const sortBy = detail?.sortBy?.filter((k) => k.expression.trim()) ?? [];
+      // Report files are untrusted: ignore a malformed sortBy rather than fail the whole report.
+      const sortBy = Array.isArray(detail?.sortBy) ? detail.sortBy.filter((k) => typeof k?.expression === 'string' && k.expression.trim()) : [];
       for (const row of rows) {
         keys.set(row, [
           ...groupHeaders.map((h) => this.groupKey(h, row)),

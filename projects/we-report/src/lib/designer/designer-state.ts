@@ -1,5 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { Band, createBlankReport, ReportControl, ReportDefinition, ReportStyle } from 'we-report-core';
+import { Band, createBlankReport, ReportControl, ReportControlType, ReportDefinition, ReportStyle } from 'we-report-core';
 import { TableCellRef } from './table-ops';
 
 export type Selection = { kind: 'none' } | { kind: 'controls'; ids: string[] } | { kind: 'band'; id: string };
@@ -13,6 +13,23 @@ const round = (v: number) => Math.round(v * 100) / 100;
 
 /** Marks designer items on the system clipboard, so they paste into another tab or window. */
 export const CLIPBOARD_MARKER = 'we-report/controls+json:';
+
+const CONTROL_TYPES: Record<ReportControlType, true> = {
+  text: true, line: true, shape: true, image: true, barcode: true, pageInfo: true, checkbox: true, chart: true, table: true,
+};
+
+function isPastedControl(c: unknown): c is ReportControl {
+  if (!c || typeof c !== 'object') return false;
+  const x = c as Record<string, unknown>;
+  const finite = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+  return (
+    typeof x['id'] === 'string' &&
+    typeof x['type'] === 'string' &&
+    Object.hasOwn(CONTROL_TYPES, x['type']) &&
+    ['x', 'y', 'width', 'height'].every((k) => finite(x[k])) &&
+    (x['type'] !== 'table' || (Array.isArray(x['columns']) && Array.isArray(x['rows']) && x['rows'].every((r) => Array.isArray(r?.cells))))
+  );
+}
 
 const HISTORY_LIMIT = 200;
 const COALESCE_MS = 800;
@@ -41,9 +58,9 @@ export class DesignerState {
   readonly canRedo = signal(false);
   /** The table cell last clicked; the inspector edits it while its table is selected. */
   readonly tableCell = signal<TableCellRef | null>(null);
-  /** Text being typed on the page (double-click / F2): a text control, or a cell of a table. */
   /** Format painter: the look picked up from one item, applied to the next item clicked. */
   readonly painter = signal<Pick<ReportControl, 'style' | 'styleOverrides'> | null>(null);
+  /** Text being typed on the page (double-click / F2): a text control, or a cell of a table. */
   readonly editing = signal<{ controlId: string; row?: number; cell?: number } | null>(null);
   /** Where the pointer is on the page, for the status bar: band and mm inside it. */
   readonly pointer = signal<{ bandId: string; x: number; y: number } | null>(null);
@@ -116,8 +133,7 @@ export class DesignerState {
     this.syncFlags();
   }
 
-  /** A new id not used by any band or control. */
-  /** A free id; pass the same `taken` set when making several ids before the report changes. */
+  /** A new id not used by any band or control; pass the same `taken` set when making several ids before the report changes. */
   newId(prefix: string, taken = new Set<string>()): string {
     const used = new Set(this.report().bands.flatMap((b) => [b.id, ...b.controls.map((c) => c.id)]));
     let n = 1;
@@ -233,7 +249,8 @@ export class DesignerState {
     if (!text.startsWith(CLIPBOARD_MARKER)) return false;
     try {
       const items = JSON.parse(text.slice(CLIPBOARD_MARKER.length)) as typeof clipboard;
-      if (!Array.isArray(items) || !items.every((i) => i && typeof i.control?.id === 'string' && typeof i.control?.type === 'string')) return false;
+      // Any program can write this text: take only items the designer can draw.
+      if (!Array.isArray(items) || !items.length || !items.every((i) => isPastedControl(i?.control))) return false;
       clipboard = items;
       return true;
     } catch {

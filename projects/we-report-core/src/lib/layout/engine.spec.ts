@@ -116,6 +116,10 @@ describe('layout engine', () => {
     report.bands.find((b) => b.kind === 'detail')!.sortBy = [{ expression: '[Price]', descending: true }];
     const doc = layoutReport(report, { fonts, now: NOW });
     expect(texts(doc.pages[0])).toEqual(['Title', 'Coffee', 'Tea', 'Water', 'Apple', '1 / 1']);
+
+    // A malformed sort from a hand-edited file is ignored instead of failing the report.
+    (report.bands.find((b) => b.kind === 'detail') as { sortBy: unknown }).sortBy = [{}];
+    expect(layoutReport(report, { fonts, now: NOW }).pages.length).toBe(1);
   });
 
   it('keeps a group together and repeats its header on following pages', () => {

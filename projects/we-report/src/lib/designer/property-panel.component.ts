@@ -215,7 +215,6 @@ export class PropertyPanelComponent {
     this.state.selection.set({ kind: 'band', id: this.state.report().bands[0].id });
   }
 
-  /** Detail columns; one column removes the setting. */
   protected readonly fieldExpressions = computed(() => new Set(this.fields().map((f) => f.expression)));
 
   /** The detail's first sort key; further keys (set in the file) are kept. */
@@ -229,6 +228,7 @@ export class PropertyPanelComponent {
     });
   }
 
+  /** Detail columns; one column removes the setting. */
   protected setColumns(key: 'count' | 'gap', value: string): void {
     const band = this.band();
     if (!band) return;

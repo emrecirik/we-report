@@ -15,7 +15,7 @@
     <button type="button" class="wd__icon" [disabled]="state.selection().kind !== 'controls'" (click)="state.deleteSelection()" [title]="s.delete + ' (Del)'" [attr.aria-label]="s.delete" [innerHTML]="'trash' | weReportIcon"></button>
     <span class="wd__sep"></span>
     <button type="button" class="wd__icon" (click)="setZoom(zoomLevel() - 0.1)" [title]="s.zoomOut" [attr.aria-label]="s.zoomOut" [innerHTML]="'zoomOut' | weReportIcon"></button>
-    <select class="wd__zoom" (change)="pickZoom($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="s.zoomIn">
+    <select class="wd__zoom" (change)="pickZoom($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="s.zoomLevel">
       <option value="" selected>{{ (zoomLevel() * 100).toFixed(0) }}%</option>
       @for (z of zoomSteps; track z) {
         <option [value]="z">{{ z * 100 }}%</option>
@@ -36,7 +36,7 @@
       }
     </div>
     @if (fields().rows.length) {
-      <button type="button" class="wd__text-btn wd__magic" (click)="autoDesign()" [title]="s.autoDesignHint">✨ {{ s.autoDesign }}</button>
+      <button type="button" class="wd__text-btn wd__magic" (click)="autoDesign()" [title]="s.autoDesignHint"><span [innerHTML]="'wand' | weReportIcon"></span>&nbsp;{{ s.autoDesign }}</button>
     }
     <button type="button" class="wd__text-btn" (click)="dataDialogOpen.set(true)">
       <span [innerHTML]="'database' | weReportIcon"></span>&nbsp;{{ s.dataSources }}
@@ -47,7 +47,7 @@
     </label>
     <select class="wd__zoom" [title]="s.snapGrid" [attr.aria-label]="s.snapGrid" (change)="gridSize.set(+$any($event.target).value)">
       @for (g of gridSteps; track g) {
-        <option [value]="g" [selected]="g === gridSize()">{{ g ? '▦ ' + g + ' mm' : s.gridOff }}</option>
+        <option [value]="g" [selected]="g === gridSize()">{{ g ? g + ' mm' : s.gridOff }}</option>
       }
     </select>
     <span class="wd__spacer"></span>
@@ -72,7 +72,7 @@
         </div>
       }
     </div>
-    <button type="button" class="wd__icon" (click)="shortcutsOpen.set(true)" [title]="s.keyboardShortcuts + ' (F1)'" [attr.aria-label]="s.keyboardShortcuts">⌨</button>
+    <button type="button" class="wd__icon" (click)="shortcutsOpen.set(true)" [title]="s.keyboardShortcuts + ' (F1)'" [attr.aria-label]="s.keyboardShortcuts" [innerHTML]="'keyboard' | weReportIcon"></button>
     <div class="wd__mode" role="radiogroup">
       <button type="button" role="radio" [attr.aria-checked]="!advanced()" [class.wd__mode--on]="!advanced()" (click)="advanced.set(false)">{{ s.basicMode }}</button>
       <button type="button" role="radio" [attr.aria-checked]="advanced()" [class.wd__mode--on]="advanced()" (click)="advanced.set(true)">{{ s.advancedMode }}</button>
@@ -192,7 +192,7 @@
         <span [style.background]="st?.backgroundColor ?? 'transparent'"></span>
         <input type="color" [disabled]="!st" [value]="st?.backgroundColor ?? '#ffffff'" (input)="format('backgroundColor', $any($event.target).value)" [attr.aria-label]="s.backgroundColor" />
       </label>
-      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" (click)="format('backgroundColor', undefined)" [title]="s.backgroundColor + ': ' + s.noColor" [attr.aria-label]="s.noColor">∅</button>
+      <button type="button" class="wd__icon wd__fmt" [disabled]="!st" (click)="format('backgroundColor', undefined)" [title]="s.backgroundColor + ': ' + s.noColor" [attr.aria-label]="s.noColor" [innerHTML]="'noColor' | weReportIcon"></button>
       <span class="wd__sep"></span>
       <button type="button" class="wd__icon wd__fmt" [disabled]="!st" [class.wd__fmt--on]="!!st?.border" (click)="setBorder(true)" [title]="s.allBorders" [attr.aria-label]="s.allBorders" [innerHTML]="'borderAll' | weReportIcon"></button>
       <button type="button" class="wd__icon wd__fmt" [disabled]="!st" (click)="setBorder(false)" [title]="s.noBorder" [attr.aria-label]="s.noBorder" [innerHTML]="'borderNone' | weReportIcon"></button>
@@ -237,7 +237,7 @@
     }
     <button type="button" role="menuitem" [disabled]="!state.hasClipboard()" (click)="menu(state.paste.bind(state, m.bandId ?? undefined))"><span [innerHTML]="'paste' | weReportIcon"></span>{{ s.paste }}<kbd>Ctrl+V</kbd></button>
     @if (m.onControl) {
-      <button type="button" role="menuitem" (click)="menu(editSelected.bind(this))"><span>✎</span>{{ s.editText }}<kbd>F2</kbd></button>
+      <button type="button" role="menuitem" (click)="menu(editSelected.bind(this))"><span [innerHTML]="'edit' | weReportIcon"></span>{{ s.editText }}<kbd>F2</kbd></button>
       <button type="button" role="menuitem" (click)="menu(state.duplicateSelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.duplicate }}<kbd>Ctrl+D</kbd></button>
       <hr />
       <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'front'))"><span [innerHTML]="'bringToFront' | weReportIcon"></span>{{ s.bringToFront }}</button>
@@ -245,9 +245,9 @@
       <hr />
       <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.delete }}<kbd>Del</kbd></button>
     } @else {
-      <button type="button" role="menuitem" (click)="menu(addTextAt.bind(this, m.bandId, m.at))"><span>T</span>{{ s.addTextHere }}</button>
+      <button type="button" role="menuitem" (click)="menu(addTextAt.bind(this, m.bandId, m.at))"><span [innerHTML]="'text' | weReportIcon"></span>{{ s.addTextHere }}</button>
       <button type="button" role="menuitem" (click)="menu(state.selectAll.bind(state))"><span [innerHTML]="'outline' | weReportIcon"></span>{{ s.selectAll }}<kbd>Ctrl+A</kbd></button>
-      <button type="button" role="menuitem" (click)="menu(fitBand.bind(this, m.bandId))"><span>↕</span>{{ s.fitBandToContent }}</button>
+      <button type="button" role="menuitem" (click)="menu(fitBand.bind(this, m.bandId))"><span [innerHTML]="'fitHeight' | weReportIcon"></span>{{ s.fitBandToContent }}</button>
       @if (state.selectedBand()?.kind !== 'detail') {
         <hr />
         <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.removeBand }}</button>

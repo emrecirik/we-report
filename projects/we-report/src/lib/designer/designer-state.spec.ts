@@ -2,6 +2,7 @@ import { TableControl } from 'we-report-core';
 import { cellAt, columnOf, deleteColumn, insertColumn, insertRow, mergeRight, splitCell } from './table-ops';
 import { buildCondition, parseCondition } from './formatting-rule';
 import { createBlankReport } from 'we-report-core';
+import { CLIPBOARD_MARKER } from './designer-state';
 import { captionFor } from './control-factory';
 import { designerFields } from './designer-fields';
 import { DesignerState } from './designer-state';
@@ -105,6 +106,21 @@ describe('DesignerState', () => {
     state.updateControls(['c'], (c) => (c.x = 30));
     state.distribute('h');
     expect([ctl('a').x, ctl('c').x, ctl('b').x]).toEqual([10, 40, 70]);
+  });
+
+  it('pastes items from the system clipboard only when they are well-formed', () => {
+    state.addControls('detail', [text('text1')]);
+    state.selection.set({ kind: 'controls', ids: ['text1'] });
+    state.copySelection();
+    const ours = state.clipboardText();
+    expect(state.loadClipboard('plain text')).toBeFalse();
+    expect(state.loadClipboard(CLIPBOARD_MARKER + '[{"control":{"id":"a","type":"table","x":"10","y":0,"width":5,"height":5}}]')).toBeFalse();
+    expect(state.loadClipboard(CLIPBOARD_MARKER + '[{"control":{"id":"a","type":"table","x":1,"y":0,"width":5,"height":5}}]')).toBeFalse();
+    expect(state.loadClipboard(CLIPBOARD_MARKER + '[{"control":{"id":"a","type":"script","x":1,"y":0,"width":5,"height":5}}]')).toBeFalse();
+    expect(state.loadClipboard(CLIPBOARD_MARKER + '{oops')).toBeFalse();
+    expect(state.loadClipboard(ours)).toBeTrue();
+    state.paste();
+    expect(state.report().bands[1].controls.map((c) => c.id)).toEqual(['text1', 'text2']);
   });
 
   it('copies, pastes with an offset over the original and arranges the draw order', () => {

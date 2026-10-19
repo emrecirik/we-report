@@ -31,6 +31,18 @@ export interface WeReportIcons {
   borderAll: string;
   borderNone: string;
   brush: string;
+  firstPage: string;
+  previousPage: string;
+  nextPage: string;
+  lastPage: string;
+  chevronUp: string;
+  chevronDown: string;
+  thumbnails: string;
+  keyboard: string;
+  edit: string;
+  fitHeight: string;
+  noColor: string;
+  wand: string;
   arrangeLeft: string;
   arrangeCenter: string;
   arrangeRight: string;
@@ -80,6 +92,18 @@ export const WE_REPORT_DEFAULT_ICONS: WeReportIcons = {
   borderAll: svg('<rect x="4" y="4" width="16" height="16" rx="1"/>'),
   borderNone: svg('<rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="2 3"/>'),
   brush: svg('<rect x="4" y="3" width="14" height="6" rx="1.5"/><path d="M18 6h2v5h-8v3"/><rect x="10.5" y="14" width="3" height="7" rx="1"/>'),
+  firstPage: svg('<path d="M6 5v14M18 6l-7 6 7 6"/>'),
+  previousPage: svg('<path d="M15 6l-6 6 6 6"/>'),
+  nextPage: svg('<path d="M9 6l6 6-6 6"/>'),
+  lastPage: svg('<path d="M18 5v14M6 6l7 6-7 6"/>'),
+  chevronUp: svg('<path d="M6 15l6-6 6 6"/>'),
+  chevronDown: svg('<path d="M6 9l6 6 6-6"/>'),
+  thumbnails: svg('<rect x="3" y="3" width="7" height="8" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 5h7M14 9h5M14 16h7M14 20h5"/>'),
+  keyboard: svg('<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>'),
+  edit: svg('<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>'),
+  fitHeight: svg('<path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"/>'),
+  noColor: svg('<circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/>'),
+  wand: svg('<path d="M4 20L15 9"/><path d="M14 4v3M18 6l-2 2M20 10h-3M17 14l-2-2"/>'),
   table: svg('<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 10h18M3 14.5h18M9 5v14M15 5v14"/>'),
   chart: svg('<path d="M4 20h16"/><rect x="5" y="11" width="3" height="9" rx="0.5"/><rect x="10.5" y="6" width="3" height="14" rx="0.5"/><rect x="16" y="13" width="3" height="7" rx="0.5"/>'),
   database: svg('<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'),

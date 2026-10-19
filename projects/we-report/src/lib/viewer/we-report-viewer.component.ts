@@ -17,7 +17,7 @@ import { WeReportPageComponent } from './we-report-page.component';
   template: `
     <div class="we-report-viewer__toolbar" role="toolbar">
       <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() - 0.1)" [attr.aria-label]="strings().zoomOut" [title]="strings().zoomOut + ' (Ctrl+-)'" [innerHTML]="'zoomOut' | weReportIcon"></button>
-      <select class="we-report-viewer__zoomsel" (change)="pickZoom($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="strings().zoomIn">
+      <select class="we-report-viewer__zoomsel" (change)="pickZoom($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="strings().zoomLevel">
         <option value="" selected>{{ (zoomLevel() * 100).toFixed(0) }}%</option>
         @for (z of zoomSteps; track z) {
           <option [value]="z">{{ z * 100 }}%</option>
@@ -28,13 +28,13 @@ import { WeReportPageComponent } from './we-report-page.component';
       <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() + 0.1)" [attr.aria-label]="strings().zoomIn" [title]="strings().zoomIn + ' (Ctrl+=)'" [innerHTML]="'zoomIn' | weReportIcon"></button>
       @if (pageTotal() > 1) {
         <span class="we-report-viewer__sep"></span>
-        <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showThumbs()" (click)="showThumbs.set(!showThumbs())" [title]="strings().thumbnails" [attr.aria-label]="strings().thumbnails" [attr.aria-pressed]="showThumbs()">▤</button>
-        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(1)" [title]="strings().firstPage + ' (Home)'" [attr.aria-label]="strings().firstPage">⏮</button>
-        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)" [title]="strings().previousPage + ' (PgUp)'" [attr.aria-label]="strings().previousPage">◀</button>
+        <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showThumbs()" (click)="showThumbs.set(!showThumbs())" [title]="strings().thumbnails" [attr.aria-label]="strings().thumbnails" [attr.aria-pressed]="showThumbs()" [innerHTML]="'thumbnails' | weReportIcon"></button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(1)" [title]="strings().firstPage + ' (Home)'" [attr.aria-label]="strings().firstPage" [innerHTML]="'firstPage' | weReportIcon"></button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)" [title]="strings().previousPage + ' (PgUp)'" [attr.aria-label]="strings().previousPage" [innerHTML]="'previousPage' | weReportIcon"></button>
         <input class="we-report-viewer__pagebox" type="number" min="1" [max]="pageTotal()" [value]="currentPage()" (change)="goToPage(+$any($event.target).value)" [attr.aria-label]="strings().pageNumber" />
         <span class="we-report-viewer__pages">{{ strings().pageOf.replace('{0}', '' + pageTotal()) }}</span>
-        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() >= pageTotal()" (click)="goToPage(currentPage() + 1)" [title]="strings().nextPage + ' (PgDn)'" [attr.aria-label]="strings().nextPage">▶</button>
-        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() >= pageTotal()" (click)="goToPage(pageTotal())" [title]="strings().lastPage + ' (End)'" [attr.aria-label]="strings().lastPage">⏭</button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() >= pageTotal()" (click)="goToPage(currentPage() + 1)" [title]="strings().nextPage + ' (PgDn)'" [attr.aria-label]="strings().nextPage" [innerHTML]="'nextPage' | weReportIcon"></button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() >= pageTotal()" (click)="goToPage(pageTotal())" [title]="strings().lastPage + ' (End)'" [attr.aria-label]="strings().lastPage" [innerHTML]="'lastPage' | weReportIcon"></button>
       } @else {
         <span class="we-report-viewer__pages">{{ pageLabel() }}</span>
       }
@@ -42,8 +42,8 @@ import { WeReportPageComponent } from './we-report-page.component';
       <input #searchBox class="we-report-viewer__search" type="search" [placeholder]="strings().search + ' (Ctrl+F)'" [value]="query()" (input)="setQuery($any($event.target).value)" (keydown.enter)="nextMatch($any($event).shiftKey ? -1 : 1)" [attr.aria-label]="strings().search" />
       @if (query().trim()) {
         <span class="we-report-viewer__pages">{{ matches().length ? strings().matches.replace('{0}', '' + (matchIndex() + 1)).replace('{1}', '' + matches().length) : strings().noMatches }}</span>
-        <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(-1)" [attr.aria-label]="strings().previousPage">▲</button>
-        <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(1)" [attr.aria-label]="strings().nextPage">▼</button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(-1)" [attr.aria-label]="strings().previousMatch" [title]="strings().previousMatch + ' (Shift+Enter)'" [innerHTML]="'chevronUp' | weReportIcon"></button>
+        <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(1)" [attr.aria-label]="strings().nextMatch" [title]="strings().nextMatch + ' (Enter)'" [innerHTML]="'chevronDown' | weReportIcon"></button>
       }
       <span class="we-report-viewer__spacer"></span>
       <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="print()" [disabled]="!document()">

@@ -364,10 +364,14 @@ export class WeReportDesignerComponent {
     action();
   }
 
+  /** Ctrl+C/X/V pressed on the page and not yet answered by a clipboard event. */
+  private pendingClipboardKey: string | null = null;
+
   /** Copy and cut also put the items on the system clipboard, so they paste in another tab. */
   @HostListener('copy', ['$event'])
   @HostListener('cut', ['$event'])
   protected onCopy(e: ClipboardEvent): void {
+    this.pendingClipboardKey = null;
     if (this.tab() !== 'design' || this.isTyping(e) || !this.state.copySelection()) return;
     e.preventDefault();
     e.clipboardData?.setData('text/plain', this.state.clipboardText());
@@ -377,6 +381,7 @@ export class WeReportDesignerComponent {
   /** Pastes our items, else a picture (screenshot) or text from any other program. */
   @HostListener('paste', ['$event'])
   protected onPaste(e: ClipboardEvent): void {
+    this.pendingClipboardKey = null;
     if (this.tab() !== 'design' || this.isTyping(e)) return;
     const data = e.clipboardData;
     const text = data?.getData('text/plain') ?? '';
@@ -607,8 +612,18 @@ export class WeReportDesignerComponent {
         e.preventDefault();
         this.state.deleteSelection();
       }
-    } else if (mod && e.key.toLowerCase() === 'c' && !typing) {
-      // Copy, cut and paste go through the clipboard events below (system clipboard).
+    } else if (mod && ['c', 'x', 'v'].includes(e.key.toLowerCase()) && !typing && !e.shiftKey && !e.altKey) {
+      // Copy, cut and paste go through the clipboard events below (system clipboard). Browsers
+      // that fire no clipboard event on a non-editable element (Safari) get the in-memory clipboard.
+      const key = e.key.toLowerCase();
+      this.pendingClipboardKey = key;
+      setTimeout(() => {
+        if (this.pendingClipboardKey !== key) return;
+        this.pendingClipboardKey = null;
+        if (key === 'c') this.state.copySelection();
+        else if (key === 'x') this.state.cutSelection();
+        else if (this.state.hasClipboard()) this.state.paste();
+      });
     } else if (mod && e.key.toLowerCase() === 'a' && !typing) {
       e.preventDefault();
       this.state.selectAll();

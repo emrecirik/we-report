@@ -924,6 +924,10 @@ export class DesignSurfaceComponent implements OnDestroy {
   }
 
   private setText(controlId: string, row: number | undefined, cell: number | undefined, text: Bindable<string>): void {
+    const c = this.state.report().bands.flatMap((b) => b.controls).find((x) => x.id === controlId);
+    const current = c?.type === 'text' ? c.text : c?.type === 'table' && row !== undefined && cell !== undefined ? c.rows[row]?.cells[cell]?.text : undefined;
+    // Leaving the editor without a change adds no undo step.
+    if (JSON.stringify(current) === JSON.stringify(text)) return;
     this.state.updateControls([controlId], (c) => {
       if (c.type === 'text') c.text = text;
       else if (c.type === 'table' && row !== undefined && cell !== undefined && c.rows[row]?.cells[cell]) c.rows[row].cells[cell].text = text;
@@ -1100,12 +1104,14 @@ export class DesignSurfaceComponent implements OnDestroy {
     // Ctrl+drag copies: the originals stay where they were, the dragged items are the copies.
     if (op?.kind === 'move' && op.moved && (e.ctrlKey || e.metaKey)) {
       this.state.update((d) => {
-        const band = d.bands.find((b) => b.id === op.bandId)!;
         const taken = new Set<string>();
-        const copies = band.controls
-          .filter((c) => op.originals.has(c.id))
-          .map((c) => ({ ...structuredClone(c), id: this.state.newId(c.type, taken), ...op.originals.get(c.id)! }));
-        band.controls.unshift(...copies);
+        // The selection can span sections: each section keeps copies of its own items.
+        for (const band of d.bands) {
+          const copies = band.controls
+            .filter((c) => op.originals.has(c.id))
+            .map((c) => ({ ...structuredClone(c), id: this.state.newId(c.type, taken), ...op.originals.get(c.id)! }));
+          band.controls.unshift(...copies);
+        }
       }, op.key);
     }
     // A click (no drag) inside a multi-selection narrows it to the clicked control.

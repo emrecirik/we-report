@@ -22,6 +22,9 @@
   `customerId`) are no longer summed and print without thousands separators.
 - Studio: certificate template (one page filled from parameters); Ctrl+S saves, Ctrl+O opens.
 - Fix: duplicating several items of the same kind gave them the same id.
+- Items pasted from the system clipboard are checked (known kind, numeric position and size, a
+  table's rows and columns) before they reach the report; a malformed `sortBy` in a report file is
+  ignored instead of failing the layout. New toolbar icons are on `WE_REPORT_ICONS`.
 
 ## 0.4.0 — 2026-10-19
 

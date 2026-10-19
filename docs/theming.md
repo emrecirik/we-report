@@ -32,6 +32,7 @@ Dark mode follows `prefers-color-scheme`, or force it with `<html data-theme="da
 | `--we-report-margin-guide`, `--we-report-control-outline` | Guides in the designer |
 | `--we-report-selection`, `--we-report-selection-fill`, `--we-report-guide` | Selected items, alignment guides |
 | `--we-report-warning-bg`, `--we-report-warning-fg` | Problems and warnings |
+| `--we-report-search-highlight` | Matches of *find in report* in the viewer |
 
 Icons are inline SVG on the `WE_REPORT_ICONS` token — provide your own set to restyle them.
 
