@@ -6,6 +6,8 @@
   across, then down, then the next sheet. Ready layouts for common A4 and Letter label sheets
   (`LABEL_SHEETS`, `applyLabelSheet`) set the paper, margins and label size in one step; the
   designer shades where the other labels go.
+- Barcodes: the digits under a linear barcode keep their shape when the bars are stretched to a
+  wide or short box.
 - Studio: a shelf-label template (A4, 21 per sheet) with product, price and barcode.
 
 ## 0.2.0 — 2026-10-19

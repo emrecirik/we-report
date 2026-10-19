@@ -44,22 +44,51 @@ export function barcodeItem(
   const sx = width / vw;
   const sy = height / vh;
 
-  const paths: PathItem['paths'] = [];
+  const parsed: { d: string; fill?: string; stroke?: string; strokeWidth?: string }[] = [];
   for (const [, attrText] of svg.matchAll(/<path ([^>]*?)\/?>/g)) {
     const attrs: Record<string, string> = {};
     for (const [, k, v] of attrText.matchAll(ATTRS)) attrs[k] = v;
-    if (!attrs['d']) continue;
+    if (attrs['d']) parsed.push({ d: attrs['d'], fill: attrs['fill'], stroke: attrs['stroke'], strokeWidth: attrs['stroke-width'] });
+  }
+
+  // Linear codes stretch their bars to the box, but the human-readable digits keep their shape:
+  // scaled evenly, centred under the bars and resting on the bottom edge.
+  const text = TWO_D.has(symbology) ? [] : parsed.filter((p) => !p.stroke);
+  const nums = text.flatMap((p) => p.d.match(/-?[\d.]+/g)?.map(Number) ?? []);
+  const xs = nums.filter((_, i) => i % 2 === 0);
+  const ys = nums.filter((_, i) => i % 2 === 1);
+  const cx = xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
+  const bottom = ys.length ? Math.max(...ys) : 0;
+  const even = Math.min(sx, sy);
+
+  const paths: PathItem['paths'] = parsed.map((p) => {
     // SVG fills a path black unless told otherwise; bwip-js relies on that for 2D symbols.
-    const stroked = !!attrs['stroke'];
-    paths.push({
-      d: scalePath(attrs['d'], sx, sy),
-      fill: attrs['fill'] || !stroked ? color : undefined,
+    const stroked = !!p.stroke;
+    const d = text.includes(p)
+      ? mapPath(p.d, (px, py) => [cx * sx + (px - cx) * even, bottom * sy + (py - bottom) * even])
+      : scalePath(p.d, sx, sy);
+    return {
+      d,
+      fill: p.fill || !stroked ? color : undefined,
       stroke: stroked ? color : undefined,
       // Linear bars are vertical strokes, so their width scales horizontally.
-      strokeWidth: attrs['stroke-width'] ? Number(attrs['stroke-width']) * sx : undefined,
-    });
-  }
+      strokeWidth: p.strokeWidth ? Number(p.strokeWidth) * sx : undefined,
+    };
+  });
   return { kind: 'path', x, y, width, height, viewBox: { width, height }, paths };
+}
+
+/** Passes every point of an absolute-coordinate path (M, L, Q, Z) through `map`. */
+function mapPath(d: string, map: (x: number, y: number) => [number, number]): string {
+  return d.replace(/([MLQ])([^MLQZ]*)/g, (_, command: string, args: string) => {
+    const n = args.match(/-?[\d.]+/g)?.map(Number) ?? [];
+    let out = command;
+    for (let i = 0; i + 1 < n.length; i += 2) {
+      const [x, y] = map(n[i], n[i + 1]);
+      out += `${Math.round(x * 10000) / 10000} ${Math.round(y * 10000) / 10000} `;
+    }
+    return out.trimEnd();
+  });
 }
 
 /** Scales an absolute-coordinate path (bwip-js emits only M, L, Q, Z). */

@@ -7,6 +7,7 @@ import { renderPdf } from '../render/pdf';
 import { layoutReport } from './engine';
 import { LayoutPage, PathItem, RectItem, TextItem } from './layout-types';
 import { niceScale } from './chart';
+import { barcodeItem } from './barcode';
 import { applyLabelSheet, LABEL_SHEETS } from '../definition/label-sheets';
 import { wrapText } from './text-wrap';
 
@@ -289,5 +290,21 @@ describe('layout engine', () => {
     expect(y('c') - y('a')).toBeCloseTo(8, 5);
     // The row is 8 mm with its text 1 mm down; the footer's text sits at its top.
     expect(y('END') - y('c')).toBeCloseTo(7, 5);
+  });
+
+  it('stretches barcode bars to the box but keeps the digits in shape', () => {
+    const textBox = (box: { x: number; y: number; width: number; height: number }) => {
+      const item = barcodeItem('code128', '29001000', true, box, '#000000');
+      const nums = item.paths.filter((p) => !p.stroke).flatMap((p) => p.d.match(/-?[\d.]+/g)!.map(Number));
+      const xs = nums.filter((_, k) => k % 2 === 0);
+      const ys = nums.filter((_, k) => k % 2 === 1);
+      return { w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys), item };
+    };
+    const natural = textBox({ x: 0, y: 0, width: 40, height: 20 });
+    const wide = textBox({ x: 0, y: 0, width: 57.5, height: 14 });
+    expect(wide.w / wide.h).toBeCloseTo(natural.w / natural.h, 1);
+    expect(wide.right).toBeLessThanOrEqual(57.5);
+    expect(wide.bottom).toBeLessThanOrEqual(14.001);
+    expect(wide.item.width).toBe(57.5);
   });
 });
