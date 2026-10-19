@@ -36,6 +36,22 @@ describe('WeReportDesignerComponent', () => {
     expect(labels).toEqual(['Sayfa başlığı', 'Detay (her satır için tekrarlanır)', 'Sayfa altlığı']);
   });
 
+  it('adds a total of a detail column to every group footer and the report footer', () => {
+    const report = createBlankReport();
+    report.bands.splice(1, 0, { id: 'g', kind: 'groupHeader', height: 8, groupBy: { expression: '[city]' }, controls: [] });
+    report.bands.splice(3, 0, { id: 'gf', kind: 'groupFooter', groupHeaderId: 'g', height: 8, controls: [] });
+    report.bands[2].controls.push({ id: 'amount', type: 'text', x: 100, y: 0, width: 30, height: 6, text: { expression: '[amount]' }, format: 'n2' });
+    create(report, [{ city: 'a', amount: 1 }]);
+    state.selection.set({ kind: 'controls', ids: ['amount'] });
+    (fixture.componentInstance as unknown as { addTotal(): void }).addTotal();
+    const totals = state.report().bands.filter((b) => b.kind === 'groupFooter' || b.kind === 'reportFooter').map((b) => b.controls.map((c) => [c.type === 'text' ? c.text : null, c.x, (c as { format?: string }).format]));
+    expect(totals).toEqual([
+      [[{ expression: 'Sum([amount])' }, 100, 'n2']],
+      [[{ expression: 'Sum([amount])' }, 100, 'n2']],
+    ]);
+    expect(state.report().bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'groupFooter', 'reportFooter', 'pageFooter']);
+  });
+
   it('builds a grouped, sorted list from the report wizard', () => {
     create(createBlankReport(), [
       { city: 'B', name: 'x', amount: 2, paid: true },

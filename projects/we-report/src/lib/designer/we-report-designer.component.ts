@@ -360,6 +360,42 @@ export class WeReportDesignerComponent {
     this.editSelected();
   }
 
+  /** A single bound text in the detail section: it can get a total ("insert summary"). */
+  protected readonly totalTarget = computed(() => {
+    const [c, ...more] = this.state.selectedControls();
+    if (!c || more.length || c.type !== 'text' || !isExpression(c.text) || !c.text.expression.trim()) return null;
+    return this.state.selectedBand()?.kind === 'detail' || this.state.report().bands.find((b) => b.controls.includes(c))?.kind === 'detail' ? c : null;
+  });
+
+  /** Puts `Sum(...)` of the selected column under it in every group footer and the report footer. */
+  protected addTotal(): void {
+    const c = this.totalTarget();
+    if (!c || c.type !== 'text' || !isExpression(c.text)) return;
+    const expression = `Sum(${c.text.expression})`;
+    const taken = new Set<string>();
+    const ids: string[] = [];
+    this.state.update((d) => {
+      if (!d.bands.some((b) => b.kind === 'reportFooter')) {
+        d.bands.push({ id: this.state.newId('reportFooter', taken), kind: 'reportFooter', height: 8, controls: [] });
+        d.bands = orderBands(d.bands);
+      }
+      for (const band of d.bands) {
+        if (band.kind !== 'groupFooter' && band.kind !== 'reportFooter') continue;
+        // Under whatever already sits in this column, else at the top.
+        const inColumn = band.controls.filter((x) => x.x < c.x + c.width && x.x + x.width > c.x);
+        const y = inColumn.length ? Math.round(Math.max(...inColumn.map((x) => x.y + x.height)) * 100) / 100 : 1;
+        const id = this.state.newId('total', taken);
+        ids.push(id);
+        band.controls.push({
+          id, type: 'text', x: c.x, y, width: c.width, height: c.height, text: { expression }, format: c.format,
+          style: c.style, styleOverrides: { ...c.styleOverrides, bold: true },
+        });
+        band.height = Math.max(band.height, y + c.height + 1);
+      }
+    });
+    this.state.selection.set({ kind: 'controls', ids });
+  }
+
   /** Shrinks (or grows) a section to just below its lowest item. */
   protected fitBand(bandId: string | null): void {
     this.state.update((d) => {

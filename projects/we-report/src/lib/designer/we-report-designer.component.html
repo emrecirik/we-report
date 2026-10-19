@@ -241,6 +241,9 @@
     <button type="button" role="menuitem" [disabled]="!state.hasClipboard()" (click)="menu(state.paste.bind(state, m.bandId ?? undefined))"><span [innerHTML]="'paste' | weReportIcon"></span>{{ s.paste }}<kbd>Ctrl+V</kbd></button>
     @if (m.onControl) {
       <button type="button" role="menuitem" (click)="menu(editSelected.bind(this))"><span [innerHTML]="'edit' | weReportIcon"></span>{{ s.editText }}<kbd>F2</kbd></button>
+      @if (totalTarget()) {
+        <button type="button" role="menuitem" (click)="menu(addTotal.bind(this))"><span [innerHTML]="'sum' | weReportIcon"></span>{{ s.addTotal }}</button>
+      }
       <button type="button" role="menuitem" (click)="menu(state.duplicateSelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.duplicate }}<kbd>Ctrl+D</kbd></button>
       <hr />
       <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'front'))"><span [innerHTML]="'bringToFront' | weReportIcon"></span>{{ s.bringToFront }}</button>

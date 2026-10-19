@@ -298,6 +298,7 @@ export const weReportLocaleFr: WeReportLocale = {
   wizardTotals: 'Totaux des colonnes numériques',
   automatic: 'Automatique',
   createReport: 'Créer le rapport',
+  addTotal: 'Ajouter le total de cette colonne',
   filterFields: 'Rechercher un champ',
   previousMatch: 'Résultat précédent',
   nextMatch: 'Résultat suivant',
