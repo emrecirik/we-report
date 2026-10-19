@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-19
 
 - Languages: the designer and viewer now speak German (`weReportLocaleDe`), French
   (`weReportLocaleFr`) and Spanish (`weReportLocaleEs`) besides English and Turkish;
