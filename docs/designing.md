@@ -56,3 +56,32 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
   [Languages and regions](localization.md).
 
 Formulas and formats are described in [Formulas](expressions.md).
+
+## Working in the designer
+
+The designer behaves like a desktop report designer:
+
+- **Start fast** — *Design from data* opens the report wizard: pick the columns, what to group and
+  sort by, totals and paper orientation. Undo brings your previous design back.
+- **Add** — drag an item or a data field onto the page, or click an item / double-click a field to
+  add it to the selected section. Right-click an empty spot for *Add text here*. Drop a field on a
+  text to show that field there; drop a PNG/JPEG from your desktop to place a picture.
+- **Edit text in place** — double-click, press F2 or Enter, or just start typing on a selected text
+  or table cell. Enter keeps it, Shift+Enter starts a new line, Escape cancels. Formulas open the
+  formula editor instead.
+- **Select** — click, Shift/Ctrl-click to add, drag on an empty part of a section for a rubber
+  band, Tab to step through items, Ctrl+A for everything.
+- **Move and size** — drag (items snap to the grid and to other items; hold Alt to move freely),
+  arrows move by 1 mm (Shift: 5 mm, Alt: 0.1 mm), Ctrl+arrows resize. While moving, the distance
+  to the nearest items is shown. Ctrl+drag leaves a copy behind. The grid menu sets 0.5–5 mm or no
+  grid.
+- **Format** — the format bar sets font, size, bold/italic/underline (Ctrl+B/I/U), alignment,
+  colours and borders for everything selected; the brush copies one item's look to the next item
+  you click.
+- **Clipboard** — Ctrl+C / Ctrl+X / Ctrl+V use the system clipboard, so items paste into another
+  tab; text or a screenshot copied from another program pastes as a text or picture item.
+- **View** — Ctrl+wheel or Ctrl+= / Ctrl+− zoom, Ctrl+0 fits the width; the side panels can be
+  resized or hidden (double-click their edge). F5 switches to the preview, F1 lists every shortcut.
+
+The preview has page thumbnails, page navigation (PageUp/PageDown, Home/End), zoom presets, find
+in report (Ctrl+F, Enter for the next match) and printing (Ctrl+P).
