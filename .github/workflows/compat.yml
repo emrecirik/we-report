@@ -1,0 +1,54 @@
+name: Angular compatibility
+
+# Builds the npm packages and installs them into a brand-new app of every supported Angular major
+# (peer range 18 – 22). A version is supported only while this passes.
+
+on:
+  push:
+    branches: [main]
+    paths: ['projects/we-report/**', 'projects/we-report-core/**', 'tools/compat/**', '.github/workflows/compat.yml', 'package*.json']
+  pull_request:
+    paths: ['projects/we-report/**', 'projects/we-report-core/**', 'tools/compat/**', '.github/workflows/compat.yml']
+  schedule:
+    - cron: '0 4 * * 1' # weekly: catches new Angular releases
+  workflow_dispatch:
+
+env:
+  NG_CLI_ANALYTICS: "false"
+
+jobs:
+  compat:
+    name: Angular ${{ matrix.angular }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        angular: [18, 19, 20, 21, 22]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build:libs
+
+      - name: Pack the libraries as they would be published
+        run: |
+          mkdir -p "$RUNNER_TEMP/packs"
+          npm pack ./dist/we-report-core --pack-destination "$RUNNER_TEMP/packs"
+          npm pack ./dist/we-report --pack-destination "$RUNNER_TEMP/packs"
+
+      - name: Create a new Angular ${{ matrix.angular }} app
+        working-directory: ${{ runner.temp }}
+        run: npx --yes @angular/cli@${{ matrix.angular }} new compat-app --defaults --skip-git --skip-tests --ssr=false --style=css --routing=false
+
+      - name: Install the packed libraries and build
+        working-directory: ${{ runner.temp }}/compat-app
+        run: |
+          npm install "$RUNNER_TEMP"/packs/we-report-core-*.tgz "$RUNNER_TEMP"/packs/we-report-angular-*.tgz
+          cp "$GITHUB_WORKSPACE/tools/compat/main.ts" src/main.ts
+          npx ng version | grep -i "angular cli"
+          npx ng build
