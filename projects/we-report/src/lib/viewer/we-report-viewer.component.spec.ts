@@ -110,4 +110,24 @@ describe('WeReportViewerComponent', () => {
     const bytes = await fixture.componentInstance.toPdf();
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe('%PDF-');
   });
+
+  it('draws a page as a PNG at the asked resolution, text where the layout put it', async () => {
+    const doc = await render(listReport(), [{ name: 'WWWWWWWWWW' }]);
+    const blob = await fixture.componentInstance.toPng(0, 96);
+    expect(blob.type).toBe('image/png');
+    const bitmap = await createImageBitmap(blob);
+    expect(bitmap.width).toBe(Math.round((doc.pages[0].width * 96) / 25.4));
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bitmap, 0, 0);
+    const text = doc.pages[0].items.find((i) => i.kind === 'text')! as { x: number; y: number; width: number; height: number };
+    const px = 96 / 25.4;
+    const box = ctx.getImageData(Math.round(text.x * px), Math.round(text.y * px), Math.round(30 * px), Math.round(text.height * px)).data;
+    const dark = Array.from({ length: box.length / 4 }, (_, i) => box[i * 4]).filter((r) => r < 128).length;
+    expect(dark).toBeGreaterThan(20);
+    const corner = ctx.getImageData(2, 2, 1, 1).data;
+    expect(Array.from(corner)).toEqual([255, 255, 255, 255]);
+  });
 });

@@ -6,6 +6,7 @@ import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WE_REPORT_LOCALE, WeReportLocale } from '../we-report-locale';
+import { drawPage } from './page-canvas';
 import { WeReportPageComponent } from './we-report-page.component';
 
 /** Paged preview of a report with zoom, PDF download and print. No server involved. */
@@ -51,6 +52,9 @@ import { WeReportPageComponent } from './we-report-page.component';
       </button>
       <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadExcel()" [disabled]="!document()">
         <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadExcel }}
+      </button>
+      <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPng()" [disabled]="!document()" [title]="strings().downloadPng + ' · ' + strings().pageNumber + ' ' + currentPage()">
+        <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPng }}
       </button>
       <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPdf()" [disabled]="!document()">
         <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPdf }}
@@ -622,6 +626,19 @@ export class WeReportViewerComponent {
 
   protected async downloadPdf(): Promise<void> {
     this.save(new Blob([await this.toPdf()], { type: 'application/pdf' }), 'pdf');
+  }
+
+  /** One page of the current preview as a PNG image, `dpi` dots per inch (default 200). */
+  async toPng(pageIndex = this.currentPage() - 1, dpi = 200): Promise<Blob> {
+    const page = this.document()?.pages[pageIndex];
+    if (!page) throw new Error('The page is not rendered yet.');
+    const canvas = await drawPage(page, dpi / 25.4, this.dom);
+    return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('The image could not be made.'))), 'image/png'));
+  }
+
+  protected async downloadPng(): Promise<void> {
+    const page = this.currentPage();
+    this.save(await this.toPng(page - 1), this.pageTotal() > 1 ? `p${page}.png` : 'png');
   }
 
   protected downloadExcel(): void {

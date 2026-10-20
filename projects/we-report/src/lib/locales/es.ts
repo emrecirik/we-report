@@ -33,6 +33,7 @@ export const weReportLocaleEs: WeReportLocale = {
   print: 'Imprimir',
   downloadPdf: 'Descargar PDF',
   downloadExcel: 'Excel',
+  downloadPng: 'PNG',
   pageCount: '{0} página(s)',
   problems: 'Problemas',
   loading: 'Preparando la vista previa…',

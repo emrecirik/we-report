@@ -100,8 +100,9 @@ import { WeReportViewerComponent } from 'we-report-angular';
 export class InvoicePage { /* … */ }
 ```
 
-The viewer shows pages exactly as the PDF will print them, with zoom, **Print**, **PDF** and
-**Excel** buttons. `parameters` passes [report parameters](data-sources.md#parameters),
+The viewer shows pages exactly as the PDF will print them, with zoom, **Print**, **PDF**,
+**Excel** and **PNG** (the current page as an image) buttons; in code `toPdf()`, `toXlsx()` and
+`toPng(pageIndex, dpi)`. `parameters` passes [report parameters](data-sources.md#parameters),
 `printDate` fixes the print time for reproducible output.
 
 ## Without Angular (Node, a worker, a CLI)

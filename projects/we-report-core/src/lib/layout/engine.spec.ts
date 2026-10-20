@@ -429,6 +429,9 @@ describe('layout engine', () => {
     expect(wide.right).toBeLessThanOrEqual(57.5);
     expect(wide.bottom).toBeLessThanOrEqual(14.001);
     expect(wide.item.width).toBe(57.5);
+    // The bars stop clearly above the digits.
+    const barYs = wide.item.paths.filter((p) => p.stroke).flatMap((p) => p.d.match(/-?[\d.]+/g)!.map(Number).filter((_, k) => k % 2 === 1));
+    expect(Math.max(...barYs)).toBeLessThan(wide.bottom - wide.h - wide.h * 0.2);
   });
 
   it('lays out a table: columns, spans, data cells, growing rows and a border grid', () => {

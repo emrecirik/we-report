@@ -72,13 +72,17 @@ export function barcodeItem(
   const cx = xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
   const bottom = ys.length ? Math.max(...ys) : 0;
   const even = Math.min(sx, sy);
+  // bwip-js leaves almost no gap above the digits; once they are scaled down less than the bars
+  // they would touch, so the bars end a quarter of a digit's height above them.
+  const textTop = ys.length ? Math.min(...ys) : 0;
+  const barScale = text.length && textTop > 0 ? (bottom * sy - (bottom - textTop) * even * 1.25) / textTop : sy;
 
   const paths: PathItem['paths'] = parsed.map((p) => {
     // SVG fills a path black unless told otherwise; bwip-js relies on that for 2D symbols.
     const stroked = !!p.stroke;
     const d = text.includes(p)
       ? mapPath(p.d, (px, py) => [cx * sx + (px - cx) * even, bottom * sy + (py - bottom) * even])
-      : scalePath(p.d, sx, sy);
+      : scalePath(p.d, sx, barScale);
     return {
       d,
       fill: p.fill || !stroked ? color : undefined,

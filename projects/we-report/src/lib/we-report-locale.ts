@@ -13,6 +13,7 @@ export interface WeReportLocale {
   print: string;
   downloadPdf: string;
   downloadExcel: string;
+  downloadPng: string;
   /** `{0}` = number of pages. */
   pageCount: string;
   problems: string;
@@ -412,6 +413,7 @@ export const weReportLocaleEn: WeReportLocale = {
   print: 'Print',
   downloadPdf: 'Download PDF',
   downloadExcel: 'Excel',
+  downloadPng: 'PNG',
   pageCount: '{0} page(s)',
   problems: 'Problems',
   loading: 'Preparing preview…',
@@ -841,6 +843,7 @@ export const weReportLocaleTr: WeReportLocale = {
   print: 'Yazdır',
   downloadPdf: 'PDF indir',
   downloadExcel: 'Excel',
+  downloadPng: 'PNG',
   pageCount: '{0} sayfa',
   problems: 'Sorunlar',
   loading: 'Önizleme hazırlanıyor…',

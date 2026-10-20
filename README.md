@@ -12,7 +12,7 @@
 
 **Free, open-source, native Angular report designer and viewer.** Design banded reports with drag
 and drop, bind them to JSON, Excel/CSV, web services or live databases, preview, print and export to
-PDF and Excel — the DevExpress XtraReports / Crystal Reports experience, MIT licensed, with **no
+PDF, Excel and PNG — the DevExpress XtraReports / Crystal Reports experience, MIT licensed, with **no
 backend required**.
 
 **Try it:** [we-report Studio](https://emrecirik.github.io/we-report/) · **Install:** `npm install we-report-angular we-report-core`

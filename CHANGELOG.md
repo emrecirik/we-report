@@ -14,6 +14,10 @@
 - Parameters can offer a list (`choices`): fixed values, or each value of a data field with an
   optional label field (a customer's name for its id). The viewer shows a drop-down; core exports
   `parameterChoices()`. The viewer now also loads the remote sources of sub-reports.
+- Viewer: **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)` in code), drawn
+  from the same layout and fonts as the preview and the PDF.
+- Barcodes: the bars of linear codes end clearly above their digits (they touched when the box
+  was wide and low).
 - Formulas: `RunningSum(value)` — running balance in a row, amount carried forward in a page
   footer — and `CarriedSum(value)`, the total brought forward from earlier pages in a page header.
 - Layout: an item placed up to 1 mm inside a growing text is pushed down with it.
