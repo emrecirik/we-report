@@ -212,6 +212,7 @@ export const weReportLocaleFr: WeReportLocale = {
   pageBreakAfter: 'Nouvelle page après',
   dataRows: 'Les lignes viennent de',
   dataRowsHint: 'Chemin de la liste dans les données, ex. lines',
+  hostDataNote: 'Les lignes du rapport viennent de l\'application ; ces données ne servent que si elle n\'en fournit pas.',
   dataSources: 'Sources de données',
   close: 'Fermer',
   rowsSource: 'lignes',

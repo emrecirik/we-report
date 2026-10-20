@@ -116,6 +116,8 @@
 - Sub-reports, charts, cross tables, barcodes, check boxes and pictures from data are drawn on the
   design page as they print, from the sample data (clipped to their box), instead of an icon.
 
+- Data sources: when the app passes the rows (`data`), the main source says its own data is only a
+  fallback (`hostDataNote`), instead of showing an empty source with 0 rows as if data were missing.
 - Dark theme: scrollbars and form controls are dark too (`color-scheme: dark` in the theme's dark
   blocks).
 

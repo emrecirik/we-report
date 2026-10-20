@@ -84,6 +84,9 @@
               </datalist>
               <small class="dsd__hint">{{ s.dataRowsHint }} · {{ s.rowCount.replace('{0}', '' + rowCount()) }}</small>
             </label>
+            @if (hostData()) {
+              <p class="dsd__hint">{{ s.hostDataNote }}</p>
+            }
           } @else {
             <button type="button" class="dsd__link" (click)="useForRows()">{{ s.useForRows }}</button>
           }

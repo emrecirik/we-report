@@ -34,6 +34,8 @@ import { DesignerState } from './designer-state';
 export class DataSourcesDialogComponent {
   readonly strings = input.required<WeReportLocale>();
   readonly fetchFn = input<typeof fetch | undefined>(undefined);
+  /** The host app passes the rows (the designer's `data`), so the main source's own data is a fallback. */
+  readonly hostData = input(false);
   readonly closed = output<void>();
 
   protected readonly state = inject(DesignerState);

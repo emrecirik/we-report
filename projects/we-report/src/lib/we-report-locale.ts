@@ -196,6 +196,8 @@ export interface WeReportLocale {
   pageBreakAfter: string;
   dataRows: string;
   dataRowsHint: string;
+  /** Shown under the main data source when the host app passes the rows. */
+  hostDataNote: string;
   dataSources: string;
   close: string;
   rowsSource: string;
@@ -639,6 +641,7 @@ export const weReportLocaleEn: WeReportLocale = {
   pageBreakAfter: 'New page after',
   dataRows: 'Rows come from',
   dataRowsHint: 'Path to the list inside the data, e.g. lines',
+  hostDataNote: 'The report\'s rows come from the app; this data is used only when the app gives none.',
   dataSources: 'Data sources',
   close: 'Close',
   rowsSource: 'rows',
@@ -1125,6 +1128,7 @@ export const weReportLocaleTr: WeReportLocale = {
   pageBreakAfter: 'Sonrasında yeni sayfa',
   dataRows: 'Satırlar nereden gelsin',
   dataRowsHint: 'Veri içindeki listenin yolu, örn. lines',
+  hostDataNote: 'Raporun satırları uygulamadan geliyor; buradaki veri yalnızca uygulama veri vermediğinde kullanılır.',
   dataSources: 'Veri kaynakları',
   close: 'Kapat',
   rowsSource: 'satırlar',

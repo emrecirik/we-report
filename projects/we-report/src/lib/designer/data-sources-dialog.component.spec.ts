@@ -28,6 +28,15 @@ describe('DataSourcesDialogComponent', () => {
     expect(el().textContent).toContain('2 satır');
   });
 
+  it('says when the app passes the rows, so the main source is only a fallback', () => {
+    dialog['add']('json');
+    fixture.detectChanges();
+    expect(el().textContent).not.toContain(weReportLocaleTr.hostDataNote);
+    fixture.componentRef.setInput('hostData', true);
+    fixture.detectChanges();
+    expect(el().textContent).toContain(weReportLocaleTr.hostDataNote);
+  });
+
   it('keeps the previous data when pasted JSON is invalid', () => {
     dialog['add']('json');
     dialog['setJson']('[{"a":1}]');

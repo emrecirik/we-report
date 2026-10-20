@@ -229,7 +229,7 @@
 }
 
 @if (dataDialogOpen()) {
-  <we-report-data-sources-dialog [strings]="s" [fetchFn]="fetchFn()" (closed)="dataDialogOpen.set(false)" />
+  <we-report-data-sources-dialog [strings]="s" [fetchFn]="fetchFn()" [hostData]="data() !== undefined" (closed)="dataDialogOpen.set(false)" />
 }
 
 @if (contextMenu(); as m) {

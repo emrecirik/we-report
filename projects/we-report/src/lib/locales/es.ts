@@ -212,6 +212,7 @@ export const weReportLocaleEs: WeReportLocale = {
   pageBreakAfter: 'Página nueva después',
   dataRows: 'Las filas vienen de',
   dataRowsHint: 'Ruta de la lista dentro de los datos, p. ej. lines',
+  hostDataNote: 'Las filas del informe vienen de la aplicación; estos datos solo se usan si no aporta ninguna.',
   dataSources: 'Orígenes de datos',
   close: 'Cerrar',
   rowsSource: 'filas',
