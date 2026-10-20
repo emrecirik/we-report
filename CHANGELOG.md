@@ -47,6 +47,8 @@
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, total row and column, numbers sorted numerically; grows downwards and
   pushes the items below. Dropping one binds it to the first two text fields and a number field.
+- Formulas: `AddMonths`, `AddYears`, `DateDiff('day' | 'month' | 'year', start, end)` (days
+  overdue, ages), `Left`, `Right` and `PadLeft`.
 - Formulas: `RunningSum(value)` — running balance in a row, amount carried forward in a page
   footer — and `CarriedSum(value)`, the total brought forward from earlier pages in a page header.
 - Layout: an item placed up to 1 mm inside a growing text is pushed down with it.

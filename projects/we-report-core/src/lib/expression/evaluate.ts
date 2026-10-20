@@ -121,7 +121,39 @@ const FUNCTIONS: Record<string, FunctionDef> = {
       return new Date(d.getFullYear(), d.getMonth(), d.getDate() + num(days, 'AddDays'), d.getHours(), d.getMinutes(), d.getSeconds());
     },
   },
+  addmonths: { min: 2, max: 2, fn: ([v, n]) => addMonths(date(v, 'AddMonths'), num(n, 'AddMonths')) },
+  addyears: { min: 2, max: 2, fn: ([v, n]) => addMonths(date(v, 'AddYears'), 12 * num(n, 'AddYears')) },
+  datediff: {
+    min: 3,
+    max: 3,
+    fn: ([unit, from, to]) => {
+      const a = date(from, 'DateDiff');
+      const b = date(to, 'DateDiff');
+      const u = str(unit).toLowerCase();
+      // Whole calendar days, so a time of day or a daylight-saving change does not shift the count.
+      if (u === 'day') return Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 86_400_000);
+      const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() - (b.getDate() < a.getDate() ? 1 : 0);
+      if (u === 'month') return months;
+      if (u === 'year') return Math.trunc(months / 12);
+      throw new Error("DateDiff counts 'day', 'month' or 'year'.");
+    },
+  },
+  left: { min: 2, max: 2, fn: ([v, n]) => str(v).slice(0, Math.max(0, num(n, 'Left'))) },
+  right: { min: 2, max: 2, fn: ([v, n]) => { const s = str(v); const k = Math.max(0, num(n, 'Right')); return k ? s.slice(-k) : ''; } },
+  padleft: {
+    min: 2,
+    max: 3,
+    fn: ([v, n, ch]) => str(v).padStart(Math.min(1000, num(n, 'PadLeft')), ch === undefined ? ' ' : str(ch) || ' '),
+  },
 };
+
+/** The same day `n` months later (or earlier); the 31st becomes the last day of a shorter month. */
+function addMonths(d: Date, n: number): Date {
+  const target = new Date(d.getFullYear(), d.getMonth() + n, 1, d.getHours(), d.getMinutes(), d.getSeconds());
+  const last = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  target.setDate(Math.min(d.getDate(), last));
+  return target;
+}
 
 const AGGREGATES = new Set(['sum', 'count', 'avg', 'min', 'max']);
 /** Totals that run on: through the current row, or over the earlier pages. */
@@ -147,6 +179,9 @@ export const EXPRESSION_FUNCTIONS: readonly FunctionInfo[] = [
   { name: 'Lower', signature: 'Lower(text)', category: 'text' },
   { name: 'Trim', signature: 'Trim(text)', category: 'text' },
   { name: 'Substring', signature: 'Substring(text, start, length?)', category: 'text' },
+  { name: 'Left', signature: 'Left(text, count)', category: 'text' },
+  { name: 'Right', signature: 'Right(text, count)', category: 'text' },
+  { name: 'PadLeft', signature: "PadLeft(text, length, '0'?)", category: 'text' },
   { name: 'Replace', signature: 'Replace(text, find, with)', category: 'text' },
   { name: 'Contains', signature: 'Contains(text, part)', category: 'text' },
   { name: 'StartsWith', signature: 'StartsWith(text, part)', category: 'text' },
@@ -166,6 +201,9 @@ export const EXPRESSION_FUNCTIONS: readonly FunctionInfo[] = [
   { name: 'Month', signature: 'Month(date)', category: 'date' },
   { name: 'Day', signature: 'Day(date)', category: 'date' },
   { name: 'AddDays', signature: 'AddDays(date, days)', category: 'date' },
+  { name: 'AddMonths', signature: 'AddMonths(date, months)', category: 'date' },
+  { name: 'AddYears', signature: 'AddYears(date, years)', category: 'date' },
+  { name: 'DateDiff', signature: "DateDiff('day' | 'month' | 'year', start, end)", category: 'date' },
   { name: 'RowNumber', signature: 'RowNumber()', category: 'aggregate' },
   { name: 'Sum', signature: 'Sum(value)', category: 'aggregate' },
   { name: 'Count', signature: 'Count()', category: 'aggregate' },

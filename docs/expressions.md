@@ -36,6 +36,9 @@ Arithmetic with an empty value gives an empty value; dividing by zero is an erro
 | `ToNumber`, `ToString`, `Format(v, pattern)` | `Format([Date], 'dd MMMM yyyy')` | |
 | `Today()`, `Now()` | | The print time |
 | `Year`, `Month`, `Day`, `AddDays(d, n)` | `AddDays([^.date], 30)` | |
+| `AddMonths(d, n)`, `AddYears(d, n)` | `AddMonths([start], 6)` | 31 January + 1 month → 28/29 February |
+| `DateDiff(unit, start, end)` | `DateDiff('day', [due], Today())` | Whole `'day'`s, `'month'`s or `'year'`s; negative when `end` is earlier — days overdue, age, years of service |
+| `Left(s, n)`, `Right(s, n)`, `PadLeft(s, length, char?)` | `PadLeft([no], 6, '0')` | `000042` |
 | `Sum`, `Count`, `Avg`, `Min`, `Max` | `Sum([Qty] * [Price])` | Over the rows in scope |
 | `RowNumber()` | `RowNumber()` | `1`, `2`, `3` … — restarts in every group and inner list |
 | `RunningSum(v)` | `RunningSum([Debit] - [Credit])` | Total so far: in a row, up to that row within its group (a running balance that starts again in every group, like `RowNumber()`); in a page footer, over the whole report up to the end of the page — the amount carried forward |

@@ -5,6 +5,31 @@ import { ExpressionError, parseExpression } from './parser';
 describe('expression language', () => {
   const row = { Name: 'çağrı', Price: 12.5, Qty: 4, Customer: { City: 'İzmir' }, Missing: null, Date: '2026-03-07' };
 
+  it('moves dates by months and years and counts whole days, months and years between them', () => {
+    const ev = (e: string, row: unknown = {}) => evaluate(e, { row });
+    const feb = ev("AddMonths('2026-01-31', 1)") as Date;
+    expect([feb.getMonth(), feb.getDate()]).toEqual([1, 28]);
+    expect((ev("AddMonths('2024-01-31', 1)") as Date).getDate()).toBe(29); // leap year
+    expect((ev("AddYears('2024-02-29', 1)") as Date).getDate()).toBe(28);
+    expect((ev("AddMonths('2026-03-15', -3)") as Date).getMonth()).toBe(11);
+    expect(ev("DateDiff('day', '2026-10-01', '2026-10-20')")).toBe(19);
+    expect(ev("DateDiff('day', '2026-10-20', '2026-10-01')")).toBe(-19);
+    expect(ev("DateDiff('day', '2026-03-28', '2026-03-30')")).toBe(2); // across a clock change
+    expect(ev("DateDiff('month', '2026-01-31', '2026-02-28')")).toBe(0);
+    expect(ev("DateDiff('month', '2026-01-15', '2026-03-15')")).toBe(2);
+    expect(ev("DateDiff('year', '1990-10-21', '2026-10-20')")).toBe(35);
+    expect(() => ev("DateDiff('week', '2026-01-01', '2026-02-01')")).toThrow();
+  });
+
+  it('takes the left and right ends of a text and pads it', () => {
+    const ev = (e: string) => evaluate(e, { row: { no: 42 } });
+    expect(ev("Left('İstanbul', 3)")).toBe('İst');
+    expect(ev("Right('İstanbul', 4)")).toBe('nbul');
+    expect(ev("Right('abc', 0)")).toBe('');
+    expect(ev("PadLeft([no], 6, '0')")).toBe('000042');
+    expect(ev("PadLeft('ab', 4)")).toBe('  ab');
+  });
+
   it('evaluates arithmetic with precedence', () => {
     expect(evaluate('1 + 2 * 3')).toBe(7);
     expect(evaluate('(1 + 2) * 3')).toBe(9);
