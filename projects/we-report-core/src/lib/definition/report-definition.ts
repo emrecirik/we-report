@@ -74,6 +74,8 @@ interface ControlBase {
   style?: string;
   styleOverrides?: ReportStyle;
   visible?: Bindable<boolean>;
+  /** When the section grows (a text grew to fit), this item extends to the section's bottom — e.g. cell borders and column lines. */
+  stretch?: boolean;
   /** Applied in order; every rule whose formula is true merges its style over the control's. */
   formatting?: FormattingRule[];
 }

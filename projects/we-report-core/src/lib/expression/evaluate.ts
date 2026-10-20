@@ -19,6 +19,22 @@ export interface EvaluationContext {
 
 type Value = unknown;
 
+/** Row positions per row list, built once per list: numbering stays linear for large reports. */
+const rowIndexes = new WeakMap<readonly unknown[], Map<unknown, number>>();
+
+/** 1-based position of the current row among the rows in scope (its group, or its inner list). */
+function rowNumber(ctx: EvaluationContext): number | null {
+  const rows = ctx.rows;
+  if (!rows) return null;
+  let index = rowIndexes.get(rows);
+  if (!index) {
+    index = new Map();
+    rows.forEach((r, i) => index!.has(r) || index!.set(r, i + 1));
+    rowIndexes.set(rows, index);
+  }
+  return index.get(ctx.row) ?? null;
+}
+
 interface FunctionDef {
   min: number;
   max: number;
@@ -98,6 +114,7 @@ const FUNCTIONS: Record<string, FunctionDef> = {
     },
   },
   now: { min: 0, max: 0, fn: (_, ctx) => now(ctx) },
+  rownumber: { min: 0, max: 0, fn: (_, ctx) => rowNumber(ctx) },
   year: { min: 1, max: 1, fn: ([v]) => date(v, 'Year').getFullYear() },
   month: { min: 1, max: 1, fn: ([v]) => date(v, 'Month').getMonth() + 1 },
   day: { min: 1, max: 1, fn: ([v]) => date(v, 'Day').getDate() },
@@ -152,6 +169,7 @@ export const EXPRESSION_FUNCTIONS: readonly FunctionInfo[] = [
   { name: 'Month', signature: 'Month(date)', category: 'date' },
   { name: 'Day', signature: 'Day(date)', category: 'date' },
   { name: 'AddDays', signature: 'AddDays(date, days)', category: 'date' },
+  { name: 'RowNumber', signature: 'RowNumber()', category: 'aggregate' },
   { name: 'Sum', signature: 'Sum(value)', category: 'aggregate' },
   { name: 'Count', signature: 'Count()', category: 'aggregate' },
   { name: 'Avg', signature: 'Avg(value)', category: 'aggregate' },

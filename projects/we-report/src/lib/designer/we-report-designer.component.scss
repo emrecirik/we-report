@@ -700,9 +700,23 @@ button {
   }
 }
 
-.wd__tool:focus-visible {
+.wd__tool:focus-visible,
+.wd__fields li:focus-visible {
   outline: none;
   box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
+}
+
+.wd__field-filter {
+  width: 100%;
+  height: 28px;
+  box-sizing: border-box;
+  margin-bottom: 6px;
+  border: 0;
+  border-radius: var(--we-report-control-radius, 7px);
+  padding: 0 8px;
+  background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
+  color: inherit;
+  font: inherit;
 }
 
 .wd__wizard {

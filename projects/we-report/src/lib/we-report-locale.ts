@@ -284,6 +284,15 @@ export interface WeReportLocale {
   wizardTotals: string;
   automatic: string;
   createReport: string;
+  issueTextCut: string;
+  stretch: string;
+  stretchHint: string;
+  fitToText: string;
+  collapseBand: string;
+  expandBand: string;
+  groupByThis: string;
+  addTotal: string;
+  filterFields: string;
   previousMatch: string;
   nextMatch: string;
   zoomLevel: string;
@@ -654,6 +663,15 @@ export const weReportLocaleEn: WeReportLocale = {
   wizardTotals: 'Totals of number columns',
   automatic: 'Automatic',
   createReport: 'Create report',
+  issueTextCut: 'The text does not fit in its box and is cut off.',
+  stretch: 'Extend to the bottom when the section grows',
+  stretchHint: 'For cell borders and column lines next to a text that grows.',
+  fitToText: 'Fit size to text',
+  collapseBand: 'Collapse section',
+  expandBand: 'Expand section',
+  groupByThis: 'Group rows by this value',
+  addTotal: 'Add a total of this column',
+  filterFields: 'Find a field',
   previousMatch: 'Previous match',
   nextMatch: 'Next match',
   zoomLevel: 'Zoom',
@@ -743,6 +761,7 @@ export const weReportLocaleEn: WeReportLocale = {
     Day: 'Day of the month.',
     AddDays: 'A date moved by a number of days, e.g. a due date.',
     Sum: 'Total over the rows in scope (group, page or report).',
+    RowNumber: 'Position of the row: 1, 2, 3 … (restarts in every group).',
     Count: 'Number of rows in scope.',
     Avg: 'Average over the rows in scope.',
     Min: 'Smallest value over the rows in scope (or of two values).',
@@ -1056,6 +1075,15 @@ export const weReportLocaleTr: WeReportLocale = {
   wizardTotals: 'Sayı sütunlarının toplamı',
   automatic: 'Otomatik',
   createReport: 'Raporu oluştur',
+  issueTextCut: 'Metin kutusuna sığmıyor, kesiliyor.',
+  stretch: 'Bölüm uzayınca alta kadar uzat',
+  stretchHint: 'Uzayan bir metnin yanındaki hücre kenarlıkları ve sütun çizgileri için.',
+  fitToText: 'Boyutu metne sığdır',
+  collapseBand: 'Bölümü daralt',
+  expandBand: 'Bölümü genişlet',
+  groupByThis: 'Satırları bu değere göre grupla',
+  addTotal: 'Bu sütunun toplamını ekle',
+  filterFields: 'Alan ara',
   previousMatch: 'Önceki eşleşme',
   nextMatch: 'Sonraki eşleşme',
   zoomLevel: 'Yakınlaştırma',
@@ -1145,6 +1173,7 @@ export const weReportLocaleTr: WeReportLocale = {
     Day: 'Ayın günü.',
     AddDays: 'Tarihe gün ekler; örn. vade tarihi.',
     Sum: 'Kapsamdaki satırların toplamı (grup, sayfa veya rapor).',
+    RowNumber: 'Satırın sıra numarası: 1, 2, 3 … (her grupta yeniden başlar).',
     Count: 'Kapsamdaki satır sayısı.',
     Avg: 'Kapsamdaki satırların ortalaması.',
     Min: 'Kapsamdaki en küçük değer (veya iki değerden küçüğü).',

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostL
 import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT, StudioLanguage } from './studio-text';
+import { decodeShare, encodeShare, SHARE_PREFIX } from './share-link';
 import { TEMPLATES } from './templates';
 
 const BACKEND_KEY = 'we-report-studio.backendUrl';
@@ -82,11 +83,39 @@ export class AppComponent {
       document.documentElement.lang = this.language();
     });
 
-    // The last design comes back after a reload; a first visit starts at the gallery.
-    const restored = this.restore();
-    if (restored) this.message.set(this.text().restored);
+    // A shared link wins; else the last design comes back after a reload; a first visit starts at the gallery.
+    if (location.hash.startsWith(SHARE_PREFIX)) void this.openShared(location.hash);
+    else if (this.restore()) this.message.set(this.text().restored);
     else this.openGallery();
     effect(() => writeStorage(AUTOSAVE_KEY, JSON.stringify({ templateId: this.templateId(), report: this.report() })));
+  }
+
+  /** A design from a share link: an untrusted report file, so it goes through the same migration as Open. */
+  private async openShared(hash: string): Promise<void> {
+    try {
+      const shared = (await decodeShare(hash)) as { report?: unknown; data?: unknown } | null;
+      this.report.set(migrateDefinition(shared?.report));
+      this.data.set(shared?.data);
+      this.templateId.set('blank');
+      this.message.set(this.text().sharedOpened);
+    } catch {
+      this.message.set(this.text().sharedFailed);
+      if (!this.restore()) this.openGallery();
+    }
+    // Later edits are autosaved; the link stays only until the page is reloaded.
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  /** Puts the design and its data in the address bar (and on the clipboard) as a link. */
+  protected async share(): Promise<void> {
+    const url = location.origin + location.pathname + location.search + (await encodeShare({ report: this.report(), data: this.data() }));
+    history.replaceState(null, '', url);
+    try {
+      await navigator.clipboard.writeText(url);
+      this.message.set(this.text().shareCopied);
+    } catch {
+      this.message.set(this.text().shareReady);
+    }
   }
 
   private restore(): boolean {

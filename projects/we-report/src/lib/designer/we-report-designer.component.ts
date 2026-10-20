@@ -14,24 +14,28 @@ import { DataSourcesDialogComponent } from './data-sources-dialog.component';
 
 const WIDTH_KEY = 'we-report-designer.panels';
 
-/** Panel widths are a per-browser convenience; storage may be unavailable. */
-function readWidth(side: 'left' | 'right', fallback: number): number {
+/** Panel widths, zoom and grid are a per-browser convenience; storage may be unavailable. */
+function readSaved<T>(key: string, fallback: T, valid: (v: unknown) => boolean): T {
   try {
-    const saved = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}')[side];
-    return typeof saved === 'number' && (saved === 0 || (saved >= 160 && saved <= 480)) ? saved : fallback;
+    const saved = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}')[key];
+    return valid(saved) ? (saved as T) : fallback;
   } catch {
     return fallback;
   }
 }
 
-function writeWidth(side: 'left' | 'right', width: number): void {
+function writeSaved(values: Record<string, unknown>): void {
   try {
     const all = JSON.parse(localStorage.getItem(WIDTH_KEY) ?? '{}');
-    localStorage.setItem(WIDTH_KEY, JSON.stringify({ ...all, [side]: width }));
+    localStorage.setItem(WIDTH_KEY, JSON.stringify({ ...all, ...values }));
   } catch {
     /* not remembered */
   }
 }
+
+let designerCount = 0;
+
+const isWidth = (v: unknown) => typeof v === 'number' && (v === 0 || (v >= 160 && v <= 480));
 
 const BAND_ORDER: Record<BandKind, number> = {
   pageHeader: 0,
@@ -83,7 +87,7 @@ export class WeReportDesignerComponent {
   protected readonly toolbox = TOOLBOX_ITEMS;
   protected readonly tab = signal<'design' | 'preview'>('design');
   protected readonly advanced = signal(false);
-  protected readonly zoomLevel = signal(1);
+  protected readonly zoomLevel = signal(readSaved('zoom', 1, (v) => typeof v === 'number' && v >= 0.3 && v <= 3));
   protected readonly fontFamilies = signal<string[]>([]);
   protected readonly bandMenuOpen = signal(false);
   protected readonly dataDialogOpen = signal(false);
@@ -92,11 +96,12 @@ export class WeReportDesignerComponent {
   /** Right-click menu: screen position and the band it was opened on. */
   protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean; at?: { x: number; y: number } } | null>(null);
   private readonly canvas = viewChild<ElementRef<HTMLElement>>('canvas');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly surface = viewChild(DesignSurfaceComponent);
   protected readonly shortcutsOpen = signal(false);
   /** Side panel widths in px; 0 hides a panel. Remembered in this browser. */
-  protected readonly leftWidth = signal(readWidth('left', 232));
-  protected readonly rightWidth = signal(readWidth('right', 288));
+  protected readonly leftWidth = signal(readSaved('left', 232, isWidth));
+  protected readonly rightWidth = signal(readSaved('right', 288, isWidth));
   protected readonly fontSizes = [6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
   protected readonly textAligns: { value: TextAlign; icon: keyof WeReportIcons; label: 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' }[] = [
     { value: 'left', icon: 'textLeft', label: 'alignLeft' },
@@ -181,7 +186,7 @@ export class WeReportDesignerComponent {
     const up = () => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
-      writeWidth(side, target());
+      writeSaved({ [side]: target() });
     };
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
@@ -190,7 +195,7 @@ export class WeReportDesignerComponent {
   protected togglePanel(side: 'left' | 'right'): void {
     const target = side === 'left' ? this.leftWidth : this.rightWidth;
     target.set(target() ? 0 : side === 'left' ? 232 : 288);
-    writeWidth(side, target());
+    writeSaved({ [side]: target() });
   }
 
   protected editSelected(): void {
@@ -227,19 +232,33 @@ export class WeReportDesignerComponent {
     const { rows, parent } = this.fields();
     const known = rows.length || parent.length;
     const inner = this.fields().inner;
-    return checkReport(
-      this.state.report(),
-      known ? rows.map((f) => f.path) : undefined,
-      known ? parent.map((f) => f.path) : undefined,
-      undefined,
-      inner.length ? inner.map((f) => f.path) : undefined,
-    );
+    const bandOf = (id: string) => this.state.report().bands.find((b) => b.controls.some((c) => c.id === id))?.id ?? '';
+    const cut: ReportIssue[] = [...(this.surface()?.cutTexts() ?? [])].map((controlId) => ({ code: 'textCut', severity: 'warning', bandId: bandOf(controlId), controlId }));
+    return [
+      ...checkReport(
+        this.state.report(),
+        known ? rows.map((f) => f.path) : undefined,
+        known ? parent.map((f) => f.path) : undefined,
+        undefined,
+        inner.length ? inner.map((f) => f.path) : undefined,
+      ),
+      ...cut,
+    ];
   });
   /** Show the first data row inside bound controls instead of their formulas. */
-  protected readonly showData = signal(true);
+  protected readonly showData = signal(readSaved('showData', true, (v) => typeof v === 'boolean'));
   protected readonly sample = computed<DesignSample | null>(() => (this.showData() ? this.state.sample() : null));
 
   protected readonly fields = computed(() => designerFields(this.state.report(), this.data()));
+  protected readonly fieldFilter = signal('');
+  /** The field list narrowed to names containing the filter text. */
+  protected readonly shownFields = computed(() => {
+    const f = this.fields();
+    const q = this.fieldFilter().trim().toLocaleLowerCase();
+    if (!q) return f;
+    const keep = (list: DesignerField[]) => list.filter((x) => x.label.toLocaleLowerCase().includes(q) || x.path.toLocaleLowerCase().includes(q));
+    return { ...f, rows: keep(f.rows), inner: keep(f.inner), parent: keep(f.parent) };
+  });
   protected readonly allFields = computed<DesignerField[]>(() => [...this.fields().rows, ...this.fields().parent, ...this.fields().inner]);
   protected readonly addableBands = computed(() => {
     const kinds = new Set(this.state.report().bands.map((b) => b.kind));
@@ -304,10 +323,13 @@ export class WeReportDesignerComponent {
     return sel.kind === 'controls' && sel.ids.includes(id);
   }
 
+  /** Unique per designer, so two designers on one page do not share the size list. */
+  protected readonly sizeListId = `we-report-sizes-${++designerCount}`;
   protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
   protected readonly gridSteps = [0, 0.5, 1, 2, 5];
   /** Snap grid in mm; 0 turns the grid off. */
-  protected readonly gridSize = signal(1);
+  protected readonly gridSize = signal(readSaved('grid', 1, (v) => typeof v === 'number' && v >= 0 && v <= 10));
+  private readonly rememberView = effect(() => writeSaved({ zoom: this.zoomLevel(), grid: this.gridSize(), showData: this.showData() }));
 
   protected pickZoom(value: string): void {
     if (value === 'width') this.fitWidth();
@@ -350,6 +372,73 @@ export class WeReportDesignerComponent {
     this.editSelected();
   }
 
+  /** A single bound text in the detail section: it can get a total ("insert summary"). */
+  protected readonly totalTarget = computed(() => {
+    const [c, ...more] = this.state.selectedControls();
+    if (!c || more.length || c.type !== 'text' || !isExpression(c.text) || !c.text.expression.trim()) return null;
+    return this.state.selectedBand()?.kind === 'detail' || this.state.report().bands.find((b) => b.controls.includes(c))?.kind === 'detail' ? c : null;
+  });
+
+  protected groupByValue(): void {
+    const c = this.totalTarget();
+    if (c?.type === 'text' && isExpression(c.text)) this.addBand('groupHeader', c.text.expression);
+  }
+
+  /** Puts `Sum(...)` of the selected column under it in every group footer and the report footer. */
+  protected addTotal(): void {
+    const c = this.totalTarget();
+    if (!c || c.type !== 'text' || !isExpression(c.text)) return;
+    const expression = `Sum(${c.text.expression})`;
+    const taken = new Set<string>();
+    const ids: string[] = [];
+    this.state.update((d) => {
+      if (!d.bands.some((b) => b.kind === 'reportFooter')) {
+        d.bands.push({ id: this.state.newId('reportFooter', taken), kind: 'reportFooter', height: 8, controls: [] });
+        d.bands = orderBands(d.bands);
+      }
+      for (const band of d.bands) {
+        if (band.kind !== 'groupFooter' && band.kind !== 'reportFooter') continue;
+        // Under whatever already sits in this column, else at the top.
+        const inColumn = band.controls.filter((x) => x.x < c.x + c.width && x.x + x.width > c.x);
+        const y = inColumn.length ? Math.round(Math.max(...inColumn.map((x) => x.y + x.height)) * 100) / 100 : 1;
+        const id = this.state.newId('total', taken);
+        ids.push(id);
+        band.controls.push({
+          id, type: 'text', x: c.x, y, width: c.width, height: c.height, text: { expression }, format: c.format,
+          style: c.style, styleOverrides: { ...c.styleOverrides, bold: true },
+        });
+        band.height = Math.max(band.height, y + c.height + 1);
+      }
+    });
+    this.state.selection.set({ kind: 'controls', ids });
+  }
+
+  protected readonly hasTextSelected = computed(() => this.state.selectedControls().some((c) => c.type === 'text'));
+
+  /**
+   * Sizes the selected texts to what they show on the page (fixed text, or the sample value),
+   * measured with the report's fonts, so it matches the printed size.
+   */
+  protected async fitToText(): Promise<void> {
+    const texts = this.state.selectedControls().filter((c) => c.type === 'text');
+    if (!texts.length) return;
+    const fonts = await this.fontsService.ready();
+    const report = this.state.report();
+    const sizes = new Map<string, { width: number; height: number }>();
+    for (const c of texts) {
+      const shown = this.host.nativeElement.querySelector(`[data-control-id="${CSS.escape(c.id)}"] .ds__text`)?.textContent ?? '';
+      const lines = shown.split('\n');
+      const style = resolveStyle(report, c.style, c.styleOverrides);
+      const font = fonts.resolve(style.fontFamily, style.bold, style.italic);
+      const up = (v: number) => Math.ceil(v * 10) / 10;
+      sizes.set(c.id, {
+        width: up(Math.max(2, ...lines.map((l) => font.widthOf(l, style.fontSize))) + 2 * style.padding + 0.5),
+        height: up(lines.length * font.lineHeight(style.fontSize) + 2 * style.padding),
+      });
+    }
+    this.state.updateControls([...sizes.keys()], (c) => Object.assign(c, sizes.get(c.id)));
+  }
+
   /** Shrinks (or grows) a section to just below its lowest item. */
   protected fitBand(bandId: string | null): void {
     this.state.update((d) => {
@@ -372,7 +461,8 @@ export class WeReportDesignerComponent {
   @HostListener('cut', ['$event'])
   protected onCopy(e: ClipboardEvent): void {
     this.pendingClipboardKey = null;
-    if (this.tab() !== 'design' || this.isTyping(e) || !this.state.copySelection()) return;
+    // Text selected on the page (a label, a hint) is copied as text, not as report items.
+    if (this.tab() !== 'design' || this.isTyping(e) || !document.getSelection()?.isCollapsed || !this.state.copySelection()) return;
     e.preventDefault();
     e.clipboardData?.setData('text/plain', this.state.clipboardText());
     if (e.type === 'cut') this.state.deleteSelection();
@@ -438,14 +528,19 @@ export class WeReportDesignerComponent {
     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copy';
   }
 
-  protected addBand(kind: BandKind): void {
+  protected addBand(kind: BandKind, groupBy?: string): void {
     this.bandMenuOpen.set(false);
     const id = this.state.newId(kind);
     this.state.update((d) => {
       if (kind === 'groupHeader') {
-        const field = this.allFields().find((f) => !f.parent);
+        const expression = groupBy ?? this.allFields().find((f) => !f.parent)?.expression ?? '';
+        const width = resolvePageGeometry(d.page).contentWidth;
+        // A group made from a value shows that value as its heading.
+        const heading: ReportControl[] = groupBy
+          ? [{ id: `${id}Value`, type: 'text', x: 0, y: 1, width: Math.min(120, width), height: 6, text: { expression }, styleOverrides: { bold: true } }]
+          : [];
         // Pushed last, so after the stable sort it is the innermost group header…
-        d.bands.push({ id, kind, height: 8, groupBy: { expression: field?.expression ?? '' }, controls: [] });
+        d.bands.push({ id, kind, height: 8, groupBy: { expression }, controls: heading });
         // …and its footer, placed right after the detail band, the innermost footer.
         const detailIndex = d.bands.findIndex((b) => b.kind === 'detail');
         d.bands.splice(detailIndex + 1, 0, { id: `${id}Footer`, kind: 'groupFooter', groupHeaderId: id, height: 8, controls: [] });
@@ -486,7 +581,12 @@ export class WeReportDesignerComponent {
       totals: true,
       orientation: '',
     });
+    // Focus the dialog so Escape and Enter work at once.
+    setTimeout(() => this.host.nativeElement.querySelector<HTMLInputElement>('.wd__wizard input')?.select());
   }
+
+  /** At least one column (or a grouping) to build from. */
+  protected readonly wizardReady = computed(() => !!this.wizard()?.fields.some((f) => f.on) || !!this.wizard()?.groupBy);
 
   protected updateWizard(change: Partial<NonNullable<ReturnType<typeof this.wizard>>>): void {
     const w = this.wizard();
@@ -531,6 +631,7 @@ export class WeReportDesignerComponent {
       emptyFormula: s.issueEmptyFormula,
       overlap: s.issueOverlap,
       outsideColumn: s.issueOutsideColumn,
+      textCut: s.issueTextCut,
     }[issue.code];
     return text.replace('{0}', issue.detail ?? '');
   }
@@ -539,8 +640,14 @@ export class WeReportDesignerComponent {
     this.state.selection.set({ kind: 'controls', ids: [issue.controlId] });
   }
 
-  /** Moves (and if needed narrows) an item back inside the paper. */
+  /** Moves (and if needed narrows) an item back inside the paper; a cut text grows to fit instead. */
   protected fixIssue(issue: ReportIssue): void {
+    if (issue.code === 'textCut') {
+      this.state.updateControls([issue.controlId], (c) => {
+        if (c.type === 'text') c.canGrow = true;
+      });
+      return;
+    }
     const width = resolvePageGeometry(this.state.report().page).contentWidth;
     this.state.updateControls([issue.controlId], (c) => {
       c.width = Math.min(c.width, width);

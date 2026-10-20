@@ -76,6 +76,8 @@ describe('expression language', () => {
     const rows = [{ T: 10, C: 'b' }, { T: 5, C: 'a' }, { T: null, C: 'c' }, { T: 15, C: 'a' }];
     expect(evaluate('Sum([T])', { rows })).toBe(30);
     expect(evaluate('Count()', { rows })).toBe(4);
+    expect(evaluate('RowNumber()', { rows, row: rows[2] })).toBe(3);
+    expect(evaluate('RowNumber()', { rows, row: { T: 1 } })).toBeNull();
     expect(evaluate('Count([T])', { rows })).toBe(3);
     expect(evaluate('Avg([T])', { rows })).toBe(10);
     expect(evaluate('Min([C])', { rows })).toBe('a');

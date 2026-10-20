@@ -21,7 +21,7 @@ import { aggregate, ChartPoint, chartItems } from './chart';
 import { readImage } from './images';
 import { LayoutDocument, LayoutItem, LayoutPage, LayoutProblem, TextItem } from './layout-types';
 import { resolveStyle, ResolvedStyle } from './style';
-import { wrapText } from './text-wrap';
+import { fitLines, wrapText } from './text-wrap';
 import { toMm } from '../units';
 
 export interface LayoutOptions {
@@ -410,12 +410,35 @@ class LayoutRun {
     const items: LayoutItem[] = [];
     const deferred: RenderedBand['deferred'] = [];
     let height = band.height;
-    for (const control of band.controls) {
-      if (control.visible !== undefined && !this.truthy(this.bind(control.visible, scope, control.id))) continue;
-      const result = this.renderControl(control, scope);
+    const shown = band.controls.filter((c) => c.visible === undefined || this.truthy(this.bind(c.visible, scope, c.id)));
+    // An item that grows pushes down the items below it (that share its columns), as in desktop
+    // designers. Top to bottom, so a push carries on down the section.
+    const growths: { x1: number; x2: number; bottom: number; delta: number }[] = [];
+    const shiftOf = (c: ReportControl) =>
+      growths.reduce((m, g) => (g.bottom <= c.y + 0.01 && g.x1 < c.x + c.width && g.x2 > c.x ? Math.max(m, g.delta) : m), 0);
+    // Fixed items first decide the height; stretching items then reach down to it.
+    const results = new Map<ReportControl, ReturnType<typeof this.renderControl>>();
+    for (const control of [...shown].sort((a, b) => a.y - b.y)) {
+      if (control.stretch) continue;
+      const shift = shiftOf(control);
+      const result = this.renderControl(shift ? { ...control, y: control.y + shift } : control, scope);
+      results.set(control, result);
+      if (result.height > control.height + 0.01 || shift) {
+        growths.push({ x1: control.x, x2: control.x + control.width, bottom: control.y + control.height, delta: shift + Math.max(0, result.height - control.height) });
+      }
+      height = Math.max(height, control.y + shift + result.height);
+    }
+    for (const control of shown) {
+      if (!control.stretch) continue;
+      const y = control.y + shiftOf(control);
+      const result = this.renderControl({ ...control, y, height: Math.max(control.height, height - y) }, scope);
+      results.set(control, result);
+      height = Math.max(height, y + result.height);
+    }
+    for (const control of shown) {
+      const result = results.get(control)!;
       if (result.deferred) deferred.push(result.deferred);
       items.push(...result.items);
-      height = Math.max(height, control.y + result.height);
     }
     if (band.backgroundColor) {
       items.unshift({ kind: 'rect', x: 0, y: 0, width: this.cellWidth(band), height, fill: band.backgroundColor });
@@ -631,9 +654,7 @@ class LayoutRun {
     const innerWidth = Math.max(0, box.width - 2 * pad);
     const lineHeight = font.lineHeight(size);
     const ascent = font.ascent(size);
-    let lines = wrapText(text, font, size, innerWidth);
-    const maxLines = Math.max(1, Math.floor((box.height - 2 * pad) / lineHeight + 0.01));
-    if (lines.length > maxLines) lines = lines.slice(0, maxLines);
+    const { lines } = fitLines(text, font, size, pad, box.width, box.height);
     const free = Math.max(0, box.height - 2 * pad - lines.length * lineHeight);
     const offset = style.verticalAlign === 'middle' ? free / 2 : style.verticalAlign === 'bottom' ? free : 0;
     const item: TextItem = {

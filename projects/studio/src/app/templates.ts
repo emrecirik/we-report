@@ -1,5 +1,6 @@
 import { createBlankReport, migrateDefinition, ReportDefinition } from 'we-report-core';
 import certificate from '../templates/certificate.wrpt.json';
+import deliveryNote from '../templates/delivery-note.wrpt.json';
 import invoiceData from '../templates/invoice.data.json';
 import invoice from '../templates/invoice.wrpt.json';
 import labels from '../templates/labels.wrpt.json';
@@ -25,6 +26,13 @@ export const TEMPLATES: StudioTemplate[] = [
     name: { tr: 'Fatura', en: 'Invoice' },
     description: { tr: 'Logo, müşteri, kalemler, KDV ve barkod', en: 'Logo, customer, lines, VAT and a barcode' },
     report: () => migrateDefinition(structuredClone(invoice)),
+    data: invoiceData,
+  },
+  {
+    id: 'delivery-note',
+    name: { tr: 'Sevk irsaliyesi', en: 'Delivery note' },
+    description: { tr: 'Sıra no, miktar, imza alanları; faturayla aynı veri', en: 'Row numbers, quantities and signature lines; same data as the invoice' },
+    report: () => migrateDefinition(structuredClone(deliveryNote)),
     data: invoiceData,
   },
   {

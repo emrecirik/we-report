@@ -9,6 +9,31 @@
   sample backends implement it and pass the extended conformance suite (15 checks) on SQLite and
   PostgreSQL. Used by we-grid-angular 0.11 for server-side paging and server-saved layouts.
 
+- Designer: texts that will be cut off in print are underlined in orange and listed under
+  Problems (measured with the report's fonts); *Fix* turns on *Grow to fit text*. `wrapText` is
+  exported from core, with `fitLines` (the rule the engine cuts text by).
+- Layout: a text that grows pushes the items below it (in the same columns) down instead of
+  overlapping them, keeping their spacing — as in desktop designers.
+- Formula editor: suggestions while typing — functions with their explanation, `[` for fields and
+  parameters; arrows to choose, Enter or Tab to insert.
+- Items can *extend to the bottom when the section grows* (`stretch`), so cell borders and column
+  lines stay aligned next to a text that grows (Advanced → Behaviour).
+- Formulas: `RowNumber()` — 1, 2, 3 … for each row, restarting in every group and inner list.
+- Studio: delivery note template (row numbers, quantities, signature lines).
+- Studio: *Share* puts the design and its data into a link (gzip in the address bar, no server);
+  opening the link loads it like an opened file.
+- Designer: *Fit size to text* (right-click) sizes texts to what they show, measured with the
+  report's fonts.
+- Designer: zoom, grid size and *Show data* are remembered in the browser, like the panel widths.
+- Designer: fold a section away (double-click its label, or right-click) to make room while
+  working on others; only the designer view changes.
+- Designer: right-click a value in the detail section → *Add a total of this column* puts its sum
+  under it in every group footer and the report footer (added when missing).
+  *Group rows by this value* adds a group with that value as its heading.
+- Designer: a search box over the data fields when there are many.
+- Designer: the report wizard focuses its first field and its Create button is off until a column
+  or a grouping is chosen; Ctrl+S while typing on the page keeps the text and reaches the app's save.
+
 ## 0.5.0 — 2026-10-20
 
 - Designer, desktop comfort: type on the page (double-click, F2 or just start typing on a selected

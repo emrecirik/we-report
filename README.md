@@ -22,7 +22,7 @@ backend required**.
 - **The preview is the PDF.** One layout engine measures text with the embedded font, so the
   screen, the printout and the PDF break lines and pages in exactly the same places.
 - **Data first.** Paste a table from Excel, call a web service or pick a database table — then
-  *Design from data* builds a tidy report with headers, totals and page numbers in one click.
+  The *Report wizard* builds a tidy report with headers, groups, sorting, totals and page numbers.
 - **Live data while designing.** Fields show the first record's real values, not `[CustomerName]`.
 - **Plain language.** "Grow to fit text", "Keep group on one page", "Show only when" — a Basic mode
   that hides everything a first report does not need.

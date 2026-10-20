@@ -5,6 +5,14 @@ import { WeReportLocale } from '../we-report-locale';
 import { DesignerField } from './designer-fields';
 import { DesignerState } from './designer-state';
 
+interface Suggestion {
+  label: string;
+  insert: string;
+  /** How far the caret moves back after inserting (into a function's brackets). */
+  back: number;
+  help: string;
+}
+
 const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
   { id: 'logic', label: 'fnLogic' },
   { id: 'text', label: 'fnText' },
@@ -27,7 +35,34 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
     <div class="xe" role="dialog" aria-modal="true" [attr.aria-label]="s.formulaEditor" (keydown.escape)="closed.emit()">
       <h2>{{ s.formulaEditor }}</h2>
       <p class="xe__hint">{{ s.formulaEditorHint }}</p>
-      <textarea #area class="xe__formula" (input)="draft.set($any($event.target).value)" spellcheck="false" rows="3" [attr.aria-label]="s.expression"></textarea>
+      <div class="xe__field">
+        <textarea
+          #area
+          class="xe__formula"
+          (input)="draft.set($any($event.target).value); findToken()"
+          (click)="findToken()"
+          (keydown)="onKey($event)"
+          (blur)="token.set(null)"
+          spellcheck="false"
+          rows="3"
+          role="combobox"
+          aria-autocomplete="list"
+          [attr.aria-expanded]="suggestions().length > 0"
+          [attr.aria-label]="s.expression"
+        ></textarea>
+        @if (suggestions().length) {
+          <ul class="xe__suggest" role="listbox">
+            @for (o of suggestions(); track o.label; let i = $index) {
+              <li role="option" [attr.aria-selected]="i === active()" [class.xe__on]="i === active()" (mousedown)="$event.preventDefault(); accept(o)">
+                <code>{{ o.label }}</code>
+                @if (o.help) {
+                  <small>{{ o.help }}</small>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
       <div class="xe__result" [class.xe__result--error]="result().error" aria-live="polite">
         <span>{{ s.formulaResult }}</span>
         <output>{{ result().text }}</output>
@@ -109,6 +144,41 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
     .xe__hint {
       margin: -6px 0 0;
       font-size: 12px;
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+    }
+    .xe__field {
+      position: relative;
+    }
+    .xe__suggest {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      z-index: 2;
+      max-height: 220px;
+      overflow: auto;
+      margin: 4px 0 0;
+      padding: 4px;
+      list-style: none;
+      border-radius: 10px;
+      background: var(--we-report-panel-bg, #fbfbfd);
+      box-shadow: var(--we-report-popover-shadow, 0 8px 24px rgba(0, 0, 0, 0.14));
+    }
+    .xe__suggest li {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .xe__suggest li.xe__on {
+      background: var(--we-report-selection-fill, rgba(0, 122, 255, 0.12));
+    }
+    .xe__suggest small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
     .xe__formula {
@@ -285,6 +355,71 @@ export class ExpressionEditorComponent implements AfterViewInit {
     el.setRangeText(text, el.selectionStart, el.selectionEnd, 'end');
     el.selectionStart = el.selectionEnd = el.selectionEnd - caretBack;
     this.draft.set(el.value);
+  }
+
+  /** The word (or `[field` start) before the caret that suggestions complete. */
+  protected readonly token = signal<{ start: number; text: string; field: boolean } | null>(null);
+  protected readonly active = signal(0);
+
+  /** Functions, fields and parameters matching the word being typed, best first. */
+  protected readonly suggestions = computed<Suggestion[]>(() => {
+    const t = this.token();
+    if (!t) return [];
+    const q = t.text.toLocaleLowerCase();
+    const fields: Suggestion[] = [
+      ...this.fields().map((f) => ({ label: f.expression, insert: f.expression, back: 0, help: f.label })),
+      ...this.parameters().map((p) => ({ label: `[?${p.name}]`, insert: `[?${p.name}]`, back: 0, help: p.label ?? '' })),
+    ];
+    const matches = (s: Suggestion) => s.label.toLocaleLowerCase().replace(/^\[\??/, '').includes(q.replace(/^\[\??/, ''));
+    if (t.field) return fields.filter(matches).slice(0, 8);
+    const help = this.strings().functionHelp;
+    const fns: Suggestion[] = EXPRESSION_FUNCTIONS.filter((f) => f.name.toLocaleLowerCase().startsWith(q)).map((f) => ({
+      label: f.signature,
+      insert: `${f.name}()`,
+      back: 1,
+      help: help[f.name] ?? '',
+    }));
+    return [...fns, ...fields.filter(matches)].slice(0, 8);
+  });
+
+  /** Finds the word at the caret: letters after an operator, or an unfinished `[field`. */
+  protected findToken(): void {
+    const el = this.area().nativeElement;
+    const before = el.value.slice(0, el.selectionStart);
+    const field = /\[[^\]]*$/.exec(before);
+    const word = /[A-Za-zÇĞİÖŞÜçğıöşü_]+$/.exec(before);
+    // Inside quotes it is text, not a formula word.
+    const quotes = (before.match(/'/g) ?? []).length % 2 === 1;
+    const found = quotes ? null : field ? { start: field.index, text: field[0], field: true } : word ? { start: word.index, text: word[0], field: false } : null;
+    this.token.set(found);
+    this.active.set(0);
+  }
+
+  protected onKey(e: KeyboardEvent): void {
+    const list = this.suggestions();
+    if (!list.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.active.set((this.active() + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length);
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      this.accept(list[this.active()]);
+    } else if (e.key === 'Escape') {
+      // Closes the list only, not the editor.
+      e.stopPropagation();
+      this.token.set(null);
+    }
+  }
+
+  protected accept(s: Suggestion): void {
+    const t = this.token();
+    if (!t) return;
+    const el = this.area().nativeElement;
+    el.focus();
+    el.setRangeText(s.insert, t.start, el.selectionStart, 'end');
+    el.selectionStart = el.selectionEnd = el.selectionEnd - s.back;
+    this.draft.set(el.value);
+    this.token.set(null);
   }
 
   /** Inserts `Name()` and puts the cursor between the brackets. */

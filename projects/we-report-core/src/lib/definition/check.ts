@@ -2,7 +2,8 @@ import { parseExpression, ExpressionError, ExpressionNode } from '../expression/
 import { resolvePageGeometry } from './page';
 import { Bindable, isExpression, ReportControl, ReportDefinition } from './report-definition';
 
-export type ReportIssueCode = 'outsidePage' | 'outsideColumn' | 'formulaError' | 'unknownField' | 'emptyFormula' | 'overlap';
+/** `textCut` is found by the designer, which measures with the loaded fonts; `checkReport` does not report it. */
+export type ReportIssueCode = 'outsidePage' | 'outsideColumn' | 'formulaError' | 'unknownField' | 'emptyFormula' | 'overlap' | 'textCut';
 
 /** A design problem the designer can explain and often fix. Messages are localized by `code`. */
 export interface ReportIssue {

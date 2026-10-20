@@ -11,7 +11,7 @@ import { barcodeItem } from './barcode';
 import { applyLabelSheet, LABEL_SHEETS } from '../definition/label-sheets';
 import { checkReport } from '../definition/check';
 import { reportTable } from '../render/xlsx';
-import { wrapText } from './text-wrap';
+import { fitLines, wrapText } from './text-wrap';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
 
@@ -103,6 +103,48 @@ describe('layout engine', () => {
     report.bands.splice(3, 0, footer);
     const doc = layoutReport(report, { fonts, now: NOW });
     expect(texts(doc.pages[0])).toEqual(['Title', 'Drinks', 'Tea', 'Coffee', 'Sum: 30', 'Fruit', 'Apple', 'Sum: 3', '1 / 1']);
+  });
+
+  it('says when a box cuts text off, always showing at least one line', () => {
+    const font = fonts.resolve(undefined);
+    // A single line never counts as cut, even in a box shorter than the line.
+    expect(fitLines('FATURA', font, 22, 0.8, 50, 6).cut).toBeFalse();
+    const long = 'one two three four five six seven eight nine ten';
+    expect(fitLines(long, font, 10, 0.8, 20, 6)).toEqual(jasmine.objectContaining({ cut: true }));
+    expect(fitLines(long, font, 10, 0.8, 20, 6).lines.length).toBe(1);
+    expect(fitLines(long, font, 10, 0.8, 200, 6).cut).toBeFalse();
+  });
+
+  it('pushes items below a growing text down instead of overlapping them', () => {
+    const report = listReport([{ Name: 'A long name that wraps onto several lines in a narrow box', Price: 1 }]);
+    const detail = report.bands.find((b) => b.kind === 'detail')!;
+    detail.height = 14;
+    detail.controls = [
+      { id: 'name', type: 'text', x: 0, y: 0, width: 20, height: 6, canGrow: true, text: { expression: '[Name]' } },
+      { id: 'below', type: 'text', x: 0, y: 8, width: 20, height: 6, text: 'Below' },
+      { id: 'beside', type: 'text', x: 30, y: 8, width: 20, height: 6, text: 'Beside' },
+    ];
+    const doc = layoutReport(report, { fonts, now: NOW });
+    const items = doc.pages[0].items.filter((i): i is TextItem => i.kind === 'text');
+    const name = items.find((t) => t.lines[0]?.text.startsWith('A long'))!;
+    const below = items.find((t) => t.lines[0]?.text === 'Below')!;
+    const beside = items.find((t) => t.lines[0]?.text === 'Beside')!;
+    expect(below.y).toBeCloseTo(name.y + name.height + 2, 5); // the 2 mm gap is kept
+    expect(beside.y).toBeCloseTo(name.y + 8, 5); // other columns stay put
+  });
+
+  it('stretches marked items to the bottom of a grown section', () => {
+    const report = listReport([{ Name: 'A long name that wraps onto several lines in a narrow box', Price: 1 }]);
+    const detail = report.bands.find((b) => b.kind === 'detail')!;
+    detail.controls = [
+      { id: 'name', type: 'text', x: 0, y: 0, width: 20, height: 6, canGrow: true, text: { expression: '[Name]' } },
+      { id: 'box', type: 'shape', shape: 'rectangle', x: 20, y: 0, width: 10, height: 6, stretch: true },
+      { id: 'fixed', type: 'shape', shape: 'rectangle', x: 30, y: 0, width: 10, height: 6 },
+    ];
+    const doc = layoutReport(report, { fonts, now: NOW });
+    const rects = doc.pages[0].items.filter((i) => i.kind === 'rect') as { height: number }[];
+    expect(rects[0].height).toBeGreaterThan(12);
+    expect(rects[1].height).toBe(6);
   });
 
   it('sorts detail rows inside their group', () => {

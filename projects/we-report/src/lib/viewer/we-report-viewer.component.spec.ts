@@ -54,6 +54,15 @@ describe('WeReportViewerComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.we-report-page__hit').length).toBeGreaterThan(0);
     expect(fixture.nativeElement.querySelectorAll('.we-report-page__hit--current').length).toBe(1);
+
+    // Keyboard paging: End goes to the last page, Home back to the first.
+    const scroller = fixture.nativeElement.querySelector('.we-report-viewer__scroll') as HTMLElement;
+    scroller.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.we-report-viewer__pagebox').value).toBe('3');
+    scroller.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.we-report-viewer__pagebox').value).toBe('1');
   });
 
   it('uses the prefixed font family so an installed font cannot replace the measured one', async () => {

@@ -58,6 +58,15 @@ export class DesignerState {
   readonly canRedo = signal(false);
   /** The table cell last clicked; the inspector edits it while its table is selected. */
   readonly tableCell = signal<TableCellRef | null>(null);
+  /** Sections folded away in the designer to save room (not saved in the report). */
+  readonly collapsed = signal<ReadonlySet<string>>(new Set());
+
+  toggleCollapsed(bandId: string): void {
+    const next = new Set(this.collapsed());
+    if (!next.delete(bandId)) next.add(bandId);
+    this.collapsed.set(next);
+  }
+
   /** Format painter: the look picked up from one item, applied to the next item clicked. */
   readonly painter = signal<Pick<ReportControl, 'style' | 'styleOverrides'> | null>(null);
   /** Text being typed on the page (double-click / F2): a text control, or a cell of a table. */

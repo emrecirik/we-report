@@ -36,6 +36,64 @@ describe('WeReportDesignerComponent', () => {
     expect(labels).toEqual(['Sayfa başlığı', 'Detay (her satır için tekrarlanır)', 'Sayfa altlığı']);
   });
 
+  it('adds a total of a detail column to every group footer and the report footer', () => {
+    const report = createBlankReport();
+    report.bands.splice(1, 0, { id: 'g', kind: 'groupHeader', height: 8, groupBy: { expression: '[city]' }, controls: [] });
+    report.bands.splice(3, 0, { id: 'gf', kind: 'groupFooter', groupHeaderId: 'g', height: 8, controls: [] });
+    report.bands[2].controls.push({ id: 'amount', type: 'text', x: 100, y: 0, width: 30, height: 6, text: { expression: '[amount]' }, format: 'n2' });
+    create(report, [{ city: 'a', amount: 1 }]);
+    state.selection.set({ kind: 'controls', ids: ['amount'] });
+    (fixture.componentInstance as unknown as { addTotal(): void }).addTotal();
+    const totals = state.report().bands.filter((b) => b.kind === 'groupFooter' || b.kind === 'reportFooter').map((b) => b.controls.map((c) => [c.type === 'text' ? c.text : null, c.x, (c as { format?: string }).format]));
+    expect(totals).toEqual([
+      [[{ expression: 'Sum([amount])' }, 100, 'n2']],
+      [[{ expression: 'Sum([amount])' }, 100, 'n2']],
+    ]);
+    expect(state.report().bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'groupFooter', 'reportFooter', 'pageFooter']);
+  });
+
+  it('groups rows by the value of the selected detail item', () => {
+    const report = createBlankReport();
+    report.bands[1].controls.push({ id: 'city', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[city]' } });
+    create(report, [{ city: 'a' }]);
+    state.selection.set({ kind: 'controls', ids: ['city'] });
+    (fixture.componentInstance as unknown as { groupByValue(): void }).groupByValue();
+    const header = state.report().bands.find((b) => b.kind === 'groupHeader')!;
+    expect(header.groupBy).toEqual({ expression: '[city]' });
+    expect(header.controls.map((c) => (c.type === 'text' ? c.text : null))).toEqual([{ expression: '[city]' }]);
+    expect(state.report().bands.some((b) => b.kind === 'groupFooter' && b.groupHeaderId === header.id)).toBeTrue();
+  });
+
+  it('builds a grouped, sorted list from the report wizard', () => {
+    create(createBlankReport(), [
+      { city: 'B', name: 'x', amount: 2, paid: true },
+      { city: 'A', name: 'y', amount: 1, paid: false },
+    ]);
+    el().querySelector<HTMLButtonElement>('.wd__magic')!.click();
+    fixture.detectChanges();
+    const selects = el().querySelectorAll<HTMLSelectElement>('.wd__wizard select');
+    const choose = (select: HTMLSelectElement, value: string) => {
+      select.value = value;
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+    };
+    choose(selects[0], 'city');
+    choose(selects[1], 'amount');
+    choose(selects[2], 'desc');
+    const create_ = el().querySelector<HTMLButtonElement>('.wd__wizard .wd__primary')!;
+    expect(create_.disabled).toBeFalse();
+    create_.click();
+    fixture.detectChanges();
+    expect(el().querySelector('.wd__wizard')).toBeNull();
+    const bands = state.report().bands;
+    expect(bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'groupFooter', 'reportFooter', 'pageFooter']);
+    expect(bands.find((b) => b.kind === 'groupHeader')!.groupBy).toEqual({ expression: '[city]' });
+    expect(bands.find((b) => b.kind === 'detail')!.sortBy).toEqual([{ expression: '[amount]', descending: true }]);
+    // Undo brings the blank report back in one step.
+    state.undo();
+    expect(state.report().bands.map((b) => b.kind)).toEqual(['pageHeader', 'detail', 'pageFooter']);
+  });
+
   it('emits every edit through the two-way report binding', () => {
     const report = createBlankReport();
     create(report);

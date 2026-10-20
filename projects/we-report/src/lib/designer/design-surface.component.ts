@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
+import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -119,14 +119,15 @@ interface DragOp {
         <div class="ds__watermark" aria-hidden="true" [style.color]="state.report().watermark?.color ?? defaultWatermarkColor" [style.font-size.mm]="geometry().width * zoom() * 0.12" [style.transform]="'translate(-50%, -50%) rotate(' + -(state.report().watermark?.angle ?? 45) + 'deg)'">{{ wm }}</div>
       }
       @for (band of state.report().bands; track band.id) {
-        <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)">
-          <button type="button" class="ds__band-label" [title]="bandLabel(band)" (click)="selectBand(band.id)">
+        @let folded = state.collapsed().has(band.id);
+        <div class="ds__band" [class.ds__band--selected]="isBandSelected(band.id)" [class.ds__band--collapsed]="folded">
+          <button type="button" class="ds__band-label" [title]="bandLabel(band) + ' — ' + (folded ? strings().expandBand : strings().collapseBand) " [attr.aria-expanded]="!folded" (click)="selectBand(band.id)" (dblclick)="state.toggleCollapsed(band.id)">
             {{ bandLabel(band) }}
           </button>
           <div
             class="ds__band-body"
             [attr.data-band-id]="band.id"
-            [style.height.mm]="band.height * zoom()"
+            [style.height.mm]="folded ? 6 : band.height * zoom()"
             [style.background-color]="band.backgroundColor ?? null"
             [style.background-size.mm]="gridSize() * zoom()"
             [style.background-image]="gridSize() ? null : 'none'"
@@ -139,6 +140,7 @@ interface DragOp {
                 class="ds__control"
                 [attr.data-control-id]="c.id"
                 [class.ds__control--selected]="isSelected(c.id)"
+                [class.ds__control--cut]="cutTexts().has(c.id)"
                 [attr.data-type]="c.type"
                 [style.left.mm]="c.x * zoom()"
                 [style.top.mm]="c.y * zoom()"
@@ -250,7 +252,7 @@ interface DragOp {
               }
             }
           </div>
-          <div class="ds__band-resize" (pointerdown)="onBandResizePointerDown($event, band)" [title]="strings().bandHeight"></div>
+          <div class="ds__band-resize" [hidden]="folded" (pointerdown)="onBandResizePointerDown($event, band)" [title]="strings().bandHeight"></div>
         </div>
       }
     </div>
@@ -352,6 +354,14 @@ interface DragOp {
       outline: none;
       box-shadow: var(--we-report-focus-ring, 0 0 0 3px rgba(0, 122, 255, 0.35));
     }
+    /* A folded section: a thin hatched strip, its items hidden. */
+    .ds__band--collapsed .ds__band-body {
+      overflow: hidden;
+      background: repeating-linear-gradient(-45deg, var(--we-report-band-label-bg, rgba(118, 118, 128, 0.1)) 0 4px, transparent 4px 8px) !important;
+    }
+    .ds__band--collapsed .ds__band-body > * {
+      display: none;
+    }
     .ds__band-body {
       position: relative;
       background-image: radial-gradient(circle, var(--we-report-margin-guide, rgba(0, 122, 255, 0.18)) 0.7px, transparent 0.7px);
@@ -403,6 +413,10 @@ interface DragOp {
     /* Typing on the page: the editor takes the item's box and look. */
     :host(.ds--painting) .ds__control {
       cursor: copy;
+    }
+    /* A text that will be cut off in print. */
+    .ds__control--cut {
+      box-shadow: inset 0 -2px 0 var(--we-report-warning-fg, #c93400);
     }
     .ds__editor {
       position: absolute;
@@ -570,6 +584,26 @@ export class DesignSurfaceComponent implements OnDestroy {
   protected readonly handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
   protected readonly guides = signal<Guide[]>([]);
   protected readonly gaps = signal<Gap[]>([]);
+  private readonly fontsService = inject(WeReportFontsService);
+  /** Texts (without Grow to fit text) whose content does not fit, measured with the report's fonts like the print. */
+  readonly cutTexts = signal<ReadonlySet<string>>(new Set());
+  private measureRun = 0;
+  private readonly measureTexts = effect(() => {
+    const report = this.state.report();
+    const texts = report.bands.flatMap((b) => b.controls.filter((c) => c.type === 'text' && !c.canGrow).map((c) => ({ c, text: this.caption(c, b) })));
+    const run = ++this.measureRun;
+    void this.fontsService.ready().then((fonts) => {
+      if (run !== this.measureRun) return;
+      const cut = new Set<string>();
+      for (const { c, text } of texts) {
+        if (!text) continue;
+        const style = resolveStyle(report, c.style, c.styleOverrides);
+        const font = fonts.resolve(style.fontFamily, style.bold, style.italic);
+        if (fitLines(text, font, style.fontSize, style.padding, c.width, c.height).cut) cut.add(c.id);
+      }
+      this.cutTexts.set(cut);
+    });
+  });
   /** The rubber band while dragging on an empty part of a section (mm in that section). */
   protected readonly marquee = signal<{ bandId: string; x: number; y: number; width: number; height: number } | null>(null);
   /** A bound item whose formula is open in the editor. */
@@ -897,6 +931,11 @@ export class DesignSurfaceComponent implements OnDestroy {
 
   /** Enter keeps the text, Shift+Enter starts a new line, Escape leaves it as it was. */
   protected onEditorKey(e: KeyboardEvent): void {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      // Save shortcuts of the host app keep working: keep the typed text first, then let it through.
+      (e.target as HTMLTextAreaElement).blur();
+      return;
+    }
     e.stopPropagation();
     if (e.key === 'Escape') {
       e.preventDefault();
