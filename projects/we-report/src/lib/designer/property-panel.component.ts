@@ -45,6 +45,7 @@ const CHART_TYPES: { type: ChartType; label: keyof WeReportLocale }[] = [
   { type: 'line', label: 'chartLine' },
   { type: 'pie', label: 'chartPie' },
   { type: 'doughnut', label: 'chartDoughnut' },
+  { type: 'sparkline', label: 'chartSparkline' },
 ];
 
 const AGGREGATES: { value: ChartAggregate; label: keyof WeReportLocale }[] = [
@@ -286,6 +287,10 @@ export class PropertyPanelComponent {
     this.state.updateControls(this.ids(), (c) => {
       c.visible = isExpression(value) && value.expression.trim() ? value : undefined;
     }, 'bind-visible');
+  }
+
+  protected setOptionalChartRows(expression: string): void {
+    this.set('rows', expression.trim() ? { expression } : undefined, 'chart-rows');
   }
 
   protected setExpression(key: 'category' | 'value', expression: string): void {

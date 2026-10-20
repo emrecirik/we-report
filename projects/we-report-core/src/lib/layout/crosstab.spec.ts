@@ -40,6 +40,28 @@ function grid(r: ReportDefinition, fonts: FontRegistry): string[][] {
   return [...rows].sort((a, b) => a[0] - b[0]).map(([, items]) => items.sort((a, b) => a.x - b.x).map((t) => t.lines.map((l) => l.text).join(' ')));
 }
 
+describe('sparkline', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('draws a small line from the list inside every row, scaled to its own range', () => {
+    const r = createBlankReport('Trend');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [{ name: 'A', months: [{ v: 1 }, { v: 3 }, { v: 2 }] }, { name: 'B', months: [{ v: 5 }] }, { name: 'C', months: [] }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands[1].height = 8;
+    r.bands[1].controls.push({ id: 's', type: 'chart', chartType: 'sparkline', x: 50, y: 1, width: 30, height: 6, rows: { expression: '[months]' }, category: { expression: '' }, value: { expression: '[v]' } });
+    const items = layoutReport(r, { fonts, now: NOW }).pages[0].items;
+    const lines = items.filter((i) => i.kind === 'path');
+    const dots = items.filter((i) => i.kind === 'ellipse');
+    expect(lines.length).toBe(1); // only A has two or more points
+    expect(dots.length).toBe(2); // A and B get a dot on their last value, C nothing
+    const path = (lines[0] as { paths: { d: string }[] }).paths[0].d;
+    const ys = path.match(/-?[\d.]+/g)!.map(Number).filter((_, k) => k % 2 === 1);
+    expect(ys[1]).toBeLessThan(ys[2]); // 3 is drawn higher than 2
+    expect(ys[0]).toBeGreaterThan(ys[2]); // 1 is the lowest
+  });
+});
+
 describe('cross table', () => {
   let fonts: FontRegistry;
   beforeAll(async () => (fonts = await loadTestFonts()));

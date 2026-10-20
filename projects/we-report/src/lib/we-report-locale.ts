@@ -258,6 +258,9 @@ export interface WeReportLocale {
   chartLine: string;
   chartPie: string;
   chartDoughnut: string;
+  chartSparkline: string;
+  chartRows: string;
+  chartRowsHint: string;
   chartCategory: string;
   chartValue: string;
   chartAggregate: string;
@@ -672,6 +675,9 @@ export const weReportLocaleEn: WeReportLocale = {
   chartLine: 'Line',
   chartPie: 'Pie',
   chartDoughnut: 'Doughnut',
+  chartSparkline: 'Sparkline',
+  chartRows: 'Rows from a list in each row',
+  chartRowsHint: 'E.g. [months]: a small chart in every detail row, from that row’s own list. Pick its fields as Group by / Value (or leave Group by empty for a sparkline).',
   chartCategory: 'Group by',
   chartValue: 'Value',
   chartAggregate: 'Calculation',
@@ -1121,6 +1127,9 @@ export const weReportLocaleTr: WeReportLocale = {
   chartLine: 'Çizgi',
   chartPie: 'Pasta',
   chartDoughnut: 'Halka',
+  chartSparkline: 'Mini çizgi',
+  chartRows: 'Satırdaki listeden',
+  chartRowsHint: 'Örn. [aylar]: her detay satırında o satırın kendi listesinden küçük bir grafik. Listenin alanlarını Gruplama / Değer olarak yazın (mini çizgide gruplama boş kalabilir).',
   chartCategory: 'Gruplama alanı',
   chartValue: 'Değer',
   chartAggregate: 'Hesaplama',

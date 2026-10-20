@@ -496,6 +496,18 @@
               }
             </select>
           </label>
+          @if (advanced() || c.rows) {
+            <label class="pp__row pp__row--stack">
+              <span>{{ s.chartRows }}</span>
+              <input class="pp__mono" list="pp-chart-lists" [value]="c.rows?.expression ?? ''" placeholder="[months]" (input)="setOptionalChartRows($any($event.target).value)" spellcheck="false" />
+              <datalist id="pp-chart-lists">
+                @for (l of lists(); track l) {
+                  <option [value]="'[' + l + ']'"></option>
+                }
+              </datalist>
+            </label>
+            <small class="pp__hint">{{ s.chartRowsHint }}</small>
+          }
           <label class="pp__row">
             <span>{{ s.format }}</span>
             <select (change)="set('format', $any($event.target).value)">

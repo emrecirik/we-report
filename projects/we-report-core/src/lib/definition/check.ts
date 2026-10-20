@@ -58,7 +58,8 @@ function bindings(c: ReportControl): Bindable<unknown>[] {
     case 'table':
       return [...list, ...c.rows.flatMap((r) => r.cells.map((cell) => cell.text))];
     case 'chart':
-      return [...list, ...[c.category, c.value].filter((e) => e.expression.trim())];
+      // Formulas over a list inside the row (`rows`) read that list's fields; only `rows` itself is checked then.
+      return [...list, ...(c.rows?.expression.trim() ? [c.rows] : [c.category, c.value].filter((e) => e.expression.trim()))];
     case 'crosstab':
       return [...list, ...[c.rows, c.columns, c.value].filter((e) => e?.expression.trim())];
     case 'subreport':

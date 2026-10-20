@@ -62,8 +62,31 @@ export function chartItems(c: ChartControl, points: ChartPoint[], style: Resolve
   }
   if (!points.length || area.width <= 0 || area.height <= 0) return items;
   const small: ResolvedStyle = { ...style, fontSize: Math.max(5, style.fontSize * 0.8), bold: false, italic: false, underline: false, padding: 0 };
-  if (c.chartType === 'pie' || c.chartType === 'doughnut') items.push(...pie(c, points, area, small, palette, env));
+  if (c.chartType === 'sparkline') items.push(...sparkline(points, area, palette[0]));
+  else if (c.chartType === 'pie' || c.chartType === 'doughnut') items.push(...pie(c, points, area, small, palette, env));
   else items.push(...axes(c, points, area, small, palette, env));
+  return items;
+}
+
+/** A line through the values, scaled to their own range, with no axes or labels; a dot on the last value. */
+function sparkline(points: ChartPoint[], area: Box, color: string): LayoutItem[] {
+  const values = points.map((p) => p.value);
+  const min = values.reduce((m, v) => (v < m ? v : m), Infinity);
+  const max = values.reduce((m, v) => (v > m ? v : m), -Infinity);
+  const dot = Math.min(1.4, area.height / 3);
+  const inner: Box = { x: area.x + dot / 2, y: area.y + dot / 2, width: area.width - dot, height: area.height - dot };
+  const at = (i: number, v: number) => ({
+    x: inner.x + (points.length > 1 ? (i / (points.length - 1)) * inner.width : inner.width / 2),
+    y: inner.y + inner.height - (max > min ? ((v - min) / (max - min)) * inner.height : inner.height / 2),
+  });
+  const pts = values.map((v, i) => at(i, v));
+  const items: LayoutItem[] = [];
+  if (pts.length > 1) {
+    const d = 'M' + pts.map((p) => `${round(p.x - area.x)} ${round(p.y - area.y)}`).join('L');
+    items.push({ kind: 'path', ...area, viewBox: { width: area.width, height: area.height }, paths: [{ d, stroke: color, strokeWidth: 0.35 }] });
+  }
+  const last = pts[pts.length - 1];
+  items.push({ kind: 'ellipse', x: last.x - dot / 2, y: last.y - dot / 2, width: dot, height: dot, fill: color });
   return items;
 }
 

@@ -42,6 +42,8 @@
 - Preview: every text line is drawn exactly as wide as the engine measured it (SVG `textLength`,
   and in PNG), so the screen matches the PDF; styled words no longer leave gaps.
 - ISBN and other barcodes with text above the bars stay inside their box.
+- Charts: **sparkline** type (a bare line with a dot on the last value) and `rows` — a chart in
+  every detail row from a list inside that row (`[months]`).
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, total row and column, numbers sorted numerically; grows downwards and
   pushes the items below. Dropping one binds it to the first two text fields and a number field.

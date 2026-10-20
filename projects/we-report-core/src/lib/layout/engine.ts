@@ -765,11 +765,24 @@ class LayoutRun {
 
   /** The band's rows grouped by the chart's category, in order of first appearance. */
   private chartPoints(c: ChartControl, scope: Scope): ChartPoint[] {
-    if (!c.category.expression.trim() || !c.value.expression.trim()) return [];
+    // A sparkline may leave the category empty: then every row is one point, in order.
+    const byRow = c.chartType === 'sparkline' && !c.category.expression.trim();
+    if ((!byRow && !c.category.expression.trim()) || !c.value.expression.trim()) return [];
     const groups = new Map<string, number[]>();
     const options = { locale: this.locale, currency: this.currency };
-    for (const row of scope.rows) {
-      const rowScope = { row, rows: scope.rows };
+    let rows = scope.rows;
+    if (c.rows?.expression.trim()) {
+      const value = this.eval(c.rows.expression, scope, c.id);
+      rows = toRows(value === ERROR_TEXT ? null : value);
+    }
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowScope = { row, rows, parent: c.rows?.expression.trim() ? scope.row : scope.parent };
+      if (byRow) {
+        const value = numberOrNull(this.eval(c.value.expression, rowScope, c.id));
+        if (value !== null) groups.set(String(i), [value]);
+        continue;
+      }
       const category = this.eval(c.category.expression, rowScope, c.id);
       const label = category instanceof Date ? formatValue(category, undefined, options) : String(category ?? '');
       const value = numberOrNull(this.eval(c.value.expression, rowScope, c.id));

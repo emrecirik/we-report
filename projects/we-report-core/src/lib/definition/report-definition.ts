@@ -141,7 +141,7 @@ export interface CheckboxControl extends ControlBase {
   checked: Bindable<boolean>;
 }
 
-export type ChartType = 'column' | 'bar' | 'line' | 'pie' | 'doughnut';
+export type ChartType = 'column' | 'bar' | 'line' | 'pie' | 'doughnut' | 'sparkline';
 export type ChartAggregate = 'sum' | 'count' | 'avg' | 'min' | 'max';
 
 /**
@@ -163,6 +163,11 @@ export interface ChartControl extends ControlBase {
   format?: string;
   /** Series colours; the default palette (`DEFAULT_CHART_PALETTE`) when omitted. */
   colors?: string[];
+  /**
+   * Formula giving the chart's rows from the row around it, e.g. `[months]`: a small chart in
+   * every detail row. The section's rows when omitted.
+   */
+  rows?: Expression;
   /** Colour of the grid lines; `DEFAULT_CHART_GRID_COLOR` when omitted. */
   gridColor?: string;
 }
