@@ -503,6 +503,50 @@
           }
         </section>
       }
+      @case ('crosstab') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <small class="pp__hint">{{ s.crosstabHint }}</small>
+          @for (k of crosstabKeys; track k.key) {
+            <label class="pp__row pp__row--stack">
+              <span>{{ s[k.label] }}</span>
+              <select (change)="setCrosstab(k.key, $any($event.target).value)">
+                <option value="" [selected]="!c[k.key].expression">—</option>
+                @for (f of fields(); track f.expression) {
+                  <option [value]="f.expression" [selected]="f.expression === c[k.key].expression">{{ f.label }}</option>
+                }
+              </select>
+              @if (advanced()) {
+                <input class="pp__mono" [value]="c[k.key].expression" (input)="setCrosstab(k.key, $any($event.target).value)" spellcheck="false" />
+              }
+            </label>
+          }
+          <label class="pp__row">
+            <span>{{ s.chartAggregate }}</span>
+            <select (change)="set('aggregate', $any($event.target).value)">
+              @for (a of aggregates; track a.value) {
+                <option [value]="a.value" [selected]="(c.aggregate ?? 'sum') === a.value">{{ s[a.label] }}</option>
+              }
+            </select>
+          </label>
+          <label class="pp__row">
+            <span>{{ s.format }}</span>
+            <select (change)="set('format', $any($event.target).value)">
+              @for (f of formats; track f.value) {
+                <option [value]="f.value" [selected]="(c.format ?? '') === f.value">{{ s[f.key] }}</option>
+              }
+            </select>
+          </label>
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.crosstabTitle }}</span>
+            <input [value]="c.title ?? ''" (input)="set('title', $any($event.target).value)" />
+          </label>
+          <label class="pp__check">
+            <input type="checkbox" [checked]="c.totals !== false" (change)="set('totals', $any($event.target).checked ? undefined : false)" />
+            <span>{{ s.crosstabTotals }}</span>
+          </label>
+        </section>
+      }
       @case ('subreport') {
         <section class="pp__section">
           <h3>{{ s.groupContent }}</h3>

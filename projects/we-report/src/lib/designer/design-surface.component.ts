@@ -209,6 +209,12 @@ interface DragOp {
                   @case ('checkbox') {
                     <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
                   }
+                  @case ('crosstab') {
+                    <div class="ds__placeholder ds__chart">
+                      <span [innerHTML]="'crosstab' | weReportIcon"></span>
+                      <small>{{ crosstabLabel(c) }}</small>
+                    </div>
+                  }
                   @case ('subreport') {
                     <div class="ds__placeholder ds__chart" [title]="strings().subreportEdit">
                       <span [innerHTML]="'subreport' | weReportIcon"></span>
@@ -1292,6 +1298,12 @@ export class DesignSurfaceComponent implements OnDestroy {
     return text === undefined ? '' : isExpression(text) ? text.expression : text;
   }
 
+  protected crosstabLabel(c: ReportControl): string {
+    if (c.type !== 'crosstab') return '';
+    const parts = [c.rows, c.columns].map((e) => e.expression.trim()).filter(Boolean);
+    return parts.length === 2 ? `${parts[0]} × ${parts[1]}` : this.strings().controlNames.crosstab;
+  }
+
   protected chartLabel(c: ReportControl): string {
     if (c.type !== 'chart') return '';
     const s = this.strings();
@@ -1340,6 +1352,18 @@ export class DesignSurfaceComponent implements OnDestroy {
     if (data.kind === 'control') {
       const s = this.strings();
       const control = createControl(data.type, this.state.newId(data.type), x, y, data.type === 'table' ? s.columnN : data.type === 'subreport' ? s.controlNames.subreport : s.newText, data.variant);
+      if (control.type === 'crosstab') {
+        // Start bound to the data: the first two text fields across, the first number field summed.
+        const row = this.sample()?.row;
+        const entries = row && typeof row === 'object' ? Object.entries(row as Record<string, unknown>) : [];
+        const texts = entries.filter(([, v]) => typeof v === 'string').map(([k]) => k);
+        const number = entries.find(([, v]) => typeof v === 'number')?.[0];
+        if (texts.length >= 2 && number) {
+          control.rows = { expression: `[${texts[0]}]` };
+          control.columns = { expression: `[${texts[1]}]` };
+          control.value = { expression: `[${number}]` };
+        }
+      }
       if (control.type === 'chart') {
         // Start bound to the data: the first text field per the first number field.
         const row = this.sample()?.row;

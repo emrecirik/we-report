@@ -161,6 +161,33 @@ export interface ChartControl extends ControlBase {
   gridColor?: string;
 }
 
+/**
+ * A cross table (pivot) of the section's rows: one row per value of `rows`, one column per value
+ * of `columns`, each cell the `value` of the rows that have both, aggregated. Like a chart it
+ * reads every row in a report header/footer, the group's rows in a group footer. Grows downwards
+ * to fit its rows; the columns share the width.
+ */
+export interface CrosstabControl extends ControlBase {
+  type: 'crosstab';
+  rows: Expression;
+  columns: Expression;
+  value: Expression;
+  /** Default `sum`. */
+  aggregate?: ChartAggregate;
+  /** Format of the cells, e.g. `n2`. */
+  format?: string;
+  /** Text of the top-left corner. */
+  title?: string;
+  /** Adds a total column and a total row; default true. */
+  totals?: boolean;
+  /** Heading of the total column and row; default `Σ`. */
+  totalLabel?: string;
+  /** Width of the row header column (mm); default a third of the box, at most 40. */
+  rowHeaderWidth?: number;
+  /** Height of each row (mm); default 6. */
+  rowHeight?: number;
+}
+
 /** One cell of a table row; a cell may span the columns to its right. */
 export interface TableCell {
   text: Bindable<string>;
@@ -219,6 +246,7 @@ export type ReportControl =
   | CheckboxControl
   | ChartControl
   | TableControl
+  | CrosstabControl
   | SubreportControl;
 
 export type ReportControlType = ReportControl['type'];

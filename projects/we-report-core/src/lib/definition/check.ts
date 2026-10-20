@@ -49,6 +49,8 @@ function bindings(c: ReportControl): Bindable<unknown>[] {
       return [...list, ...c.rows.flatMap((r) => r.cells.map((cell) => cell.text))];
     case 'chart':
       return [...list, ...[c.category, c.value].filter((e) => e.expression.trim())];
+    case 'crosstab':
+      return [...list, ...[c.rows, c.columns, c.value].filter((e) => e?.expression.trim())];
     case 'subreport':
       // The filter reads the sub-report's own fields, so only the formulas over the outer row are checked here.
       return [...list, ...(c.rows?.expression.trim() ? [c.rows] : []), ...(c.parameters ?? []).map((p) => p.value)];

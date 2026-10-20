@@ -284,6 +284,16 @@ export class PropertyPanelComponent {
     this.set(key, { expression }, `chart-${key}`);
   }
 
+  protected readonly crosstabKeys: { key: 'rows' | 'columns' | 'value'; label: 'crosstabRows' | 'crosstabColumns' | 'crosstabValue' }[] = [
+    { key: 'rows', label: 'crosstabRows' },
+    { key: 'columns', label: 'crosstabColumns' },
+    { key: 'value', label: 'crosstabValue' },
+  ];
+
+  protected setCrosstab(key: 'rows' | 'columns' | 'value', expression: string): void {
+    this.set(key, { expression }, `crosstab-${key}`);
+  }
+
   // ── Sub-report ─────────────────────────────────────────────────────────────
 
   /** A file chosen for "Use a saved report" could not be read. */

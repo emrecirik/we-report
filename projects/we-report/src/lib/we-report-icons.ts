@@ -25,6 +25,7 @@ export interface WeReportIcons {
   chart: string;
   table: string;
   subreport: string;
+  crosstab: string;
   textLeft: string;
   textCenter: string;
   textRight: string;
@@ -108,6 +109,7 @@ export const WE_REPORT_DEFAULT_ICONS: WeReportIcons = {
   wand: svg('<path d="M4 20L15 9"/><path d="M14 4v3M18 6l-2 2M20 10h-3M17 14l-2-2"/>'),
   sum: svg('<path d="M17 5H7l5 7-5 7h10"/>'),
   table: svg('<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 10h18M3 14.5h18M9 5v14M15 5v14"/>'),
+  crosstab: svg('<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M9 4v16M3 4l6 5"/><path d="M12.5 13h1.5M16.5 13h1.5M12.5 16.5h1.5M16.5 16.5h1.5"/>'),
   subreport: svg('<rect x="3" y="3" width="18" height="18" rx="1.5"/><rect x="7" y="9" width="10" height="8" rx="1"/><path d="M7 6h6M9.5 12h5M9.5 14.5h5"/>'),
   chart: svg('<path d="M4 20h16"/><rect x="5" y="11" width="3" height="9" rx="0.5"/><rect x="10.5" y="6" width="3" height="14" rx="0.5"/><rect x="16" y="13" width="3" height="7" rx="0.5"/>'),
   database: svg('<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'),

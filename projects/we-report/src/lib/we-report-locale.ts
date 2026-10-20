@@ -260,6 +260,12 @@ export interface WeReportLocale {
   showValues: string;
   showLegend: string;
   chartHint: string;
+  crosstabHint: string;
+  crosstabRows: string;
+  crosstabColumns: string;
+  crosstabValue: string;
+  crosstabTotals: string;
+  crosstabTitle: string;
   subreportHint: string;
   subreportEdit: string;
   subreportLoad: string;
@@ -407,6 +413,7 @@ export const weReportLocaleEn: WeReportLocale = {
     checkbox: 'Checkbox',
     chart: 'Chart',
     table: 'Table',
+    crosstab: 'Cross table',
     subreport: 'Sub-report',
   },
 
@@ -657,6 +664,12 @@ export const weReportLocaleEn: WeReportLocale = {
   showValues: 'Show values',
   showLegend: 'Show legend',
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
+  crosstabHint: 'A cross table sums the rows of its section: one row per value of one field, one column per value of another. In a report header or footer it shows every row, in a group footer the group’s rows.',
+  crosstabRows: 'Rows',
+  crosstabColumns: 'Columns',
+  crosstabValue: 'Value',
+  crosstabTotals: 'Totals row and column',
+  crosstabTitle: 'Corner text',
   subreportHint: 'A separate report printed inside this box, e.g. the orders under each customer. The box grows to fit its rows.',
   subreportEdit: 'Edit sub-report…',
   subreportLoad: 'Use a saved report…',
@@ -839,6 +852,7 @@ export const weReportLocaleTr: WeReportLocale = {
     checkbox: 'Onay kutusu',
     chart: 'Grafik',
     table: 'Tablo',
+    crosstab: 'Çapraz tablo',
     subreport: 'Alt rapor',
   },
 
@@ -1089,6 +1103,12 @@ export const weReportLocaleTr: WeReportLocale = {
   showValues: 'Değerleri göster',
   showLegend: 'Açıklamayı göster',
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
+  crosstabHint: 'Çapraz tablo bulunduğu bölümün satırlarını özetler: bir alanın her değeri bir satır, diğerinin her değeri bir sütun olur. Rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını gösterir.',
+  crosstabRows: 'Satırlar',
+  crosstabColumns: 'Sütunlar',
+  crosstabValue: 'Değer',
+  crosstabTotals: 'Toplam satırı ve sütunu',
+  crosstabTitle: 'Köşe yazısı',
   subreportHint: 'Bu kutunun içine basılan ayrı bir rapor; örneğin her müşterinin altında siparişleri. Kutu satırlarına göre uzar.',
   subreportEdit: 'Alt raporu düzenle…',
   subreportLoad: 'Kayıtlı bir raporu kullan…',

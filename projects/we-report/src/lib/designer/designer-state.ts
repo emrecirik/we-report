@@ -15,7 +15,7 @@ const round = (v: number) => Math.round(v * 100) / 100;
 export const CLIPBOARD_MARKER = 'we-report/controls+json:';
 
 const CONTROL_TYPES: Record<ReportControlType, true> = {
-  text: true, line: true, shape: true, image: true, barcode: true, pageInfo: true, checkbox: true, chart: true, table: true, subreport: true,
+  text: true, line: true, shape: true, image: true, barcode: true, pageInfo: true, checkbox: true, chart: true, table: true, crosstab: true, subreport: true,
 };
 
 function isPastedControl(c: unknown): c is ReportControl {

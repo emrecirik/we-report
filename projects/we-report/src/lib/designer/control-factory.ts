@@ -14,6 +14,7 @@ export const TOOLBOX_ITEMS: { type: ReportControlType; icon: string; variant?: s
   { type: 'checkbox', icon: 'checkbox' },
   { type: 'table', icon: 'table' },
   { type: 'chart', icon: 'chart' },
+  { type: 'crosstab', icon: 'crosstab' },
   { type: 'subreport', icon: 'subreport' },
 ];
 
@@ -53,6 +54,17 @@ export function createControl(type: ReportControlType, id: string, x: number, y:
       };
     case 'chart':
       return { ...base, type, width: 120, height: 60, chartType: 'column', category: { expression: '' }, value: { expression: '' }, showValues: true };
+    case 'crosstab':
+      return {
+        ...base,
+        type,
+        width: 120,
+        height: 18,
+        rows: { expression: '' },
+        columns: { expression: '' },
+        value: { expression: '' },
+        styleOverrides: { border: { width: 0.25, color: DEFAULT_TABLE_BORDER_COLOR, sides: { top: true, right: true, bottom: true, left: true } } },
+      };
     case 'subreport': {
       // An empty report with only a detail section: the box shows its rows.
       const report = createBlankReport(text);

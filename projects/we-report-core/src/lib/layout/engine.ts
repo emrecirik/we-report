@@ -6,6 +6,7 @@ import {
   Band,
   Bindable,
   ChartControl,
+  CrosstabControl,
   TableCell,
   TableControl,
   isExpression,
@@ -486,6 +487,8 @@ class LayoutRun {
       }
       case 'table':
         return this.renderTable(c, scope);
+      case 'crosstab':
+        return this.renderCrosstab(c, scope);
       case 'subreport': {
         const inner = this.renderSubreport(c, scope);
         const height = Math.max(c.height, inner.height);
@@ -632,6 +635,77 @@ class LayoutRun {
       height += page.height;
     }
     return { items, height };
+  }
+
+  /** The cross table of the band's rows; rows and columns in ascending order of their values. */
+  private renderCrosstab(c: CrosstabControl, scope: Scope): { items: LayoutItem[]; height: number } {
+    const style = resolveStyle(this.def, c.style, this.overridesFor(c, scope));
+    const options = { locale: this.locale, currency: this.currency };
+    const kind = c.aggregate ?? 'sum';
+    const totals = c.totals !== false;
+    type Key = { label: string; sort: unknown };
+    const rowKeys = new Map<string, Key>();
+    const colKeys = new Map<string, Key>();
+    const cells = new Map<string, number[]>();
+    const keyOf = (v: unknown): Key => {
+      if (v instanceof Date) return { label: formatValue(v, undefined, options), sort: v.getTime() };
+      return { label: v === null || v === undefined || v === ERROR_TEXT ? '' : typeof v === 'string' ? v : formatValue(v, undefined, options), sort: v ?? '' };
+    };
+    const ready = [c.rows, c.columns, c.value].every((e) => e?.expression?.trim());
+    for (const row of ready ? scope.rows : []) {
+      const rowScope = { row, rows: scope.rows };
+      const r = keyOf(this.eval(c.rows.expression, rowScope, c.id));
+      const k = keyOf(this.eval(c.columns.expression, rowScope, c.id));
+      const value = Number(this.eval(c.value.expression, rowScope, c.id));
+      if (!rowKeys.has(r.label)) rowKeys.set(r.label, r);
+      if (!colKeys.has(k.label)) colKeys.set(k.label, k);
+      const cell = `${r.label}\u0000${k.label}`;
+      if (!cells.has(cell)) cells.set(cell, []);
+      // Count counts rows, whatever the value formula returns.
+      if (Number.isFinite(value) || kind === 'count') cells.get(cell)!.push(Number.isFinite(value) ? value : 0);
+    }
+    const collator = new Intl.Collator(this.locale, { numeric: true });
+    const order = (a: Key, b: Key) =>
+      typeof a.sort === 'number' && typeof b.sort === 'number' ? a.sort - b.sort : collator.compare(String(a.sort), String(b.sort));
+    const rows = [...rowKeys.values()].sort(order).map((k) => k.label);
+    const cols = [...colKeys.values()].sort(order).map((k) => k.label);
+    const values = (r?: string, k?: string) =>
+      [...cells].filter(([key]) => {
+        const [cr, ck] = key.split('\u0000');
+        return (r === undefined || cr === r) && (k === undefined || ck === k);
+      }).flatMap(([, v]) => v);
+    const show = (list: number[], always: boolean) => (list.length || always ? formatValue(aggregate(kind, list), c.format || undefined, options) : '');
+
+    const headerWidth = c.rowHeaderWidth ?? Math.min(40, c.width / 3);
+    const columnCount = cols.length + (totals ? 1 : 0);
+    const columnWidth = (c.width - headerWidth) / Math.max(1, columnCount);
+    if (columnWidth < 6) this.problem('overflow', c.id, `The cross table has ${columnCount} columns; they are too narrow to read.`);
+    const rowHeight = c.rowHeight ?? 6;
+    const middle = { ...style, verticalAlign: 'middle' as const };
+    const head = { ...middle, bold: true };
+    const number = { ...middle, textAlign: 'right' as const };
+    const total = c.totalLabel ?? 'Σ';
+    const items: LayoutItem[] = [];
+    const cell = (text: string, st: ResolvedStyle, column: number, line: number) => {
+      const x = column < 0 ? c.x : c.x + headerWidth + column * columnWidth;
+      items.push(...this.textBox(text, st, { x, y: c.y + line * rowHeight, width: column < 0 ? headerWidth : columnWidth, height: rowHeight }));
+    };
+    cell(c.title ?? '', head, -1, 0);
+    cols.forEach((k, i) => cell(k, { ...head, textAlign: 'right' }, i, 0));
+    if (totals) cell(total, { ...head, textAlign: 'right' }, cols.length, 0);
+    rows.forEach((r, line) => {
+      cell(r, head, -1, line + 1);
+      cols.forEach((k, i) => cell(show(values(r, k), false), number, i, line + 1));
+      if (totals) cell(show(values(r), true), { ...number, bold: true }, cols.length, line + 1);
+    });
+    if (totals) {
+      const line = rows.length + 1;
+      cell(total, head, -1, line);
+      cols.forEach((k, i) => cell(show(values(undefined, k), true), { ...number, bold: true }, i, line));
+      cell(show(values(), true), { ...number, bold: true }, cols.length, line);
+    }
+    const lines = 1 + rows.length + (totals ? 1 : 0);
+    return { items, height: Math.max(c.height, lines * rowHeight) };
   }
 
   /** The control's own overrides plus every formatting rule whose formula is true for this row. */
