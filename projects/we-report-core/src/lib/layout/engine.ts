@@ -21,7 +21,7 @@ import { aggregate, ChartPoint, chartItems } from './chart';
 import { readImage } from './images';
 import { LayoutDocument, LayoutItem, LayoutPage, LayoutProblem, TextItem } from './layout-types';
 import { resolveStyle, ResolvedStyle } from './style';
-import { wrapText } from './text-wrap';
+import { fitLines, wrapText } from './text-wrap';
 import { toMm } from '../units';
 
 export interface LayoutOptions {
@@ -654,9 +654,7 @@ class LayoutRun {
     const innerWidth = Math.max(0, box.width - 2 * pad);
     const lineHeight = font.lineHeight(size);
     const ascent = font.ascent(size);
-    let lines = wrapText(text, font, size, innerWidth);
-    const maxLines = Math.max(1, Math.floor((box.height - 2 * pad) / lineHeight + 0.01));
-    if (lines.length > maxLines) lines = lines.slice(0, maxLines);
+    const { lines } = fitLines(text, font, size, pad, box.width, box.height);
     const free = Math.max(0, box.height - 2 * pad - lines.length * lineHeight);
     const offset = style.verticalAlign === 'middle' ? free / 2 : style.verticalAlign === 'bottom' ? free : 0;
     const item: TextItem = {

@@ -4,7 +4,7 @@
 
 - Designer: texts that will be cut off in print are underlined in orange and listed under
   Problems (measured with the report's fonts); *Fix* turns on *Grow to fit text*. `wrapText` is
-  exported from core.
+  exported from core, with `fitLines` (the rule the engine cuts text by).
 - Layout: a text that grows pushes the items below it (in the same columns) down instead of
   overlapping them, keeping their spacing — as in desktop designers.
 - Formula editor: suggestions while typing — functions with their explanation, `[` for fields and

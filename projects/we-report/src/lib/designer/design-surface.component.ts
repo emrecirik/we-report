@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, wrapText, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -599,8 +599,7 @@ export class DesignSurfaceComponent implements OnDestroy {
         if (!text) continue;
         const style = resolveStyle(report, c.style, c.styleOverrides);
         const font = fonts.resolve(style.fontFamily, style.bold, style.italic);
-        const lines = wrapText(text, font, style.fontSize, Math.max(0, c.width - 2 * style.padding));
-        if (lines.length * font.lineHeight(style.fontSize) + 2 * style.padding > c.height + 0.05) cut.add(c.id);
+        if (fitLines(text, font, style.fontSize, style.padding, c.width, c.height).cut) cut.add(c.id);
       }
       this.cutTexts.set(cut);
     });

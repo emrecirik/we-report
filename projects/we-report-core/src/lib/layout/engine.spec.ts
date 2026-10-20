@@ -11,7 +11,7 @@ import { barcodeItem } from './barcode';
 import { applyLabelSheet, LABEL_SHEETS } from '../definition/label-sheets';
 import { checkReport } from '../definition/check';
 import { reportTable } from '../render/xlsx';
-import { wrapText } from './text-wrap';
+import { fitLines, wrapText } from './text-wrap';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
 
@@ -103,6 +103,16 @@ describe('layout engine', () => {
     report.bands.splice(3, 0, footer);
     const doc = layoutReport(report, { fonts, now: NOW });
     expect(texts(doc.pages[0])).toEqual(['Title', 'Drinks', 'Tea', 'Coffee', 'Sum: 30', 'Fruit', 'Apple', 'Sum: 3', '1 / 1']);
+  });
+
+  it('says when a box cuts text off, always showing at least one line', () => {
+    const font = fonts.resolve(undefined);
+    // A single line never counts as cut, even in a box shorter than the line.
+    expect(fitLines('FATURA', font, 22, 0.8, 50, 6).cut).toBeFalse();
+    const long = 'one two three four five six seven eight nine ten';
+    expect(fitLines(long, font, 10, 0.8, 20, 6)).toEqual(jasmine.objectContaining({ cut: true }));
+    expect(fitLines(long, font, 10, 0.8, 20, 6).lines.length).toBe(1);
+    expect(fitLines(long, font, 10, 0.8, 200, 6).cut).toBeFalse();
   });
 
   it('pushes items below a growing text down instead of overlapping them', () => {
