@@ -42,6 +42,17 @@ sample data so the report can be designed even when the service is not reachable
   secret can live in the backend instead.
 - Your app can pass its own `fetchFn` to the viewer and designer to add auth headers.
 
+### Paged APIs
+
+Tick **Paged API** and put `{{page}}` (1, 2, 3 …) or `{{offset}}`, and `{{size}}`, in the address
+or body: pages are loaded until one brings fewer rows than the page size (at most 20 pages, or
+`maxPages` up to 100), and their rows are joined.
+
+```json
+{ "kind": "webService", "url": "https://api.example.com/orders?page={{page}}&per_page={{size}}",
+  "paging": { "size": 100, "rowsPath": "data" } }
+```
+
 ## Databases
 
 With a [data backend](backend.md) running: **+ Database → Connect → choose connection → table →

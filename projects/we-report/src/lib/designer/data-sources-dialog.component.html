@@ -137,6 +137,16 @@
               </label>
             }
             <label class="dsd__check">
+              <input type="checkbox" [checked]="!!w.paging" (change)="setPaging($any($event.target).checked ? '50' : '')" />
+              <span>{{ s.paging }}<small class="dsd__hint">{{ s.pagingHint }}</small></span>
+            </label>
+            @if (w.paging) {
+              <label class="dsd__field">
+                <span>{{ s.pageSize }}</span>
+                <input type="number" min="1" step="1" [value]="w.paging.size" (input)="setPaging($any($event.target).value)" />
+              </label>
+            }
+            <label class="dsd__check">
               <input type="checkbox" [checked]="w.via === 'backend'" (change)="setWeb('via', $any($event.target).checked ? 'backend' : '')" />
               <span>{{ s.viaBackend }}<small class="dsd__hint">{{ s.viaBackendHint }}</small></span>
             </label>

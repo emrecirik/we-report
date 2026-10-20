@@ -2,7 +2,7 @@ import { createBlankReport } from '../definition/blank-report';
 import { WebServiceDataSource } from '../definition/report-definition';
 import { evaluate } from '../expression/evaluate';
 import { findListPaths, resolveReportData } from './data-source';
-import { fillPlaceholders, loadReportData, resolveParameters } from './web-service';
+import { fetchWebService, fillPlaceholders, loadReportData, resolveParameters } from './web-service';
 
 function fakeFetch(handler: (url: string, init: RequestInit) => { status?: number; body: string; type?: string }): typeof fetch {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -10,6 +10,26 @@ function fakeFetch(handler: (url: string, init: RequestInit) => { status?: numbe
     return new Response(r.body, { status: r.status ?? 200, headers: { 'content-type': r.type ?? 'application/json' } });
   }) as typeof fetch;
 }
+
+describe('paged web services', () => {
+  const pages = [[{ n: 1 }, { n: 2 }], [{ n: 3 }, { n: 4 }], [{ n: 5 }]];
+  const fakeFetch = (wrap: boolean) =>
+    (async (url: string) => {
+      const page = Number(new URL(url).searchParams.get('page'));
+      const rows = pages[page - 1] ?? [];
+      return new Response(JSON.stringify(wrap ? { total: 5, data: { items: rows } } : rows), { headers: { 'content-type': 'application/json' } });
+    }) as unknown as typeof fetch;
+
+  it('loads every page until a short one and joins the rows', async () => {
+    const source = { id: 'w', name: 'W', kind: 'webService' as const, url: 'https://api.example.com/x?page={{page}}&size={{size}}', paging: { size: 2 } };
+    expect(await fetchWebService(source, {}, { fetch: fakeFetch(false) })).toEqual([{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }, { n: 5 }]);
+  });
+
+  it('finds the list inside each page and keeps the rest of the first page', async () => {
+    const source = { id: 'w', name: 'W', kind: 'webService' as const, url: 'https://api.example.com/x?page={{page}}', paging: { size: 2, maxPages: 2 } };
+    expect(await fetchWebService(source, {}, { fetch: fakeFetch(true) })).toEqual({ total: 5, data: { items: [{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }] } });
+  });
+});
 
 describe('web service data sources', () => {
   const source: WebServiceDataSource = {

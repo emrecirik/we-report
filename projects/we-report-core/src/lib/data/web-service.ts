@@ -2,6 +2,7 @@ import { DatabaseDataSource, DataSourceDefinition, ReportDefinition, ReportParam
 import { backendClient } from './backend-client';
 import { toDate } from '../format';
 import { csvToObjects } from './csv';
+import { findListPaths, readPath } from './data-source';
 
 export interface LoadDataOptions {
   /** Report parameter values by name; missing ones use the parameter's default. */
@@ -66,8 +67,45 @@ export function fillPlaceholders(template: string, params: Record<string, unknow
   });
 }
 
-/** Calls one web service and returns its parsed body (JSON, or CSV as rows). */
+/**
+ * Calls one web service and returns its parsed body (JSON, or CSV as rows). A paged source
+ * (`paging`) is called page by page and its rows are joined into the first page's shape.
+ */
 export async function fetchWebService(source: WebServiceDataSource, params: Record<string, unknown>, options: LoadDataOptions = {}): Promise<unknown> {
+  const paging = source.paging;
+  if (!paging || !(paging.size > 0)) return fetchPage(source, params, options);
+  const size = Math.floor(paging.size);
+  const start = paging.start ?? 1;
+  const max = Math.min(100, Math.max(1, Math.floor(paging.maxPages ?? 20)));
+  let first: unknown;
+  let path = paging.rowsPath?.trim() || undefined;
+  const rows: unknown[] = [];
+  for (let i = 0; i < max; i++) {
+    const body = await fetchPage(source, { ...params, page: start + i, offset: i * size, size }, options);
+    if (i === 0) {
+      first = body;
+      if (!path && !Array.isArray(body)) {
+        const lists = findListPaths(body);
+        if (lists.length === 1) path = lists[0];
+      }
+    }
+    const page = path ? readPath(body, path) : body;
+    // Not a list: not a paged answer after all, keep the first page as it is.
+    if (!Array.isArray(page)) return first;
+    rows.push(...page);
+    if (page.length < size) break;
+  }
+  return path ? withPath(first, path, rows) : rows;
+}
+
+/** A copy of `value` with the list at the dotted `path` replaced by `rows`. */
+function withPath(value: unknown, path: string, rows: unknown[]): unknown {
+  const [key, ...rest] = path.split('.');
+  const object = value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  return { ...object, [key]: rest.length ? withPath(object[key], rest.join('.'), rows) : rows };
+}
+
+async function fetchPage(source: WebServiceDataSource, params: Record<string, unknown>, options: LoadDataOptions): Promise<unknown> {
   const doFetch = options.fetch ?? fetch;
   const headers: Record<string, string> = { Accept: 'application/json, text/csv;q=0.9, */*;q=0.5' };
   for (const h of source.headers ?? []) if (h.name.trim()) headers[h.name.trim()] = fillPlaceholders(h.value, params, false);

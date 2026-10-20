@@ -355,6 +355,13 @@ export interface WebServiceDataSource {
   sample?: unknown;
   /** `backend`: called through the data backend (CORS-blocked APIs, secrets kept server-side). */
   via?: 'browser' | 'backend';
+  /**
+   * A paged API: the address (or body) uses `{{page}}` (counting from `start`, default 1) or
+   * `{{offset}}`, and `{{size}}`; pages are loaded until one brings fewer than `size` rows, at most
+   * `maxPages` (default 20, never more than 100). `rowsPath` is where the rows are in a page
+   * (found by itself when the page holds a single list).
+   */
+  paging?: { size: number; start?: number; maxPages?: number; rowsPath?: string };
 }
 
 /** One condition of a structured query; `param` uses a report parameter's value. */

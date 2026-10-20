@@ -207,6 +207,16 @@ export class DataSourcesDialogComponent {
     }, key);
   }
 
+  /** Page size of a paged web service; empty turns paging off. */
+  protected setPaging(size: string): void {
+    this.edit((s) => {
+      if (s.kind !== 'webService') return;
+      const n = Math.floor(Number(size));
+      if (size === '' || !(n > 0)) delete s.paging;
+      else s.paging = { ...s.paging, size: n };
+    }, 'paging');
+  }
+
   protected db(s: DataSourceDefinition): DatabaseDataSource | null {
     return s.kind === 'database' ? s : null;
   }

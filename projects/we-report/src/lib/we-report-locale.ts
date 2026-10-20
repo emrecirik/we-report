@@ -251,6 +251,9 @@ export interface WeReportLocale {
   rowLimitReached: string;
   viaBackend: string;
   viaBackendHint: string;
+  paging: string;
+  pagingHint: string;
+  pageSize: string;
   autoDesign: string;
   autoDesignHint: string;
   newReportTitle: string;
@@ -681,6 +684,9 @@ export const weReportLocaleEn: WeReportLocale = {
   rowLimitReached: '(row limit reached — more rows exist)',
   viaBackend: 'Call through the data backend',
   viaBackendHint: 'Use this when the service blocks browser calls (CORS) or needs a secret key the browser must not see.',
+  paging: 'Paged API',
+  pagingHint: 'Loads every page: write {{page}} (1, 2, 3 …) or {{offset}} and {{size}} in the address.',
+  pageSize: 'Rows per page',
   autoDesign: 'Design from data',
   autoDesignHint: 'Builds a tidy list of your data with headers, totals and page numbers. Undo brings your design back.',
   newReportTitle: 'Report',
@@ -1154,6 +1160,9 @@ export const weReportLocaleTr: WeReportLocale = {
   rowLimitReached: '(satır sınırına ulaşıldı — daha fazla satır var)',
   viaBackend: 'Veri backend’i üzerinden çağır',
   viaBackendHint: 'Servis tarayıcıdan çağrılmaya izin vermiyorsa (CORS) ya da tarayıcının görmemesi gereken gizli bir anahtar gerekiyorsa kullanın.',
+  paging: 'Sayfalı API',
+  pagingHint: 'Tüm sayfaları yükler: adrese {{page}} (1, 2, 3 …) ya da {{offset}} ve {{size}} yazın.',
+  pageSize: 'Sayfa başına satır',
   autoDesign: 'Veriden otomatik tasarla',
   autoDesignHint: 'Verinizden başlıklı, toplamlı ve sayfa numaralı düzenli bir liste oluşturur. Geri al ile eski tasarımınıza dönersiniz.',
   newReportTitle: 'Rapor',
