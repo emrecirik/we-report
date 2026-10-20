@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, toMonoBitmap, writeCsv, writeXlsx, zplFromBitmaps } from 'we-report-core';
+import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, storedZip, toMonoBitmap, writeCsv, writeXlsx, zplFromBitmaps } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -82,6 +82,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       <select class="we-report-viewer__more" [disabled]="!document()" (change)="downloadForPrinter($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="strings().printerOutput" [title]="strings().printerOutputHint">
         <option value="" selected>{{ strings().printerOutput }}…</option>
         <option value="csv">CSV</option>
+        <option value="pngzip">{{ strings().pngAllPages }}</option>
         <option value="zpl">{{ strings().printerZpl }}</option>
         <option value="escpos58">{{ strings().printerEscPos }} · 58 mm</option>
         <option value="escpos80">{{ strings().printerEscPos }} · 80 mm</option>
@@ -758,6 +759,14 @@ export class WeReportViewerComponent {
     return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('The image could not be made.'))), 'image/png'));
   }
 
+  /** Every page as a PNG (`page-1.png` …) in one ZIP file. */
+  async toPngZip(dpi = 200): Promise<Uint8Array> {
+    const pages = this.document()?.pages ?? [];
+    const files: [string, Uint8Array][] = [];
+    for (let i = 0; i < pages.length; i++) files.push([`page-${i + 1}.png`, new Uint8Array(await (await this.toPng(i, dpi)).arrayBuffer())]);
+    return storedZip(files);
+  }
+
   /** Every page in black and white dots, `pxPerMm(page)` dots per millimetre. */
   private async bitmaps(pxPerMm: (pageWidth: number) => number): Promise<MonoBitmap[]> {
     const doc = this.document();
@@ -790,6 +799,7 @@ export class WeReportViewerComponent {
 
   protected async downloadForPrinter(kind: string): Promise<void> {
     if (kind === 'csv') this.save(new Blob([this.toCsv()], { type: 'text/csv' }), 'csv');
+    else if (kind === 'pngzip') this.save(new Blob([await this.toPngZip()], { type: 'application/zip' }), 'zip');
     else if (kind === 'zpl') this.save(new Blob([await this.toZpl()], { type: 'text/plain' }), 'zpl');
     else if (kind === 'escpos58' || kind === 'escpos80') this.save(new Blob([await this.toEscPos(kind === 'escpos58' ? 384 : 576)], { type: 'application/octet-stream' }), 'bin');
   }

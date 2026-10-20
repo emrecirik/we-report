@@ -69,7 +69,7 @@
 ### Viewer and output
 
 - **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)`).
-- *More formats*: **CSV** (`toCsv()`; `;` and decimal commas in comma-decimal regions, a UTF-8
+- *More formats*: every page as PNG in one ZIP (`toPngZip()`), **CSV** (`toCsv()`; `;` and decimal commas in comma-decimal regions, a UTF-8
   byte-order mark, formula-like text defused; `writeCsv()` in core), Zebra **ZPL** (203 dpi) for
   label printers and **ESC/POS** (58 / 80 mm) for receipt printers — the pages sent as an image,
   so they print exactly as previewed (`toZpl()`, `toEscPos()`; `toMonoBitmap`, `zplFromBitmaps`,

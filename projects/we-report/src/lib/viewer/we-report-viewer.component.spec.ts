@@ -164,6 +164,15 @@ describe('WeReportViewerComponent', () => {
     expect(csv.slice(1).split('\r\n').slice(1, 3)).toEqual(['"Çay; siyah"', "'=1+1"]);
   });
 
+  it('puts every page as a PNG into one ZIP', async () => {
+    const rows = Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` }));
+    const doc = await render(listReport(), rows);
+    const zip = await fixture.componentInstance.toPngZip(48);
+    expect(String.fromCharCode(zip[0], zip[1])).toBe('PK');
+    const names = new TextDecoder().decode(zip).match(/page-\d+\.png/g) ?? [];
+    expect(new Set(names).size).toBe(doc.pages.length);
+  });
+
   it('makes label and receipt printer files of every page', async () => {
     const rows = Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` }));
     const doc = await render(listReport(), rows);

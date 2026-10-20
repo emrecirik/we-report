@@ -15,6 +15,7 @@ export interface WeReportLocale {
   downloadExcel: string;
   documentMap: string;
   downloadPng: string;
+  pngAllPages: string;
   printerOutput: string;
   printerOutputHint: string;
   printerZpl: string;
@@ -458,6 +459,7 @@ export const weReportLocaleEn: WeReportLocale = {
   downloadExcel: 'Excel',
   documentMap: 'Document map',
   downloadPng: 'PNG',
+  pngAllPages: 'PNG, every page (ZIP)',
   printerOutput: 'More formats',
   printerOutputHint: 'CSV for spreadsheets; files for label and receipt printers (the pages as an image the printer prints directly).',
   printerZpl: 'Label printer (ZPL, 203 dpi)',
@@ -939,6 +941,7 @@ export const weReportLocaleTr: WeReportLocale = {
   downloadExcel: 'Excel',
   documentMap: 'Belge haritası',
   downloadPng: 'PNG',
+  pngAllPages: 'PNG, tüm sayfalar (ZIP)',
   printerOutput: 'Diğer biçimler',
   printerOutputHint: 'Tablolar için CSV; etiket ve fiş yazıcıları için dosyalar (sayfalar yazıcının doğrudan bastığı bir görüntü olarak).',
   printerZpl: 'Etiket yazıcısı (ZPL, 203 dpi)',

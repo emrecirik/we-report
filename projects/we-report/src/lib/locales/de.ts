@@ -36,6 +36,7 @@ export const weReportLocaleDe: WeReportLocale = {
   downloadExcel: 'Excel',
   documentMap: 'Dokumentstruktur',
   downloadPng: 'PNG',
+  pngAllPages: 'PNG, alle Seiten (ZIP)',
   printerOutput: 'Weitere Formate',
   printerOutputHint: 'CSV für Tabellen; Dateien für Etiketten- und Bondrucker (die Seiten als Bild, das der Drucker direkt druckt).',
   printerZpl: 'Etikettendrucker (ZPL, 203 dpi)',

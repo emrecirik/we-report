@@ -110,6 +110,7 @@ reproducible output.
 
 *More formats* saves:
 
+- every page as **PNG in one ZIP** (`toPngZip(dpi)`);
 - the rows as **CSV** (`toCsv()`), with `;` and decimal commas in regions that use them;
 - the pages for **label printers** (Zebra ZPL, `toZpl(dpi)`) and **receipt printers** (ESC/POS,
   `toEscPos(dots)`) as an image the printer prints directly, so fonts and barcodes come out as
