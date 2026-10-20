@@ -111,6 +111,25 @@ describe('WeReportViewerComponent', () => {
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe('%PDF-');
   });
 
+  it('fetches pictures from addresses and shows them; a failed one is a problem', async () => {
+    const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='), (c) => c.charCodeAt(0));
+    const asked: string[] = [];
+    fixture.componentRef.setInput('fetchFn', (async (url: string) => {
+      asked.push(url);
+      return url.endsWith('ok.png') ? new Response(new Blob([png], { type: 'image/png' })) : new Response('', { status: 404 });
+    }) as unknown as typeof fetch);
+    const report = listReport();
+    report.bands[1].controls = [{ id: 'img', type: 'image', x: 0, y: 0, width: 10, height: 6, source: { expression: '[name]' }, fit: 'contain' }];
+    const rendered = new Promise<LayoutDocument>((resolve) => fixture.componentInstance.rendered.subscribe(resolve));
+    fixture.componentRef.setInput('report', report);
+    fixture.componentRef.setInput('data', [{ name: 'https://example.com/ok.png' }, { name: 'https://example.com/missing.png' }]);
+    fixture.detectChanges();
+    const doc = await rendered;
+    expect(asked.sort()).toEqual(['https://example.com/missing.png', 'https://example.com/ok.png']);
+    expect(doc.pages[0].items.filter((i) => i.kind === 'image').length).toBe(1);
+    expect(doc.problems.some((p) => p.message.includes('missing.png'))).toBeTrue();
+  });
+
   it('makes label and receipt printer files of every page', async () => {
     const rows = Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` }));
     const doc = await render(listReport(), rows);

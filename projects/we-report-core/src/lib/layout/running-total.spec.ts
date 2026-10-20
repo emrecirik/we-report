@@ -65,3 +65,26 @@ describe('page settings', () => {
     expect(new Set(firstX(1))).toEqual(new Set([10]));
   });
 });
+
+describe('pictures from addresses', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+  // A 1 × 1 PNG.
+  const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+  it('lists the addresses it needs, then draws what the host fetched', () => {
+    const r = createBlankReport('Catalogue');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [{ photo: 'https://example.com/a.png' }, { photo: 'https://example.com/b.png' }, { photo: 'https://example.com/a.png' }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands[1].controls.push({ id: 'img', type: 'image', x: 0, y: 0, width: 20, height: 20, source: { expression: '[photo]' }, fit: 'contain' });
+    r.bands[1].height = 22;
+    const first = layoutReport(r, { fonts, now: NOW });
+    expect(first.imageUrls).toEqual(['https://example.com/a.png', 'https://example.com/b.png']);
+    expect(first.pages[0].items.some((i) => i.kind === 'image')).toBeFalse();
+
+    const second = layoutReport(r, { fonts, now: NOW, images: { 'https://example.com/a.png': PNG, 'https://example.com/b.png': '' } });
+    expect(second.imageUrls).toBeUndefined();
+    expect(second.pages[0].items.filter((i) => i.kind === 'image').length).toBe(2);
+    expect(second.problems.some((p) => p.code === 'image' && p.message.includes('b.png'))).toBeTrue();
+  });
+});

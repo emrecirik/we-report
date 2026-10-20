@@ -16,6 +16,26 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+/** A fetched picture as a PNG/JPEG `data:` URI (other formats, e.g. WebP or SVG, are converted to PNG). */
+export async function pictureDataUri(blob: Blob, doc: Document = document): Promise<string> {
+  const read = (b: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(b);
+    });
+  if (blob.type === 'image/png' || blob.type === 'image/jpeg') return read(blob);
+  const img = await loadImage(URL.createObjectURL(blob));
+  if (!img) throw new Error('Not a picture.');
+  const canvas = doc.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  canvas.getContext('2d')!.drawImage(img, 0, 0);
+  URL.revokeObjectURL(img.src);
+  return canvas.toDataURL('image/png');
+}
+
 /**
  * Draws a laid-out page on a canvas, `pxPerMm` pixels per millimetre, from the same positioned
  * items (and the same registered fonts) as the on-screen SVG and the PDF.

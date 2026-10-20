@@ -6,6 +6,11 @@
 export interface LayoutDocument {
   pages: LayoutPage[];
   problems: LayoutProblem[];
+  /**
+   * Picture addresses (http/https) the report showed but `LayoutOptions.images` did not hold:
+   * fetch them, pass them in `images` and lay out again. Absent when there are none.
+   */
+  imageUrls?: string[];
 }
 
 export interface LayoutPage {

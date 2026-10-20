@@ -73,7 +73,8 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
 | Cross table | A pivot of the section's rows: one row per value of a field, one column per value of another, each cell the sum (count, average, min, max) of the rows that have both, with a total row and column (`Σ`, or your `totalLabel`). Like a chart it reads every row in a report header/footer, the group's rows in a group footer; it grows downwards and its columns share the width. |
 | Sub-report | A separate report inside a box; see *Sub-reports* above. |
 | Barcode / QR | Code 128, EAN-13, QR, DataMatrix, PDF417 and more; the value can come from data. A fixed EAN/UPC with a wrong check digit shows under Problems, with the right digit. |
-| Image, line, shape, checkbox, page number / date | |
+| Image | A PNG/JPEG you choose, or a picture from data: a `data:` URI or an `https://` address (e.g. a product photo). The viewer fetches addresses (the server must allow it — CORS), converts WebP/SVG to PNG and lays out again; one that fails is listed under Problems. In code, pass fetched pictures as `layoutReport(…, { images })` — `LayoutDocument.imageUrls` lists the ones still needed. |
+| Line, shape, checkbox, page number / date | |
 
 ## Look
 

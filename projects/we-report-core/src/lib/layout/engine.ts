@@ -35,6 +35,11 @@ export interface LayoutOptions {
   sources?: Record<string, unknown>;
   /** Report parameter values by name; defaults apply for missing ones. */
   params?: Record<string, unknown>;
+  /**
+   * Pictures the host fetched for image addresses: URL → PNG/JPEG `data:` URI, or `''` when it
+   * could not be loaded. Missing ones are listed in `LayoutDocument.imageUrls`.
+   */
+  images?: Record<string, string>;
   /** Print time for `Today()`, `Now()` and print-date page info. Required so output is reproducible. */
   now: Date;
   locale?: string;
@@ -90,6 +95,7 @@ export function layoutReport(definition: ReportDefinition, options: LayoutOption
 
 class LayoutRun {
   private readonly problems: LayoutProblem[] = [];
+  private readonly imageUrls = new Set<string>();
   private readonly reported = new Set<string>();
   private readonly geometry: PageGeometry;
   private readonly locale: string;
@@ -153,7 +159,7 @@ class LayoutRun {
     }
 
     const pages = this.paginate(entries, byKind('pageHeader'), byKind('pageFooter'), first);
-    return { pages, problems: this.problems };
+    return this.imageUrls.size ? { pages, problems: this.problems, imageUrls: [...this.imageUrls] } : { pages, problems: this.problems };
   }
 
   // ── Grouping ────────────────────────────────────────────────────────────────
@@ -536,12 +542,19 @@ class LayoutRun {
       case 'image': {
         const src = this.bind(c.source, scope, c.id);
         const items = this.decorations(style, box);
-        if (typeof src === 'string' && src) {
-          const info = readImage(src);
+        // An address is drawn from the picture the host fetched for it (see `LayoutOptions.images`).
+        const remote = typeof src === 'string' && /^https?:\/\//i.test(src.trim());
+        const data = remote ? this.options.images?.[(src as string).trim()] : src;
+        if (remote && data === undefined) {
+          this.imageUrls.add((src as string).trim());
+        } else if (remote && data === '') {
+          this.problem('image', c.id, `The picture could not be loaded: ${src}`);
+        } else if (typeof data === 'string' && data) {
+          const info = readImage(data);
           if (!info) {
-            this.problem('image', c.id, 'Only PNG and JPEG data URIs are supported.');
+            this.problem('image', c.id, 'Only PNG and JPEG pictures are supported.');
           } else {
-            items.push({ kind: 'image', ...fitImage(c.fit, box, info.width * MM_PER_PX, info.height * MM_PER_PX), clip: box, src });
+            items.push({ kind: 'image', ...fitImage(c.fit, box, info.width * MM_PER_PX, info.height * MM_PER_PX), clip: box, src: data });
           }
         }
         return { items, height: c.height };
@@ -640,6 +653,7 @@ class LayoutRun {
       return { items: [], height: 0 };
     }
     for (const p of doc.problems) this.problem(p.code, p.controlId ?? c.id, p.message);
+    for (const url of doc.imageUrls ?? []) this.imageUrls.add(url);
     // A page break inside it starts another continuous page: stack them.
     const items: LayoutItem[] = [];
     let height = 0;

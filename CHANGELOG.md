@@ -23,6 +23,9 @@
   from the same layout and fonts as the preview and the PDF.
 - Barcodes: the bars of linear codes end clearly above their digits (they touched when the box
   was wide and low).
+- Pictures from addresses: an image whose source (or data) is an `https://` address is fetched by
+  the viewer and drawn in the preview, PDF and PNG (WebP/SVG converted; at most 200 pictures of
+  10 MB). Core: `LayoutOptions.images` and `LayoutDocument.imageUrls` for a host's own fetching.
 - Page settings: page colour (`page.color`) and mirrored margins for booklets
   (`page.mirrorMargins`: even pages swap left and right), under Advanced.
 - Problems: a fixed EAN-13 / EAN-8 / UPC-A / ITF-14 with a wrong check digit is reported with the

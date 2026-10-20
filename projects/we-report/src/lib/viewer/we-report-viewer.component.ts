@@ -6,7 +6,11 @@ import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WE_REPORT_LOCALE, WeReportLocale } from '../we-report-locale';
-import { drawPage } from './page-canvas';
+import { drawPage, pictureDataUri } from './page-canvas';
+
+/** Pictures from addresses: at most this many per report, each at most this big. */
+const MAX_PICTURES = 200;
+const MAX_PICTURE_BYTES = 10 * 1024 * 1024;
 import { WeReportPageComponent } from './we-report-page.component';
 
 /** Paged preview of a report with zoom, PDF download and print. No server involved. */
@@ -429,6 +433,8 @@ export class WeReportViewerComponent {
 
   private fonts?: FontRegistry;
   private run = 0;
+  /** Pictures fetched for image addresses (URL → data URI, `''` when it failed), kept between runs. */
+  private readonly pictures = new Map<string, string>();
   /** What the current preview was laid out from, so exports use exactly the same data. */
   private lastInput: { data: unknown; sources: Record<string, unknown>; params: Record<string, unknown>; now?: Date } = { data: undefined, sources: {}, params: {} };
 
@@ -597,15 +603,24 @@ export class WeReportViewerComponent {
       this.loadedSources.set(loaded.sources);
       this.loadErrors.set(loaded.errors.map((e) => e.message));
       this.loadWarnings.set(loaded.warnings.map((e) => e.message));
-      const doc = layoutReport(report, {
-        fonts: this.fonts,
-        now: now ?? new Date(),
-        data,
-        sources: loaded.sources,
-        params,
-        locale: this.config.locale,
-        currency: this.config.currency,
-      });
+      const lay = () =>
+        layoutReport(report, {
+          fonts: this.fonts!,
+          now: now ?? new Date(),
+          data,
+          sources: loaded.sources,
+          params,
+          images: Object.fromEntries(this.pictures),
+          locale: this.config.locale,
+          currency: this.config.currency,
+        });
+      let doc = lay();
+      // Pictures from addresses: fetch the ones the layout asked for, then lay out again.
+      if (doc.imageUrls?.length) {
+        await this.fetchPictures(doc.imageUrls);
+        if (run !== this.run) return;
+        doc = lay();
+      }
       this.error.set(null);
       this.document.set(doc);
       this.problems.emit(doc.problems);
@@ -615,6 +630,26 @@ export class WeReportViewerComponent {
       this.document.set(null);
       this.error.set((e as Error).message);
     }
+  }
+
+  private async fetchPictures(urls: string[]): Promise<void> {
+    const fetchFn = this.fetchFn() ?? fetch;
+    const wanted = urls.filter((u) => !this.pictures.has(u));
+    // Beyond the limit a picture counts as failed: it shows as a problem, not as a silent gap.
+    for (const url of wanted.slice(MAX_PICTURES)) this.pictures.set(url, '');
+    await Promise.all(
+      wanted.slice(0, MAX_PICTURES).map(async (url) => {
+        try {
+          const response = await fetchFn(url);
+          if (!response.ok) throw new Error(String(response.status));
+          const blob = await response.blob();
+          if (blob.size > MAX_PICTURE_BYTES) throw new Error('Too large.');
+          this.pictures.set(url, await pictureDataUri(blob, this.dom));
+        } catch {
+          this.pictures.set(url, '');
+        }
+      }),
+    );
   }
 
   /** The current preview as PDF bytes. */
