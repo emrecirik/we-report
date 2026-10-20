@@ -133,6 +133,23 @@ describe('layout engine', () => {
     expect(beside.y).toBeCloseTo(name.y + 8, 5); // other columns stay put
   });
 
+  it('also pushes an item dropped slightly into the growing text, but not one beside it', () => {
+    const report = listReport([{ Name: 'A long name that wraps onto several lines in a narrow box', Price: 1 }]);
+    const detail = report.bands.find((b) => b.kind === 'detail')!;
+    detail.height = 14;
+    detail.controls = [
+      { id: 'name', type: 'text', x: 0, y: 0, width: 20, height: 6, canGrow: true, text: { expression: '[Name]' } },
+      { id: 'overlap', type: 'text', x: 0, y: 5.6, width: 20, height: 6, text: 'Overlap' },
+      { id: 'side', type: 'text', x: 10, y: 0, width: 20, height: 6, text: 'Side' },
+    ];
+    const items = layoutReport(report, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text');
+    const name = items.find((t) => t.lines[0]?.text.startsWith('A long'))!;
+    const overlap = items.find((t) => t.lines[0]?.text === 'Overlap')!;
+    const side = items.find((t) => t.lines[0]?.text === 'Side')!;
+    expect(overlap.y).toBeCloseTo(name.y + name.height - 0.4, 5);
+    expect(side.y).toBeCloseTo(name.y, 5);
+  });
+
   it('numbers rows per group, the same on every run', () => {
     const rows = [{ Name: 'a', G: 1 }, { Name: 'b', G: 1 }, { Name: 'c', G: 2 }];
     const report = listReport(rows);

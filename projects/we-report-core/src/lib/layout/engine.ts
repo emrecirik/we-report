@@ -416,9 +416,10 @@ class LayoutRun {
     const shown = band.controls.filter((c) => c.visible === undefined || this.truthy(this.bind(c.visible, scope, c.id)));
     // An item that grows pushes down the items below it (that share its columns), as in desktop
     // designers. Top to bottom, so a push carries on down the section.
-    const growths: { x1: number; x2: number; bottom: number; delta: number }[] = [];
+    // An item that starts up to 1 mm inside the grown one's box (a sloppy drop) still counts as below it.
+    const growths: { x1: number; x2: number; top: number; bottom: number; delta: number }[] = [];
     const shiftOf = (c: ReportControl) =>
-      growths.reduce((m, g) => (g.bottom <= c.y + 0.01 && g.x1 < c.x + c.width && g.x2 > c.x ? Math.max(m, g.delta) : m), 0);
+      growths.reduce((m, g) => (c.y > g.top && g.bottom <= c.y + 1 && g.x1 < c.x + c.width && g.x2 > c.x ? Math.max(m, g.delta) : m), 0);
     // Every item first at its natural size decides the height; stretching items then grow by as
     // much as the section grew, so they keep reaching its bottom.
     const results = new Map<ReportControl, ReturnType<typeof this.renderControl>>();
@@ -427,7 +428,7 @@ class LayoutRun {
       const result = this.renderControl(shift ? { ...control, y: control.y + shift } : control, scope);
       results.set(control, result);
       if (result.height > control.height + 0.01 || shift) {
-        growths.push({ x1: control.x, x2: control.x + control.width, bottom: control.y + control.height, delta: shift + Math.max(0, result.height - control.height) });
+        growths.push({ x1: control.x, x2: control.x + control.width, top: control.y, bottom: control.y + control.height, delta: shift + Math.max(0, result.height - control.height) });
       }
       height = Math.max(height, control.y + shift + result.height);
     }

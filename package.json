@@ -9,7 +9,7 @@
     "build:lib": "ng build we-report",
     "build:libs": "npm run build:core && npm run build:lib",
     "build:studio": "ng build studio",
-    "test": "ng test we-report-core --watch=false --browsers=ChromeHeadless && ng test we-report --watch=false --browsers=ChromeHeadless",
+    "test": "ng test we-report-core --watch=false --browsers=ChromeHeadless && ng test we-report --watch=false --browsers=ChromeHeadless && ng test studio --watch=false --browsers=ChromeHeadless",
     "conformance": "node tools/protocol-conformance/run.mjs"
   },
   "dependencies": {

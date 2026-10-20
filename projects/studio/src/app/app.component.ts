@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostL
 import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT, StudioLanguage } from './studio-text';
-import { decodeShare, encodeShare, SHARE_PREFIX } from './share-link';
+import { decodeShare, encodeShare, hasRemoteSources, MAX_SHARE_URL, SHARE_PREFIX } from './share-link';
 import { TEMPLATES } from './templates';
 
 const BACKEND_KEY = 'we-report-studio.backendUrl';
@@ -104,10 +104,11 @@ export class AppComponent {
     this.opening.set(true);
     try {
       const shared = (await decodeShare(hash)) as { report?: unknown; data?: unknown } | null;
-      this.report.set(migrateDefinition(shared?.report));
+      const report = migrateDefinition(shared?.report);
+      this.report.set(report);
       this.data.set(shared?.data);
       this.templateId.set('blank');
-      this.message.set(this.text().sharedOpened);
+      this.message.set(hasRemoteSources(report) ? this.text().sharedRemote : this.text().sharedOpened);
     } catch {
       this.message.set(this.text().sharedFailed);
       if (!this.restore()) this.openGallery();
@@ -126,6 +127,10 @@ export class AppComponent {
   /** Puts the design and its data in the address bar (and on the clipboard) as a link. */
   protected async share(): Promise<void> {
     const url = location.origin + location.pathname + location.search + (await encodeShare({ report: this.report(), data: this.data() }));
+    if (url.length > MAX_SHARE_URL) {
+      this.message.set(this.text().shareTooLarge);
+      return;
+    }
     try {
       history.replaceState(null, '', url);
       await navigator.clipboard.writeText(url);
