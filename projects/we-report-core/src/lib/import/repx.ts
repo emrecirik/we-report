@@ -279,8 +279,9 @@ class RepxImport {
         const fit = sizing === 'StretchImage' ? 'stretch' : sizing === 'Normal' || sizing === 'AutoSize' ? 'none' : 'contain';
         const bound = this.formula(e, 'ImageSource') ?? this.formula(e, 'ImageUrl');
         const embedded = /^(img|svg),(.+)$/s.exec(e.attrs['ImageSource'] ?? '');
-        const source: Bindable<string> = bound ? { expression: bound } : embedded?.[1] === 'img' ? `data:${this.mime(embedded[2])};base64,${embedded[2]}` : '';
-        if (!source) this.warnings.push(`Picture "${name}": ${embedded?.[1] === 'svg' ? 'SVG pictures are not supported' : e.attrs['ImageUrl'] ? 'pictures from a web address are not loaded' : 'no picture found'}; choose it again.`);
+        const url = /^https?:\/\//i.test(e.attrs['ImageUrl'] ?? '') ? e.attrs['ImageUrl'] : '';
+        const source: Bindable<string> = bound ? { expression: bound } : embedded?.[1] === 'img' ? `data:${this.mime(embedded[2])};base64,${embedded[2]}` : url;
+        if (!source) this.warnings.push(`Picture "${name}": ${embedded?.[1] === 'svg' ? 'SVG pictures are not supported' : 'no picture found'}; choose it again.`);
         return [{ id: this.id('image'), type: 'image', ...common, source, fit }];
       }
       case 'XRBarCode': {

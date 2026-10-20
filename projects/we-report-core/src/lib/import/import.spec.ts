@@ -226,6 +226,14 @@ describe('report import', () => {
     expect(checkReport(report).filter((i) => i.severity === 'error')).toEqual([]);
   });
 
+  it('keeps pictures from web addresses (the viewer fetches them)', () => {
+    const rdlc = RDLC.replace('<ReportItems>', '<ReportItems><Image Name="Logo"><Source>External</Source><Value>https://example.com/logo.png</Value><Top>0cm</Top><Left>0cm</Left><Height>2cm</Height><Width>4cm</Width></Image>');
+    const { report, warnings } = importReport(rdlc, 'Logo.rdlc');
+    const logo = report.bands.flatMap((b) => b.controls).find((c) => c.name === 'Logo');
+    expect(logo).toEqual(jasmine.objectContaining({ type: 'image', source: 'https://example.com/logo.png' }));
+    expect(warnings.join(' ')).not.toContain('Image "Logo"');
+  });
+
   it('refuses unknown files and code-based .repx with a clear message', () => {
     expect(() => importReport('hello', 'x.txt')).toThrowError(/Unknown report file/);
     expect(() => importReport('namespace X { class R : XtraReport {} }', 'old.repx')).toThrowError(/saved as code/);

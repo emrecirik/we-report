@@ -284,7 +284,9 @@ class RdlcImport {
         let src: Bindable<string> = '';
         if (source === 'Embedded') src = this.images.get(value) ?? '';
         else if (source === 'Database') src = vbToFormula(value, this.fields) ?? '';
-        if (!src) this.warnings.push(`Image "${name}": ${source === 'External' ? 'external images are not loaded; choose the picture again' : 'its picture could not be read'}.`);
+        // An external picture from a web address (or a formula giving one) is fetched by the viewer.
+        else if (source === 'External') src = /^https?:\/\//i.test(value.trim()) ? value.trim() : value.startsWith('=') ? (vbToFormula(value, this.fields) ?? '') : '';
+        if (!src) this.warnings.push(`Image "${name}": ${source === 'External' ? 'only pictures from a web address (https://…) are loaded; choose the picture again' : 'its picture could not be read'}.`);
         return [{ id: this.id('image'), name, type: 'image', x, y, width, height, source: src, fit }];
       }
       case 'Subreport':
