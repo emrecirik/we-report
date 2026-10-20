@@ -15,7 +15,7 @@ const round = (v: number) => Math.round(v * 100) / 100;
 export const CLIPBOARD_MARKER = 'we-report/controls+json:';
 
 const CONTROL_TYPES: Record<ReportControlType, true> = {
-  text: true, line: true, shape: true, image: true, barcode: true, pageInfo: true, checkbox: true, chart: true, table: true,
+  text: true, line: true, shape: true, image: true, barcode: true, pageInfo: true, checkbox: true, chart: true, table: true, subreport: true,
 };
 
 function isPastedControl(c: unknown): c is ReportControl {
@@ -27,7 +27,8 @@ function isPastedControl(c: unknown): c is ReportControl {
     typeof x['type'] === 'string' &&
     Object.hasOwn(CONTROL_TYPES, x['type']) &&
     ['x', 'y', 'width', 'height'].every((k) => finite(x[k])) &&
-    (x['type'] !== 'table' || (Array.isArray(x['columns']) && Array.isArray(x['rows']) && x['rows'].every((r) => Array.isArray(r?.cells))))
+    (x['type'] !== 'table' || (Array.isArray(x['columns']) && Array.isArray(x['rows']) && x['rows'].every((r) => Array.isArray(r?.cells)))) &&
+    (x['type'] !== 'subreport' || Array.isArray((x['report'] as { bands?: unknown } | null)?.bands))
   );
 }
 
@@ -70,6 +71,8 @@ export class DesignerState {
   /** Format painter: the look picked up from one item, applied to the next item clicked. */
   readonly painter = signal<Pick<ReportControl, 'style' | 'styleOverrides'> | null>(null);
   /** Text being typed on the page (double-click / F2): a text control, or a cell of a table. */
+  /** Id of the sub-report whose design is open in its own designer window. */
+  readonly subreportOpen = signal<string | null>(null);
   readonly editing = signal<{ controlId: string; row?: number; cell?: number } | null>(null);
   /** Where the pointer is on the page, for the status bar: band and mm inside it. */
   readonly pointer = signal<{ bandId: string; x: number; y: number } | null>(null);

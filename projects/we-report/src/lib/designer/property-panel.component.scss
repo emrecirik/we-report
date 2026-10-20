@@ -396,3 +396,7 @@ input[type='color'] {
     transition: none;
   }
 }
+
+.pp__warn {
+  color: var(--we-report-warning-fg, #b25000);
+}

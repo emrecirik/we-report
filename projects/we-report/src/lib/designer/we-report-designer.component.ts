@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, model, signal, untracked, viewChild } from '@angular/core';
-import { Band, BandKind, checkReport, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, TextAlign } from 'we-report-core';
+import { Band, BandKind, checkReport, evaluate, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WeReportIcons } from '../we-report-icons';
@@ -229,7 +229,7 @@ export class WeReportDesignerComponent {
   }
   /** Design problems, checked on every edit; field names are judged only when there is data. */
   protected readonly issues = computed<ReportIssue[]>(() => {
-    const { rows, parent } = this.fields();
+    const { rows, parent, lists } = this.fields();
     const known = rows.length || parent.length;
     const inner = this.fields().inner;
     const bandOf = (id: string) => this.state.report().bands.find((b) => b.controls.some((c) => c.id === id))?.id ?? '';
@@ -237,7 +237,8 @@ export class WeReportDesignerComponent {
     return [
       ...checkReport(
         this.state.report(),
-        known ? rows.map((f) => f.path) : undefined,
+        // Lists inside a row are fields too (a sub-report's rows, Count([orders])).
+        known ? [...rows.map((f) => f.path), ...lists] : undefined,
         known ? parent.map((f) => f.path) : undefined,
         undefined,
         inner.length ? inner.map((f) => f.path) : undefined,
@@ -411,6 +412,57 @@ export class WeReportDesignerComponent {
       }
     });
     this.state.selection.set({ kind: 'controls', ids });
+  }
+
+  /** The sub-report whose design is open in its own designer window. */
+  protected readonly openSubreport = computed(() => {
+    const id = this.state.subreportOpen();
+    const c = id ? this.state.report().bands.flatMap((b) => b.controls).find((x) => x.id === id) : undefined;
+    return c?.type === 'subreport' ? c : null;
+  });
+
+  /** The sub-report on a page as wide as its box and as tall as its content, as it prints. */
+  protected readonly subreportDesign = computed(() => {
+    const c = this.openSubreport();
+    if (!c) return null;
+    const p = c.report.page;
+    const m = p?.margins;
+    if (p?.paper === 'custom' && p.width === c.width && p.height == null && m && !m.top && !m.right && !m.bottom && !m.left) return c.report;
+    return {
+      ...c.report,
+      page: { paper: 'custom', orientation: 'portrait', width: c.width, height: null, margins: { top: 0, right: 0, bottom: 0, left: 0 }, displayUnit: p?.displayUnit ?? 'mm' },
+    } satisfies ReportDefinition;
+  });
+
+  /**
+   * Sample data for the sub-report's designer: its rows formula over the first row, else the data
+   * of the source it is bound to (its own, or one of this report's, as in the layout).
+   */
+  protected readonly subreportData = computed(() => {
+    const c = this.openSubreport();
+    if (!c) return undefined;
+    const sample = this.state.sample();
+    if (c.rows?.expression.trim()) {
+      if (!sample) return undefined;
+      try {
+        const value = evaluate(c.rows.expression, sample);
+        return Array.isArray(value) ? value : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+    const id = c.report.dataMember?.dataSourceId;
+    if (!id || c.report.dataSources.some((s) => s.id === id)) return undefined;
+    const outer = this.state.report().dataSources.find((s) => s.id === id);
+    return outer ? sourceValue(outer) : undefined;
+  });
+
+  /** Edits from the sub-report's designer; one undo step per burst of edits here. */
+  protected setSubreport(id: string, report: ReportDefinition): void {
+    // The very object the inner designer holds, so it does not reload (and lose its undo history).
+    this.state.updateControls([id], (c) => {
+      if (c.type === 'subreport') c.report = report;
+    }, `subreport-${id}`);
   }
 
   protected readonly hasTextSelected = computed(() => this.state.selectedControls().some((c) => c.type === 'text'));

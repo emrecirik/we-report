@@ -1,4 +1,4 @@
-import { DatabaseDataSource, ReportDefinition, ReportParameter, WebServiceDataSource } from '../definition/report-definition';
+import { DatabaseDataSource, DataSourceDefinition, ReportDefinition, ReportParameter, WebServiceDataSource } from '../definition/report-definition';
 import { backendClient } from './backend-client';
 import { toDate } from '../format';
 import { csvToObjects } from './csv';
@@ -120,12 +120,33 @@ export async function fetchDatabase(
   return { rows: result.rows, truncated: result.truncated };
 }
 
-/** Loads every web-service and database source of a report. Inline JSON/CSV need no loading. */
+/**
+ * The report's data sources and those of its sub-reports (nested ones too), each id once; the
+ * outer report's source wins when ids clash, as in the layout.
+ */
+export function allDataSources(definition: ReportDefinition, depth = 0): DataSourceDefinition[] {
+  const out = [...(definition.dataSources ?? [])];
+  if (depth >= 5) return out;
+  for (const band of definition.bands ?? []) {
+    for (const c of band.controls ?? []) {
+      if (c.type !== 'subreport' || !c.report) continue;
+      for (const s of allDataSources(c.report, depth + 1)) if (!out.some((o) => o.id === s.id)) out.push(s);
+    }
+  }
+  return out;
+}
+
+/**
+ * Loads every web-service and database source of a report and its sub-reports. Inline JSON/CSV
+ * need no loading.
+ * shortcut: a sub-report's sources load once, with the report's own parameter values, not per
+ * row; rows are matched to the row around the sub-report by its filter.
+ */
 export async function loadReportData(definition: ReportDefinition, options: LoadDataOptions = {}): Promise<LoadedData> {
   const params = resolveParameters(definition.parameters, options.params);
   const result: LoadedData = { sources: {}, errors: [], warnings: [] };
   await Promise.all(
-    definition.dataSources.map(async (source) => {
+    allDataSources(definition).map(async (source) => {
       try {
         if (source.kind === 'webService') {
           result.sources[source.id] = await fetchWebService(source, params, options);

@@ -186,6 +186,29 @@ export interface TableControl extends ControlBase {
   canGrow?: boolean;
 }
 
+/** A value for one parameter of a sub-report. */
+export interface SubreportParameter {
+  name: string;
+  /** A formula over the row around the sub-report, or a fixed value. */
+  value: Bindable<unknown>;
+}
+
+/**
+ * A whole report — its own sections, styles and data — printed inside a box, e.g. a customer's
+ * orders from another table under each customer. The box grows to fit; its page settings are
+ * ignored. Inside it `[^.field]` reads the row around the box.
+ */
+export interface SubreportControl extends ControlBase {
+  type: 'subreport';
+  report: ReportDefinition;
+  /** Formula giving its rows from the row around it, e.g. `[orders]`; the sub-report's own data when omitted. */
+  rows?: Expression;
+  /** Keeps the rows for which this is true, e.g. `[CustomerId] = [^.Id]`. */
+  filter?: Expression;
+  /** Values for the sub-report's parameters (`[?name]` inside it). */
+  parameters?: SubreportParameter[];
+}
+
 export type ReportControl =
   | TextControl
   | LineControl
@@ -195,7 +218,8 @@ export type ReportControl =
   | PageInfoControl
   | CheckboxControl
   | ChartControl
-  | TableControl;
+  | TableControl
+  | SubreportControl;
 
 export type ReportControlType = ReportControl['type'];
 

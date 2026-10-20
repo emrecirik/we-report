@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import {
   Band,
   BARCODE_SYMBOLOGIES,
@@ -18,6 +18,7 @@ import {
   ReportControl,
   ReportStyle,
   resolveStyle,
+  importReport,
 } from 'we-report-core';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WeReportIcons } from '../we-report-icons';
@@ -281,6 +282,45 @@ export class PropertyPanelComponent {
 
   protected setExpression(key: 'category' | 'value', expression: string): void {
     this.set(key, { expression }, `chart-${key}`);
+  }
+
+  // ── Sub-report ─────────────────────────────────────────────────────────────
+
+  /** A file chosen for "Use a saved report" could not be read. */
+  protected readonly subreportError = signal(false);
+
+  /** A formula that may be left empty (then the property goes away). */
+  protected setOptionalExpression(key: 'rows' | 'filter', expression: string): void {
+    this.set(key, expression.trim() ? { expression } : undefined, `sub-${key}`);
+  }
+
+  /** Puts a saved report (or an RDLC / REPX one, converted) into the selected sub-report. */
+  protected async chooseSubreport(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      const { report } = importReport(await file.text(), file.name);
+      this.subreportError.set(false);
+      this.set('report', report, 'sub-file');
+    } catch {
+      this.subreportError.set(true);
+    }
+  }
+
+  protected subreportParamValue(c: ReportControl, name: string): Bindable<string> {
+    const value = c.type === 'subreport' ? c.parameters?.find((p) => p.name === name)?.value : undefined;
+    return isExpression(value) ? value : value === undefined || value === null ? '' : String(value);
+  }
+
+  protected setSubreportParam(name: string, value: Bindable<string>): void {
+    this.state.updateControls(this.ids(), (c) => {
+      if (c.type !== 'subreport') return;
+      const rest = (c.parameters ?? []).filter((p) => p.name !== name);
+      const empty = isExpression(value) ? !value.expression.trim() : value === '';
+      c.parameters = empty ? (rest.length ? rest : undefined) : [...rest, { name, value }];
+    }, `sub-param-${name}`);
   }
 
   // ── Table ──────────────────────────────────────────────────────────────────

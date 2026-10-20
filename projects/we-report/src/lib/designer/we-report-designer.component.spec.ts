@@ -27,6 +27,32 @@ describe('WeReportDesignerComponent', () => {
     });
   });
 
+  it('opens a sub-report in its own designer, with sample rows, and keeps its edits as one undo step', () => {
+    const inner = createBlankReport('Siparişler');
+    inner.bands = [{ id: 'd', kind: 'detail', height: 6, controls: [{ id: 'no', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[No]' } }] }];
+    const report = createBlankReport();
+    report.bands[1].controls.push({ id: 'sub', type: 'subreport', x: 0, y: 0, width: 100, height: 10, report: inner, rows: { expression: '[orders]' } });
+    create(report, [{ name: 'a', orders: [{ No: 'S-1' }, { No: 'S-2' }] }]);
+    expect(el().querySelector('.wd__subreport')).toBeNull();
+    el().querySelector<HTMLElement>('[data-control-id="sub"]')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    fixture.detectChanges();
+    fixture.detectChanges();
+    const dialog = el().querySelector('.wd__subreport')!;
+    expect(dialog.querySelector('h2')?.textContent).toContain('Siparişler');
+    // The inner designer shows the first order where the formula is.
+    expect(dialog.querySelector('[data-control-id="no"]')?.textContent).toContain('S-1');
+
+    const innerState = fixture.debugElement.queryAll((d) => d.name === 'we-report-designer')[0].injector.get(DesignerState);
+    innerState.updateControls(['no'], (c) => (c.x = 12));
+    innerState.updateControls(['no'], (c) => (c.width = 40));
+    fixture.detectChanges();
+    const sub = () => state.report().bands[1].controls[0] as { report: ReportDefinition };
+    expect(sub().report.bands[0].controls[0]).toEqual(jasmine.objectContaining({ x: 12, width: 40 }));
+    expect(innerState.canUndo()).toBeTrue(); // the inner designer was not reloaded
+    state.undo();
+    expect(sub().report.bands[0].controls[0]).toEqual(jasmine.objectContaining({ x: 0, width: 30 }));
+  });
+
   it('renders the page at real size with localized bands', () => {
     create(createBlankReport());
     const page = el().querySelector('.ds__page') as HTMLElement;

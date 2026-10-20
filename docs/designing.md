@@ -28,6 +28,34 @@ Inside it `[field]` is the item and `[^.field]` the row around it; `Sum([amount]
 the inner footer run over that row's items. Rows with an empty list print no inner list. The
 header always starts on the same page as the first item.
 
+### Sub-reports
+
+A **sub-report** is a whole report — its own sections, styles, data and parameters — printed inside
+a box. Double-click it (or *Edit sub-report…*) to design it in its own designer window, or put a
+saved report (`.wrpt.json`, RDLC, REPX) into it. Its rows come from, in this order:
+
+- **Its rows come from** (`rows`): a formula over the row around it, e.g. `[orders]`;
+- otherwise its own data source, or one of the outer report's sources by id.
+
+**Show only rows where** (`filter`) keeps matching rows, e.g. `[CustomerId] = [^.Id]` to show each
+customer's payments from another table. Inside the sub-report `[^.field]` reads the row around the
+box, and its parameters (`[?name]`) take values from formulas over that row (`parameters`).
+
+```json
+{ "id": "pay", "type": "subreport", "x": 10, "y": 8, "width": 120, "height": 14,
+  "report": { "version": 1, "name": "Payments", … },
+  "filter": { "expression": "[CustomerId] = [^.Id]" } }
+```
+
+The box grows to fit its rows and pushes the items below it down. Web-service and database sources
+of sub-reports load once with the report, not per row. Sub-reports may be nested five deep.
+
+### Sections taller than a page
+
+A section that needs more room than a page — a long sub-report or text — continues on the next
+pages. It is cut between items and between text lines; pictures, barcodes and charts are never
+cut, and boxes and lines are split at the cut.
+
 ### Side by side: labels and cards
 
 The detail section can print rows next to each other (`columns: { count, gap }`). Design one label;
@@ -42,6 +70,7 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
 | Text | Fixed text or a formula; *Grow to fit text* makes the row taller instead of cutting it, and pushes the items below it (in the same columns) down. Items marked *Extend to the bottom when the section grows* (`stretch`) grow with it, so cell borders and column lines stay aligned. |
 | Table | Column widths, rows, cells that span columns. Click a cell to edit its content, format, bold, alignment and background; drop a data field on a cell to bind it. The table's border becomes the grid; *Grow to fit text* grows each row to its tallest cell. |
 | Chart | Column, bar, line, pie or doughnut of the section's rows grouped by a field (sum, count, average, min, max). In a report header/footer it shows every row, in a group footer the group's rows. |
+| Sub-report | A separate report inside a box; see *Sub-reports* above. |
 | Barcode / QR | Code 128, EAN-13, QR, DataMatrix, PDF417 and more; the value can come from data. |
 | Image, line, shape, checkbox, page number / date | |
 

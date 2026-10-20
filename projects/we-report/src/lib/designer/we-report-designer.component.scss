@@ -847,3 +847,32 @@ button {
   padding: 0 !important;
   overflow: hidden !important;
 }
+
+.wd__subreport {
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 32px);
+  height: calc(100vh - 32px);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.wd__subreport-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.wd__subreport-designer {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--we-report-border, rgba(0, 0, 0, 0.1));
+  border-radius: 8px;
+  overflow: hidden;
+}

@@ -1,4 +1,4 @@
-import { DEFAULT_TABLE_BORDER_COLOR, FieldSchema, ReportControl, ReportControlType } from 'we-report-core';
+import { createBlankReport, DEFAULT_TABLE_BORDER_COLOR, FieldSchema, ReportControl, ReportControlType } from 'we-report-core';
 
 export { captionFor } from 'we-report-core';
 
@@ -14,6 +14,7 @@ export const TOOLBOX_ITEMS: { type: ReportControlType; icon: string; variant?: s
   { type: 'checkbox', icon: 'checkbox' },
   { type: 'table', icon: 'table' },
   { type: 'chart', icon: 'chart' },
+  { type: 'subreport', icon: 'subreport' },
 ];
 
 /** A new control with sensible defaults, top-left corner at (x, y) mm. */
@@ -52,6 +53,12 @@ export function createControl(type: ReportControlType, id: string, x: number, y:
       };
     case 'chart':
       return { ...base, type, width: 120, height: 60, chartType: 'column', category: { expression: '' }, value: { expression: '' }, showValues: true };
+    case 'subreport': {
+      // An empty report with only a detail section: the box shows its rows.
+      const report = createBlankReport(text);
+      report.bands = [{ id: 'detail', kind: 'detail', height: 6, controls: [] }];
+      return { ...base, type, width: 120, height: 20, report };
+    }
   }
 }
 

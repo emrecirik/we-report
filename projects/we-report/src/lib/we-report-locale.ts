@@ -256,6 +256,17 @@ export interface WeReportLocale {
   showValues: string;
   showLegend: string;
   chartHint: string;
+  subreportHint: string;
+  subreportEdit: string;
+  subreportLoad: string;
+  subreportLoadFailed: string;
+  subreportRows: string;
+  subreportRowsHint: string;
+  subreportFilter: string;
+  subreportFilterHint: string;
+  subreportParams: string;
+  subreportTitle: string;
+  subreportDone: string;
   conditionalFormatting: string;
   watermark: string;
   firstPage: string;
@@ -390,6 +401,7 @@ export const weReportLocaleEn: WeReportLocale = {
     checkbox: 'Checkbox',
     chart: 'Chart',
     table: 'Table',
+    subreport: 'Sub-report',
   },
 
   zoomIn: 'Zoom in',
@@ -635,6 +647,17 @@ export const weReportLocaleEn: WeReportLocale = {
   showValues: 'Show values',
   showLegend: 'Show legend',
   chartHint: 'A chart shows the rows of its section: every row in a report header or footer, the group’s rows in a group footer.',
+  subreportHint: 'A separate report printed inside this box, e.g. the orders under each customer. The box grows to fit its rows.',
+  subreportEdit: 'Edit sub-report…',
+  subreportLoad: 'Use a saved report…',
+  subreportLoadFailed: 'The file is not a we-report report (.wrpt.json).',
+  subreportRows: 'Its rows come from',
+  subreportRowsHint: 'Empty: the sub-report’s own data. For a list inside each row write e.g. [orders].',
+  subreportFilter: 'Show only rows where',
+  subreportFilterHint: 'E.g. [CustomerId] = [^.Id] — [^.field] reads the row around the box.',
+  subreportParams: 'Parameter values',
+  subreportTitle: 'Sub-report: {0}',
+  subreportDone: 'Done',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
   firstPage: 'First page',
@@ -802,6 +825,7 @@ export const weReportLocaleTr: WeReportLocale = {
     checkbox: 'Onay kutusu',
     chart: 'Grafik',
     table: 'Tablo',
+    subreport: 'Alt rapor',
   },
 
   zoomIn: 'Yakınlaştır',
@@ -1047,6 +1071,17 @@ export const weReportLocaleTr: WeReportLocale = {
   showValues: 'Değerleri göster',
   showLegend: 'Açıklamayı göster',
   chartHint: 'Grafik bulunduğu bölümün satırlarını gösterir: rapor başlığı veya altlığında tüm satırları, grup altlığında grubun satırlarını.',
+  subreportHint: 'Bu kutunun içine basılan ayrı bir rapor; örneğin her müşterinin altında siparişleri. Kutu satırlarına göre uzar.',
+  subreportEdit: 'Alt raporu düzenle…',
+  subreportLoad: 'Kayıtlı bir raporu kullan…',
+  subreportLoadFailed: 'Dosya bir we-report raporu (.wrpt.json) değil.',
+  subreportRows: 'Satırları nereden gelir',
+  subreportRowsHint: 'Boş: alt raporun kendi verisi. Her satırın içindeki liste için örneğin [orders] yazın.',
+  subreportFilter: 'Yalnızca şu satırları göster',
+  subreportFilterHint: 'Örn. [MusteriId] = [^.Id] — [^.alan] kutuyu çevreleyen satırı okur.',
+  subreportParams: 'Parametre değerleri',
+  subreportTitle: 'Alt rapor: {0}',
+  subreportDone: 'Tamam',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
   firstPage: 'İlk sayfa',

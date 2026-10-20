@@ -209,6 +209,12 @@ interface DragOp {
                   @case ('checkbox') {
                     <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
                   }
+                  @case ('subreport') {
+                    <div class="ds__placeholder ds__chart" [title]="strings().subreportEdit">
+                      <span [innerHTML]="'subreport' | weReportIcon"></span>
+                      <small>{{ c.report.name || strings().controlNames.subreport }}</small>
+                    </div>
+                  }
                   @default {
                     @if (isEditing(c.id)) {
                       <textarea class="ds__editor" [value]="editText()" [style]="textStyle(c)" (pointerdown)="$event.stopPropagation()" (keydown)="onEditorKey($event)" (blur)="commitEditing($event)" [attr.aria-label]="strings().content"></textarea>
@@ -886,6 +892,10 @@ export class DesignSurfaceComponent implements OnDestroy {
 
   /** Double-click / F2: fixed text is typed on the page, a formula opens the formula editor. */
   startEditing(c: ReportControl, row?: number, cell?: number, seed?: string): void {
+    if (c.type === 'subreport') {
+      this.state.subreportOpen.set(c.id);
+      return;
+    }
     let value: Bindable<string> | undefined;
     if (c.type === 'text') value = c.text;
     else if (c.type === 'table') {
@@ -1329,7 +1339,7 @@ export class DesignSurfaceComponent implements OnDestroy {
     const width = this.geometry().contentWidth;
     if (data.kind === 'control') {
       const s = this.strings();
-      const control = createControl(data.type, this.state.newId(data.type), x, y, data.type === 'table' ? s.columnN : s.newText, data.variant);
+      const control = createControl(data.type, this.state.newId(data.type), x, y, data.type === 'table' ? s.columnN : data.type === 'subreport' ? s.controlNames.subreport : s.newText, data.variant);
       if (control.type === 'chart') {
         // Start bound to the data: the first text field per the first number field.
         const row = this.sample()?.row;

@@ -1,4 +1,4 @@
-import { resolveReportData } from '../data/data-source';
+import { resolveReportData, toRows } from '../data/data-source';
 import { resolveParameters } from '../data/web-service';
 import { DEFAULT_WATERMARK_COLOR } from '../definition/blank-report';
 import { PageGeometry, resolvePageGeometry } from '../definition/page';
@@ -11,6 +11,7 @@ import {
   isExpression,
   ReportControl,
   ReportDefinition,
+  SubreportControl,
   TextControl,
 } from '../definition/report-definition';
 import { evaluate, EvaluationContext } from '../expression/evaluate';
@@ -69,6 +70,8 @@ type Entry =
 
 const ERROR_TEXT = '#ERR';
 const MM_PER_PX = toMm(1, 'px');
+/** Sub-reports inside sub-reports deeper than this are not printed (report files are untrusted). */
+const MAX_SUBREPORT_DEPTH = 5;
 
 /**
  * Lays a report out into pages. Pure and deterministic: the same definition, data, fonts and
@@ -91,6 +94,8 @@ class LayoutRun {
   constructor(
     private readonly def: ReportDefinition,
     private readonly options: LayoutOptions,
+    /** Set for a sub-report: the row around its box (what `[^.field]` reads) and how deep it is nested. */
+    private readonly nesting: { parent: unknown; depth: number } | null = null,
   ) {
     this.geometry = resolvePageGeometry(def.page);
     // A report written for one region keeps its formats wherever it is printed.
@@ -102,7 +107,7 @@ class LayoutRun {
 
   run(): LayoutDocument {
     const { rows, parent } = resolveReportData(this.def, this.options.data, this.options.sources);
-    this.parent = parent;
+    this.parent = this.nesting ? this.nesting.parent : parent;
     const allRows = rows ?? [];
     const first = allRows[0];
     const bands = this.def.bands;
@@ -330,7 +335,9 @@ class LayoutRun {
       const columns = r.band.kind === 'detail' ? Math.max(1, Math.floor(r.band.columns?.count ?? 1)) : 1;
       if (columns === 1) endRow();
       // Later cells of a row sit beside the first one, which already decided the page.
-      if (column === 0 && (breakPending || (r.band.pageBreakBefore && !fresh) || (!fresh && y + r.height > bodyBottom))) {
+      // A band that fits on no page starts right here and is cut, rather than leaving this page empty.
+      const fitsAPage = r.height <= bodyBottom - headerHeight;
+      if (column === 0 && (breakPending || (r.band.pageBreakBefore && !fresh) || (!fresh && y + r.height > bodyBottom && (fitsAPage || bodyBottom - y < 10)))) {
         if (entry.groupLevel !== undefined) repeating.length = entry.groupLevel;
         startPage();
       }
@@ -346,8 +353,17 @@ class LayoutRun {
         page.endY = rowTop + rowHeight;
         if (++column === columns) endRow();
       } else {
-        // shortcut: a band taller than the page is placed anyway and overflows; split bands when needed.
-        put(r);
+        // A band taller than a whole page (a long sub-report or text) is cut between its items and
+        // text lines onto the following pages.
+        let rest = r;
+        while (y + rest.height > bodyBottom && bodyBottom - y > 1) {
+          const cut = cutPoint(rest.items, bodyBottom - y);
+          const [top, bottom] = splitItems(rest.items, cut);
+          put({ ...rest, items: top, height: cut });
+          startPage();
+          rest = { ...rest, items: bottom, deferred: [], height: rest.height - cut };
+        }
+        put(rest);
       }
       fresh = false;
       if (entry.groupLevel !== undefined) {
@@ -465,6 +481,11 @@ class LayoutRun {
       }
       case 'table':
         return this.renderTable(c, scope);
+      case 'subreport': {
+        const inner = this.renderSubreport(c, scope);
+        const height = Math.max(c.height, inner.height);
+        return { items: [...this.decorations(style, { ...box, height }), ...inner.items], height };
+      }
       case 'pageInfo':
         return {
           items: [],
@@ -547,6 +568,65 @@ class LayoutRun {
         return { items, height: c.height };
       }
     }
+  }
+
+  /**
+   * A sub-report laid out on a continuous page as wide as its box. Its rows come from the `rows`
+   * formula or its own data source (it may also use the outer report's sources), then `filter`.
+   * shortcut: page numbers inside a sub-report count its own pages (always 1 / 1).
+   */
+  private renderSubreport(c: SubreportControl, scope: Scope): { items: LayoutItem[]; height: number } {
+    const report = c.report;
+    const depth = (this.nesting?.depth ?? 0) + 1;
+    if (!report || !Array.isArray(report.bands) || depth > MAX_SUBREPORT_DEPTH) {
+      this.problem('data', c.id, depth > MAX_SUBREPORT_DEPTH ? `Sub-reports are nested deeper than ${MAX_SUBREPORT_DEPTH}.` : 'The sub-report has no design.');
+      return { items: [], height: 0 };
+    }
+    const ownSources = Array.isArray(report.dataSources) ? report.dataSources : [];
+    const dataSources = [...ownSources, ...this.def.dataSources.filter((d) => !ownSources.some((o) => o.id === d.id))];
+    const values: Record<string, unknown> = {};
+    for (const p of c.parameters ?? []) if (p?.name) values[p.name] = this.bind(p.value, scope, c.id);
+    const params = resolveParameters(report.parameters, values);
+    let rows: unknown[] | null;
+    if (c.rows?.expression.trim()) {
+      const value = this.eval(c.rows.expression, scope, c.id);
+      rows = toRows(value === ERROR_TEXT ? null : value);
+    } else {
+      rows = resolveReportData({ ...report, dataSources }, undefined, this.options.sources).rows;
+    }
+    const filter = c.filter?.expression.trim();
+    if (rows && filter) {
+      const all = rows;
+      rows = all.filter((row) => this.truthy(this.eval(filter, { row, rows: all, parent: scope.row }, c.id, params)));
+    }
+    const definition: ReportDefinition = {
+      ...report,
+      dataSources,
+      dataMember: undefined,
+      watermark: undefined,
+      styles: report.styles ?? {},
+      page: { paper: 'custom', orientation: 'portrait', width: c.width, height: null, margins: { top: 0, right: 0, bottom: 0, left: 0 }, displayUnit: 'mm' },
+    };
+    let doc: LayoutDocument;
+    try {
+      doc = new LayoutRun(
+        definition,
+        { ...this.options, data: rows ?? undefined, params, locale: this.locale, currency: this.currency },
+        { parent: scope.row, depth },
+      ).run();
+    } catch (e) {
+      this.problem('data', c.id, (e as Error).message);
+      return { items: [], height: 0 };
+    }
+    for (const p of doc.problems) this.problem(p.code, p.controlId ?? c.id, p.message);
+    // A page break inside it starts another continuous page: stack them.
+    const items: LayoutItem[] = [];
+    let height = 0;
+    for (const page of doc.pages) {
+      for (const item of page.items) items.push(translate(item, c.x, c.y + height));
+      height += page.height;
+    }
+    return { items, height };
   }
 
   /** The control's own overrides plus every formatting rule whose formula is true for this row. */
@@ -689,13 +769,13 @@ class LayoutRun {
     return isExpression(value) ? this.eval(value.expression, scope, controlId) : value;
   }
 
-  private eval(expression: string, scope: Scope, controlId: string): unknown {
+  private eval(expression: string, scope: Scope, controlId: string, params = this.params): unknown {
     const ctx: EvaluationContext = {
       row: scope.row,
       rows: scope.rows,
       rowIndex: scope.rowIndex,
       parent: scope.parent ?? this.parent,
-      params: this.params,
+      params,
       locale: this.locale,
       currency: this.currency,
       now: this.now,
@@ -731,6 +811,68 @@ function fitImage(
   const width = iw * scale;
   const height = ih * scale;
   return { x: box.x + (box.width - width) / 2, y: box.y + (box.height - height) / 2, width, height };
+}
+
+const EPS = 0.01;
+
+/** Top and bottom of an item. */
+function extent(item: LayoutItem): [number, number] {
+  return item.kind === 'line' ? [Math.min(item.y1, item.y2), Math.max(item.y1, item.y2)] : [item.y, item.y + item.height];
+}
+
+/**
+ * Where to cut a band that needs more than `room`: the lowest point at or above `room` that cuts
+ * through no text line, picture, barcode or chart. Boxes and lines can be cut anywhere. Falls back
+ * to `room` when nothing fits (a picture taller than the page).
+ */
+function cutPoint(items: LayoutItem[], room: number): number {
+  const solid: [number, number][] = [];
+  for (const item of items) {
+    if (item.kind === 'rect' || item.kind === 'line') continue;
+    if (item.kind === 'text') {
+      const step = item.lines.length > 1 ? item.lines[1].baseline - item.lines[0].baseline : (item.size * 25.4 * 1.2) / 72;
+      for (const l of item.lines) solid.push([l.baseline - step * 0.8, l.baseline + step * 0.2]);
+    } else {
+      solid.push(extent(item));
+    }
+  }
+  const candidates = solid.flat().filter((c) => c > EPS && c <= room + EPS);
+  candidates.push(room);
+  let best = 0;
+  for (const c of candidates) {
+    if (c > best && !solid.some(([a, b]) => a < c - EPS && b > c + EPS)) best = c;
+  }
+  return best > EPS ? Math.min(best, room) : room;
+}
+
+/** Items above `cut`, and those below it moved up by `cut`; boxes, lines and texts across it are split. */
+function splitItems(items: LayoutItem[], cut: number): [LayoutItem[], LayoutItem[]] {
+  const top: LayoutItem[] = [];
+  const bottom: LayoutItem[] = [];
+  const below = (item: LayoutItem) => bottom.push(translate(item, 0, -cut));
+  for (const item of items) {
+    const [a, b] = extent(item);
+    if (b <= cut + EPS) top.push(item);
+    else if (a >= cut - EPS) below(item);
+    else if (item.kind === 'rect') {
+      top.push({ ...item, height: cut - item.y });
+      below({ ...item, y: cut, height: item.y + item.height - cut });
+    } else if (item.kind === 'line') {
+      const t = (cut - item.y1) / (item.y2 - item.y1);
+      const x = item.x1 + (item.x2 - item.x1) * t;
+      const [upper, lower] = item.y1 < item.y2 ? [[item.x1, item.y1], [item.x2, item.y2]] : [[item.x2, item.y2], [item.x1, item.y1]];
+      top.push({ ...item, x1: upper[0], y1: upper[1], x2: x, y2: cut });
+      below({ ...item, x1: x, y1: cut, x2: lower[0], y2: lower[1] });
+    } else if (item.kind === 'text') {
+      const lines = item.lines.filter((l) => l.baseline < cut);
+      top.push({ ...item, height: cut - item.y, lines });
+      below({ ...item, y: cut, height: item.y + item.height - cut, lines: item.lines.filter((l) => l.baseline >= cut) });
+    } else {
+      // Pictures cannot be cut: one taller than the page stays with the top part and runs over.
+      top.push(item);
+    }
+  }
+  return [top, bottom];
 }
 
 /** Moves an item by (dx, dy). */

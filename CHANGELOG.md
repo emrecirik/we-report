@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- **Sub-reports** (`type: 'subreport'`): a whole report inside a box, designed in its own designer
+  window (double-click), or loaded from a saved report / RDLC / REPX file. Rows come from a formula
+  over the outer row (`rows`) or the sub-report's own data, matched with `filter`
+  (`[CustomerId] = [^.Id]`); `parameters` pass values from the outer row. The box grows and pushes
+  the items below it. Remote sources of sub-reports are loaded with the report (`allDataSources`).
+  Nested sub-reports migrate with the file around them; more than five levels are refused.
+- Layout: a section taller than a page now continues on the next pages, cut between items and
+  text lines (boxes and lines split, pictures never), instead of running off the page. Such a
+  section starts right after the previous one rather than on a new page.
+- Layout: an item placed up to 1 mm inside a growing text is pushed down with it.
+- Studio: opening a shared link that fetches from a web service or database shows a warning; a
+  design too large for a link says so instead of producing a link that will not open. Studio has
+  unit tests (`npm test` runs them).
+
 ## 0.6.0 — 2026-10-20
 
 - Data protocol 1.1 (backward compatible, still `/v1`): query `offset` and `distinct`, the

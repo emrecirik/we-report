@@ -503,6 +503,39 @@
           }
         </section>
       }
+      @case ('subreport') {
+        <section class="pp__section">
+          <h3>{{ s.groupContent }}</h3>
+          <small class="pp__hint">{{ s.subreportHint }}</small>
+          <div class="pp__buttons">
+            <button type="button" (click)="state.subreportOpen.set(c.id)">{{ s.subreportEdit }}</button>
+          </div>
+          <label class="pp__file">
+            <input type="file" accept=".json,.rdl,.rdlc,.repx" (change)="chooseSubreport($event)" />
+            <span>{{ s.subreportLoad }}</span>
+          </label>
+          @if (subreportError()) {
+            <small class="pp__hint pp__warn" role="alert">{{ s.subreportLoadFailed }}</small>
+          }
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.subreportRows }}</span>
+            <input class="pp__mono" [value]="c.rows?.expression ?? ''" placeholder="[orders]" (input)="setOptionalExpression('rows', $any($event.target).value)" spellcheck="false" />
+          </label>
+          <small class="pp__hint">{{ s.subreportRowsHint }}</small>
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.subreportFilter }}</span>
+            <input class="pp__mono" [value]="c.filter?.expression ?? ''" placeholder="[CustomerId] = [^.Id]" (input)="setOptionalExpression('filter', $any($event.target).value)" spellcheck="false" />
+          </label>
+          <small class="pp__hint">{{ s.subreportFilterHint }}</small>
+          @if (c.report.parameters?.length) {
+            <span class="pp__label">{{ s.subreportParams }}</span>
+            @for (p of c.report.parameters; track p.name) {
+              <span class="pp__label">{{ p.label || p.name }}</span>
+              <we-report-bindable-input [value]="subreportParamValue(c, p.name)" [fields]="fields()" [strings]="s" (valueChange)="setSubreportParam(p.name, $event)" />
+            }
+          }
+        </section>
+      }
       @case ('checkbox') {
         <section class="pp__section">
           <h3>{{ s.groupContent }}</h3>
