@@ -172,7 +172,11 @@ interface DragOp {
                     @if (staticImage(c); as src) {
                       <img class="ds__fill ds__image" [src]="src" [style.object-fit]="objectFit(c)" alt="" />
                     } @else {
-                      <div class="ds__placeholder" [innerHTML]="'image' | weReportIcon"></div>
+                      @if (previewPages().get(c.id); as preview) {
+                        <div class="ds__subpreview"><we-report-page [page]="preview" [zoom]="zoom()" /></div>
+                      } @else {
+                        <div class="ds__placeholder" [innerHTML]="'image' | weReportIcon"></div>
+                      }
                     }
                   }
                   @case ('barcode') {
@@ -218,7 +222,11 @@ interface DragOp {
                     }
                   }
                   @case ('checkbox') {
-                    <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
+                    @if (previewPages().get(c.id); as preview) {
+                      <div class="ds__subpreview"><we-report-page [page]="preview" [zoom]="zoom()" /></div>
+                    } @else {
+                      <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
+                    }
                   }
                   @case ('crosstab') {
                     @if (previewPages().get(c.id); as preview) {
@@ -662,7 +670,15 @@ export class DesignSurfaceComponent implements OnDestroy {
     const sample = this.sample();
     const subs = report.bands.flatMap((band) =>
       band.controls
-        .filter((c) => c.type === 'subreport' || ((c.type === 'crosstab' || c.type === 'chart') && sample) || (c.type === 'barcode' && (sample || !isExpression(c.value))))
+        .filter(
+          (c) =>
+            c.type === 'subreport' ||
+            ((c.type === 'crosstab' || c.type === 'chart') && sample) ||
+            (c.type === 'barcode' && (sample || !isExpression(c.value))) ||
+            (c.type === 'checkbox' && (sample || !isExpression(c.checked))) ||
+            // Pictures from data (embedded ones show as an <img>; addresses are only fetched by the viewer).
+            (c.type === 'image' && sample && isExpression(c.source)),
+        )
         .map((c) => ({ c, band })),
     );
     const run = ++this.previewRun;
