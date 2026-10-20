@@ -6,7 +6,7 @@ export interface FormatOptions {
 }
 
 const NUMBER_PATTERN = /^([nNcCpPdD])(\d{0,2})$/;
-const DATE_TOKENS = /yyyy|yy|MMMM|MMM|MM|M|dd|d|HH|H|mm|ss|'[^']*'/g;
+const DATE_TOKENS = /yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|mm|ss|'[^']*'/g;
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ISO_DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
 
@@ -26,7 +26,7 @@ export function toDate(value: unknown): Date | null {
 /**
  * Formats a value for display. Numbers: `n2` (grouped, 2 decimals), `c2` (currency), `p0`
  * (percent of a 0-1 ratio), `d4` (integer, zero padded). Dates: tokens `yyyy yy MMMM MMM MM M
- * dd d HH H mm ss`, literal text in single quotes.
+ * dddd ddd dd d HH H mm ss` (`dddd` the day's name), literal text in single quotes.
  */
 export function formatValue(value: unknown, pattern: string | undefined, options: FormatOptions): string {
   if (value === null || value === undefined) return '';
@@ -78,6 +78,8 @@ function formatDate(date: Date, pattern: string | undefined, locale: string): st
       case 'MMM': return new Intl.DateTimeFormat(locale, { month: 'short' }).format(date);
       case 'MM': return pad(date.getMonth() + 1);
       case 'M': return String(date.getMonth() + 1);
+      case 'dddd': return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
+      case 'ddd': return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date);
       case 'dd': return pad(date.getDate());
       case 'd': return String(date.getDate());
       case 'HH': return pad(date.getHours());

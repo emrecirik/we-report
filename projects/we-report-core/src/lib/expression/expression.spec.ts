@@ -43,6 +43,12 @@ describe('expression language', () => {
     expect(ev('In([n], 1, 2, 3)', { n: '2' })).toBeTrue();
   });
 
+  it('writes the name of the day', () => {
+    const now = new Date(2026, 9, 19); // a Monday
+    expect(evaluate("Format(Today(), 'dddd, dd MMMM yyyy')", { now, locale: 'tr-TR' })).toBe('Pazartesi, 19 Ekim 2026');
+    expect(evaluate("Format(Today(), 'ddd dd.MM')", { now, locale: 'en-US' })).toBe('Mon 19.10');
+  });
+
   it('takes the left and right ends of a text and pads it', () => {
     const ev = (e: string) => evaluate(e, { row: { no: 42 } });
     expect(ev("Left('İstanbul', 3)")).toBe('İst');

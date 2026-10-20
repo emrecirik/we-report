@@ -69,6 +69,7 @@ order, a later rule wins on the same property.
 | `d5` | `00042` |
 | `dd.MM.yyyy HH:mm` | `05.01.2026 09:07` |
 | `d MMMM yyyy` | `5 Ocak 2026` |
+| `dddd, d MMMM` · `ddd` | `Pazartesi, 5 Ocak` · `Pzt` (the day's name) |
 | `'Tarih:' dd/MM/yy` | `Tarih: 05/01/26` (quoted text is literal) |
 
 Page numbers use `{0}` (page) and `{1}` (pages): `Sayfa {0} / {1}`.

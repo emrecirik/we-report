@@ -52,6 +52,7 @@
   in a page footer — and `CarriedSum(value)`, the total brought forward in a page header.
 - `AddMonths`, `AddYears`, `DateDiff('day' | 'month' | 'year', start, end)` (days overdue, ages),
   `Left`, `Right`, `PadLeft`, `Switch(value, match, result, …, otherwise)` and `In(value, a, b, …)`.
+- Date formats: `dddd` and `ddd` write the day's name (`Pazartesi`, `Pzt`).
 - Parameters can offer a list (`choices`): fixed values, or each value of a data field with an
   optional label field (a customer's name for its id). The viewer shows a drop-down; core exports
   `parameterChoices()`.
