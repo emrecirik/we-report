@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, parseRichText, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle, RichRun } from 'we-report-core';
+import { Band, Bindable, createBlankReport, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, LayoutPage, layoutReport, parseRichText, ReportControl, ReportControlType, ReportDefinition, ReportStyle, resolvePageGeometry, resolveStyle, RichRun } from 'we-report-core';
+import { WeReportPageComponent } from '../viewer/we-report-page.component';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -99,7 +100,7 @@ interface DragOp {
 @Component({
   selector: 'we-report-design-surface',
   standalone: true,
-  imports: [WeReportIconPipe, ExpressionEditorComponent],
+  imports: [WeReportIconPipe, ExpressionEditorComponent, WeReportPageComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Focusable so keyboard shortcuts (undo, delete, arrows) reach the designer after a click.
   host: { tabindex: '0', '[class.ds--painting]': '!!state.painter()' },
@@ -218,10 +219,18 @@ interface DragOp {
                     </div>
                   }
                   @case ('subreport') {
-                    <div class="ds__placeholder ds__chart" [title]="strings().subreportEdit">
-                      <span [innerHTML]="'subreport' | weReportIcon"></span>
-                      <small>{{ c.report.name || strings().controlNames.subreport }}</small>
-                    </div>
+                    @if (subreportPages().get(c.id); as preview) {
+                      <!-- The sub-report laid out with the sample row, as it prints; double-click edits it. -->
+                      <div class="ds__subpreview" [title]="strings().subreportEdit">
+                        <we-report-page [page]="preview" [zoom]="zoom()" />
+                        <small class="ds__subname">{{ c.report.name || strings().controlNames.subreport }}</small>
+                      </div>
+                    } @else {
+                      <div class="ds__placeholder ds__chart" [title]="strings().subreportEdit">
+                        <span [innerHTML]="'subreport' | weReportIcon"></span>
+                        <small>{{ c.report.name || strings().controlNames.subreport }}</small>
+                      </div>
+                    }
                   }
                   @default {
                     @if (isEditing(c.id)) {
@@ -517,6 +526,24 @@ interface DragOp {
       line-height: 1.36;
       pointer-events: none;
     }
+    .ds__subpreview {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      --we-report-page-bg: transparent;
+      --we-report-page-shadow: none;
+    }
+    .ds__subname {
+      position: absolute;
+      top: 1px;
+      right: 2px;
+      padding: 0 4px;
+      border-radius: 4px;
+      font-size: 10px;
+      background: var(--we-report-band-label-bg, rgba(118, 118, 128, 0.1));
+      color: var(--we-report-band-label-fg, rgba(60, 60, 67, 0.7));
+    }
     .ds__text--bound {
       text-decoration: underline dotted var(--we-report-accent, #007aff);
       text-underline-offset: 2px;
@@ -612,6 +639,51 @@ export class DesignSurfaceComponent implements OnDestroy {
   private readonly fontsService = inject(WeReportFontsService);
   /** Texts (without Grow to fit text) whose content does not fit, measured with the report's fonts like the print. */
   readonly cutTexts = signal<ReadonlySet<string>>(new Set());
+  /** First page of every sub-report, laid out with the sample row, shown inside its box. */
+  protected readonly subreportPages = signal<ReadonlyMap<string, LayoutPage>>(new Map());
+  private previewRun = 0;
+  private readonly previewSubreports = effect(() => {
+    const report = this.state.report();
+    this.sample();
+    const subs = report.bands.flatMap((band) => band.controls.filter((c) => c.type === 'subreport').map((c) => ({ c, band })));
+    const run = ++this.previewRun;
+    if (!subs.length) {
+      if (this.subreportPages().size) setTimeout(() => run === this.previewRun && this.subreportPages.set(new Map()));
+      return;
+    }
+    void this.fontsService.ready().then((fonts) => {
+      if (run !== this.previewRun) return;
+      const pages = new Map<string, LayoutPage>();
+      for (const { c, band } of subs) {
+        const row = this.sampleFor(band)?.row;
+        // The box alone on a page of its own width, with the sample row around it.
+        const def: ReportDefinition = {
+          ...createBlankReport(),
+          page: { paper: 'custom', orientation: 'portrait', width: c.width, height: null, margins: { top: 0, right: 0, bottom: 0, left: 0 }, displayUnit: 'mm' },
+          styles: report.styles,
+          dataSources: report.dataSources,
+          calculatedFields: report.calculatedFields,
+          parameters: report.parameters,
+          locale: report.locale,
+          currency: report.currency,
+          bands: [{ id: 'preview', kind: 'detail', height: c.height, controls: [{ ...c, x: 0, y: 0 }] }],
+        };
+        try {
+          const doc = layoutReport(def, {
+            fonts,
+            data: row === undefined ? undefined : [row],
+            now: new Date(),
+            locale: this.config.locale,
+            currency: this.config.currency,
+          });
+          if (doc.pages[0]) pages.set(c.id, doc.pages[0]);
+        } catch {
+          /* a sub-report that cannot be laid out shows its placeholder */
+        }
+      }
+      this.subreportPages.set(pages);
+    });
+  });
   private measureRun = 0;
   private readonly measureTexts = effect(() => {
     const report = this.state.report();
