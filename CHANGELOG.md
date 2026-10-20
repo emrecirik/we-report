@@ -16,7 +16,8 @@
   file around them; more than five levels are refused.
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, a total row and column, numbers sorted numerically, at most 500 rows and
-  50 columns (a problem says when more were cut). It grows downwards and pushes the items below.
+  50 columns (a problem says when more were cut). A number wider than its cell is printed smaller,
+  or as `###` when it would be unreadable — never cut off into a different number. It grows downwards and pushes the items below.
   A dropped cross table or chart starts grouped by the text fields that repeat, summing the number
   field with the largest total (never an identifier such as `orderNo` or a calendar field —
   `isSummableField` in core); a cross table puts the field with the fewest values across and

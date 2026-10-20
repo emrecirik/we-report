@@ -820,23 +820,36 @@ class LayoutRun {
     const number = { ...middle, textAlign: 'right' as const };
     const total = c.totalLabel ?? 'Σ';
     const items: LayoutItem[] = [];
-    const cell = (text: string, st: ResolvedStyle, column: number, line: number) => {
+    const cell = (text: string, st: ResolvedStyle, column: number, line: number, isNumber = false) => {
       const x = column < 0 ? c.x : c.x + headerWidth + column * columnWidth;
-      items.push(...this.textBox(text, st, { x, y: c.y + line * rowHeight, width: column < 0 ? headerWidth : columnWidth, height: rowHeight }));
+      const width = column < 0 ? headerWidth : columnWidth;
+      if (isNumber && text) {
+        // A cut-off number reads as another number: shrink it to fit, and when that would make it
+        // unreadable show ### like a spreadsheet.
+        const font = this.options.fonts.resolve(st.fontFamily, st.bold, st.italic);
+        const room = width - 2 * st.padding;
+        const needed = font.widthOf(text, st.fontSize);
+        if (needed > room) {
+          const size = (st.fontSize * room) / needed;
+          if (size >= st.fontSize * 0.6) st = { ...st, fontSize: Math.floor(size * 100) / 100 };
+          else text = '###';
+        }
+      }
+      items.push(...this.textBox(text, st, { x, y: c.y + line * rowHeight, width, height: rowHeight }));
     };
     cell(c.title ?? '', head, -1, 0);
     cols.forEach((k, i) => cell(k, { ...head, textAlign: 'right' }, i, 0));
     if (totals) cell(total, { ...head, textAlign: 'right' }, cols.length, 0);
     rows.forEach((r, line) => {
       cell(r, head, -1, line + 1);
-      cols.forEach((k, i) => cell(show(values(r, k), false), number, i, line + 1));
-      if (totals) cell(show(values(r), true), { ...number, bold: true }, cols.length, line + 1);
+      cols.forEach((k, i) => cell(show(values(r, k), false), number, i, line + 1, true));
+      if (totals) cell(show(values(r), true), { ...number, bold: true }, cols.length, line + 1, true);
     });
     if (totals) {
       const line = rows.length + 1;
       cell(total, head, -1, line);
-      cols.forEach((k, i) => cell(show(values(undefined, k), true), { ...number, bold: true }, i, line));
-      cell(show(values(), true), { ...number, bold: true }, cols.length, line);
+      cols.forEach((k, i) => cell(show(values(undefined, k), true), { ...number, bold: true }, i, line, true));
+      cell(show(values(), true), { ...number, bold: true }, cols.length, line, true);
     }
     const lines = 1 + rows.length + (totals ? 1 : 0);
     return { items, height: Math.max(c.height, lines * rowHeight) };

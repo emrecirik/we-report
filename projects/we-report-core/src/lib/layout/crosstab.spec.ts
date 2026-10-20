@@ -114,6 +114,23 @@ describe('cross table', () => {
     expect(performance.now() - start).toBeLessThan(5000);
   });
 
+  it('shrinks a number that does not fit its cell instead of cutting it, and shows ### when it would be unreadable', () => {
+    const cells = (r: ReportDefinition) =>
+      layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text' && /\d|#/.test(i.lines[0]?.text ?? ''));
+    const wide = report({ format: 'n2' });
+    (wide.dataSources[0] as { data: unknown }).data = [{ city: 'A', month: 1, amount: 123456.78 }];
+    const normal = cells(wide).find((t) => t.lines[0].text === '123.456,78')!;
+    const narrow = report({ format: 'n2', width: 52 });
+    (narrow.dataSources[0] as { data: unknown }).data = [{ city: 'A', month: 1, amount: 123456.78 }];
+    const shrunk = cells(narrow).filter((t) => t.lines[0].text === '123.456,78');
+    expect(shrunk.length).toBeGreaterThan(0); // the whole number, never 123.456,
+    expect(shrunk[0].size).toBeLessThan(normal.size);
+    expect(shrunk[0].lines.length).toBe(1);
+    const tiny = report({ format: 'n2', width: 30 });
+    (tiny.dataSources[0] as { data: unknown }).data = [{ city: 'A', month: 1, amount: 123456.78 }];
+    expect(cells(tiny).some((t) => t.lines[0].text === '###')).toBeTrue();
+  });
+
   it('aggregates by count or average and can leave the totals out', () => {
     expect(grid(report({ aggregate: 'count', totals: false }), fonts).slice(0, 3)).toEqual([
       ['Şehir', '1', '2', '10'],
