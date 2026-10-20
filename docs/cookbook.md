@@ -30,8 +30,8 @@ customer.
 ## The ten biggest customers
 
 Group by customer, put `Sum([amount])` in the group footer, and on the group header (Advanced) set
-*Order groups by* `Sum([amount])` with *Largest first* and *Only the first … groups* `10`. The report
-footer's totals still add up every customer.
+*Order groups by* `Sum([amount])` with *Largest first* and *Only the first … groups* `10`. Excel
+and CSV export the same ten; the report footer's totals still add up every customer.
 
 ```json
 { "id": "byCustomer", "kind": "groupHeader", "groupBy": { "expression": "[customer]" },

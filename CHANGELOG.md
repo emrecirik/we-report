@@ -35,7 +35,7 @@
   page, page X of Y counts the group's pages and carried totals restart: batch-printed statements.
 - Groups: *Order groups by* (`orderBy`) — a formula over each group's rows, e.g. `Sum([amount])`
   descending: the biggest customers first (nested groups within their parent); with `top`, only
-  the first N groups print (the top 10 customers).
+  the first N groups print and export (the top 10 customers).
 - Groups: *Keep the header with the first row* (`keepWithFirstRow`) — no group header left alone
   at the bottom of a page.
 - Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and

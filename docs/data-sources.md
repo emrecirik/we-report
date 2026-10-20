@@ -45,8 +45,9 @@ sample data so the report can be designed even when the service is not reachable
 ### Paged APIs
 
 Tick **Paged API** and put `{{page}}` (1, 2, 3 …) or `{{offset}}`, and `{{size}}`, in the address
-or body: pages are loaded until one brings fewer rows than the page size (at most 20 pages, or
-`maxPages` up to 100), and their rows are joined.
+or body: pages are loaded until one brings fewer rows than the page size, no list or an error
+(at most 20 pages, or `maxPages` up to 100), and their rows are joined. An address without one of
+these placeholders is loaded once.
 
 ```json
 { "kind": "webService", "url": "https://api.example.com/orders?page={{page}}&per_page={{size}}",
