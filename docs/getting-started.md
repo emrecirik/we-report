@@ -135,5 +135,5 @@ produce the same pages. `reportTable` + `writeXlsx` (or `writeCsv`) produce a sp
 
 - [Formulas](expressions.md) — `[Price] * [Qty]`, `Sum(...)`, `Iif(...)`, formats
 - [Data sources](data-sources.md) — JSON, CSV/Excel, web services, databases, parameters
-- [Data backend](backend.md) — the protocol and ready-made backends in 4 languages
+- [Data backend](backend.md) — the protocol and ready-made backends in six languages
 - [Theming and fonts](theming.md)
