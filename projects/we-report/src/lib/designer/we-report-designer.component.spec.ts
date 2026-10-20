@@ -102,6 +102,30 @@ describe('WeReportDesignerComponent', () => {
     fixture.detectChanges();
   });
 
+  it('draws charts, cross tables, barcodes and sub-reports as they print, a broken one as its icon', async () => {
+    const inner = createBlankReport('Inner');
+    inner.bands = [{ id: 'd', kind: 'detail', height: 6, controls: [{ id: 't', type: 'text', x: 0, y: 0, width: 30, height: 6, text: 'inner text' }] }];
+    const report = createBlankReport();
+    report.bands.splice(2, 0, {
+      id: 'rf', kind: 'reportFooter', height: 60, controls: [
+        { id: 'ch', type: 'chart', chartType: 'column', x: 0, y: 0, width: 80, height: 40, category: { expression: '[c]' }, value: { expression: '[v]' } },
+        { id: 'bc', type: 'barcode', x: 90, y: 0, width: 40, height: 15, symbology: 'code128', value: 'ABC123', showText: true },
+        { id: 'sub', type: 'subreport', x: 90, y: 20, width: 60, height: 10, report: inner },
+        { id: 'bad', type: 'subreport', x: 90, y: 40, width: 60, height: 10, report: { bands: 'nope' } as unknown as ReturnType<typeof createBlankReport> },
+      ],
+    });
+    create(report, [{ c: 'a', v: 1 }, { c: 'b', v: 2 }]);
+    await TestBed.inject(WeReportFontsService).ready();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    fixture.detectChanges();
+    const preview = (id: string) => el().querySelector(`[data-control-id="${id}"] .ds__subpreview svg`);
+    expect(preview('ch')).not.toBeNull();
+    expect(preview('bc')).not.toBeNull();
+    expect(preview('sub')?.textContent).toContain('inner text');
+    expect(preview('bad')).toBeNull(); // nothing to draw: the icon stays
+    expect(el().querySelector('[data-control-id="bad"] .ds__placeholder')).not.toBeNull();
+  });
+
   it('renders the page at real size with localized bands', () => {
     create(createBlankReport());
     const page = el().querySelector('.ds__page') as HTMLElement;

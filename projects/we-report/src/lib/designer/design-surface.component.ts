@@ -716,7 +716,8 @@ export class DesignSurfaceComponent implements OnDestroy {
             locale: this.config.locale,
             currency: this.config.currency,
           });
-          if (doc.pages[0]) pages.set(c.id, doc.pages[0]);
+          // Nothing drawn (a broken sub-report, an empty value): the icon says more than a blank box.
+          if (doc.pages[0]?.items.length) pages.set(c.id, doc.pages[0]);
         } catch {
           /* a sub-report that cannot be laid out shows its placeholder */
         }
