@@ -54,6 +54,7 @@ backend required**.
 ## Documentation
 
 - [Getting started](docs/getting-started.md)
+- [Cookbook](docs/cookbook.md) — ledgers, statements per customer, sub-reports, cross tables, labels on a Zebra printer
 - [Designing reports](docs/designing.md) — sections, inner lists, sub-reports, labels, tables, charts, cross tables
 - [Moving reports from other tools](docs/migrating.md) — open RDLC/RDL and DevExpress REPX files
 - [Formulas](docs/expressions.md)

@@ -135,6 +135,7 @@ produce the same pages. `reportTable` + `writeXlsx` (or `writeCsv`) produce a sp
 
 ## Next
 
+- [Cookbook](cookbook.md) — recipes: running balances, statements per customer, sub-reports, labels
 - [Formulas](expressions.md) — `[Price] * [Qty]`, `Sum(...)`, `Iif(...)`, formats
 - [Data sources](data-sources.md) — JSON, CSV/Excel, web services, databases, parameters
 - [Data backend](backend.md) — the protocol and ready-made backends in six languages
