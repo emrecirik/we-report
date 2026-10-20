@@ -715,6 +715,8 @@ class LayoutRun {
         return { items, height: c.height };
       }
     }
+    // An item type this version does not know (a damaged file) prints nothing.
+    return { items: [], height: 0 };
   }
 
   /**

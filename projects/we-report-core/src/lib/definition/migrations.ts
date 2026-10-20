@@ -1,4 +1,5 @@
 import { CURRENT_DEFINITION_VERSION, ReportDefinition } from './report-definition';
+import { sanitizeDefinition } from './sanitize';
 
 type Migration = (definition: Record<string, unknown>) => Record<string, unknown>;
 
@@ -37,7 +38,7 @@ export function migrateDefinition(input: unknown, depth = 0): ReportDefinition {
     definition = { ...migrate(definition), version: version + 1 };
     version++;
   }
-  return migrateSubreports(definition, original, depth) as unknown as ReportDefinition;
+  return migrateSubreports(sanitizeDefinition(definition), original, depth) as unknown as ReportDefinition;
 }
 
 /** Sub-reports were saved with the report around them: they migrate from its version. */
