@@ -9,7 +9,8 @@
   over the outer row (`rows`) or the sub-report's own data, matched with `filter`
   (`[CustomerId] = [^.Id]`); `parameters` pass values from the outer row; *Its rows come from*
   suggests the lists in the data; its designer knows the row around it, so `[^.field]` shows a
-  sample value and is no unknown field (`outerRow` input), and it offers no paper or watermark
+  sample value and is no unknown field (`outerRow` input), its rows are those the filter matches
+  to the sample row, and it offers no paper or watermark
   settings there (`embedded`). The box grows and pushes the items below it. Remote sources of
   sub-reports are loaded with the report (`allDataSources`). Nested sub-reports migrate with the
   file around them; more than five levels are refused.

@@ -70,6 +70,19 @@ describe('WeReportDesignerComponent', () => {
     expect(state.subreportOpen()).toBeNull();
   });
 
+  it('shows the rows of the sample row in the sub-report window, as the filter matches them', () => {
+    const inner = createBlankReport('Hareketler');
+    inner.bands = [{ id: 'd', kind: 'detail', height: 6, controls: [{ id: 'no', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[No]' } }] }];
+    const report = createBlankReport();
+    report.bands[1].controls.push({ id: 'sub', type: 'subreport', x: 0, y: 0, width: 100, height: 10, report: inner, rows: { expression: '[all]' }, filter: { expression: '[owner] = [^.name]' } });
+    const all = [{ No: 'X-1', owner: 'b' }, { No: 'A-1', owner: 'a' }];
+    create(report, [{ name: 'a', all }]);
+    state.subreportOpen.set('sub');
+    fixture.detectChanges();
+    fixture.detectChanges();
+    expect(el().querySelector('.wd__subreport [data-control-id="no"]')?.textContent).toContain('A-1');
+  });
+
   it('warns about a text the print would cut off and fixes it by letting it grow', async () => {
     const report = createBlankReport();
     report.bands[1].controls.push(

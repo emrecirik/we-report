@@ -458,19 +458,34 @@ export class WeReportDesignerComponent {
     const c = this.openSubreport();
     if (!c) return undefined;
     const sample = this.state.sample();
+    let rows: unknown;
     if (c.rows?.expression.trim()) {
       if (!sample) return undefined;
       try {
-        const value = evaluate(c.rows.expression, sample);
-        return Array.isArray(value) ? value : undefined;
+        rows = evaluate(c.rows.expression, sample);
       } catch {
         return undefined;
       }
+    } else {
+      const id = c.report.dataMember?.dataSourceId;
+      if (!id || c.report.dataSources.some((s) => s.id === id)) return undefined;
+      const outer = this.state.report().dataSources.find((s) => s.id === id);
+      rows = outer ? sourceValue(outer) : undefined;
     }
-    const id = c.report.dataMember?.dataSourceId;
-    if (!id || c.report.dataSources.some((s) => s.id === id)) return undefined;
-    const outer = this.state.report().dataSources.find((s) => s.id === id);
-    return outer ? sourceValue(outer) : undefined;
+    if (!Array.isArray(rows)) return c.rows?.expression.trim() ? undefined : rows;
+    // The sample row's own rows, as printed (the filter matches them to the row around).
+    const filter = c.filter?.expression.trim();
+    if (!filter || !sample) return rows;
+    const all = rows;
+    const matching = all.filter((row) => {
+      try {
+        return Boolean(evaluate(filter, { row, rows: all, parent: sample.row }));
+      } catch {
+        return false;
+      }
+    });
+    // No match for the sample row: all rows, so the fields can still be designed.
+    return matching.length ? matching : all;
   });
 
   /** The window closes when its sub-report is gone (deleted, or undone away), and takes the focus when it opens. */
