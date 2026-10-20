@@ -2,87 +2,103 @@
 
 ## Unreleased
 
+### New items
+
 - **Sub-reports** (`type: 'subreport'`): a whole report inside a box, designed in its own designer
   window (double-click), or loaded from a saved report / RDLC / REPX file. Rows come from a formula
   over the outer row (`rows`) or the sub-report's own data, matched with `filter`
-  (`[CustomerId] = [^.Id]`); `parameters` pass values from the outer row. The box grows and pushes
-  the items below it. Remote sources of sub-reports are loaded with the report (`allDataSources`).
-  Nested sub-reports migrate with the file around them; more than five levels are refused.
-- Layout: a section taller than a page now continues on the next pages, cut between items and
-  text lines (boxes and lines split, pictures never), instead of running off the page. Such a
-  section starts right after the previous one rather than on a new page.
-- Parameters can offer a list (`choices`): fixed values, or each value of a data field with an
-  optional label field (a customer's name for its id). The viewer shows a drop-down; core exports
-  `parameterChoices()`. The viewer now also loads the remote sources of sub-reports.
-- Designer: *Tidy up* (right-click a section or several items) — snaps to the grid, lines up items
-  that are nearly in a row or column, one height per row of texts; one undo step.
-- Excel and CSV exports list the rows in the printed order (groups and the detail's sort keys).
-- Viewer: **CSV** under *More formats* — the rows for spreadsheets, with `;` and decimal commas in
-  comma-decimal regions, a UTF-8 byte-order mark and formula-like text defused (`toCsv()`,
-  `writeCsv()` in core).
-- Viewer: *Printer file* — Zebra **ZPL** (203 dpi) for label printers and **ESC/POS** (58 / 80 mm)
-  for receipt printers, the pages sent as an image so they print exactly as previewed
-  (`toZpl()`, `toEscPos()`; encoders `toMonoBitmap`, `zplFromBitmaps`, `escPosFromBitmaps` in core).
-- Viewer: **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)` in code), drawn
-  from the same layout and fonts as the preview and the PDF.
-- Barcodes: the bars of linear codes end clearly above their digits (they touched when the box
-  was wide and low).
-- Pictures from addresses: an image whose source (or data) is an `https://` address is fetched by
-  the viewer and drawn in the preview, PDF and PNG (WebP/SVG converted; at most 200 pictures of
-  10 MB, 15 s each; through the viewer's `fetchFn`). Core: `LayoutOptions.images` and
-  `LayoutDocument.imageUrls` for a host's own fetching. The design page shows a placeholder.
-- Web services: **paged APIs** (`paging`: `{{page}}` / `{{offset}}` / `{{size}}` in the address;
-  pages are loaded and joined until a short page, at most 20 or `maxPages` ≤ 100).
-- Import: DevExpress calculated fields become calculated fields of the report.
-- Import: RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
-- Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and
-  *Print only when* (`visible` formula on any section but the page header/footer).
-- Groups: *Keep the header with the first row* (`keepWithFirstRow`) — no group header left alone at
-  the bottom of a page. The grouped sales template uses it, and its city headers are bookmarks.
-- PDF: the report's language is written into the file (`PdfOptions.lang`; the viewer passes the
-  report's region), for screen readers.
-- **Document map**: a `bookmark` on group headers and the detail section becomes PDF bookmarks
-  (nested by group, the PDF opens with them shown) and a list in the preview that jumps to the
-  section (`LayoutDocument.bookmarks`).
-- Groups: *New page and page numbers per group* (`resetPageNumber`) — every group starts on a new
-  page, page X of Y counts the group's pages and carried totals restart: batch-printed statements.
-- Page settings: page colour (`page.color`) and mirrored margins for booklets
-  (`page.mirrorMargins`: even pages swap left and right), under Advanced.
-- Problems: a fixed EAN-13 / EAN-8 / UPC-A / ITF-14 with a wrong check digit is reported with the
-  right digit, and *Fix* corrects it (`gtinCheckDigit` in core; `ReportIssueCode` gains
-  `checkDigit` — a `switch` over every code needs the new case).
-- Sub-report: *Its rows come from* suggests the lists in the data.
-- Designer: *Fit size to text* measures what a bound text prints, also while *Show data* is off.
+  (`[CustomerId] = [^.Id]`); `parameters` pass values from the outer row; *Its rows come from*
+  suggests the lists in the data. The box grows and pushes the items below it. Remote sources of
+  sub-reports are loaded with the report (`allDataSources`). Nested sub-reports migrate with the
+  file around them; more than five levels are refused.
+- **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
+  average / min / max, a total row and column, numbers sorted numerically, at most 500 rows and
+  50 columns (a problem says when more were cut). It grows downwards and pushes the items below;
+  dropping one binds it to the first two text fields and a number field.
 - **Rich text** (`markup: true` on a text): `**bold**`, `*italic*`, `__underline__` and `{formula}`
   fields inside one text, wrapped and measured with the right font per word; the designer shows it
   formatted, Excel exports the words. `parseRichText`, `wrapRichText` and `plainRichText` are
-  exported from core. The payment receipt template uses it.
-- Cross table: at most 500 rows and 50 columns (a problem says when more were cut). Cross tables
-  and charts skip empty values in averages, minimums and maximums (they counted as 0).
-- Preview: every text line is drawn exactly as wide as the engine measured it (SVG `textLength`,
-  and in PNG), so the screen matches the PDF; styled words no longer leave gaps.
-- ISBN and other barcodes with text above the bars stay inside their box.
+  exported from core.
 - Charts: **sparkline** type (a bare line with a dot on the last value) and `rows` — a chart in
-  every detail row from a list inside that row (`[months]`).
-- **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
-  average / min / max, total row and column, numbers sorted numerically; grows downwards and
-  pushes the items below. Dropping one binds it to the first two text fields and a number field.
+  every detail row from a list inside that row (`[months]`). Choosing *Sparkline* shrinks the box.
+
+### Layout
+
+- A section taller than a page continues on the next pages, cut between items and text lines
+  (boxes and lines are split, pictures never), instead of running off the page. A section that
+  fits on no page starts right after the previous one; side-by-side cells are never cut.
+- Groups: *New page and page numbers per group* (`resetPageNumber`) — every group starts on a new
+  page, page X of Y counts the group's pages and carried totals restart: batch-printed statements.
+- Groups: *Keep the header with the first row* (`keepWithFirstRow`) — no group header left alone
+  at the bottom of a page.
+- Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and
+  *Print only when* (`visible` formula on any section but the page header/footer).
+- **Document map**: a `bookmark` on group headers and the detail section becomes PDF bookmarks
+  (nested by group; the PDF opens with them shown) and a list in the preview that jumps to the
+  section (`LayoutDocument.bookmarks`).
+- Page settings: page colour (`page.color`) and mirrored margins for booklets
+  (`page.mirrorMargins`: even pages swap left and right), under Advanced.
+- An item placed up to 1 mm inside a growing text is pushed down with it.
+- Barcodes: the bars of linear codes end clearly above their digits; ISBN and other codes with
+  text above the bars stay inside their box.
+- Cross tables and charts skip empty values in averages, minimums and maximums (they counted as 0).
+
+### Formulas and data
+
 - **Calculated fields** (`calculatedFields`): a formula per row used like a data field (`[total]`)
   in texts, totals, sorting, groups and exports; edited under Data sources, listed with the fields.
-- Formulas: `Switch(value, match, result, …, otherwise)` and `In(value, a, b, …)`.
-- Formulas: `AddMonths`, `AddYears`, `DateDiff('day' | 'month' | 'year', start, end)` (days
-  overdue, ages), `Left`, `Right` and `PadLeft`.
-- Formulas: `RunningSum(value)` — running balance in a row, amount carried forward in a page
-  footer — and `CarriedSum(value)`, the total brought forward from earlier pages in a page header.
-- Layout: an item placed up to 1 mm inside a growing text is pushed down with it.
-- Studio: *History* — the design is kept in the browser whenever a template, file or shared link
-  replaces it and every few minutes while editing (20 kept); *Restore* brings one back.
-- Studio: customer statement (sub-report), e-Archive (e-Arşiv) invoice look, mail merge letter (rich
-  text), business cards (A4, 10 per sheet), payment receipt (A5) and shipping label (100×150)
-  templates.
-- Studio: opening a shared link that fetches from a web service or database shows a warning; a
-  design too large for a link says so instead of producing a link that will not open. Studio has
-  unit tests (`npm test` runs them).
+- `RunningSum(value)` — a running balance in a row (within its group), the amount carried forward
+  in a page footer — and `CarriedSum(value)`, the total brought forward in a page header.
+- `AddMonths`, `AddYears`, `DateDiff('day' | 'month' | 'year', start, end)` (days overdue, ages),
+  `Left`, `Right`, `PadLeft`, `Switch(value, match, result, …, otherwise)` and `In(value, a, b, …)`.
+- Parameters can offer a list (`choices`): fixed values, or each value of a data field with an
+  optional label field (a customer's name for its id). The viewer shows a drop-down; core exports
+  `parameterChoices()`.
+- Web services: **paged APIs** (`paging`: `{{page}}` / `{{offset}}` / `{{size}}` in the address;
+  pages are loaded and joined until a short page, at most 20 or `maxPages` ≤ 100).
+- **Pictures from addresses**: an image whose source (or data) is an `https://` address is fetched
+  by the viewer and drawn in the preview, PDF and PNG (WebP/SVG converted; at most 200 pictures of
+  10 MB, 15 s each, through the viewer's `fetchFn`). Core: `LayoutOptions.images` and
+  `LayoutDocument.imageUrls` for a host's own fetching. The design page shows a placeholder.
+
+### Viewer and output
+
+- **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)`).
+- *More formats*: **CSV** (`toCsv()`; `;` and decimal commas in comma-decimal regions, a UTF-8
+  byte-order mark, formula-like text defused; `writeCsv()` in core), Zebra **ZPL** (203 dpi) for
+  label printers and **ESC/POS** (58 / 80 mm) for receipt printers — the pages sent as an image,
+  so they print exactly as previewed (`toZpl()`, `toEscPos()`; `toMonoBitmap`, `zplFromBitmaps`,
+  `escPosFromBitmaps` in core).
+- Excel and CSV list the rows in the printed order (groups and the detail's sort keys).
+- Every text line is drawn exactly as wide as the engine measured it (SVG `textLength`, and in
+  PNG), so the screen matches the PDF; styled words no longer leave gaps.
+- PDF: the report's language is written into the file (`PdfOptions.lang`), for screen readers.
+- The viewer loads the remote sources of sub-reports.
+
+### Designer
+
+- *Tidy up* (right-click a section or several items): snaps to the grid, lines up items that are
+  nearly in a row or column, one height per row of texts; one undo step.
+- Problems: a fixed EAN-13 / EAN-8 / UPC-A / ITF-14 with a wrong check digit is reported with the
+  right digit, and *Fix* corrects it (`gtinCheckDigit` in core; `ReportIssueCode` gains
+  `checkDigit` — a `switch` over every code needs the new case).
+- *Fit size to text* measures what a bound text prints, also while *Show data* is off.
+
+### Import
+
+- DevExpress calculated fields become calculated fields of the report.
+- RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
+
+### Studio
+
+- *History*: the design is kept in the browser whenever a template, file or shared link replaces it
+  and every few minutes while editing (20 kept); *Restore* brings one back.
+- New templates: customer statement (sub-report), e-Archive (e-Arşiv) invoice look, mail merge
+  letter (rich text), business cards (A4, 10 per sheet), payment receipt (A5) and shipping label
+  (100×150). The grouped sales template keeps its headers with their first row and has bookmarks.
+- Opening a shared link that fetches from a web service or database (also inside a sub-report)
+  shows a warning; a design too large for a link says so instead of producing a link that will not
+  open. Studio has unit tests (`npm test` runs them).
 
 ## 0.6.0 — 2026-10-20
 
