@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, model, signal, untracked, viewChild } from '@angular/core';
-import { Band, BandKind, checkReport, evaluate, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
+import { Band, BandKind, checkReport, evaluate, formatValue, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
+import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WeReportIcons } from '../we-report-icons';
@@ -81,6 +82,7 @@ export class WeReportDesignerComponent {
 
   protected readonly state = inject(DesignerState);
   private readonly fontsService = inject(WeReportFontsService);
+  private readonly config = inject(WE_REPORT_CONFIG);
   private readonly defaultLocale = inject(WE_REPORT_LOCALE);
   protected readonly strings = computed(() => this.locale() ?? this.defaultLocale);
 
@@ -478,7 +480,7 @@ export class WeReportDesignerComponent {
     const report = this.state.report();
     const sizes = new Map<string, { width: number; height: number }>();
     for (const c of texts) {
-      const shown = this.host.nativeElement.querySelector(`[data-control-id="${CSS.escape(c.id)}"] .ds__text`)?.textContent ?? '';
+      const shown = this.printedText(c) ?? this.host.nativeElement.querySelector(`[data-control-id="${CSS.escape(c.id)}"] .ds__text`)?.textContent ?? '';
       const lines = shown.split('\n');
       const style = resolveStyle(report, c.style, c.styleOverrides);
       const font = fonts.resolve(style.fontFamily, style.bold, style.italic);
@@ -498,6 +500,24 @@ export class WeReportDesignerComponent {
   protected tidyBand(bandId: string): void {
     const band = this.state.report().bands.find((b) => b.id === bandId);
     if (band) this.state.tidy(band.controls.map((c) => c.id), this.gridSize());
+  }
+
+  /**
+   * What a bound text prints with the first data row, also while *Show data* is off (the page
+   * then shows the formula); `null` when there is no data to evaluate with.
+   * shortcut: inner-list texts use the detail row, so their size may be off; measure them with *Show data* on.
+   */
+  private printedText(c: ReportControl): string | null {
+    const sample = this.state.sample();
+    if (c.type !== 'text' || !isExpression(c.text) || !sample || this.showData()) return null;
+    const report = this.state.report();
+    const options = { locale: report.locale || this.config.locale || 'en-US', currency: report.currency || this.config.currency || 'USD' };
+    try {
+      const value = evaluate(c.text.expression, { ...sample, ...options, now: new Date() });
+      return typeof value === 'string' && !c.format ? value : formatValue(value, c.format, options);
+    } catch {
+      return null;
+    }
   }
 
   /** Shrinks (or grows) a section to just below its lowest item. */

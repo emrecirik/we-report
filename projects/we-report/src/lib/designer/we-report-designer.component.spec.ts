@@ -72,6 +72,23 @@ describe('WeReportDesignerComponent', () => {
     expect(state.report().bands[1].controls[0]).toEqual(jasmine.objectContaining({ id: 'cut', canGrow: true }));
   });
 
+  it('fits a bound text to what it prints even while the data is hidden', async () => {
+    const report = createBlankReport();
+    report.dataSources = [{ id: 'd', name: 'd', kind: 'json', data: [{ name: 'Anadolu Gıda ve Pazarlama Ticaret A.Ş.' }] }];
+    report.dataMember = { dataSourceId: 'd' };
+    report.bands[1].controls.push({ id: 'n', type: 'text', x: 0, y: 0, width: 10, height: 5, text: { expression: '[name]' } });
+    create(report);
+    const designer = fixture.componentInstance as unknown as { showData: { set(v: boolean): void }; fitToText(): Promise<void> };
+    designer.showData.set(false);
+    fixture.detectChanges();
+    state.selection.set({ kind: 'controls', ids: ['n'] });
+    await designer.fitToText();
+    expect(state.report().bands[1].controls[0].width).toBeGreaterThan(50); // the name, not "[name]"
+    // The choice is remembered in the browser: put it back for the other tests.
+    designer.showData.set(true);
+    fixture.detectChanges();
+  });
+
   it('renders the page at real size with localized bands', () => {
     create(createBlankReport());
     const page = el().querySelector('.ds__page') as HTMLElement;

@@ -29,6 +29,7 @@
   right digit, and *Fix* corrects it (`gtinCheckDigit` in core; `ReportIssueCode` gains
   `checkDigit` — a `switch` over every code needs the new case).
 - Sub-report: *Its rows come from* suggests the lists in the data.
+- Designer: *Fit size to text* measures what a bound text prints, also while *Show data* is off.
 - **Rich text** (`markup: true` on a text): `**bold**`, `*italic*`, `__underline__` and `{formula}`
   fields inside one text, wrapped and measured with the right font per word; the designer shows it
   formatted, Excel exports the words. `parseRichText`, `wrapRichText` and `plainRichText` are
