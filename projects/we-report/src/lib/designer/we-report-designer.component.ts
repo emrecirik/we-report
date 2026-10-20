@@ -81,6 +81,8 @@ export class WeReportDesignerComponent {
   readonly fetchFn = input<typeof fetch | undefined>(undefined);
   /** When the report is a sub-report: a sample of the row around it, which its `[^.field]` reads. */
   readonly outerRow = input<unknown>(undefined);
+  /** Designing a sub-report inside another designer: its page comes from the box (no paper settings). */
+  readonly embedded = input(false);
 
   protected readonly state = inject(DesignerState);
   private readonly fontsService = inject(WeReportFontsService);

@@ -326,6 +326,7 @@ export const weReportLocaleFr: WeReportLocale = {
   subreportParams: 'Valeurs des paramètres',
   subreportTitle: 'Sous-rapport : {0}',
   subreportDone: 'Terminé',
+  subreportPageHint: 'Un sous-rapport a la largeur de son cadre ; le papier et les marges viennent du rapport autour.',
   conditionalFormatting: 'Mise en forme conditionnelle',
   watermark: 'Filigrane',
   firstPage: 'Première page',

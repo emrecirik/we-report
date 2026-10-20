@@ -104,6 +104,8 @@ export class PropertyPanelComponent {
   readonly advanced = input(false);
   /** Lists inside a row that an inner list can repeat over. */
   readonly lists = input<string[]>([]);
+  /** A sub-report's design: its page comes from the box, so paper and margins are not offered. */
+  readonly embedded = input(false);
 
   protected readonly state = inject(DesignerState);
   /** Prefix of this panel's datalist ids: two designers may share a page. */

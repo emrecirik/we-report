@@ -19,55 +19,59 @@
       <span>{{ s.reportName }}</span>
       <input [value]="report().name" (input)="setReport('name', $any($event.target).value)" />
     </label>
-    <label class="pp__row pp__row--stack">
-      <span>{{ s.paper }}</span>
-      <select (change)="setPaper($any($event.target).value)">
-        @for (p of papers; track p.id) {
-          <option [value]="p.id" [selected]="p.id === report().page.paper">{{ p.id }} ({{ p.width }} × {{ p.height ?? '∞' }} mm)</option>
-        }
-        <option value="custom" [selected]="report().page.paper === 'custom'">{{ s.customSize }}</option>
-      </select>
-    </label>
-    @if (report().page.paper === 'custom') {
-      <div class="pp__grid">
-        <label class="pp__row pp__row--stack">
-          <span>{{ s.width }} (mm)</span>
-          <input type="number" min="10" step="1" [value]="num(report().page.width)" (input)="setPage('width', $any($event.target).value)" />
-        </label>
-        <label class="pp__row pp__row--stack">
-          <span>{{ s.height }} (mm)</span>
-          <input type="number" min="10" step="1" [value]="num(report().page.height)" (input)="setPage('height', $any($event.target).value)" />
-        </label>
-      </div>
-    }
-    <div class="pp__row pp__row--stack">
-      <span>{{ s.orientation }}</span>
-      <div class="pp__segmented">
-        <button type="button" [class.pp__on]="report().page.orientation === 'portrait'" (click)="setPage('orientation', 'portrait')">{{ s.portrait }}</button>
-        <button type="button" [class.pp__on]="report().page.orientation === 'landscape'" (click)="setPage('orientation', 'landscape')">{{ s.landscape }}</button>
-      </div>
-    </div>
-    <div class="pp__row pp__row--stack">
-      <span>{{ s.margins }} (mm)</span>
-      <div class="pp__grid pp__grid--4">
-        <label><small>{{ s.marginTop }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.top)" (input)="setMargin('top', $any($event.target).value)" /></label>
-        <label><small>{{ s.marginRight }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.right)" (input)="setMargin('right', $any($event.target).value)" /></label>
-        <label><small>{{ s.marginBottom }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.bottom)" (input)="setMargin('bottom', $any($event.target).value)" /></label>
-        <label><small>{{ s.marginLeft }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.left)" (input)="setMargin('left', $any($event.target).value)" /></label>
-      </div>
-    </div>
-    @if (advanced()) {
-      <label class="pp__check">
-        <input type="checkbox" [checked]="!!report().page.mirrorMargins" (change)="setPageOption('mirrorMargins', $any($event.target).checked || undefined)" />
-        <span>{{ s.mirrorMargins }}<small class="pp__hint">{{ s.mirrorMarginsHint }}</small></span>
+    @if (!embedded()) {
+      <label class="pp__row pp__row--stack">
+        <span>{{ s.paper }}</span>
+        <select (change)="setPaper($any($event.target).value)">
+          @for (p of papers; track p.id) {
+            <option [value]="p.id" [selected]="p.id === report().page.paper">{{ p.id }} ({{ p.width }} × {{ p.height ?? '∞' }} mm)</option>
+          }
+          <option value="custom" [selected]="report().page.paper === 'custom'">{{ s.customSize }}</option>
+        </select>
       </label>
-      <label class="pp__row">
-        <span>{{ s.pageColor }}</span>
-        <span class="pp__color">
-          <input type="color" [value]="report().page.color ?? '#ffffff'" (input)="setPageOption('color', $any($event.target).value)" />
-          <button type="button" class="pp__link" (click)="setPageOption('color', undefined)">{{ s.noColor }}</button>
-        </span>
-      </label>
+      @if (report().page.paper === 'custom') {
+        <div class="pp__grid">
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.width }} (mm)</span>
+            <input type="number" min="10" step="1" [value]="num(report().page.width)" (input)="setPage('width', $any($event.target).value)" />
+          </label>
+          <label class="pp__row pp__row--stack">
+            <span>{{ s.height }} (mm)</span>
+            <input type="number" min="10" step="1" [value]="num(report().page.height)" (input)="setPage('height', $any($event.target).value)" />
+          </label>
+        </div>
+      }
+      <div class="pp__row pp__row--stack">
+        <span>{{ s.orientation }}</span>
+        <div class="pp__segmented">
+          <button type="button" [class.pp__on]="report().page.orientation === 'portrait'" (click)="setPage('orientation', 'portrait')">{{ s.portrait }}</button>
+          <button type="button" [class.pp__on]="report().page.orientation === 'landscape'" (click)="setPage('orientation', 'landscape')">{{ s.landscape }}</button>
+        </div>
+      </div>
+      <div class="pp__row pp__row--stack">
+        <span>{{ s.margins }} (mm)</span>
+        <div class="pp__grid pp__grid--4">
+          <label><small>{{ s.marginTop }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.top)" (input)="setMargin('top', $any($event.target).value)" /></label>
+          <label><small>{{ s.marginRight }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.right)" (input)="setMargin('right', $any($event.target).value)" /></label>
+          <label><small>{{ s.marginBottom }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.bottom)" (input)="setMargin('bottom', $any($event.target).value)" /></label>
+          <label><small>{{ s.marginLeft }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.left)" (input)="setMargin('left', $any($event.target).value)" /></label>
+        </div>
+      </div>
+      @if (advanced()) {
+        <label class="pp__check">
+          <input type="checkbox" [checked]="!!report().page.mirrorMargins" (change)="setPageOption('mirrorMargins', $any($event.target).checked || undefined)" />
+          <span>{{ s.mirrorMargins }}<small class="pp__hint">{{ s.mirrorMarginsHint }}</small></span>
+        </label>
+        <label class="pp__row">
+          <span>{{ s.pageColor }}</span>
+          <span class="pp__color">
+            <input type="color" [value]="report().page.color ?? '#ffffff'" (input)="setPageOption('color', $any($event.target).value)" />
+            <button type="button" class="pp__link" (click)="setPageOption('color', undefined)">{{ s.noColor }}</button>
+          </span>
+        </label>
+      }
+    } @else {
+      <small class="pp__hint">{{ s.subreportPageHint }}</small>
     }
   </section>
   <section class="pp__section">
@@ -92,22 +96,25 @@
     </label>
     <small class="pp__hint">{{ s.reportLocaleHint }}</small>
   </section>
-  <section class="pp__section">
-    <h3>{{ s.watermark }}</h3>
-    @let wm = report().watermark;
-    <we-report-bindable-input [value]="wm?.text ?? ''" [fields]="fields()" [strings]="s" (valueChange)="setWatermark({ text: $event })" />
-    <small class="pp__hint">{{ s.watermarkHint }}</small>
-    @if (wm) {
-      <div class="pp__row">
-        <span>{{ s.color }}</span>
-        <input type="color" [value]="wm.color ?? '#e3e6ea'" (input)="setWatermark({ color: $any($event.target).value })" [attr.aria-label]="s.color" />
-      </div>
-      <div class="pp__segmented" role="radiogroup" [attr.aria-label]="s.watermarkAngle">
-        <button type="button" role="radio" [attr.aria-checked]="(wm.angle ?? 45) === 45" [class.pp__on]="(wm.angle ?? 45) === 45" (click)="setWatermark({ angle: undefined })">↗ 45°</button>
-        <button type="button" role="radio" [attr.aria-checked]="wm.angle === 0" [class.pp__on]="wm.angle === 0" (click)="setWatermark({ angle: 0 })">→ 0°</button>
-      </div>
-    }
-  </section>
+  <!-- A sub-report has no watermark of its own (the page around it does). -->
+  @if (!embedded()) {
+    <section class="pp__section">
+      <h3>{{ s.watermark }}</h3>
+      @let wm = report().watermark;
+      <we-report-bindable-input [value]="wm?.text ?? ''" [fields]="fields()" [strings]="s" (valueChange)="setWatermark({ text: $event })" />
+      <small class="pp__hint">{{ s.watermarkHint }}</small>
+      @if (wm) {
+        <div class="pp__row">
+          <span>{{ s.color }}</span>
+          <input type="color" [value]="wm.color ?? '#e3e6ea'" (input)="setWatermark({ color: $any($event.target).value })" [attr.aria-label]="s.color" />
+        </div>
+        <div class="pp__segmented" role="radiogroup" [attr.aria-label]="s.watermarkAngle">
+          <button type="button" role="radio" [attr.aria-checked]="(wm.angle ?? 45) === 45" [class.pp__on]="(wm.angle ?? 45) === 45" (click)="setWatermark({ angle: undefined })">↗ 45°</button>
+          <button type="button" role="radio" [attr.aria-checked]="wm.angle === 0" [class.pp__on]="wm.angle === 0" (click)="setWatermark({ angle: 0 })">→ 0°</button>
+        </div>
+      }
+    </section>
+  }
   @if (advanced() && report().dataMember) {
     <section class="pp__section">
       <h3>{{ s.groupData }}</h3>

@@ -208,7 +208,7 @@
 
     <div class="wd__splitter" role="separator" aria-orientation="vertical" [title]="s.resizePanel" (pointerdown)="startResize($event, 'right')" (dblclick)="togglePanel('right')"></div>
     <aside class="wd__right" [class.wd__collapsed]="!rightWidth()">
-      <we-report-property-panel [strings]="s" [fields]="allFields()" [lists]="fields().lists" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
+      <we-report-property-panel [strings]="s" [fields]="allFields()" [lists]="fields().lists" [embedded]="embedded()" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
     </aside>
   </div>
   <footer class="wd__status" aria-live="polite">
@@ -366,6 +366,6 @@
       <h2>{{ s.subreportTitle.replace('{0}', sub.report.name) }}</h2>
       <button type="button" class="wd__primary" (click)="state.subreportOpen.set(null)">{{ s.subreportDone }}</button>
     </div>
-    <we-report-designer class="wd__subreport-designer" [report]="subreportDesign()!" (reportChange)="setSubreport(sub.id, $event)" [data]="subreportData()" [outerRow]="state.sample()?.row" [locale]="locale()" [fetchFn]="fetchFn()" />
+    <we-report-designer class="wd__subreport-designer" [report]="subreportDesign()!" (reportChange)="setSubreport(sub.id, $event)" [data]="subreportData()" [outerRow]="state.sample()?.row" [embedded]="true" [locale]="locale()" [fetchFn]="fetchFn()" />
   </div>
 }

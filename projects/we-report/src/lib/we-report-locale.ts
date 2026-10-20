@@ -310,6 +310,7 @@ export interface WeReportLocale {
   subreportParams: string;
   subreportTitle: string;
   subreportDone: string;
+  subreportPageHint: string;
   conditionalFormatting: string;
   watermark: string;
   firstPage: string;
@@ -747,6 +748,7 @@ export const weReportLocaleEn: WeReportLocale = {
   subreportParams: 'Parameter values',
   subreportTitle: 'Sub-report: {0}',
   subreportDone: 'Done',
+  subreportPageHint: 'A sub-report is as wide as its box; paper and margins come from the report around it.',
   conditionalFormatting: 'Conditional formatting',
   watermark: 'Watermark',
   firstPage: 'First page',
@@ -1227,6 +1229,7 @@ export const weReportLocaleTr: WeReportLocale = {
   subreportParams: 'Parametre değerleri',
   subreportTitle: 'Alt rapor: {0}',
   subreportDone: 'Tamam',
+  subreportPageHint: 'Alt rapor kutusu kadar geniştir; kağıt ve kenar boşlukları dıştaki rapordan gelir.',
   conditionalFormatting: 'Koşullu biçim',
   watermark: 'Filigran',
   firstPage: 'İlk sayfa',

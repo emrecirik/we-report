@@ -326,6 +326,7 @@ export const weReportLocaleEs: WeReportLocale = {
   subreportParams: 'Valores de parámetros',
   subreportTitle: 'Subinforme: {0}',
   subreportDone: 'Listo',
+  subreportPageHint: 'Un subinforme es tan ancho como su cuadro; el papel y los márgenes vienen del informe que lo contiene.',
   conditionalFormatting: 'Formato condicional',
   watermark: 'Marca de agua',
   firstPage: 'Primera página',
