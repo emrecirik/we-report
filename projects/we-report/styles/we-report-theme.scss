@@ -40,6 +40,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
+    // Scrollbars and form controls follow the dark palette.
+    color-scheme: dark;
     --we-report-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
     --we-report-fg: #f5f5f7;
     --we-report-muted-fg: rgba(235, 235, 245, 0.6);
@@ -75,6 +77,7 @@
 }
 
 :root[data-theme='dark'] {
+  color-scheme: dark;
   --we-report-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
   --we-report-fg: #f5f5f7;
   --we-report-muted-fg: rgba(235, 235, 245, 0.6);

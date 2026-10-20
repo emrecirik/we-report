@@ -315,9 +315,15 @@ export class AppComponent {
 
   private readonly openInput = viewChild<ElementRef<HTMLInputElement>>('openInput');
 
-  /** Desktop shortcuts: Ctrl+S saves the report file, Ctrl+O opens one. */
+  /** Desktop shortcuts: Ctrl+S saves the report file, Ctrl+O opens one; Esc closes the studio's own dialogs. */
   @HostListener('window:keydown', ['$event'])
   protected onKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && (this.galleryOpen() || this.historyOpen() || this.dataDialogOpen())) {
+      this.galleryOpen.set(false);
+      this.historyOpen.set(false);
+      this.dataDialogOpen.set(false);
+      return;
+    }
     if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
     const key = e.key.toLowerCase();
     if (key === 's') {

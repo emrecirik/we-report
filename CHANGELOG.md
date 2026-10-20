@@ -111,6 +111,9 @@
 - Sub-reports, charts, cross tables, barcodes, check boxes and pictures from data are drawn on the
   design page as they print, from the sample data (clipped to their box), instead of an icon.
 
+- Dark theme: scrollbars and form controls are dark too (`color-scheme: dark` in the theme's dark
+  blocks).
+
 ### Import
 
 - DevExpress calculated fields become calculated fields of the report.
@@ -125,7 +128,9 @@
   text), business cards (A4, 10 per sheet), payment receipt (A5) and shipping label (100×150). The grouped sales template keeps its headers with their first row and has bookmarks.
 - Opening a shared link that fetches from a web service or database (also inside a sub-report)
   shows a warning; a design too large for a link says so instead of producing a link that will not
-  open. Studio has unit tests (`npm test` runs them).
+  open. Studio has unit tests (`npm test` runs them). Esc closes the gallery, history and data
+  dialogs; landscape templates fit their gallery card; a blank report is named in the page's
+  language.
 
 ## 0.6.0 — 2026-10-20
 

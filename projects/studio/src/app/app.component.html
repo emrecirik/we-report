@@ -64,7 +64,7 @@
 
 @if (historyOpen()) {
   <div class="backdrop" (click)="historyOpen.set(false)"></div>
-  <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="t.historyTitle" (keydown.escape)="historyOpen.set(false)">
+  <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="t.historyTitle">
     <h2>{{ t.historyTitle }}</h2>
     <p>{{ t.historyHelp }}</p>
     @if (history().length) {
