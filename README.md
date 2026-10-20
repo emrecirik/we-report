@@ -40,7 +40,7 @@ backend required**.
 | Items | Text and data fields (rich text with **bold**/*italic* and fields inside), tables, charts, cross tables (pivot), sub-reports, lines, rectangles/ellipses, images (embedded or from an address), 1D/2D barcodes and QR codes (Code128, EAN, UPC, ITF, GS1-128, DataMatrix, PDF417, Aztec …, as vectors), checkboxes, page number / page X of Y / print date |
 | Formulas | `[Price] * [Qty]`, `Iif`, `Sum/Count/Avg/Min/Max` per group/page/report, running and carried-forward totals, amounts in words, text, math and date functions, Turkish casing, `[^.invoiceNo]` parent fields, `[?param]` parameters — no `eval` |
 | Formats | Numbers, money, percent, dates — with the locale (`1.234,50 ₺`, `5 Ocak 2026`) |
-| Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend), SQL Server, PostgreSQL, MySQL, SQLite (via a backend), report parameters with drop-down lists |
+| Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend), SQL Server, PostgreSQL, SQLite (via a backend), report parameters with drop-down lists |
 | Designer | Drag from toolbox and field list, move/resize with grid and alignment-guide snapping, multi-select, undo/redo, in-place editing, format painter, *Tidy up*, report wizard, problems list with one-click fixes, properties panel, preview tab, light/dark |
 | Output | Paged preview, print, PDF (embedded subset fonts), Excel (typed cells), PNG, label printers (ZPL) and receipt printers (ESC/POS) |
 
