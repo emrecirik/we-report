@@ -106,7 +106,8 @@ The viewer shows pages exactly as the PDF will print them, with zoom, a document
 `[hide]="['excel', 'more']"` (`print`, `pdf`, `excel`, `png`, `more`, `search`, `thumbnails`,
 `map`). `parameters` passes
 [report parameters](data-sources.md#parameters), `printDate` fixes the print time for
-reproducible output.
+reproducible output, and `outerRow` is what `[^.field]` reads (a sub-report shown on its own). On
+a phone the first preview fits the page's width unless you set `zoom`.
 
 *More formats* saves:
 
