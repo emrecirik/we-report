@@ -87,6 +87,8 @@ const ERROR_TEXT = '#ERR';
 const MM_PER_PX = toMm(1, 'px');
 /** Sub-reports inside sub-reports deeper than this are not printed (report files are untrusted). */
 const MAX_SUBREPORT_DEPTH = 5;
+// A report file is untrusted: an item a million pages tall must not freeze the browser.
+const MAX_PAGES = 20_000;
 /** A cross table shows at most this many rows and columns (each value of a unique id would be one). */
 const MAX_CROSSTAB_ROWS = 500;
 const MAX_CROSSTAB_COLUMNS = 50;
@@ -373,7 +375,12 @@ class LayoutRun {
       y += r.height;
       page.endY = y;
     };
-    const startPage = () => {
+    let stopped = false;
+    const startPage = (): boolean => {
+      if (pages.length >= MAX_PAGES) {
+        stopped = true;
+        return false;
+      }
       page = { items: [], rows: [], deferred: [], endY: 0, run };
       pages.push(page);
       column = 0;
@@ -382,6 +389,7 @@ class LayoutRun {
       for (const r of repeating) if (r) put(r);
       fresh = true;
       breakPending = false;
+      return true;
     };
     startPage();
 
@@ -398,7 +406,7 @@ class LayoutRun {
             const e = entries[j];
             if (e.type === 'band') total += e.rendered.height;
           }
-          if (y + total > bodyBottom && headerHeight + total <= bodyBottom) startPage();
+          if (y + total > bodyBottom && headerHeight + total <= bodyBottom && !startPage()) break;
         }
         continue;
       }
@@ -426,7 +434,7 @@ class LayoutRun {
       // The first group stays under the report header; every later one starts a page of its own.
       if (column === 0 && (breakPending || orphan || ((r.band.pageBreakBefore || (resets && run > 0)) && !fresh) || (!fresh && y + r.height > bodyBottom && (fitsAPage || bodyBottom - y < 10)))) {
         if (entry.groupLevel !== undefined) repeating.length = entry.groupLevel;
-        startPage();
+        if (!startPage()) break;
       }
       if (resets) page.run = ++run;
       if (r.bookmark && !this.nesting) {
@@ -456,10 +464,11 @@ class LayoutRun {
           const upper = rest.deferred.filter((render) => !below(render));
           const lower = rest.deferred.filter(below).map((render) => (page: PageInfo) => render(page).map((i) => translate(i, 0, -cut)));
           put({ ...rest, items: top, deferred: upper, height: cut });
-          startPage();
+          if (!startPage()) break;
           // The row counts on the page where it starts.
           rest = { ...rest, scope: { ...rest.scope, row: undefined }, items: bottom, deferred: lower, height: rest.height - cut };
         }
+        if (stopped) break;
         put(rest);
       }
       fresh = false;
@@ -470,6 +479,7 @@ class LayoutRun {
       if (r.band.pageBreakAfter) breakPending = true;
     }
     endRow();
+    if (stopped) this.problem('overflow', undefined, `The report stops after ${MAX_PAGES} pages.`);
 
     const count = pages.length;
     const width = this.geometry.width;

@@ -495,6 +495,17 @@ describe('layout engine', () => {
     expect(texts(layoutReport(report, { fonts, now: NOW, parent: { city: 'İzmir' } }).pages[0])).toContain('Ayşe / İzmir');
   });
 
+  it('stops at its page limit instead of freezing on an item a million pages tall', () => {
+    const report = listReport([{ Name: 'a' }]);
+    report.bands[1].controls.push({ id: 'huge', type: 'shape', shape: 'rectangle', x: 0, y: 0, width: 10, height: 1e9 });
+    report.bands[1].height = 1e9;
+    const start = performance.now();
+    const doc = layoutReport(report, { fonts, now: NOW });
+    expect(doc.pages.length).toBe(20_000);
+    expect(doc.problems.some((p) => p.code === 'overflow' && p.message.includes('20000 pages'))).toBeTrue();
+    expect(performance.now() - start).toBeLessThan(15_000);
+  });
+
   it('fits exactly rows × columns labels on every sheet layout', () => {
     for (const sheet of LABEL_SHEETS) {
       const per = sheet.rows * sheet.columns;
