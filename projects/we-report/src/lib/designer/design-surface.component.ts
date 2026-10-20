@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle } from 'we-report-core';
+import { Band, Bindable, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, parseRichText, ReportControl, ReportControlType, ReportStyle, resolvePageGeometry, resolveStyle, RichRun } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -225,7 +225,18 @@ interface DragOp {
                     @if (isEditing(c.id)) {
                       <textarea class="ds__editor" [value]="editText()" [style]="textStyle(c)" (pointerdown)="$event.stopPropagation()" (keydown)="onEditorKey($event)" (blur)="commitEditing($event)" [attr.aria-label]="strings().content"></textarea>
                     } @else {
-                      <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">{{ caption(c, band) }}</div>
+                      @if (c.type === 'text' && c.markup) {
+                        <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">
+                          <!-- One flex item, so the pieces flow as one paragraph. -->
+                          <span>
+                            @for (r of richRuns(c, band); track $index) {
+                              <span [style.font-weight]="r.bold ? 700 : null" [style.font-style]="r.italic ? 'italic' : null" [style.text-decoration]="r.underline ? 'underline' : null">{{ r.text }}</span>
+                            }
+                          </span>
+                        </div>
+                      } @else {
+                        <div class="ds__text" [class.ds__text--bound]="isBound(c)" [style]="textStyle(c)" [attr.title]="isBound(c) ? boundExpression(c) : null">{{ caption(c, band) }}</div>
+                      }
                     }
                   }
                 }
@@ -602,7 +613,8 @@ export class DesignSurfaceComponent implements OnDestroy {
   private measureRun = 0;
   private readonly measureTexts = effect(() => {
     const report = this.state.report();
-    const texts = report.bands.flatMap((b) => b.controls.filter((c) => c.type === 'text' && !c.canGrow).map((c) => ({ c, text: this.caption(c, b) })));
+    // shortcut: rich texts are not checked (their pieces measure in different fonts).
+    const texts = report.bands.flatMap((b) => b.controls.filter((c) => c.type === 'text' && !c.canGrow && !c.markup).map((c) => ({ c, text: this.caption(c, b) })));
     const run = ++this.measureRun;
     void this.fontsService.ready().then((fonts) => {
       if (run !== this.measureRun) return;
@@ -729,6 +741,22 @@ export class DesignSurfaceComponent implements OnDestroy {
       return c.info === 'pageNumber' ? '1' : c.info === 'pageCount' ? '9' : c.info === 'pageNofM' ? (c.format || '{0} / {1}').replace('{0}', '1').replace('{1}', '9') : s.printDate;
     }
     return '';
+  }
+
+  /** A rich text's styled pieces; its `{formula}` fields show the sample data, else the formula. */
+  protected richRuns(c: ReportControl, band?: Band): RichRun[] {
+    const sample = this.sampleFor(band);
+    const report = this.state.report();
+    const options = { locale: report.locale || this.config.locale || 'en-US', currency: report.currency || this.config.currency || 'USD' };
+    return parseRichText(this.caption(c, band), (expression) => {
+      if (!sample) return `{${expression}}`;
+      try {
+        const v = evaluate(expression, { ...sample, ...options, now: new Date() });
+        return v === null || v === undefined ? '' : typeof v === 'string' ? v : formatValue(v, undefined, options);
+      } catch {
+        return `{${expression}}`;
+      }
+    });
   }
 
   protected textStyle(c: ReportControl): Record<string, string> {

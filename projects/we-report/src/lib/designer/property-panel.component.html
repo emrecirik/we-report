@@ -276,6 +276,10 @@
             <input type="checkbox" [checked]="!!c.canGrow" (change)="set('canGrow', $any($event.target).checked || undefined)" />
             <span>{{ s.canGrow }}<small class="pp__hint">{{ s.canGrowHint }}</small></span>
           </label>
+          <label class="pp__check">
+            <input type="checkbox" [checked]="!!c.markup" (change)="set('markup', $any($event.target).checked || undefined)" />
+            <span>{{ s.richText }}<small class="pp__hint">{{ s.richTextHint }}</small></span>
+          </label>
         </section>
       }
       @case ('barcode') {

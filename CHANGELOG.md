@@ -20,6 +20,11 @@
   from the same layout and fonts as the preview and the PDF.
 - Barcodes: the bars of linear codes end clearly above their digits (they touched when the box
   was wide and low).
+- **Rich text** (`markup: true` on a text): `**bold**`, `*italic*`, `__underline__` and `{formula}`
+  fields inside one text, wrapped and measured with the right font per word; the designer shows it
+  formatted, Excel exports the words. `parseRichText`, `wrapRichText` and `plainRichText` are
+  exported from core. The payment receipt template uses it.
+- Cross table: at most 500 rows and 50 columns (a problem says when more were cut).
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, total row and column, numbers sorted numerically; grows downwards and
   pushes the items below. Dropping one binds it to the first two text fields and a number field.

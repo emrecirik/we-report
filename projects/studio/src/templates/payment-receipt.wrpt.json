@@ -300,7 +300,8 @@
           "y": 52,
           "width": 190,
           "height": 5,
-          "text": "Aşağıda belirtilen tutar tarafımızdan tahsil edilmiştir."
+          "text": "**{[customer]}** firmasından aşağıda belirtilen tutar *{Format([date], 'dd MMMM yyyy')}* tarihinde tahsil edilmiştir.",
+          "markup": true
         },
         {
           "id": "amountLbl",

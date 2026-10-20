@@ -129,6 +129,8 @@ export interface WeReportLocale {
   padding: string;
   canGrow: string;
   canGrowHint: string;
+  richText: string;
+  richTextHint: string;
   visibleWhen: string;
   visibleWhenHint: string;
   symbology: string;
@@ -533,6 +535,8 @@ export const weReportLocaleEn: WeReportLocale = {
   padding: 'Inner spacing',
   canGrow: 'Grow to fit text',
   canGrowHint: 'Long text makes the row taller instead of being cut off.',
+  richText: 'Rich text',
+  richTextHint: '**bold**, *italic*, __underline__ and data inside the text: Dear {[name]}',
   visibleWhen: 'Show only when',
   visibleWhenHint: 'A formula; the item is hidden when it is false, e.g. [Total] > 0',
   symbology: 'Barcode type',
@@ -972,6 +976,8 @@ export const weReportLocaleTr: WeReportLocale = {
   padding: 'İç boşluk',
   canGrow: 'Metne göre uzasın',
   canGrowHint: 'Uzun metin kesilmek yerine satırı uzatır.',
+  richText: 'Zengin metin',
+  richTextHint: 'Metnin içinde **kalın**, *italik*, __altı çizili__ ve veri: Sayın {[ad]}',
   visibleWhen: 'Yalnızca şu durumda göster',
   visibleWhenHint: 'Bir formül; yanlışsa öğe gizlenir, örn. [Toplam] > 0',
   symbology: 'Barkod türü',

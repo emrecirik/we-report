@@ -24,6 +24,7 @@ import { readImage } from './images';
 import { LayoutDocument, LayoutItem, LayoutPage, LayoutProblem, TextItem } from './layout-types';
 import { resolveStyle, ResolvedStyle } from './style';
 import { fitLines, wrapText } from './text-wrap';
+import { parseRichText, RichRun, wrapRichText } from './rich-text';
 import { toMm } from '../units';
 
 export interface LayoutOptions {
@@ -75,6 +76,9 @@ const ERROR_TEXT = '#ERR';
 const MM_PER_PX = toMm(1, 'px');
 /** Sub-reports inside sub-reports deeper than this are not printed (report files are untrusted). */
 const MAX_SUBREPORT_DEPTH = 5;
+/** A cross table shows at most this many rows and columns (each value of a unique id would be one). */
+const MAX_CROSSTAB_ROWS = 500;
+const MAX_CROSSTAB_COLUMNS = 50;
 
 /**
  * Lays a report out into pages. Pure and deterministic: the same definition, data, fonts and
@@ -481,6 +485,11 @@ class LayoutRun {
     const box = { x: c.x, y: c.y, width: c.width, height: c.height };
     switch (c.type) {
       case 'text': {
+        if (c.markup) {
+          const runs = this.richRuns(c, scope);
+          const height = c.canGrow ? Math.max(c.height, this.richHeight(runs, style, c.width)) : c.height;
+          return { items: this.richTextBox(runs, style, { ...box, height }), height };
+        }
         const text = this.textOf(c, scope);
         const height = c.canGrow ? Math.max(c.height, this.measureTextHeight(text, style, c.width)) : c.height;
         return { items: this.textBox(text, style, { ...box, height }), height };
@@ -667,8 +676,11 @@ class LayoutRun {
     const collator = new Intl.Collator(this.locale, { numeric: true });
     const order = (a: Key, b: Key) =>
       typeof a.sort === 'number' && typeof b.sort === 'number' ? a.sort - b.sort : collator.compare(String(a.sort), String(b.sort));
-    const rows = [...rowKeys.values()].sort(order).map((k) => k.label);
-    const cols = [...colKeys.values()].sort(order).map((k) => k.label);
+    if (rowKeys.size > MAX_CROSSTAB_ROWS || colKeys.size > MAX_CROSSTAB_COLUMNS) {
+      this.problem('overflow', c.id, `The cross table shows the first ${MAX_CROSSTAB_ROWS} rows and ${MAX_CROSSTAB_COLUMNS} columns of ${rowKeys.size} × ${colKeys.size}.`);
+    }
+    const rows = [...rowKeys.values()].sort(order).slice(0, MAX_CROSSTAB_ROWS).map((k) => k.label);
+    const cols = [...colKeys.values()].sort(order).slice(0, MAX_CROSSTAB_COLUMNS).map((k) => k.label);
     const values = (r?: string, k?: string) =>
       [...cells].filter(([key]) => {
         const [cr, ck] = key.split('\u0000');
@@ -772,6 +784,65 @@ class LayoutRun {
     if (value === ERROR_TEXT) return ERROR_TEXT;
     if (typeof value === 'string' && !c.format) return value;
     return formatValue(value, c.format, { locale: this.locale, currency: this.currency });
+  }
+
+  /** The runs of a rich text: its fixed text or formula result, with `{formula}` fields filled in. */
+  private richRuns(c: TextControl, scope: Scope): RichRun[] {
+    const value = this.bind(c.text, scope, c.id);
+    const markup = value === null || value === undefined ? '' : String(value);
+    const options = { locale: this.locale, currency: this.currency };
+    return parseRichText(markup, (expression) => {
+      const v = this.eval(expression, scope, c.id);
+      return v === null || v === undefined ? '' : typeof v === 'string' ? v : formatValue(v, undefined, options);
+    });
+  }
+
+  private richFont(style: ResolvedStyle, run: RichRun) {
+    return this.options.fonts.resolve(style.fontFamily, style.bold || run.bold, style.italic || run.italic);
+  }
+
+  private richHeight(runs: RichRun[], style: ResolvedStyle, width: number): number {
+    const lines = wrapRichText(runs, (r) => this.richFont(style, r), style.fontSize, Math.max(0, width - 2 * style.padding));
+    return lines.length * this.richFont(style, runs[0] ?? { text: '', bold: false, italic: false, underline: false }).lineHeight(style.fontSize) + 2 * style.padding;
+  }
+
+  /** Like `textBox`, one text item per styled piece of a line. */
+  private richTextBox(runs: RichRun[], style: ResolvedStyle, box: { x: number; y: number; width: number; height: number }): LayoutItem[] {
+    const items = this.decorations(style, box);
+    if (!runs.length) return items;
+    const size = style.fontSize;
+    const pad = style.padding;
+    const innerWidth = Math.max(0, box.width - 2 * pad);
+    const base = this.richFont(style, { text: '', bold: false, italic: false, underline: false });
+    const lineHeight = base.lineHeight(size);
+    const ascent = base.ascent(size);
+    let lines = wrapRichText(runs, (r) => this.richFont(style, r), size, innerWidth);
+    // The same rule as plain text: at least one line, cut where the box ends.
+    const maxLines = Math.max(1, Math.floor((box.height - 2 * pad) / lineHeight + 0.01));
+    lines = lines.slice(0, maxLines);
+    const free = Math.max(0, box.height - 2 * pad - lines.length * lineHeight);
+    const offset = style.verticalAlign === 'middle' ? free / 2 : style.verticalAlign === 'bottom' ? free : 0;
+    lines.forEach((line, i) => {
+      const dx = style.textAlign === 'center' ? (innerWidth - line.width) / 2 : style.textAlign === 'right' ? innerWidth - line.width : 0;
+      const baseline = box.y + pad + offset + ascent + i * lineHeight;
+      for (const s of line.segments) {
+        if (!s.text.trim()) continue;
+        const font = this.richFont(style, s);
+        items.push({
+          kind: 'text',
+          ...box,
+          lines: [{ text: s.text, x: box.x + pad + dx + s.x, baseline, width: s.width }],
+          fontKey: font.key,
+          fontFamily: font.family,
+          bold: font.variant === 'bold' || font.variant === 'boldItalic',
+          italic: font.variant === 'italic' || font.variant === 'boldItalic',
+          size,
+          color: style.color,
+          underline: style.underline || s.underline,
+        });
+      }
+    });
+    return items;
   }
 
   private pageInfoText(info: string, format: string | undefined, page: PageInfo): string {

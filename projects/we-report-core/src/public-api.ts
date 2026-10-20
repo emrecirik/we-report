@@ -26,6 +26,7 @@ export * from './lib/layout/images';
 export * from './lib/render/pdf';
 export * from './lib/layout/style';
 export * from './lib/layout/text-wrap';
+export * from './lib/layout/rich-text';
 export * from './lib/data/web-service';
 export * from './lib/data/backend-client';
 export * from './lib/definition/generate';

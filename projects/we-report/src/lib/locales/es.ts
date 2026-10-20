@@ -145,6 +145,8 @@ export const weReportLocaleEs: WeReportLocale = {
   padding: 'Espaciado interior',
   canGrow: 'Crecer según el texto',
   canGrowHint: 'Un texto largo hace la fila más alta en lugar de cortarse.',
+  richText: 'Texto enriquecido',
+  richTextHint: '**negrita**, *cursiva*, __subrayado__ y datos dentro del texto: Estimado {[name]}',
   visibleWhen: 'Mostrar solo si',
   visibleWhenHint: 'Una fórmula; el elemento se oculta cuando es falsa, p. ej. [Total] > 0',
   symbology: 'Tipo de código de barras',

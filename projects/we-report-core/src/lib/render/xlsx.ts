@@ -3,6 +3,7 @@ import { resolveParameters } from '../data/web-service';
 import { Band, isExpression, ReportDefinition, TextControl } from '../definition/report-definition';
 import { evaluate } from '../expression/evaluate';
 import { toDate } from '../format';
+import { parseRichText, plainRichText } from '../layout/rich-text';
 
 export interface TableExport {
   headers: string[];
@@ -72,12 +73,18 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
   const ctxBase = { parent, params, locale: options.locale, now: options.now, rows: rows ?? [] };
   const table = (rows ?? []).map((row) =>
     cells.map((c) => {
-      if (!isExpression(c.text)) return c.text;
-      try {
-        return evaluate(c.text.expression, { ...ctxBase, row });
-      } catch {
-        return '#ERR';
-      }
+      const ctx = { ...ctxBase, row };
+      const run = (expression: string) => {
+        try {
+          return evaluate(expression, ctx);
+        } catch {
+          return '#ERR';
+        }
+      };
+      const value = isExpression(c.text) ? run(c.text.expression) : c.text;
+      // A rich text exports its words: no markers, fields filled in.
+      if (c.markup) return plainRichText(parseRichText(value === null || value === undefined ? '' : String(value), (e) => String(run(e) ?? '')));
+      return value;
     }),
   );
   return { headers, rows: table, formats: cells.map((c) => excelFormat(c.format)) };

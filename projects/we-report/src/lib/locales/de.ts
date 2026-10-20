@@ -145,6 +145,8 @@ export const weReportLocaleDe: WeReportLocale = {
   padding: 'Innenabstand',
   canGrow: 'An Text anpassen',
   canGrowHint: 'Langer Text macht die Zeile höher, statt abgeschnitten zu werden.',
+  richText: 'Formatierter Text',
+  richTextHint: '**fett**, *kursiv*, __unterstrichen__ und Daten im Text: Sehr geehrte(r) {[name]}',
   visibleWhen: 'Nur anzeigen, wenn',
   visibleWhenHint: 'Eine Formel; das Element wird ausgeblendet, wenn sie falsch ist, z. B. [Summe] > 0',
   symbology: 'Barcode-Typ',

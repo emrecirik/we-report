@@ -92,6 +92,8 @@ export interface TextControl extends ControlBase {
   text: Bindable<string>;
   /** Format pattern applied to non-string values, e.g. `n2`, `c2`, `dd.MM.yyyy`. */
   format?: string;
+  /** Rich text: `**bold**`, `*italic*`, `__underline__` and `{formula}` fields inside the text. */
+  markup?: boolean;
   canGrow?: boolean;
   canShrink?: boolean;
 }

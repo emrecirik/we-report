@@ -53,6 +53,15 @@ describe('cross table', () => {
     expect(g[4]).toEqual(['below']); // pushed below the grown table
   });
 
+  it('caps the columns of a field with too many values and says so', () => {
+    const r = report({ columns: { expression: '[n]' } });
+    (r.dataSources[0] as { data: unknown }).data = Array.from({ length: 80 }, (_, i) => ({ city: 'A', n: i, amount: 1 }));
+    const doc = layoutReport(r, { fonts, now: NOW });
+    expect(doc.problems.some((p) => p.controlId === 'x' && p.code === 'overflow' && p.message.includes('50 columns'))).toBeTrue();
+    const header = grid(r, fonts)[0];
+    expect(header.length).toBe(1 + 50 + 1);
+  });
+
   it('aggregates by count or average and can leave the totals out', () => {
     expect(grid(report({ aggregate: 'count', totals: false }), fonts).slice(0, 3)).toEqual([
       ['Şehir', '1', '2', '10'],

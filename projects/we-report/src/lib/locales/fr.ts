@@ -145,6 +145,8 @@ export const weReportLocaleFr: WeReportLocale = {
   padding: 'Marge intérieure',
   canGrow: 'Agrandir selon le texte',
   canGrowHint: 'Un texte long agrandit la ligne au lieu d’être coupé.',
+  richText: 'Texte enrichi',
+  richTextHint: '**gras**, *italique*, __souligné__ et données dans le texte : Cher {[name]}',
   visibleWhen: 'Afficher seulement si',
   visibleWhenHint: 'Une formule ; l’élément est masqué quand elle est fausse, ex. [Total] > 0',
   symbology: 'Type de code-barres',
