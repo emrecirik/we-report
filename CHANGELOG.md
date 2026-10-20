@@ -13,8 +13,9 @@
   file around them; more than five levels are refused.
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, a total row and column, numbers sorted numerically, at most 500 rows and
-  50 columns (a problem says when more were cut). It grows downwards and pushes the items below;
-  dropping one binds it to the first two text fields and a number field.
+  50 columns (a problem says when more were cut). It grows downwards and pushes the items below.
+  A dropped cross table or chart starts grouped by the text fields that repeat, summing the number
+  field with the largest total.
 - **Rich text** (`markup: true` on a text): `**bold**`, `*italic*`, `__underline__` and `{formula}`
   fields inside one text, wrapped and measured with the right font per word; the designer shows it
   formatted, Excel exports the words. `parseRichText`, `wrapRichText` and `plainRichText` are

@@ -28,6 +28,26 @@ export type DesignerDragData =
 export const DRAG_MIME = 'application/x-we-report';
 
 const PX_PER_MM = 96 / 25.4;
+
+/**
+ * Fields to start a chart or cross table with: text fields that repeat (fewest different values
+ * first; a name on every row does not group) and the number field with the largest total.
+ */
+export function guessBindings(rows: readonly unknown[]): { groups: string[]; amount?: string } {
+  const sample = rows.slice(0, 500).filter((r): r is Record<string, unknown> => !!r && typeof r === 'object');
+  const keys = [...new Set(sample.flatMap((r) => Object.keys(r)))];
+  const texts = keys
+    .filter((k) => sample.some((r) => typeof r[k] === 'string'))
+    .map((k) => ({ k, distinct: new Set(sample.map((r) => r[k])).size }))
+    .filter((t) => t.distinct > 1 && (t.distinct < sample.length || sample.length < 3))
+    .sort((a, b) => a.distinct - b.distinct)
+    .map((t) => t.k);
+  const amount = keys
+    .filter((k) => sample.some((r) => typeof r[k] === 'number'))
+    .map((k) => ({ k, total: sample.reduce((s, r) => s + Math.abs(typeof r[k] === 'number' ? (r[k] as number) : 0), 0) }))
+    .sort((a, b) => b.total - a.total)[0]?.k;
+  return { groups: texts, amount };
+}
 const SNAP_DISTANCE_MM = 1.5;
 const MIN_SIZE_MM = 1;
 
@@ -1496,28 +1516,17 @@ export class DesignSurfaceComponent implements OnDestroy {
     if (data.kind === 'control') {
       const s = this.strings();
       const control = createControl(data.type, this.state.newId(data.type), x, y, data.type === 'table' ? s.columnN : data.type === 'subreport' ? s.controlNames.subreport : s.newText, data.variant);
-      if (control.type === 'crosstab') {
-        // Start bound to the data: the first two text fields across, the first number field summed.
-        const row = this.sample()?.row;
-        const entries = row && typeof row === 'object' ? Object.entries(row as Record<string, unknown>) : [];
-        const texts = entries.filter(([, v]) => typeof v === 'string').map(([k]) => k);
-        const number = entries.find(([, v]) => typeof v === 'number')?.[0];
-        if (texts.length >= 2 && number) {
-          control.rows = { expression: `[${texts[0]}]` };
-          control.columns = { expression: `[${texts[1]}]` };
-          control.value = { expression: `[${number}]` };
-        }
+      // Start bound to the data: grouped by the text fields with the fewest different values,
+      // summing the number field with the largest total (an amount rather than a month or a count).
+      const { groups, amount } = guessBindings(this.sample()?.rows ?? []);
+      if (control.type === 'crosstab' && groups.length >= 2 && amount) {
+        control.rows = { expression: `[${groups[0]}]` };
+        control.columns = { expression: `[${groups[1]}]` };
+        control.value = { expression: `[${amount}]` };
       }
-      if (control.type === 'chart') {
-        // Start bound to the data: the first text field per the first number field.
-        const row = this.sample()?.row;
-        const entries = row && typeof row === 'object' ? Object.entries(row as Record<string, unknown>) : [];
-        const text = entries.find(([, v]) => typeof v === 'string')?.[0];
-        const number = entries.find(([, v]) => typeof v === 'number')?.[0];
-        if (text && number) {
-          control.category = { expression: `[${text}]` };
-          control.value = { expression: `[${number}]` };
-        }
+      if (control.type === 'chart' && groups.length && amount) {
+        control.category = { expression: `[${groups[0]}]` };
+        control.value = { expression: `[${amount}]` };
       }
       control.x = round(Math.max(0, Math.min(x, width - control.width)));
       control.y = round(Math.max(0, y));
