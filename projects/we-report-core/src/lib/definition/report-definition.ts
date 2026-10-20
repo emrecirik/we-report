@@ -391,6 +391,12 @@ export type DataSourceDefinition = JsonDataSource | CsvDataSource | WebServiceDa
 
 export type ParameterType = 'string' | 'number' | 'date' | 'boolean';
 
+/** A field computed from each row and used like a data field: `{ name: 'total', expression: '[qty] * [price]' }` → `[total]`. */
+export interface CalculatedField {
+  name: string;
+  expression: string;
+}
+
 /** A value asked from the user before the report runs; read in formulas as `[?name]`. */
 export interface ReportParameter {
   name: string;
@@ -432,6 +438,8 @@ export interface ReportDefinition {
   styles: Record<string, ReportStyle>;
   dataSources: DataSourceDefinition[];
   parameters?: ReportParameter[];
+  /** Fields computed from each row; a data field of the same name wins. */
+  calculatedFields?: CalculatedField[];
   /** Id of the data source the detail band repeats over, plus an optional path to the rows. */
   dataMember?: { dataSourceId: string; path?: string };
   watermark?: Watermark;

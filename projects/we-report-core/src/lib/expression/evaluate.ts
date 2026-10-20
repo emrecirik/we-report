@@ -11,6 +11,10 @@ export interface EvaluationContext {
   rowIndex?: number;
   /** Detail rows printed on the pages before this one (page header and footer), for `CarriedSum()` and `RunningSum()`. */
   before?: readonly unknown[];
+  /** Calculated fields by name (their formulas), read like data fields when the row has no such field. */
+  calculated?: Readonly<Record<string, string>>;
+  /** How many calculated fields are being worked out inside each other (loop guard). */
+  calculating?: number;
   /** The object holding the detail rows (e.g. the invoice around its lines), read with `[^.Field]`. */
   parent?: unknown;
   /** Report parameter values, read with `[?name]`. */
@@ -226,6 +230,18 @@ export function implementedFunctionNames(): string[] {
 }
 
 /** Resolves a field path on own properties only, so `[__proto__]` or `[constructor]` read nothing. */
+/** A field of the row, or the value of the calculated field of that name. */
+function readRowField(ctx: EvaluationContext, path: string[]): Value {
+  const row = ctx.row;
+  const own = row !== null && typeof row === 'object' && Object.prototype.hasOwnProperty.call(row, path[0]);
+  const formula = ctx.calculated && Object.prototype.hasOwnProperty.call(ctx.calculated, path[0]) ? ctx.calculated[path[0]] : undefined;
+  if (own || formula === undefined) return readField(row, path);
+  const depth = (ctx.calculating ?? 0) + 1;
+  if (depth > 20) throw new Error(`The calculated field "${path[0]}" refers to itself.`);
+  const value = evaluate(formula, { ...ctx, calculating: depth });
+  return path.length > 1 ? readField(value, path.slice(1)) : (value ?? null);
+}
+
 function readField(row: unknown, path: string[]): Value {
   let current: unknown = row;
   for (const key of path) {
@@ -261,7 +277,7 @@ function evalNode(node: ExpressionNode, ctx: EvaluationContext): Value {
     case 'field':
       if (node.path[0] === '^') return readField(ctx.parent, node.path.slice(1));
       if (node.path[0].startsWith('?')) return readField(ctx.params, [node.path[0].slice(1), ...node.path.slice(1)]);
-      return readField(ctx.row, node.path);
+      return readRowField(ctx, node.path);
     case 'unary': {
       const v = evalNode(node.operand, ctx);
       if (node.op === 'not') return !truthy(v);

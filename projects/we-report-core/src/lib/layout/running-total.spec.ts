@@ -4,6 +4,8 @@ import { evaluate } from '../expression/evaluate';
 import { FontRegistry } from '../fonts/font-registry';
 import { layoutReport } from './engine';
 import { renderPdf } from '../render/pdf';
+import { reportTable } from '../render/xlsx';
+import { checkReport } from '../definition/check';
 import { TextItem } from './layout-types';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
@@ -144,6 +146,28 @@ describe('document map', () => {
     expect(outlines.get(PDFName.of('Count'))!.toString()).toBe('45');
     const first = outlines.lookup(PDFName.of('First'), PDFDict);
     expect(first.lookup(PDFName.of('Title'))!.toString()).toContain('FEFF'); // UTF-16 text
+  });
+});
+
+describe('calculated fields', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('prints, totals, sorts and exports a calculated field, and checks its formula', () => {
+    const r = createBlankReport('Calc');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [{ qty: 2, price: 10 }, { qty: 5, price: 1 }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.calculatedFields = [{ name: 'total', expression: '[qty] * [price]' }];
+    r.bands[1].sortBy = [{ expression: '[total]' }];
+    r.bands[1].controls.push({ id: 't', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: "'T ' + [total]" } });
+    r.bands.splice(2, 0, { id: 'rf', kind: 'reportFooter', height: 8, controls: [{ id: 's', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: "'S ' + Sum([total])" } }] });
+    const texts = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text);
+    expect(texts.filter((t) => /^[TS] /.test(t))).toEqual(['T 5', 'T 20', 'S 25']);
+    expect(checkReport(r, ['qty', 'price']).filter((i) => i.code === 'unknownField')).toEqual([]);
+    r.calculatedFields.push({ name: 'bad', expression: '1 +' });
+    expect(checkReport(r).some((i) => i.code === 'formulaError' && i.controlId === 'bad')).toBeTrue();
+    r.bands[1].controls[0] = { id: 'c', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: '[total]' } };
+    expect(reportTable(r, { now: NOW }).rows).toEqual([[5], [20]]); // sorted as printed
   });
 });
 

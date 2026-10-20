@@ -16,6 +16,7 @@
   `parameterChoices()`. The viewer now also loads the remote sources of sub-reports.
 - Designer: *Tidy up* (right-click a section or several items) — snaps to the grid, lines up items
   that are nearly in a row or column, one height per row of texts; one undo step.
+- Excel and CSV exports list the rows in the printed order (groups and the detail's sort keys).
 - Viewer: **CSV** under *More formats* — the rows for spreadsheets, with `;` and decimal commas in
   comma-decimal regions, a UTF-8 byte-order mark and formula-like text defused (`toCsv()`,
   `writeCsv()` in core).
@@ -63,6 +64,8 @@
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, total row and column, numbers sorted numerically; grows downwards and
   pushes the items below. Dropping one binds it to the first two text fields and a number field.
+- **Calculated fields** (`calculatedFields`): a formula per row used like a data field (`[total]`)
+  in texts, totals, sorting, groups and exports; edited under Data sources, listed with the fields.
 - Formulas: `Switch(value, match, result, …, otherwise)` and `In(value, a, b, …)`.
 - Formulas: `AddMonths`, `AddYears`, `DateDiff('day' | 'month' | 'year', start, end)` (days
   overdue, ages), `Left`, `Right` and `PadLeft`.

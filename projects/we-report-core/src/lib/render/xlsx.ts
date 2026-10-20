@@ -1,4 +1,4 @@
-import { resolveReportData } from '../data/data-source';
+import { calculatedFieldMap, resolveReportData } from '../data/data-source';
 import { resolveParameters } from '../data/web-service';
 import { Band, isExpression, ReportDefinition, TextControl } from '../definition/report-definition';
 import { evaluate } from '../expression/evaluate';
@@ -70,8 +70,37 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
   const headers = cells.map((c) => captionAbove(c, captions) ?? (isExpression(c.text) ? c.text.expression.replace(/^\[|\]$/g, '') : c.text));
   const { rows, parent } = resolveReportData(definition, options.data, options.sources);
   const params = resolveParameters(definition.parameters, options.params);
-  const ctxBase = { parent, params, locale: options.locale, now: options.now, rows: rows ?? [] };
-  const table = (rows ?? []).map((row) =>
+  const ctxBase = { parent, params, locale: options.locale, now: options.now, rows: rows ?? [], calculated: calculatedFieldMap(definition) };
+  // The rows in the order the report prints them: by group, then by the detail's own sort keys.
+  const keys = [
+    ...definition.bands.filter((b) => b.kind === 'groupHeader' && b.groupBy?.expression.trim() && b.sort !== 'none').map((b) => ({ expression: b.groupBy!.expression, descending: b.sort === 'desc' })),
+    ...(Array.isArray(detail?.sortBy) ? detail.sortBy.filter((k) => typeof k?.expression === 'string' && k.expression.trim()) : []),
+  ];
+  const keyOf = (row: unknown, expression: string) => {
+    try {
+      const v = evaluate(expression, { ...ctxBase, row });
+      return v instanceof Date ? v.getTime() : v;
+    } catch {
+      return null;
+    }
+  };
+  const collator = new Intl.Collator(options.locale || 'en-US', { numeric: true });
+  const ordered = !keys.length
+    ? (rows ?? [])
+    : (rows ?? [])
+        .map((row) => ({ row, k: keys.map((k) => keyOf(row, k.expression)) }))
+        .sort((a, b) => {
+          for (let i = 0; i < keys.length; i++) {
+            const x = a.k[i];
+            const y = b.k[i];
+            if (x === y) continue;
+            const c = x === null || x === undefined ? -1 : y === null || y === undefined ? 1 : typeof x === 'number' && typeof y === 'number' ? x - y : collator.compare(String(x), String(y));
+            if (c) return keys[i].descending ? -c : c;
+          }
+          return 0;
+        })
+        .map((e) => e.row);
+  const table = ordered.map((row) =>
     cells.map((c) => {
       const ctx = { ...ctxBase, row };
       const run = (expression: string) => {

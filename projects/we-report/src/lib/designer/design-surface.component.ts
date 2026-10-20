@@ -15,6 +15,8 @@ export interface DesignSample {
   row: unknown;
   rows: readonly unknown[];
   parent: unknown;
+  /** The report's calculated fields, so the sample shows them too. */
+  calculated?: Record<string, string>;
 }
 
 /** Payload of an HTML5 drag from the toolbox or the field list. */
@@ -799,7 +801,7 @@ export class DesignSurfaceComponent implements OnDestroy {
     for (const row of sample.rows.length ? sample.rows : [sample.row]) {
       try {
         const items = evaluate(`[${path}]`, { row });
-        if (Array.isArray(items) && items.length) return { row: items[0], rows: items, parent: row };
+        if (Array.isArray(items) && items.length) return { row: items[0], rows: items, parent: row, calculated: sample.calculated };
       } catch {
         return null;
       }

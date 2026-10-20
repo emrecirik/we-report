@@ -50,6 +50,17 @@ Connections that allow it also accept free SQL (`SELECT … WHERE date >= :from`
 
 The browser never sees connection strings — only connection names.
 
+## Calculated fields
+
+A formula worked out for every row and then used like a data field: under **Data sources →
+Calculated fields** add `total` = `[qty] * [price]`, and `[total]` works in texts, `Sum([total])`,
+sorting, grouping and exports. A data field of the same name wins; a field that refers to itself
+is reported instead of looping.
+
+```json
+"calculatedFields": [{ "name": "total", "expression": "[qty] * [price]" }]
+```
+
 ## Parameters
 
 Values asked before the report runs: a date range, a customer, "only unpaid". Define them in

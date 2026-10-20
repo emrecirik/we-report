@@ -86,6 +86,16 @@ export function checkReport(def: ReportDefinition, rowFields?: string[], parentF
   const parent = parentFields && new Set(parentFields);
   const params = new Set(paramNames ?? (def.parameters ?? []).map((p) => p.name));
   const inner = innerFields && new Set(innerFields);
+  // Calculated fields are fields of every row.
+  for (const f of def.calculatedFields ?? []) {
+    rows?.add(f.name);
+    inner?.add(f.name);
+    try {
+      parseExpression(f.expression);
+    } catch (e) {
+      issues.push({ code: 'formulaError', severity: 'error', bandId: '', controlId: f.name, detail: (e as Error).message });
+    }
+  }
 
   for (const band of def.bands) {
     if (band.visible?.expression.trim()) {

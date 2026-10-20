@@ -68,6 +68,12 @@ export function sourceValue(source: DataSourceDefinition, loaded?: Record<string
   }
 }
 
+/** A report's calculated fields as the name → formula map formulas read them from; `undefined` when it has none. */
+export function calculatedFieldMap(definition: ReportDefinition): Record<string, string> | undefined {
+  const fields = (definition.calculatedFields ?? []).filter((f) => typeof f?.name === 'string' && f.name && typeof f.expression === 'string' && f.expression.trim());
+  return fields.length ? Object.fromEntries(fields.map((f) => [f.name, f.expression])) : undefined;
+}
+
 /** Choice lists are capped: a list longer than this is no use in a drop-down. */
 const MAX_CHOICES = 1000;
 

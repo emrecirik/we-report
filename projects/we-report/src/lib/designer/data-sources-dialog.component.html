@@ -51,6 +51,18 @@
         </div>
       }
       <button type="button" class="dsd__link" (click)="addParameter()">+ {{ s.addParameter }}</button>
+
+      <h3>{{ s.calculatedFields }}</h3>
+      <p class="dsd__hint">{{ s.calculatedFieldsHint }}</p>
+      @for (f of report().calculatedFields ?? []; track $index; let i = $index) {
+        <div class="dsd__param">
+          <input class="dsd__calc-name" [value]="f.name" (input)="setCalculated(i, 'name', $any($event.target).value)" [attr.aria-label]="s.calculatedFieldName" spellcheck="false" />
+          <button type="button" class="dsd__icon dsd__calc-remove" (click)="removeCalculated(i)" [attr.aria-label]="s.delete">×</button>
+          <input class="dsd__choices dsd__mono" [value]="f.expression" (input)="setCalculated(i, 'expression', $any($event.target).value)" placeholder="[qty] * [price]" [attr.aria-label]="s.expression" spellcheck="false" />
+          <code class="dsd__use">[{{ f.name }}]</code>
+        </div>
+      }
+      <button type="button" class="dsd__link" (click)="addCalculated()">+ {{ s.addCalculatedField }}</button>
     </nav>
 
     <section class="dsd__editor">

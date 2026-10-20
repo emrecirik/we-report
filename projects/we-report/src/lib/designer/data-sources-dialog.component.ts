@@ -285,6 +285,32 @@ export class DataSourcesDialogComponent {
     }, `param-${index}-${key}`);
   }
 
+  protected addCalculated(): void {
+    this.state.update((d) => {
+      const names = new Set((d.calculatedFields ?? []).map((f) => f.name));
+      let n = 1;
+      while (names.has(`field${n}`)) n++;
+      d.calculatedFields = [...(d.calculatedFields ?? []), { name: `field${n}`, expression: '' }];
+    });
+  }
+
+  protected setCalculated(index: number, key: 'name' | 'expression', value: string): void {
+    this.state.update((d) => {
+      const f = d.calculatedFields?.[index];
+      if (!f) return;
+      // A name is used as [name] in formulas: letters, digits and underscores only.
+      if (key === 'name') f.name = value.replace(/[^\p{L}\p{N}_]/gu, '');
+      else f.expression = value;
+    }, `calc-${index}-${key}`);
+  }
+
+  protected removeCalculated(index: number): void {
+    this.state.update((d) => {
+      d.calculatedFields = (d.calculatedFields ?? []).filter((_, i) => i !== index);
+      if (!d.calculatedFields.length) delete d.calculatedFields;
+    });
+  }
+
   protected removeParameter(index: number): void {
     this.state.update((d) => {
       d.parameters = (d.parameters ?? []).filter((_, i) => i !== index);

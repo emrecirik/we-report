@@ -356,3 +356,11 @@ button:focus-visible {
   grid-column: 1 / -1;
   min-width: 0;
 }
+
+.dsd__calc-name {
+  grid-column: 1 / 3;
+}
+
+.dsd__mono {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}

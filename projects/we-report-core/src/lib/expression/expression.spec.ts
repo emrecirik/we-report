@@ -21,6 +21,16 @@ describe('expression language', () => {
     expect(() => ev("DateDiff('week', '2026-01-01', '2026-02-01')")).toThrow();
   });
 
+  it('reads calculated fields like data fields, data first, and stops a loop', () => {
+    const calculated = { total: '[qty] * [price]', net: '[total] * 0.8', loop: '[loop] + 1', qty: '999' };
+    const rows = [{ qty: 2, price: 10 }, { qty: 1, price: 5 }];
+    expect(evaluate('[total]', { row: rows[0], calculated })).toBe(20);
+    expect(evaluate('[net]', { row: rows[0], calculated })).toBe(16);
+    expect(evaluate('Sum([total])', { rows, calculated })).toBe(25);
+    expect(evaluate('[qty]', { row: rows[0], calculated })).toBe(2); // the data field wins
+    expect(() => evaluate('[loop]', { row: rows[0], calculated })).toThrowError(/refers to itself/);
+  });
+
   it('picks a result by value and tests membership', () => {
     const ev = (e: string, row: unknown) => evaluate(e, { row });
     expect(ev("Switch([s], 1, 'Open', 2, 'Closed', 'Other')", { s: 2 })).toBe('Closed');

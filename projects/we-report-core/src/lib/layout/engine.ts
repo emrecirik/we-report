@@ -1,4 +1,4 @@
-import { resolveReportData, toRows } from '../data/data-source';
+import { calculatedFieldMap, resolveReportData, toRows } from '../data/data-source';
 import { resolveParameters } from '../data/web-service';
 import { DEFAULT_WATERMARK_COLOR } from '../definition/blank-report';
 import { PageGeometry, resolvePageGeometry } from '../definition/page';
@@ -106,6 +106,7 @@ class LayoutRun {
   private readonly now: Date;
   private parent: unknown;
   private readonly params: Record<string, unknown>;
+  private readonly calculated: Record<string, string> | undefined;
 
   constructor(
     private readonly def: ReportDefinition,
@@ -119,6 +120,7 @@ class LayoutRun {
     this.currency = def.currency || options.currency || 'USD';
     this.now = options.now;
     this.params = resolveParameters(def.parameters, options.params);
+    this.calculated = calculatedFieldMap(def);
   }
 
   run(): LayoutDocument {
@@ -1016,6 +1018,7 @@ class LayoutRun {
       rows: scope.rows,
       rowIndex: scope.rowIndex,
       before: scope.before,
+      calculated: this.calculated,
       parent: scope.parent ?? this.parent,
       params,
       locale: this.locale,

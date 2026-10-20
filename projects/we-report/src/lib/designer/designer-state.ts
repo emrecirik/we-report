@@ -77,7 +77,7 @@ export class DesignerState {
   /** Where the pointer is on the page, for the status bar: band and mm inside it. */
   readonly pointer = signal<{ bandId: string; x: number; y: number } | null>(null);
   /** The first data row and its scope, for live values in the design and the formula editor. */
-  readonly sample = signal<{ row: unknown; rows: readonly unknown[]; parent: unknown } | null>(null);
+  readonly sample = signal<{ row: unknown; rows: readonly unknown[]; parent: unknown; calculated?: Record<string, string> } | null>(null);
 
   readonly selectedControls = computed(() => {
     const sel = this.selection();

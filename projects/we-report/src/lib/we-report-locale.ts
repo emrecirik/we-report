@@ -200,6 +200,10 @@ export interface WeReportLocale {
   parameterType: string;
   parameterLabel: string;
   defaultValue: string;
+  calculatedFields: string;
+  calculatedFieldsHint: string;
+  calculatedFieldName: string;
+  addCalculatedField: string;
   parameterChoices: string;
   parameterChoicesFrom: string;
   parameterNoList: string;
@@ -626,6 +630,10 @@ export const weReportLocaleEn: WeReportLocale = {
   parameterType: 'Type',
   parameterLabel: 'Label shown to the user',
   defaultValue: 'Default value',
+  calculatedFields: 'Calculated fields',
+  calculatedFieldsHint: 'A formula worked out for every row and used like a data field, e.g. total = [qty] * [price], then [total] anywhere.',
+  calculatedFieldName: 'Field name',
+  addCalculatedField: 'Add calculated field',
   parameterChoices: 'Choices: A, B, C (optional)',
   parameterChoicesFrom: 'List from a data field',
   parameterNoList: 'Free entry',
@@ -1095,6 +1103,10 @@ export const weReportLocaleTr: WeReportLocale = {
   parameterType: 'Tür',
   parameterLabel: 'Kullanıcıya görünen ad',
   defaultValue: 'Varsayılan değer',
+  calculatedFields: 'Hesaplanan alanlar',
+  calculatedFieldsHint: 'Her satır için hesaplanıp veri alanı gibi kullanılan formül; örn. toplam = [miktar] * [fiyat], sonra her yerde [toplam].',
+  calculatedFieldName: 'Alan adı',
+  addCalculatedField: 'Hesaplanan alan ekle',
   parameterChoices: 'Seçenekler: A, B, C (isteğe bağlı)',
   parameterChoicesFrom: 'Listeyi bir veri alanından al',
   parameterNoList: 'Serbest giriş',

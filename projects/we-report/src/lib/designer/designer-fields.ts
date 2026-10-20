@@ -1,4 +1,4 @@
-import { FieldSchema, FieldType, inferSchema, ReportDefinition, resolveReportData } from 'we-report-core';
+import { calculatedFieldMap, evaluate, FieldSchema, FieldType, inferSchema, ReportDefinition, resolveReportData } from 'we-report-core';
 import { fieldExpression } from './control-factory';
 
 /** A field the user can drop or pick, flattened from the data schema. */
@@ -53,6 +53,19 @@ export function designerFields(
   }
   const schema = inferSchema(resolved.rows ?? []);
   const rows = flatten(schema, false);
+  // Calculated fields join the row fields, typed by their value in the first row.
+  const calculated = calculatedFieldMap(report);
+  for (const name of Object.keys(calculated ?? {})) {
+    if (rows.some((f) => f.path === name)) continue;
+    let value: unknown = null;
+    try {
+      value = evaluate(`[${name}]`, { row: resolved.rows?.[0], rows: resolved.rows ?? [], parent: resolved.parent, calculated });
+    } catch {
+      /* typed as text */
+    }
+    const type: FieldType = typeof value === 'number' ? 'number' : typeof value === 'boolean' ? 'boolean' : value instanceof Date ? 'date' : 'string';
+    rows.push({ path: name, label: name, type, parent: false, expression: fieldExpression(name, false), depth: 0 });
+  }
   const lists = listPaths(schema);
   const innerPath = report.bands.find((b) => b.kind === 'subDetail')?.rowsPath;
   const inner = flatten(lists.find((l) => l.path === innerPath)?.fields ?? [], false);

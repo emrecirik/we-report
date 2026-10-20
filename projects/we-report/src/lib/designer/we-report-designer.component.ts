@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, model, signal, untracked, viewChild } from '@angular/core';
-import { Band, BandKind, checkReport, evaluate, formatValue, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
+import { Band, BandKind, calculatedFieldMap, checkReport, evaluate, formatValue, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -291,7 +291,7 @@ export class WeReportDesignerComponent {
       let sample: DesignSample | null = null;
       try {
         const { rows, parent } = resolveReportData(this.state.report(), this.data());
-        if (rows?.length || (parent !== undefined && parent !== null)) sample = { row: rows?.[0], rows: rows ?? [], parent };
+        if (rows?.length || (parent !== undefined && parent !== null)) sample = { row: rows?.[0], rows: rows ?? [], parent, calculated: calculatedFieldMap(this.state.report()) };
       } catch {
         sample = null;
       }
