@@ -204,22 +204,30 @@ interface DragOp {
                     }
                   }
                   @case ('chart') {
-                    <div class="ds__placeholder ds__chart">
-                      <span [innerHTML]="'chart' | weReportIcon"></span>
-                      <small>{{ chartLabel(c) }}</small>
-                    </div>
+                    @if (previewPages().get(c.id); as preview) {
+                      <div class="ds__subpreview" [title]="chartLabel(c)"><we-report-page [page]="preview" [zoom]="zoom()" /></div>
+                    } @else {
+                      <div class="ds__placeholder ds__chart">
+                        <span [innerHTML]="'chart' | weReportIcon"></span>
+                        <small>{{ chartLabel(c) }}</small>
+                      </div>
+                    }
                   }
                   @case ('checkbox') {
                     <div class="ds__placeholder" [innerHTML]="'checkbox' | weReportIcon"></div>
                   }
                   @case ('crosstab') {
-                    <div class="ds__placeholder ds__chart">
-                      <span [innerHTML]="'crosstab' | weReportIcon"></span>
-                      <small>{{ crosstabLabel(c) }}</small>
-                    </div>
+                    @if (previewPages().get(c.id); as preview) {
+                      <div class="ds__subpreview" [title]="crosstabLabel(c)"><we-report-page [page]="preview" [zoom]="zoom()" /></div>
+                    } @else {
+                      <div class="ds__placeholder ds__chart">
+                        <span [innerHTML]="'crosstab' | weReportIcon"></span>
+                        <small>{{ crosstabLabel(c) }}</small>
+                      </div>
+                    }
                   }
                   @case ('subreport') {
-                    @if (subreportPages().get(c.id); as preview) {
+                    @if (previewPages().get(c.id); as preview) {
                       <!-- The sub-report laid out with the sample row, as it prints; double-click edits it. -->
                       <div class="ds__subpreview" [title]="strings().subreportEdit">
                         <we-report-page [page]="preview" [zoom]="zoom()" />
@@ -639,24 +647,33 @@ export class DesignSurfaceComponent implements OnDestroy {
   private readonly fontsService = inject(WeReportFontsService);
   /** Texts (without Grow to fit text) whose content does not fit, measured with the report's fonts like the print. */
   readonly cutTexts = signal<ReadonlySet<string>>(new Set());
-  /** First page of every sub-report, laid out with the sample row, shown inside its box. */
-  protected readonly subreportPages = signal<ReadonlyMap<string, LayoutPage>>(new Map());
+  /**
+   * Sub-reports, cross tables and charts drawn inside their box as they print, from the sample
+   * data: a sub-report with the sample row around it, the others over all sample rows.
+   */
+  protected readonly previewPages = signal<ReadonlyMap<string, LayoutPage>>(new Map());
   private previewRun = 0;
-  private readonly previewSubreports = effect(() => {
+  private readonly previewItems = effect(() => {
     const report = this.state.report();
-    this.sample();
-    const subs = report.bands.flatMap((band) => band.controls.filter((c) => c.type === 'subreport').map((c) => ({ c, band })));
+    const sample = this.sample();
+    const subs = report.bands.flatMap((band) =>
+      band.controls.filter((c) => c.type === 'subreport' || ((c.type === 'crosstab' || c.type === 'chart') && sample)).map((c) => ({ c, band })),
+    );
     const run = ++this.previewRun;
     if (!subs.length) {
-      if (this.subreportPages().size) setTimeout(() => run === this.previewRun && this.subreportPages.set(new Map()));
+      if (this.previewPages().size) setTimeout(() => run === this.previewRun && this.previewPages.set(new Map()));
       return;
     }
     void this.fontsService.ready().then((fonts) => {
       if (run !== this.previewRun) return;
       const pages = new Map<string, LayoutPage>();
       for (const { c, band } of subs) {
-        const row = this.sampleFor(band)?.row;
-        // The box alone on a page of its own width, with the sample row around it.
+        const bandSample = this.sampleFor(band);
+        const row = bandSample?.row;
+        // A chart over a list inside the row (a sparkline) is drawn for the sample row, like a sub-report.
+        const ofRows = c.type === 'crosstab' || (c.type === 'chart' && !c.rows?.expression.trim());
+        // The box alone on a page of its own width: a sub-report with the sample row around it,
+        // a cross table or chart in a report footer over the sample rows.
         const def: ReportDefinition = {
           ...createBlankReport(),
           page: { paper: 'custom', orientation: 'portrait', width: c.width, height: null, margins: { top: 0, right: 0, bottom: 0, left: 0 }, displayUnit: 'mm' },
@@ -666,12 +683,12 @@ export class DesignSurfaceComponent implements OnDestroy {
           parameters: report.parameters,
           locale: report.locale,
           currency: report.currency,
-          bands: [{ id: 'preview', kind: 'detail', height: c.height, controls: [{ ...c, x: 0, y: 0 }] }],
+          bands: [{ id: 'preview', kind: ofRows ? 'reportFooter' : 'detail', height: c.height, controls: [{ ...c, x: 0, y: 0 }] }],
         };
         try {
           const doc = layoutReport(def, {
             fonts,
-            data: row === undefined ? undefined : [row],
+            data: ofRows ? [...(bandSample?.rows ?? [])] : row === undefined ? undefined : [row],
             now: new Date(),
             locale: this.config.locale,
             currency: this.config.currency,
@@ -681,7 +698,7 @@ export class DesignSurfaceComponent implements OnDestroy {
           /* a sub-report that cannot be laid out shows its placeholder */
         }
       }
-      this.subreportPages.set(pages);
+      this.previewPages.set(pages);
     });
   });
   private measureRun = 0;
