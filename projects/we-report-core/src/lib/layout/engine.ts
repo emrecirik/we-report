@@ -99,6 +99,8 @@ class LayoutRun {
   private readonly problems: LayoutProblem[] = [];
   private readonly imageUrls = new Set<string>();
   private readonly bookmarks: LayoutBookmark[] = [];
+  /** A data bar's full value per section rows and control, worked out once (not once per row). */
+  private readonly barMax = new WeakMap<readonly unknown[], Map<string, number>>();
   private readonly reported = new Set<string>();
   private readonly geometry: PageGeometry;
   private readonly locale: string;
@@ -167,7 +169,9 @@ class LayoutRun {
           const members = new Map<string, unknown[]>();
           for (const row of rows) {
             const path = JSON.stringify(keys.get(row)!.slice(0, level + 1));
-            members.set(path, [...(members.get(path) ?? []), row]);
+            const list = members.get(path);
+            if (list) list.push(row);
+            else members.set(path, [row]);
           }
           for (const [path, groupRows] of members) {
             const v = this.eval(orderBy.expression, { row: groupRows[0], rows: groupRows }, h.id);
@@ -404,11 +408,13 @@ class LayoutRun {
       // A header that keeps with its first row needs room for everything up to that row.
       let withFirstRow = r.height;
       if (r.band.kind === 'groupHeader' && r.band.keepWithFirstRow && !fresh) {
+        // Up to its first row: the headers of inner groups, then one more band; never past the group.
         for (let j = i + 1; j < entries.length; j++) {
           const e = entries[j];
+          if (e.type === 'groupEnd') break;
           if (e.type !== 'band') continue;
           withFirstRow += e.rendered.height;
-          if (e.rendered.band.kind === 'detail') break;
+          if (e.rendered.band.kind !== 'groupHeader') break;
         }
       }
       const orphan = withFirstRow > r.height && y + withFirstRow > bodyBottom && headerHeight + withFirstRow <= bodyBottom;
@@ -851,7 +857,14 @@ class LayoutRun {
     if (c.chartType === 'databar') {
       if (!c.value.expression.trim()) return [];
       const value = numberOrNull(this.eval(c.value.expression, scope, c.id)) ?? 0;
-      const max = c.max ?? scope.rows.reduce<number>((m, row) => Math.max(m, numberOrNull(this.eval(c.value.expression, { row, rows: scope.rows }, c.id)) ?? 0), value);
+      let maxima = this.barMax.get(scope.rows);
+      if (!maxima) this.barMax.set(scope.rows, (maxima = new Map()));
+      let largest = maxima.get(c.id);
+      if (largest === undefined) {
+        largest = scope.rows.reduce<number>((m, row) => Math.max(m, numberOrNull(this.eval(c.value.expression, { row, rows: scope.rows }, c.id)) ?? 0), 0);
+        maxima.set(c.id, largest);
+      }
+      const max = c.max ?? Math.max(largest, value);
       return [{ label: '', value }, { label: '', value: max }];
     }
     // A sparkline may leave the category empty: then every row is one point, in order.

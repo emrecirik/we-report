@@ -97,6 +97,20 @@ describe('group header with its first row', () => {
     r.bands[1].keepWithFirstRow = true;
     expect(where()).toEqual([1, 1]);
   });
+
+  it('never looks past its own group (a report without a detail section)', () => {
+    const r = createBlankReport('Summary');
+    r.page = { paper: 'custom', orientation: 'portrait', width: 100, height: 100, margins: { top: 0, right: 0, bottom: 0, left: 0 }, displayUnit: 'mm' };
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: ['a', 'b', 'c', 'd', 'e'].map((g) => ({ g })) }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands = [
+      { id: 'rh', kind: 'reportHeader', height: 60, controls: [] },
+      { id: 'gh', kind: 'groupHeader', height: 10, groupBy: { expression: '[g]' }, keepWithFirstRow: true, controls: [{ id: 'h', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: '[g]' } }] },
+      { id: 'gf', kind: 'groupFooter', groupHeaderId: 'gh', height: 5, controls: [] },
+    ];
+    const pages = layoutReport(r, { fonts, now: NOW }).pages.map((p) => p.items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text).join(''));
+    expect(pages).toEqual(['ab', 'cde']);
+  });
 });
 
 describe('groups ordered by a formula', () => {
@@ -118,10 +132,12 @@ describe('groups ordered by a formula', () => {
     );
     const texts = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text).filter((t) => /^[CP] /.test(t));
     expect(texts).toEqual(['C İzmir', 'P Çay', 'P Kahve', 'C Ankara', 'P Kahve', 'P Çay', 'C Bursa', 'P Çay']);
-    // Top 2 cities only.
+    // Top 2 cities only (exports too).
+    r.bands.find((b) => b.kind === 'detail')!.controls = [{ id: 'a', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[a]' } }];
     r.bands[1].top = 2;
     const top = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text).filter((t) => t.startsWith('C '));
     expect(top).toEqual(['C İzmir', 'C Ankara']);
+    expect(reportTable(r, { now: NOW }).rows.length).toBe(4); // İzmir and Ankara rows only
     delete r.bands[1].top;
     // Exports list the rows in the same order.
     r.bands.find((b) => b.kind === 'detail')!.controls = [{ id: 'a', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[a]' } }];

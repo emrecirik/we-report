@@ -137,9 +137,11 @@ const FUNCTIONS: Record<string, FunctionDef> = {
       const u = str(unit).toLowerCase();
       // Whole calendar days, so a time of day or a daylight-saving change does not shift the count.
       if (u === 'day') return Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 86_400_000);
-      const months = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() - (b.getDate() < a.getDate() ? 1 : 0);
-      if (u === 'month') return months;
-      if (u === 'year') return Math.trunc(months / 12);
+      // Whole months counted from the earlier date, then signed: Mar 15 → Jan 20 is -1, not -2.
+      const [lo, hi, sign] = b < a ? [b, a, -1] : [a, b, 1];
+      const months = (hi.getFullYear() - lo.getFullYear()) * 12 + hi.getMonth() - lo.getMonth() - (hi.getDate() < lo.getDate() ? 1 : 0);
+      if (u === 'month') return sign * months || 0;
+      if (u === 'year') return sign * Math.trunc(months / 12) || 0;
       throw new Error("DateDiff counts 'day', 'month' or 'year'.");
     },
   },
@@ -275,7 +277,8 @@ function evalNode(node: ExpressionNode, ctx: EvaluationContext): Value {
     case 'literal':
       return node.value;
     case 'field':
-      if (node.path[0] === '^') return readField(ctx.parent, node.path.slice(1));
+      // The row around (`[^.field]`) has calculated fields too.
+      if (node.path[0] === '^') return readRowField({ ...ctx, row: ctx.parent }, node.path.slice(1));
       if (node.path[0].startsWith('?')) return readField(ctx.params, [node.path[0].slice(1), ...node.path.slice(1)]);
       return readRowField(ctx, node.path);
     case 'unary': {

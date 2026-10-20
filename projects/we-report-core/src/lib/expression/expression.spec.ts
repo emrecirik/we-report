@@ -18,6 +18,8 @@ describe('expression language', () => {
     expect(ev("DateDiff('month', '2026-01-31', '2026-02-28')")).toBe(0);
     expect(ev("DateDiff('month', '2026-01-15', '2026-03-15')")).toBe(2);
     expect(ev("DateDiff('year', '1990-10-21', '2026-10-20')")).toBe(35);
+    expect(ev("DateDiff('month', '2026-03-15', '2026-01-20')")).toBe(-1);
+    expect(ev("DateDiff('year', '2026-03-15', '2025-03-20')")).toBe(0);
     expect(() => ev("DateDiff('week', '2026-01-01', '2026-02-01')")).toThrow();
   });
 
@@ -29,6 +31,7 @@ describe('expression language', () => {
     expect(evaluate('Sum([total])', { rows, calculated })).toBe(25);
     expect(evaluate('[qty]', { row: rows[0], calculated })).toBe(2); // the data field wins
     expect(() => evaluate('[loop]', { row: rows[0], calculated })).toThrowError(/refers to itself/);
+    expect(evaluate('[^.total]', { row: {}, parent: rows[0], calculated })).toBe(20); // the row around has them too
   });
 
   it('picks a result by value and tests membership', () => {

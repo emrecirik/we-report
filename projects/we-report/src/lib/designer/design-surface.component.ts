@@ -713,8 +713,10 @@ export class DesignSurfaceComponent implements OnDestroy {
       for (const { c, band } of subs) {
         const bandSample = this.sampleFor(band);
         const row = bandSample?.row;
-        // A chart over a list inside the row (a sparkline) is drawn for the sample row, like a sub-report.
+        // A chart over a list inside the row (a sparkline) is drawn for the sample row, like a sub-report;
+        // a data bar is the first row's bar measured against all sample rows.
         const ofRows = c.type === 'crosstab' || (c.type === 'chart' && !c.rows?.expression.trim() && c.chartType !== 'databar');
+        const dataBar = c.type === 'chart' && c.chartType === 'databar';
         // The box alone on a page of its own width: a sub-report with the sample row around it,
         // a cross table or chart in a report footer over the sample rows.
         const def: ReportDefinition = {
@@ -731,7 +733,7 @@ export class DesignSurfaceComponent implements OnDestroy {
         try {
           const doc = layoutReport(def, {
             fonts,
-            data: ofRows ? [...(bandSample?.rows ?? [])] : row === undefined ? undefined : [row],
+            data: ofRows || dataBar ? [...(bandSample?.rows ?? [])] : row === undefined ? undefined : [row],
             now: new Date(),
             locale: this.config.locale,
             currency: this.config.currency,

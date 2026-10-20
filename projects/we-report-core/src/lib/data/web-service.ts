@@ -73,7 +73,10 @@ export function fillPlaceholders(template: string, params: Record<string, unknow
  */
 export async function fetchWebService(source: WebServiceDataSource, params: Record<string, unknown>, options: LoadDataOptions = {}): Promise<unknown> {
   const paging = source.paging;
-  if (!paging || !(paging.size > 0)) return fetchPage(source, params, options);
+  // Without {{page}} or {{offset}} every call would bring the same rows: not a paged address.
+  const placeholder = /\{\{\s*(page|offset)\s*\}\}/;
+  const paged = placeholder.test(source.url) || placeholder.test(source.body ?? '') || (source.headers ?? []).some((h) => placeholder.test(h.value));
+  if (!paging || !(paging.size > 0) || !paged) return fetchPage(source, params, options);
   const size = Math.floor(paging.size);
   const start = paging.start ?? 1;
   const max = Math.min(100, Math.max(1, Math.floor(paging.maxPages ?? 20)));
@@ -81,7 +84,14 @@ export async function fetchWebService(source: WebServiceDataSource, params: Reco
   let path = paging.rowsPath?.trim() || undefined;
   const rows: unknown[] = [];
   for (let i = 0; i < max; i++) {
-    const body = await fetchPage(source, { ...params, page: start + i, offset: i * size, size }, options);
+    let body: unknown;
+    try {
+      body = await fetchPage(source, { ...params, page: start + i, offset: i * size, size }, options);
+    } catch (e) {
+      // Many APIs answer an error past the last page: that is the end, not a failure.
+      if (i === 0) throw e;
+      break;
+    }
     if (i === 0) {
       first = body;
       if (!path && !Array.isArray(body)) {
@@ -90,8 +100,11 @@ export async function fetchWebService(source: WebServiceDataSource, params: Reco
       }
     }
     const page = path ? readPath(body, path) : body;
-    // Not a list: not a paged answer after all, keep the first page as it is.
-    if (!Array.isArray(page)) return first;
+    // No list on the first page: not a paged answer after all, keep it as it is. Later: the end.
+    if (!Array.isArray(page)) {
+      if (i === 0) return first;
+      break;
+    }
     rows.push(...page);
     if (page.length < size) break;
   }

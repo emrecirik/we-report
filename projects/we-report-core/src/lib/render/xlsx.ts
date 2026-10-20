@@ -92,7 +92,9 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
     const members = new Map<string, unknown[]>();
     for (const row of all) {
       const path = JSON.stringify(groupKeys.get(row)!.slice(0, level + 1));
-      members.set(path, [...(members.get(path) ?? []), row]);
+      const list = members.get(path);
+      if (list) list.push(row);
+      else members.set(path, [row]);
     }
     for (const [path, groupRows] of members) value.set(path, keyOf(groupRows[0], g.orderBy.expression, groupRows));
     return value;
@@ -116,7 +118,7 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
   });
   for (const d of detailKeys) sortKeys.push({ descending: !!d.descending });
   const collator = new Intl.Collator(options.locale || 'en-US', { numeric: true });
-  const ordered = !sortKeys.length
+  const sorted = !sortKeys.length
     ? all
     : [...all].sort((ra, rb) => {
         const a = rowKeys.get(ra)!;
@@ -130,6 +132,23 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
         }
         return 0;
       });
+  // Groups past a group's `top` are left out, as in print (counted inside their parent group).
+  const tops = groups.map((g) => (typeof g.top === 'number' && g.top > 0 ? Math.floor(g.top) : Infinity));
+  let ordered = sorted;
+  if (tops.some((t) => t !== Infinity)) {
+    const rank = groups.map(() => 0);
+    let previous: unknown[] | undefined;
+    ordered = sorted.filter((row) => {
+      const gk = groupKeys.get(row)!;
+      groups.forEach((_, level) => {
+        const parentChanged = !previous || gk.slice(0, level).some((k, i) => k !== previous![i]);
+        if (parentChanged) rank[level] = 1;
+        else if (gk[level] !== previous![level]) rank[level]++;
+      });
+      previous = gk;
+      return rank.every((r, level) => r <= tops[level]);
+    });
+  }
   const table = ordered.map((row) =>
     cells.map((c) => {
       const ctx = { ...ctxBase, row };

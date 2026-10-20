@@ -25,6 +25,24 @@ describe('paged web services', () => {
     expect(await fetchWebService(source, {}, { fetch: fakeFetch(false) })).toEqual([{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }, { n: 5 }]);
   });
 
+  it('ends at a page without a list or with an error, and does not page an address without a placeholder', async () => {
+    let calls = 0;
+    const answers = [[{ n: 1 }, { n: 2 }], [{ n: 3 }, { n: 4 }]];
+    const endFetch = (async (url: string) => {
+      calls++;
+      const page = Number(new URL(url).searchParams.get('page'));
+      if (page === 3) return new Response(JSON.stringify({ error: 'out of range' }), { headers: { 'content-type': 'application/json' } });
+      if (page > 3) return new Response('', { status: 404 });
+      return new Response(JSON.stringify(answers[page - 1]), { headers: { 'content-type': 'application/json' } });
+    }) as unknown as typeof fetch;
+    const source = { id: 'w', name: 'W', kind: 'webService' as const, url: 'https://api.example.com/x?page={{page}}', paging: { size: 2 } };
+    expect(await fetchWebService(source, {}, { fetch: endFetch })).toEqual([{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }]);
+    calls = 0;
+    const plain = { ...source, url: 'https://api.example.com/x?page=1' };
+    expect(await fetchWebService(plain, {}, { fetch: endFetch })).toEqual([{ n: 1 }, { n: 2 }]);
+    expect(calls).toBe(1);
+  });
+
   it('finds the list inside each page and keeps the rest of the first page', async () => {
     const source = { id: 'w', name: 'W', kind: 'webService' as const, url: 'https://api.example.com/x?page={{page}}', paging: { size: 2, maxPages: 2 } };
     expect(await fetchWebService(source, {}, { fetch: fakeFetch(true) })).toEqual({ total: 5, data: { items: [{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }] } });

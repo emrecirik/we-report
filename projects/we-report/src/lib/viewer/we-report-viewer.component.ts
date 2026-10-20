@@ -627,7 +627,8 @@ export class WeReportViewerComponent {
       this.searchBox()?.nativeElement.select();
     } else if (mod && e.key.toLowerCase() === 'p') {
       e.preventDefault();
-      void this.print();
+      // A host that hides Print does not get it back through the shortcut.
+      if (!this.hidden('print')) void this.print();
     } else if (mod && (e.key === '=' || e.key === '+')) {
       e.preventDefault();
       this.setZoom(this.zoomLevel() + 0.1);

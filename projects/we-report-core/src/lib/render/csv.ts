@@ -19,7 +19,7 @@ export function writeCsv(table: TableExport, options: CsvOptions = {}): string {
   const quote = (s: string) => (s.includes(delimiter) || /["\r\n]/.test(s) || /^\s|\s$/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
   const cell = (v: unknown): string => {
     if (v === null || v === undefined) return '';
-    if (typeof v === 'number') return Number.isFinite(v) ? String(v).replace('.', decimal) : '';
+    if (typeof v === 'number') return Number.isFinite(v) ? quote(String(v).replace('.', decimal)) : '';
     if (v instanceof Date) {
       const day = `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())}`;
       return v.getHours() || v.getMinutes() ? `${day} ${pad(v.getHours())}:${pad(v.getMinutes())}` : day;
