@@ -1,13 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild } from '@angular/core';
 import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT, StudioLanguage } from './studio-text';
 import { decodeShare, encodeShare, hasRemoteSources, MAX_SHARE_URL, SHARE_PREFIX } from './share-link';
+import { HistoryEntry, parseHistory, pushHistory } from './history';
 import { TEMPLATES } from './templates';
 
 const BACKEND_KEY = 'we-report-studio.backendUrl';
 const AUTOSAVE_KEY = 'we-report-studio.autosave';
 const LANGUAGE_KEY = 'we-report-studio.language';
+const HISTORY_KEY = 'we-report-studio.history';
+/** While editing, a snapshot at most this often. */
+const SNAPSHOT_MS = 5 * 60_000;
 
 const LANGUAGES: { id: StudioLanguage; name: string }[] = [
   { id: 'tr', name: 'Türkçe' },
@@ -33,10 +37,15 @@ function readStorage(key: string): string | null {
 }
 
 function writeStorage(key: string, value: string): void {
+  tryWrite(key, value);
+}
+
+function tryWrite(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
+    return true;
   } catch {
-    /* not persisted */
+    return false;
   }
 }
 
@@ -68,6 +77,9 @@ export class AppComponent {
   protected readonly galleryOpen = signal(false);
   /** First page of every template, laid out by the real engine, for the gallery. */
   protected readonly thumbnails = signal<Record<string, LayoutPage>>({});
+  protected readonly history = signal<HistoryEntry[]>(parseHistory(readStorage(HISTORY_KEY)));
+  protected readonly historyOpen = signal(false);
+  private lastSnapshot = Date.now();
   /** A shared link is being decoded; autosave waits for it. */
   private readonly opening = signal(false);
   private readonly fonts = inject(WeReportFontsService);
@@ -96,7 +108,38 @@ export class AppComponent {
       // Data that is not the template's own (pasted, shared) is kept too, when it fits in storage.
       const data = this.data() === t?.data ? undefined : this.data();
       writeStorage(AUTOSAVE_KEY, JSON.stringify({ templateId: this.templateId(), report: this.report(), data }));
+      if (Date.now() - this.lastSnapshot > SNAPSHOT_MS) untracked(() => this.remember());
     });
+  }
+
+  /** Keeps the current design in the history (before it is replaced, and now and then while editing). */
+  private remember(): void {
+    this.lastSnapshot = Date.now();
+    const t = TEMPLATES.find((x) => x.id === this.templateId());
+    const entry: HistoryEntry = { time: Date.now(), name: this.report().name, templateId: this.templateId(), report: this.report(), data: this.data() === t?.data ? undefined : this.data() };
+    let list = pushHistory(this.history(), entry);
+    // Storage is small: the oldest designs make room for the newest.
+    while (list.length && !tryWrite(HISTORY_KEY, JSON.stringify(list))) list = list.slice(0, -1);
+    this.history.set(list);
+  }
+
+  protected restoreVersion(entry: HistoryEntry): void {
+    try {
+      const report = migrateDefinition(entry.report);
+      this.remember();
+      const t = TEMPLATES.find((x) => x.id === entry.templateId);
+      this.templateId.set(t?.id ?? 'blank');
+      this.report.set(report);
+      this.data.set(entry.data ?? t?.data);
+      this.message.set(this.text().versionRestored);
+    } catch (e) {
+      this.message.set(e instanceof DefinitionVersionError ? e.message : this.text().openFailed);
+    }
+    this.historyOpen.set(false);
+  }
+
+  protected historyTime(entry: HistoryEntry): string {
+    return new Date(entry.time).toLocaleString(this.language(), { dateStyle: 'medium', timeStyle: 'short' });
   }
 
   /** A design from a share link: an untrusted report file, so it goes through the same migration as Open. */
@@ -105,6 +148,7 @@ export class AppComponent {
     try {
       const shared = (await decodeShare(hash)) as { report?: unknown; data?: unknown } | null;
       const report = migrateDefinition(shared?.report);
+      this.remember();
       this.report.set(report);
       this.data.set(shared?.data);
       this.templateId.set('blank');
@@ -182,6 +226,7 @@ export class AppComponent {
 
   protected useTemplate(id: string): void {
     const t = TEMPLATES.find((x) => x.id === id)!;
+    this.remember();
     this.templateId.set(id);
     this.report.set(t.report());
     this.data.set(t.data);
@@ -270,6 +315,7 @@ export class AppComponent {
   private async openFile(file: File): Promise<void> {
     try {
       const { report, warnings } = importReport(await file.text(), file.name);
+      this.remember();
       this.report.set(report);
       this.data.set(undefined);
       this.importWarnings.set(warnings);

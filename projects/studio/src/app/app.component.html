@@ -18,6 +18,7 @@
   </label>
   <button type="button" (click)="save()" title="Ctrl+S">{{ t.save }}</button>
   <button type="button" (click)="share()" [title]="t.shareHint">{{ t.share }}</button>
+  <button type="button" (click)="historyOpen.set(true)" [title]="t.historyHelp">{{ t.history }}</button>
   <span class="spacer"></span>
   <a class="badge" href="https://www.npmjs.com/package/we-report-angular" target="_blank" rel="noopener" title="npm">
     <img src="https://img.shields.io/npm/v/we-report-angular.svg?label=npm" alt="npm version" height="20" />
@@ -57,6 +58,29 @@
     <div class="actions">
       <button type="button" (click)="dataDialogOpen.set(false)">{{ t.cancel }}</button>
       <button type="button" class="primary" (click)="applyData()">{{ t.apply }}</button>
+    </div>
+  </div>
+}
+
+@if (historyOpen()) {
+  <div class="backdrop" (click)="historyOpen.set(false)"></div>
+  <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="t.historyTitle" (keydown.escape)="historyOpen.set(false)">
+    <h2>{{ t.historyTitle }}</h2>
+    <p>{{ t.historyHelp }}</p>
+    @if (history().length) {
+      <ul class="history">
+        @for (entry of history(); track $index) {
+          <li>
+            <span><strong>{{ entry.name }}</strong><small>{{ historyTime(entry) }}</small></span>
+            <button type="button" (click)="restoreVersion(entry)">{{ t.restoreVersion }}</button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p>{{ t.historyEmpty }}</p>
+    }
+    <div class="actions">
+      <button type="button" (click)="historyOpen.set(false)">{{ t.cancel }}</button>
     </div>
   </div>
 }

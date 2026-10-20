@@ -26,6 +26,10 @@
 - Formulas: `RunningSum(value)` — running balance in a row, amount carried forward in a page
   footer — and `CarriedSum(value)`, the total brought forward from earlier pages in a page header.
 - Layout: an item placed up to 1 mm inside a growing text is pushed down with it.
+- Studio: *History* — the design is kept in the browser whenever a template, file or shared link
+  replaces it and every few minutes while editing (20 kept); *Restore* brings one back.
+- Studio: customer statement (sub-report), payment receipt (A5) and shipping label (100×150)
+  templates.
 - Studio: opening a shared link that fetches from a web service or database shows a warning; a
   design too large for a link says so instead of producing a link that will not open. Studio has
   unit tests (`npm test` runs them).

@@ -243,3 +243,25 @@ select:focus,
     transition: none;
   }
 }
+.history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: auto;
+}
+.history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--we-report-separator);
+}
+.history span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.history small {
+  color: var(--we-report-muted-fg);
+}
