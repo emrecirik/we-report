@@ -111,6 +111,18 @@ describe('WeReportViewerComponent', () => {
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe('%PDF-');
   });
 
+  it('makes label and receipt printer files of every page', async () => {
+    const rows = Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` }));
+    const doc = await render(listReport(), rows);
+    const zpl = await fixture.componentInstance.toZpl(203);
+    expect(zpl.match(/\^XA/g)!.length).toBe(doc.pages.length);
+    expect(zpl).toContain(`^PW${Math.round((doc.pages[0].width * 203) / 25.4)}^`);
+    expect(zpl).toMatch(/\^GFA,\d+,\d+,\d+,[0-9A-F]*[1-9A-F][0-9A-F]*\^FS/); // some black dots
+    const escpos = await fixture.componentInstance.toEscPos(384);
+    expect(Array.from(escpos.slice(0, 2))).toEqual([0x1b, 0x40]);
+    expect(escpos[6]).toBe(48); // 384 dots = 48 bytes per row
+  });
+
   it('draws a page as a PNG at the asked resolution, text where the layout put it', async () => {
     const doc = await render(listReport(), [{ name: 'WWWWWWWWWW' }]);
     const blob = await fixture.componentInstance.toPng(0, 96);

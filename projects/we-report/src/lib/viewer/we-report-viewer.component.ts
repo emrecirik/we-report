@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { allDataSources, FontRegistry, LayoutDocument, LayoutProblem, layoutReport, loadReportData, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, writeXlsx } from 'we-report-core';
+import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, toMonoBitmap, writeXlsx, zplFromBitmaps } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -56,6 +56,12 @@ import { WeReportPageComponent } from './we-report-page.component';
       <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPng()" [disabled]="!document()" [title]="strings().downloadPng + ' · ' + strings().pageNumber + ' ' + currentPage()">
         <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPng }}
       </button>
+      <select class="we-report-viewer__more" [disabled]="!document()" (change)="downloadForPrinter($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="strings().printerOutput" [title]="strings().printerOutputHint">
+        <option value="" selected>{{ strings().printerOutput }}…</option>
+        <option value="zpl">{{ strings().printerZpl }}</option>
+        <option value="escpos58">{{ strings().printerEscPos }} · 58 mm</option>
+        <option value="escpos80">{{ strings().printerEscPos }} · 80 mm</option>
+      </select>
       <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPdf()" [disabled]="!document()">
         <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPdf }}
       </button>
@@ -322,6 +328,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       gap: 3px;
       color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
+    .we-report-viewer__more,
     .we-report-viewer__params input:not([type='checkbox']),
     .we-report-viewer__params select {
       font: inherit;
@@ -634,6 +641,34 @@ export class WeReportViewerComponent {
     if (!page) throw new Error('The page is not rendered yet.');
     const canvas = await drawPage(page, dpi / 25.4, this.dom);
     return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('The image could not be made.'))), 'image/png'));
+  }
+
+  /** Every page in black and white dots, `pxPerMm(page)` dots per millimetre. */
+  private async bitmaps(pxPerMm: (pageWidth: number) => number): Promise<MonoBitmap[]> {
+    const doc = this.document();
+    if (!doc) throw new Error('The report is not rendered yet.');
+    const out: MonoBitmap[] = [];
+    for (const page of doc.pages) {
+      const canvas = await drawPage(page, pxPerMm(page.width), this.dom);
+      const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+      out.push(toMonoBitmap(pixels, canvas.width, canvas.height));
+    }
+    return out;
+  }
+
+  /** Zebra ZPL for label printers: each page as a label, at the printer's `dpi` (203 or 300). */
+  async toZpl(dpi = 203): Promise<string> {
+    return zplFromBitmaps(await this.bitmaps(() => dpi / 25.4));
+  }
+
+  /** ESC/POS for receipt printers: the page width fills `dots` (384 for 58 mm, 576 for 80 mm rolls). */
+  async toEscPos(dots = 576): Promise<Uint8Array> {
+    return escPosFromBitmaps(await this.bitmaps((width) => dots / width));
+  }
+
+  protected async downloadForPrinter(kind: string): Promise<void> {
+    if (kind === 'zpl') this.save(new Blob([await this.toZpl()], { type: 'text/plain' }), 'zpl');
+    else if (kind === 'escpos58' || kind === 'escpos80') this.save(new Blob([await this.toEscPos(kind === 'escpos58' ? 384 : 576)], { type: 'application/octet-stream' }), 'bin');
   }
 
   protected async downloadPng(): Promise<void> {

@@ -16,6 +16,9 @@
   `parameterChoices()`. The viewer now also loads the remote sources of sub-reports.
 - Designer: *Tidy up* (right-click a section or several items) — snaps to the grid, lines up items
   that are nearly in a row or column, one height per row of texts; one undo step.
+- Viewer: *Printer file* — Zebra **ZPL** (203 dpi) for label printers and **ESC/POS** (58 / 80 mm)
+  for receipt printers, the pages sent as an image so they print exactly as previewed
+  (`toZpl()`, `toEscPos()`; encoders `toMonoBitmap`, `zplFromBitmaps`, `escPosFromBitmaps` in core).
 - Viewer: **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)` in code), drawn
   from the same layout and fonts as the preview and the PDF.
 - Barcodes: the bars of linear codes end clearly above their digits (they touched when the box

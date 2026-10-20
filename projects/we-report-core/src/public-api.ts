@@ -31,6 +31,7 @@ export * from './lib/data/web-service';
 export * from './lib/data/backend-client';
 export * from './lib/definition/generate';
 export * from './lib/render/xlsx';
+export * from './lib/render/printer';
 export * from './lib/definition/check';
 export * from './lib/import/common';
 export * from './lib/import/rdlc';

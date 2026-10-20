@@ -14,6 +14,10 @@ export interface WeReportLocale {
   downloadPdf: string;
   downloadExcel: string;
   downloadPng: string;
+  printerOutput: string;
+  printerOutputHint: string;
+  printerZpl: string;
+  printerEscPos: string;
   /** `{0}` = number of pages. */
   pageCount: string;
   problems: string;
@@ -425,6 +429,10 @@ export const weReportLocaleEn: WeReportLocale = {
   downloadPdf: 'Download PDF',
   downloadExcel: 'Excel',
   downloadPng: 'PNG',
+  printerOutput: 'Printer file',
+  printerOutputHint: 'For label and receipt printers: the pages as an image the printer prints directly.',
+  printerZpl: 'Label printer (ZPL, 203 dpi)',
+  printerEscPos: 'Receipt printer (ESC/POS)',
   pageCount: '{0} page(s)',
   problems: 'Problems',
   loading: 'Preparing preview…',
@@ -866,6 +874,10 @@ export const weReportLocaleTr: WeReportLocale = {
   downloadPdf: 'PDF indir',
   downloadExcel: 'Excel',
   downloadPng: 'PNG',
+  printerOutput: 'Yazıcı dosyası',
+  printerOutputHint: 'Etiket ve fiş yazıcıları için: sayfalar yazıcının doğrudan bastığı bir görüntü olarak.',
+  printerZpl: 'Etiket yazıcısı (ZPL, 203 dpi)',
+  printerEscPos: 'Fiş yazıcısı (ESC/POS)',
   pageCount: '{0} sayfa',
   problems: 'Sorunlar',
   loading: 'Önizleme hazırlanıyor…',
