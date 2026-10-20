@@ -23,6 +23,60 @@ export interface EvaluationContext {
   currency?: string;
   /** Print time for `Today()`/`Now()`; supplied by the host so rendering stays deterministic. */
   now?: Date;
+  /** Remembers running totals for one layout run, so `RunningSum` over long lists stays linear. */
+  runningTotals?: RunningTotals;
+}
+
+/**
+ * Running totals of one layout run. Totals are prefix sums per list of rows; `chain` builds the rows
+ * of earlier pages from the previous pages' rows so each page adds only its own rows. Create one per
+ * run: cached values ignore later changes to parameters or calculated fields.
+ */
+export class RunningTotals {
+  private readonly prefixes = new WeakMap<readonly unknown[], Map<ExpressionNode, number[]>>();
+  private readonly totals = new WeakMap<readonly unknown[], Map<ExpressionNode, number>>();
+  private readonly links = new WeakMap<readonly unknown[], { prev: readonly unknown[]; added: readonly unknown[] }>();
+
+  /** `prev` followed by `added`, as one list whose totals reuse those of its parts. */
+  chain(prev: readonly unknown[], added: readonly unknown[]): readonly unknown[] {
+    const all = [...prev, ...added];
+    this.links.set(all, { prev, added });
+    return all;
+  }
+
+  /** Sum of `value` over the first `count` rows of `list`. */
+  sum(list: readonly unknown[], count: number, key: ExpressionNode, value: (row: unknown) => number): number {
+    if (count !== list.length || !this.links.has(list)) return this.prefix(list, count, key, value);
+    // Walk back to the newest chained list already added up, then add forward (no deep recursion).
+    const pending: (readonly unknown[])[] = [];
+    let at = list;
+    let total: number;
+    for (;;) {
+      const known = this.totals.get(at)?.get(key);
+      if (known !== undefined) { total = known; break; }
+      const link = this.links.get(at);
+      if (!link) { total = this.prefix(at, at.length, key, value); break; }
+      pending.push(at);
+      at = link.prev;
+    }
+    for (let i = pending.length - 1; i >= 0; i--) {
+      const added = this.links.get(pending[i])!.added;
+      total += this.prefix(added, added.length, key, value);
+      let byKey = this.totals.get(pending[i]);
+      if (!byKey) this.totals.set(pending[i], (byKey = new Map()));
+      byKey.set(key, total);
+    }
+    return total;
+  }
+
+  private prefix(list: readonly unknown[], count: number, key: ExpressionNode, value: (row: unknown) => number): number {
+    let byKey = this.prefixes.get(list);
+    if (!byKey) this.prefixes.set(list, (byKey = new Map()));
+    let sums = byKey.get(key);
+    if (!sums) byKey.set(key, (sums = [0]));
+    for (let i = sums.length - 1; i < count; i++) sums.push(sums[i] + value(list[i]));
+    return sums[count];
+  }
 }
 
 type Value = unknown;
@@ -356,8 +410,16 @@ function evalCall(node: Extract<ExpressionNode, { kind: 'call' }>, ctx: Evaluati
     if (args.length !== 1) throw new Error(`${node.name} needs 1 argument, e.g. ${node.name}([Total]).`);
     const rows = ctx.rows ?? [];
     // A row adds up to itself; a footer (no row position) adds up all its rows.
-    const upTo = name === 'carriedsum' ? [] : ctx.rowIndex === undefined ? rows : rows.slice(0, ctx.rowIndex + 1);
-    return [...(ctx.before ?? []), ...upTo]
+    const count = name === 'carriedsum' ? 0 : ctx.rowIndex === undefined ? rows.length : Math.min(ctx.rowIndex + 1, rows.length);
+    if (ctx.runningTotals) {
+      const value = (row: unknown) => {
+        const v = evalNode(args[0], { ...ctx, row });
+        return v === null || v === undefined ? 0 : num(v, node.name);
+      };
+      const before = ctx.before ?? [];
+      return ctx.runningTotals.sum(before, before.length, args[0], value) + ctx.runningTotals.sum(rows, count, args[0], value);
+    }
+    return [...(ctx.before ?? []), ...rows.slice(0, count)]
       .map((row) => evalNode(args[0], { ...ctx, row }))
       .filter((v) => v !== null && v !== undefined)
       .reduce<number>((s, v) => s + num(v, node.name), 0);

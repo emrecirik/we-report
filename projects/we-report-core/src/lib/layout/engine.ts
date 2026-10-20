@@ -15,7 +15,7 @@ import {
   SubreportControl,
   TextControl,
 } from '../definition/report-definition';
-import { evaluate, EvaluationContext } from '../expression/evaluate';
+import { evaluate, EvaluationContext, RunningTotals } from '../expression/evaluate';
 import { FontRegistry } from '../fonts/font-registry';
 import { formatValue } from '../format';
 import { barcodeItem } from './barcode';
@@ -100,6 +100,7 @@ class LayoutRun {
   private readonly imageUrls = new Set<string>();
   private readonly bookmarks: LayoutBookmark[] = [];
   /** A data bar's full value per section rows and control, worked out once (not once per row). */
+  private readonly runningTotals = new RunningTotals();
   private readonly barMax = new WeakMap<readonly unknown[], Map<string, number>>();
   private readonly reported = new Set<string>();
   private readonly geometry: PageGeometry;
@@ -468,18 +469,18 @@ class LayoutRun {
 
     const count = pages.length;
     const width = this.geometry.width;
-    const before: unknown[] = [];
+    let before: readonly unknown[] = [];
     const runLength = new Map<number, number>();
     for (const p of pages) runLength.set(p.run, (runLength.get(p.run) ?? 0) + 1);
     let runStart = 0;
     return pages.map((state, index) => {
       if (index > 0 && state.run !== pages[index - 1].run) {
         runStart = index;
-        before.length = 0;
+        before = [];
       }
       const info: PageInfo = runLength.size > 1 ? { number: index - runStart + 1, count: runLength.get(state.run)! } : { number: index + 1, count };
-      const scope: Scope = { row: state.rows[0] ?? firstRow, rows: state.rows, before: [...before] };
-      before.push(...state.rows);
+      const scope: Scope = { row: state.rows[0] ?? firstRow, rows: state.rows, before };
+      before = this.runningTotals.chain(before, state.rows);
       const items: LayoutItem[] = [];
       const pageHeight = this.geometry.height ?? margins.top + state.endY + footerHeight + margins.bottom;
       // Mirrored margins: even pages move the content over by the difference of the two margins.
@@ -1074,6 +1075,7 @@ class LayoutRun {
       rows: scope.rows,
       rowIndex: scope.rowIndex,
       before: scope.before,
+      runningTotals: this.runningTotals,
       calculated: this.calculated,
       parent: scope.parent ?? this.parent,
       params,

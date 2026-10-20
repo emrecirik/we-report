@@ -36,9 +36,24 @@ export function formatValue(value: unknown, pattern: string | undefined, options
   return String(value);
 }
 
+// Building an Intl formatter costs far more than using one; a report formats thousands of values.
+const formatters = new Map<string, Intl.NumberFormat | Intl.DateTimeFormat>();
+function numberFormat(locale: string, options: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
+  const key = 'n' + locale + JSON.stringify(options);
+  let f = formatters.get(key) as Intl.NumberFormat | undefined;
+  if (!f) formatters.set(key, (f = new Intl.NumberFormat(locale, options)));
+  return f;
+}
+function dateFormat(locale: string, options: Intl.DateTimeFormatOptions = {}): Intl.DateTimeFormat {
+  const key = 'd' + locale + JSON.stringify(options);
+  let f = formatters.get(key) as Intl.DateTimeFormat | undefined;
+  if (!f) formatters.set(key, (f = new Intl.DateTimeFormat(locale, options)));
+  return f;
+}
+
 function formatNumber(value: number, pattern: string | undefined, { locale, currency }: FormatOptions): string {
   const m = pattern ? NUMBER_PATTERN.exec(pattern) : null;
-  if (!m) return new Intl.NumberFormat(locale).format(value);
+  if (!m) return numberFormat(locale).format(value);
   const kind = m[1].toLowerCase();
   const digits = m[2] === '' ? undefined : Number(m[2]);
   switch (kind) {
@@ -47,20 +62,20 @@ function formatNumber(value: number, pattern: string | undefined, { locale, curr
       return value < 0 ? '-' + s : s;
     }
     case 'c':
-      return new Intl.NumberFormat(locale, {
+      return numberFormat(locale, {
         style: 'currency',
         currency,
         minimumFractionDigits: digits,
         maximumFractionDigits: digits,
       }).format(value);
     case 'p':
-      return new Intl.NumberFormat(locale, {
+      return numberFormat(locale, {
         style: 'percent',
         minimumFractionDigits: digits ?? 0,
         maximumFractionDigits: digits ?? 0,
       }).format(value);
     default:
-      return new Intl.NumberFormat(locale, {
+      return numberFormat(locale, {
         minimumFractionDigits: digits ?? 2,
         maximumFractionDigits: digits ?? 2,
       }).format(value);
@@ -68,18 +83,18 @@ function formatNumber(value: number, pattern: string | undefined, { locale, curr
 }
 
 function formatDate(date: Date, pattern: string | undefined, locale: string): string {
-  if (!pattern) return new Intl.DateTimeFormat(locale).format(date);
+  if (!pattern) return dateFormat(locale).format(date);
   const pad = (n: number, len = 2) => n.toString().padStart(len, '0');
   return pattern.replace(DATE_TOKENS, (token) => {
     switch (token) {
       case 'yyyy': return pad(date.getFullYear(), 4);
       case 'yy': return pad(date.getFullYear() % 100);
-      case 'MMMM': return new Intl.DateTimeFormat(locale, { month: 'long' }).format(date);
-      case 'MMM': return new Intl.DateTimeFormat(locale, { month: 'short' }).format(date);
+      case 'MMMM': return dateFormat(locale, { month: 'long' }).format(date);
+      case 'MMM': return dateFormat(locale, { month: 'short' }).format(date);
       case 'MM': return pad(date.getMonth() + 1);
       case 'M': return String(date.getMonth() + 1);
-      case 'dddd': return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
-      case 'ddd': return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date);
+      case 'dddd': return dateFormat(locale, { weekday: 'long' }).format(date);
+      case 'ddd': return dateFormat(locale, { weekday: 'short' }).format(date);
       case 'dd': return pad(date.getDate());
       case 'd': return String(date.getDate());
       case 'HH': return pad(date.getHours());

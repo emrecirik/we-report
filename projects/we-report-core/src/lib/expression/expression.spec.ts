@@ -1,9 +1,26 @@
 import { amountInWords, numberToWords } from './words';
-import { evaluate, EXPRESSION_FUNCTIONS, implementedFunctionNames } from './evaluate';
+import { evaluate, EXPRESSION_FUNCTIONS, implementedFunctionNames, RunningTotals } from './evaluate';
 import { ExpressionError, parseExpression } from './parser';
 
 describe('expression language', () => {
   const row = { Name: 'çağrı', Price: 12.5, Qty: 4, Customer: { City: 'İzmir' }, Missing: null, Date: '2026-03-07' };
+
+  it('gives the same running totals with remembered sums, also over chained earlier pages', () => {
+    const rows = [1, 2, null, 4, 5].map((v) => ({ v }));
+    const page1 = rows.slice(0, 2);
+    const page2 = rows.slice(2, 4);
+    const memo = new RunningTotals();
+    const before = memo.chain(memo.chain([], page1), page2);
+    for (const runningTotals of [undefined, memo]) {
+      const sums = rows.map((r, i) => evaluate('RunningSum([v])', { row: r, rows, rowIndex: i, runningTotals }));
+      expect(sums).toEqual([1, 3, 3, 7, 12]);
+      expect(evaluate('RunningSum([v])', { rows: [rows[4]], before, runningTotals })).toBe(12);
+      expect(evaluate('CarriedSum([v])', { rows: [rows[4]], before, runningTotals })).toBe(7);
+    }
+    // A new run (new memo) sees a changed parameter.
+    expect(evaluate('RunningSum([v] * [?k])', { rows, params: { k: 2 }, runningTotals: memo })).toBe(24);
+    expect(evaluate('RunningSum([v] * [?k])', { rows, params: { k: 3 }, runningTotals: new RunningTotals() })).toBe(36);
+  });
 
   it('moves dates by months and years and counts whole days, months and years between them', () => {
     const ev = (e: string, row: unknown = {}) => evaluate(e, { row });

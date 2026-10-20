@@ -84,6 +84,16 @@
 - The viewer loads the remote sources of sub-reports.
 - `hide` input: leave toolbar parts out (`print`, `pdf`, `excel`, `png`, `more`, `search`,
   `thumbnails`, `map`). The document-map button also shows on single-page reports.
+- A page wider than the preview (zoomed in, landscape) can be scrolled to its left edge; it was
+  centred with its left part out of reach.
+- `WeReportLocale` has new keys; a custom locale that spreads an existing one
+  (`{ ...weReportLocaleEn, … }`, see docs/localization.md) gets them automatically.
+
+### Speed
+
+- Long reports lay out about twice as fast: number and date formatters are reused, and running
+  totals (`RunningSum`, `CarriedSum`) add each row once instead of re-adding all rows before it
+  (`EvaluationContext.runningTotals`, `RunningTotals`). 20 000 grouped rows: 3.5 s → 1.8 s.
 
 ### Designer
 

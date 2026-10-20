@@ -373,8 +373,12 @@ import { WeReportPageComponent } from './we-report-page.component';
       padding: 32px;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       gap: 32px;
+    }
+    /* Auto margins centre a page but, unlike align-items: center, never push a wide one out of reach. */
+    .we-report-viewer__scroll > * {
+      margin-inline: auto;
     }
     .we-report-viewer__page {
       border-radius: 2px;
