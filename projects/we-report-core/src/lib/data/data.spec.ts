@@ -1,6 +1,7 @@
 import { createBlankReport } from '../definition/blank-report';
 import { csvToObjects, detectDelimiter, parseCsv } from './csv';
-import { readPath, resolveReportRows } from './data-source';
+import { ReportDefinition } from '../definition/report-definition';
+import { parameterChoices, readPath, resolveReportRows } from './data-source';
 import { inferSchema, inferValue } from './infer';
 
 describe('csv', () => {
@@ -82,5 +83,38 @@ describe('resolveReportRows', () => {
 
   it('does not walk prototypes', () => {
     expect(readPath({}, 'constructor.name')).toBeUndefined();
+  });
+});
+
+describe('parameter choices', () => {
+  const report = (): ReportDefinition => ({
+    ...createBlankReport(),
+    dataSources: [
+      { id: 'c', name: 'Customers', kind: 'json', data: [{ id: 2, name: 'Ege' }, { id: 1, name: 'Anadolu' }, { id: 2, name: 'Ege again' }, { id: null }] },
+      { id: 'db', name: 'Db', kind: 'database', connectionId: 'x', sample: [{ city: 'Ankara' }] },
+    ],
+  });
+
+  it('offers fixed values, each once', () => {
+    expect(parameterChoices(report(), { name: 'p', type: 'string', choices: { values: ['A', 'B', 'A', ''] } })).toEqual([
+      { value: 'A', label: 'A' },
+      { value: 'B', label: 'B' },
+    ]);
+  });
+
+  it('offers the values of a field of a data source, labelled by another field', () => {
+    const p = { name: 'p', type: 'number' as const, choices: { dataSourceId: 'c', valueField: 'id', labelField: 'name' } };
+    expect(parameterChoices(report(), p)).toEqual([
+      { value: 2, label: 'Ege' },
+      { value: 1, label: 'Anadolu' },
+    ]);
+  });
+
+  it('uses loaded responses over samples, and nothing for an unknown source or no list', () => {
+    const p = { name: 'p', type: 'string' as const, choices: { dataSourceId: 'db', valueField: 'city' } };
+    expect(parameterChoices(report(), p).map((c) => c.value)).toEqual(['Ankara']);
+    expect(parameterChoices(report(), p, { db: [{ city: 'İzmir' }] }).map((c) => c.value)).toEqual(['İzmir']);
+    expect(parameterChoices(report(), { name: 'p', type: 'string', choices: { dataSourceId: 'nope', valueField: 'x' } })).toEqual([]);
+    expect(parameterChoices(report(), { name: 'p', type: 'string' })).toEqual([]);
   });
 });

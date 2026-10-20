@@ -5,10 +5,12 @@ import {
   DataSourceDefinition,
   fetchWebService,
   findListPaths,
+  inferSchema,
   ParameterType,
   ReportParameter,
   resolveParameters,
   sourceValue,
+  toRows,
   WebServiceDataSource,
 } from 'we-report-core';
 import { WeReportLocale } from '../we-report-locale';
@@ -68,6 +70,39 @@ export class DataSourcesDialogComponent {
   protected readonly testing = signal(false);
   protected readonly testResult = signal<{ ok: boolean; message: string } | null>(null);
   protected readonly types: ParameterType[] = ['string', 'number', 'date', 'boolean'];
+
+  /** Plain fields of every source, offered as a parameter's list ("source|field"). */
+  protected readonly choiceFields = computed(() =>
+    this.report().dataSources.flatMap((s) =>
+      inferSchema(toRows(sourceValue(s)).slice(0, 50))
+        .filter((f) => f.type !== 'object' && f.type !== 'array' && f.type !== 'image')
+        .map((f) => ({ key: `${s.id}|${f.name}`, label: `${s.name} › ${f.name}` })),
+    ),
+  );
+
+  protected choicesText(p: ReportParameter): string {
+    return p.choices?.values?.join(', ') ?? '';
+  }
+
+  protected choicesKey(p: ReportParameter): string {
+    return p.choices?.dataSourceId && p.choices.valueField ? `${p.choices.dataSourceId}|${p.choices.valueField}` : '';
+  }
+
+  /** A typed list ("A, B, C") or a data field ("source|field"); empty removes the list. */
+  protected setChoices(index: number, kind: 'values' | 'field', value: string): void {
+    this.state.update((d) => {
+      const p = d.parameters?.[index];
+      if (!p) return;
+      if (kind === 'values') {
+        const values = value.split(',').map((v) => v.trim()).filter(Boolean);
+        p.choices = values.length ? { values: p.type === 'number' && values.every((v) => !isNaN(Number(v))) ? values.map(Number) : values } : undefined;
+      } else {
+        const [dataSourceId, valueField] = value.split('|');
+        p.choices = dataSourceId && valueField ? { dataSourceId, valueField } : undefined;
+      }
+      if (!p.choices) delete p.choices;
+    }, `param-${index}-choices-${kind}`);
+  }
 
   protected add(kind: DataSourceDefinition['kind']): void {
     const id = this.uniqueSourceId();

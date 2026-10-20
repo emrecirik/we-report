@@ -65,6 +65,25 @@ describe('WeReportViewerComponent', () => {
     expect(fixture.nativeElement.querySelector('.we-report-viewer__pagebox').value).toBe('1');
   });
 
+  it('offers a parameter list from a data field and reruns with the picked value', async () => {
+    const report = listReport();
+    report.dataSources.push({ id: 'cities', name: 'Cities', kind: 'json', data: [{ code: 6, name: 'Ankara' }, { code: 35, name: 'İzmir' }] });
+    report.parameters = [{ name: 'city', type: 'number', defaultValue: 6, choices: { dataSourceId: 'cities', valueField: 'code', labelField: 'name' } }];
+    report.bands[1].controls[0] = { id: 'n', type: 'text', x: 0, y: 1, width: 80, height: 6, text: { expression: "'City ' + [?city]" } };
+    await render(report, [{ name: 'x' }]);
+    const select = fixture.nativeElement.querySelector('.we-report-viewer__params select') as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.textContent)).toEqual(['—', 'Ankara', 'İzmir']);
+    expect(select.value).toBe('6');
+    const rendered = new Promise<LayoutDocument>((resolve) => fixture.componentInstance.rendered.subscribe(resolve));
+    select.value = '35';
+    select.dispatchEvent(new Event('change'));
+    (fixture.nativeElement.querySelector('.we-report-viewer__params button[type=submit]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const doc = await rendered;
+    const texts = doc.pages[0].items.filter((i) => i.kind === 'text').map((t) => (t as { lines: { text: string }[] }).lines[0]?.text);
+    expect(texts).toContain('City 35');
+  });
+
   it('uses the prefixed font family so an installed font cannot replace the measured one', async () => {
     await render(listReport(), [{ name: 'x' }]);
     const text = fixture.nativeElement.querySelector('svg.we-report-page text') as SVGTextElement;

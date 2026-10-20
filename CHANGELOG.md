@@ -11,6 +11,9 @@
 - Layout: a section taller than a page now continues on the next pages, cut between items and
   text lines (boxes and lines split, pictures never), instead of running off the page. Such a
   section starts right after the previous one rather than on a new page.
+- Parameters can offer a list (`choices`): fixed values, or each value of a data field with an
+  optional label field (a customer's name for its id). The viewer shows a drop-down; core exports
+  `parameterChoices()`. The viewer now also loads the remote sources of sub-reports.
 - Formulas: `RunningSum(value)` — running balance in a row, amount carried forward in a page
   footer — and `CarriedSum(value)`, the total brought forward from earlier pages in a page header.
 - Layout: an item placed up to 1 mm inside a growing text is pushed down with it.

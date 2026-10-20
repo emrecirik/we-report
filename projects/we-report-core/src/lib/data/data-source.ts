@@ -1,4 +1,4 @@
-import { DataSourceDefinition, ReportDefinition } from '../definition/report-definition';
+import { DataSourceDefinition, ReportDefinition, ReportParameter } from '../definition/report-definition';
 import { csvToObjects } from './csv';
 
 /** Reads a dotted path (`data.items`) on own properties only. */
@@ -66,6 +66,33 @@ export function sourceValue(source: DataSourceDefinition, loaded?: Record<string
     case 'database':
       return loaded && Object.prototype.hasOwnProperty.call(loaded, source.id) ? loaded[source.id] : source.sample;
   }
+}
+
+/** Choice lists are capped: a list longer than this is no use in a drop-down. */
+const MAX_CHOICES = 1000;
+
+/**
+ * The options of a parameter's list, each value once and in order: its fixed values, or the
+ * values of a field of a data source (loaded web-service/database responses, else their sample).
+ * Empty when the parameter has no list.
+ */
+export function parameterChoices(definition: ReportDefinition, parameter: ReportParameter, sources?: Record<string, unknown>): { value: string | number; label: string }[] {
+  const choices = parameter.choices;
+  const out = new Map<string | number, string>();
+  if (Array.isArray(choices?.values)) {
+    for (const v of choices.values) if ((typeof v === 'string' && v !== '') || typeof v === 'number') out.set(v, String(v));
+  } else if (choices?.dataSourceId && choices.valueField) {
+    const source = definition.dataSources.find((s) => s.id === choices.dataSourceId);
+    for (const row of source ? toRows(sourceValue(source, sources)) : []) {
+      const value = readPath(row, choices.valueField);
+      if ((typeof value !== 'string' || value === '') && typeof value !== 'number') continue;
+      if (out.has(value)) continue;
+      const label = choices.labelField ? readPath(row, choices.labelField) : undefined;
+      out.set(value, label === undefined || label === null || label === '' ? String(value) : String(label));
+      if (out.size >= MAX_CHOICES) break;
+    }
+  }
+  return [...out].slice(0, MAX_CHOICES).map(([value, label]) => ({ value, label }));
 }
 
 /** Dotted paths of the lists inside a value — candidates for "rows come from". */

@@ -345,6 +345,18 @@ export interface ReportParameter {
   type: ParameterType;
   label?: string;
   defaultValue?: string | number | boolean | null;
+  /** Offer a list to pick from instead of a free entry. */
+  choices?: ParameterChoices;
+}
+
+/** The values a parameter offers: a fixed list, or each value of a field of a data source's rows. */
+export interface ParameterChoices {
+  values?: (string | number)[];
+  dataSourceId?: string;
+  /** Field holding the value, e.g. `id`. */
+  valueField?: string;
+  /** Field shown for it, e.g. `name`; the value when omitted. */
+  labelField?: string;
 }
 
 /** Large text across every page behind the content, e.g. "DRAFT" or "PAID". */

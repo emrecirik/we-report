@@ -36,6 +36,17 @@
           <input [value]="p.label ?? ''" (input)="setParameter(i, 'label', $any($event.target).value)" [placeholder]="s.parameterLabel" />
           <input [value]="p.defaultValue ?? ''" (input)="setParameter(i, 'defaultValue', $any($event.target).value)" [placeholder]="s.defaultValue" />
           <button type="button" class="dsd__icon" (click)="removeParameter(i)" [attr.aria-label]="s.delete">×</button>
+          @if (!choicesKey(p)) {
+            <input class="dsd__choices" [value]="choicesText(p)" (change)="setChoices(i, 'values', $any($event.target).value)" [placeholder]="s.parameterChoices" />
+          }
+          @if (!choicesText(p) && choiceFields().length) {
+            <select class="dsd__choices" (change)="setChoices(i, 'field', $any($event.target).value)" [attr.aria-label]="s.parameterChoicesFrom">
+              <option value="" [selected]="!choicesKey(p)">{{ s.parameterChoicesFrom }}: {{ s.parameterNoList }}</option>
+              @for (f of choiceFields(); track f.key) {
+                <option [value]="f.key" [selected]="f.key === choicesKey(p)">{{ f.label }}</option>
+              }
+            </select>
+          }
           <code class="dsd__use">[?{{ p.name }}] · {{ '{{' }}{{ p.name }}{{ '}}' }}</code>
         </div>
       }

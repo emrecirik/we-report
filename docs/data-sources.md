@@ -61,3 +61,15 @@ Values asked before the report runs: a date range, a customer, "only unpaid". De
 
 The viewer shows a parameter bar; the report runs with the defaults and again with
 **Run report**. Your app can pass values: `<we-report-viewer [parameters]="{ from: '2026-01-01' }">`.
+
+A parameter can offer a **list** instead of a free entry: type the choices (`Cash, Card, Transfer`)
+or pick a data field to list each of its values once. In the file:
+
+```json
+{ "name": "customer", "type": "number",
+  "choices": { "dataSourceId": "customers", "valueField": "id", "labelField": "name" } }
+```
+
+`labelField` shows the name while the value (the id) goes into formulas and queries. Lists from a
+web-service or database source fill in once it has loaded (its saved sample until then);
+`parameterChoices()` in core returns the same options for your own UI.

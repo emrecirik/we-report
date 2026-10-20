@@ -181,6 +181,9 @@ export interface WeReportLocale {
   parameterType: string;
   parameterLabel: string;
   defaultValue: string;
+  parameterChoices: string;
+  parameterChoicesFrom: string;
+  parameterNoList: string;
   addParameter: string;
   sourceName: string;
   wholeData: string;
@@ -572,6 +575,9 @@ export const weReportLocaleEn: WeReportLocale = {
   parameterType: 'Type',
   parameterLabel: 'Label shown to the user',
   defaultValue: 'Default value',
+  parameterChoices: 'Choices: A, B, C (optional)',
+  parameterChoicesFrom: 'List from a data field',
+  parameterNoList: 'Free entry',
   addParameter: 'Add parameter',
   sourceName: 'Name',
   wholeData: '(the whole data)',
@@ -998,6 +1004,9 @@ export const weReportLocaleTr: WeReportLocale = {
   parameterType: 'Tür',
   parameterLabel: 'Kullanıcıya görünen ad',
   defaultValue: 'Varsayılan değer',
+  parameterChoices: 'Seçenekler: A, B, C (isteğe bağlı)',
+  parameterChoicesFrom: 'Listeyi bir veri alanından al',
+  parameterNoList: 'Serbest giriş',
   addParameter: 'Parametre ekle',
   sourceName: 'Ad',
   wholeData: '(verinin tamamı)',

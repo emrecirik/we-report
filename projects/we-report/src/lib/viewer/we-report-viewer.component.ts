@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { FontRegistry, LayoutDocument, LayoutProblem, layoutReport, loadReportData, renderPdf, ReportDefinition, ReportParameter, reportTable, writeXlsx } from 'we-report-core';
+import { allDataSources, FontRegistry, LayoutDocument, LayoutProblem, layoutReport, loadReportData, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, writeXlsx } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -61,6 +61,15 @@ import { WeReportPageComponent } from './we-report-page.component';
         @for (p of report().parameters!; track p.name) {
           <label>
             <span>{{ p.label || p.name }}</span>
+            @let options = choices()[p.name];
+            @if (options?.length) {
+              <select (change)="setParam(p, $any($event.target).value)">
+                <option value="" [selected]="(paramValue(p) ?? '') === ''">—</option>
+                @for (o of options; track o.value) {
+                  <option [value]="o.value" [selected]="'' + o.value === '' + (paramValue(p) ?? '')">{{ o.label }}</option>
+                }
+              </select>
+            } @else {
             @switch (p.type) {
               @case ('boolean') {
                 <input type="checkbox" [checked]="paramValue(p) === true" (change)="setParam(p, $any($event.target).checked)" />
@@ -74,6 +83,7 @@ import { WeReportPageComponent } from './we-report-page.component';
               @default {
                 <input [value]="paramValue(p) ?? ''" (input)="setParam(p, $any($event.target).value)" />
               }
+            }
             }
           </label>
         }
@@ -308,7 +318,8 @@ import { WeReportPageComponent } from './we-report-page.component';
       gap: 3px;
       color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
     }
-    .we-report-viewer__params input:not([type='checkbox']) {
+    .we-report-viewer__params input:not([type='checkbox']),
+    .we-report-viewer__params select {
       font: inherit;
       font-size: 13px;
       padding: 5px 8px;
@@ -393,6 +404,13 @@ export class WeReportViewerComponent {
   /** Values typed into the parameter bar, applied with "Run report". */
   private readonly draftParams = signal<Record<string, unknown>>({});
   private readonly appliedParams = signal<Record<string, unknown>>({});
+  /** Web-service and database responses of the last run, for parameter lists drawn from them. */
+  private readonly loadedSources = signal<Record<string, unknown>>({});
+  protected readonly choices = computed(() => {
+    const report = this.report();
+    const sources = this.loadedSources();
+    return Object.fromEntries((report.parameters ?? []).map((p) => [p.name, parameterChoices(report, p, sources)]));
+  });
   protected readonly pageLabel = computed(() => {
     const doc = this.document();
     return doc ? this.strings().pageCount.replace('{0}', String(doc.pages.length)) : '';
@@ -560,11 +578,12 @@ export class WeReportViewerComponent {
       this.fonts ??= await this.fontsService.ready();
       // Host data replaces the bound source, so only call web services when there is none.
       const loaded =
-        data === undefined && report.dataSources.some((s) => s.kind === 'webService' || s.kind === 'database')
+        data === undefined && allDataSources(report).some((s) => s.kind === 'webService' || s.kind === 'database')
           ? await loadReportData(report, { params, fetch: this.fetchFn(), backendUrl: this.backend.url() || undefined })
           : { sources: {}, errors: [], warnings: [] };
       if (run !== this.run) return;
       this.lastInput = { data, sources: loaded.sources, params, now };
+      this.loadedSources.set(loaded.sources);
       this.loadErrors.set(loaded.errors.map((e) => e.message));
       this.loadWarnings.set(loaded.warnings.map((e) => e.message));
       const doc = layoutReport(report, {
