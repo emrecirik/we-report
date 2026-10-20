@@ -491,6 +491,15 @@ export class WeReportDesignerComponent {
     this.state.updateControls([...sizes.keys()], (c) => Object.assign(c, sizes.get(c.id)));
   }
 
+  protected tidySelection(): void {
+    this.state.tidy(this.state.selectedControls().map((c) => c.id), this.gridSize());
+  }
+
+  protected tidyBand(bandId: string): void {
+    const band = this.state.report().bands.find((b) => b.id === bandId);
+    if (band) this.state.tidy(band.controls.map((c) => c.id), this.gridSize());
+  }
+
   /** Shrinks (or grows) a section to just below its lowest item. */
   protected fitBand(bandId: string | null): void {
     this.state.update((d) => {

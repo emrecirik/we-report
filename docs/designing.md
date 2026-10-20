@@ -103,7 +103,8 @@ The designer behaves like a desktop report designer:
 - **Move and size** — drag (items snap to the grid and to other items; hold Alt to move freely),
   arrows move by 1 mm (Shift: 5 mm, Alt: 0.1 mm), Ctrl+arrows resize. While moving, the distance
   to the nearest items is shown. Ctrl+drag leaves a copy behind. The grid menu sets 0.5–5 mm or no
-  grid.
+  grid. *Tidy up* (right-click a section or a selection) puts items on the grid, lines up those
+  that are nearly in a row or column and gives the texts of a row one height.
 - **Format** — the format bar sets font, size, bold/italic/underline (Ctrl+B/I/U), alignment,
   colours and borders for everything selected; the brush copies one item's look to the next item
   you click.

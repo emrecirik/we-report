@@ -301,6 +301,52 @@ export class DesignerState {
     });
   }
 
+  /**
+   * "Tidy up": puts the items on the grid (`step` mm), lines up those that are nearly in a row
+   * (same top) or a column (same left), and gives the texts of a row one height. One undo step.
+   */
+  tidy(ids: string[], step: number): void {
+    const grid = step > 0 ? step : 1;
+    const near = Math.max(2, grid);
+    const snap = (v: number) => round(Math.round(v / grid) * grid);
+    /** Clusters values that lie within `near` of the cluster's first one; maps each id to its cluster's smallest value. */
+    const cluster = (items: { id: string; v: number }[]) => {
+      const out = new Map<string, number>();
+      const sorted = [...items].sort((a, b) => a.v - b.v);
+      for (let i = 0; i < sorted.length; ) {
+        let j = i;
+        while (j < sorted.length && sorted[j].v - sorted[i].v <= near) j++;
+        for (const it of sorted.slice(i, j)) out.set(it.id, snap(sorted[i].v));
+        i = j;
+      }
+      return out;
+    };
+    const wanted = new Set(ids);
+    const target = new Map<string, { x: number; y: number; width: number; height: number }>();
+    for (const band of this.report().bands) {
+      const controls = band.controls.filter((c) => wanted.has(c.id));
+      if (!controls.length) continue;
+      const tops = cluster(controls.map((c) => ({ id: c.id, v: c.y })));
+      const lefts = cluster(controls.map((c) => ({ id: c.id, v: c.x })));
+      // Texts sharing a top share the tallest (snapped) height.
+      const rowHeight = new Map<number, number>();
+      for (const c of controls) if (c.type === 'text') rowHeight.set(tops.get(c.id)!, Math.max(rowHeight.get(tops.get(c.id)!) ?? 0, c.height));
+      for (const c of controls) {
+        const thin = c.type === 'line';
+        target.set(c.id, {
+          x: lefts.get(c.id)!,
+          y: tops.get(c.id)!,
+          width: thin && c.direction === 'vertical' ? c.width : Math.max(grid, snap(c.width)),
+          height: thin ? c.height : Math.max(grid, snap(c.type === 'text' ? rowHeight.get(tops.get(c.id)!)! : c.height)),
+        });
+      }
+    }
+    this.updateControls([...target.keys()], (c, band) => {
+      Object.assign(c, target.get(c.id));
+      band.height = Math.max(band.height, round(c.y + c.height));
+    });
+  }
+
   /** Equal gaps between three or more controls, keeping the outermost two in place. */
   distribute(axis: 'h' | 'v'): void {
     const controls = this.selectedControls();

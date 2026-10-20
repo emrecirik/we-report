@@ -318,6 +318,8 @@ export const weReportLocaleDe: WeReportLocale = {
   stretch: 'Bis zum unteren Rand verlängern, wenn der Bereich wächst',
   stretchHint: 'Für Zellrahmen und Spaltenlinien neben einem wachsenden Text.',
   fitToText: 'Größe an Text anpassen',
+  tidyUp: 'Aufräumen',
+  tidyUpHint: 'Legt die Elemente aufs Raster und richtet fast gleiche Zeilen und Spalten aus.',
   collapseBand: 'Bereich einklappen',
   expandBand: 'Bereich ausklappen',
   groupByThis: 'Zeilen nach diesem Wert gruppieren',

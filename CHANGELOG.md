@@ -14,6 +14,8 @@
 - Parameters can offer a list (`choices`): fixed values, or each value of a data field with an
   optional label field (a customer's name for its id). The viewer shows a drop-down; core exports
   `parameterChoices()`. The viewer now also loads the remote sources of sub-reports.
+- Designer: *Tidy up* (right-click a section or several items) — snaps to the grid, lines up items
+  that are nearly in a row or column, one height per row of texts; one undo step.
 - Viewer: **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)` in code), drawn
   from the same layout and fonts as the preview and the PDF.
 - Barcodes: the bars of linear codes end clearly above their digits (they touched when the box

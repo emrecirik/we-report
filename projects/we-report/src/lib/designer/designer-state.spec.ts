@@ -30,6 +30,24 @@ describe('DesignerState', () => {
     expect(state.report().bands[1].controls[0].id).toBe('a');
   });
 
+  it('tidies up: grid, rows, columns and one height per row of texts, in one undo step', () => {
+    state.addControls('detail', [
+      { ...text('a'), x: 0.4, y: 1.2, width: 30.3, height: 5.2 },
+      { ...text('b'), x: 40.6, y: 2.4, width: 29.6, height: 6.1 },
+      { ...text('c'), x: 1.3, y: 12.7, width: 30, height: 5 },
+      { id: 'l', type: 'line', x: 0.2, y: 20.3, width: 70.4, height: 0.6, direction: 'horizontal', lineWidth: 0.3 },
+    ]);
+    const before = state.report();
+    state.tidy(['a', 'b', 'c', 'l'], 1);
+    const [a, b, c, l] = state.report().bands[1].controls;
+    expect([a.x, a.y, a.width, a.height]).toEqual([0, 1, 30, 6]); // tallest of its row, snapped
+    expect([b.x, b.y, b.width, b.height]).toEqual([41, 1, 30, 6]);
+    expect([c.x, c.y]).toEqual([0, 13]); // same column as a
+    expect([l.x, l.y, l.height]).toEqual([0, 20, 0.6]); // a line keeps its thickness
+    state.undo();
+    expect(state.report()).toBe(before);
+  });
+
   it('coalesces a burst of edits with the same key into one undo step', () => {
     state.addControls('detail', [text('a')]);
     for (let i = 1; i <= 5; i++) state.updateControls(['a'], (c) => (c.x = i), 'drag1');

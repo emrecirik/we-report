@@ -318,6 +318,8 @@ export const weReportLocaleFr: WeReportLocale = {
   stretch: 'Prolonger jusqu’en bas quand la section s’agrandit',
   stretchHint: 'Pour les bordures de cellule et les lignes de colonne à côté d’un texte qui s’agrandit.',
   fitToText: 'Ajuster la taille au texte',
+  tidyUp: 'Ranger',
+  tidyUpHint: 'Place les éléments sur la grille et aligne ceux qui sont presque sur une même ligne ou colonne.',
   collapseBand: 'Réduire la section',
   expandBand: 'Développer la section',
   groupByThis: 'Regrouper les lignes par cette valeur',

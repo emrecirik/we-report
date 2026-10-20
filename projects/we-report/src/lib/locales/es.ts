@@ -318,6 +318,8 @@ export const weReportLocaleEs: WeReportLocale = {
   stretch: 'Extender hasta abajo cuando la sección crece',
   stretchHint: 'Para bordes de celda y líneas de columna junto a un texto que crece.',
   fitToText: 'Ajustar el tamaño al texto',
+  tidyUp: 'Ordenar',
+  tidyUpHint: 'Coloca los elementos en la cuadrícula y alinea los que están casi en la misma fila o columna.',
   collapseBand: 'Contraer la sección',
   expandBand: 'Expandir la sección',
   groupByThis: 'Agrupar filas por este valor',

@@ -303,6 +303,8 @@ export interface WeReportLocale {
   stretch: string;
   stretchHint: string;
   fitToText: string;
+  tidyUp: string;
+  tidyUpHint: string;
   collapseBand: string;
   expandBand: string;
   groupByThis: string;
@@ -698,6 +700,8 @@ export const weReportLocaleEn: WeReportLocale = {
   stretch: 'Extend to the bottom when the section grows',
   stretchHint: 'For cell borders and column lines next to a text that grows.',
   fitToText: 'Fit size to text',
+  tidyUp: 'Tidy up',
+  tidyUpHint: 'Puts the items on the grid and lines up those that are nearly in a row or a column.',
   collapseBand: 'Collapse section',
   expandBand: 'Expand section',
   groupByThis: 'Group rows by this value',
@@ -1128,6 +1132,8 @@ export const weReportLocaleTr: WeReportLocale = {
   stretch: 'Bölüm uzayınca alta kadar uzat',
   stretchHint: 'Uzayan bir metnin yanındaki hücre kenarlıkları ve sütun çizgileri için.',
   fitToText: 'Boyutu metne sığdır',
+  tidyUp: 'Toparla',
+  tidyUpHint: 'Öğeleri ızgaraya oturtur, neredeyse aynı satır ya da sütunda olanları hizalar.',
   collapseBand: 'Bölümü daralt',
   expandBand: 'Bölümü genişlet',
   groupByThis: 'Satırları bu değere göre grupla',

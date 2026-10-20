@@ -249,6 +249,9 @@
         <button type="button" role="menuitem" (click)="menu(fitToText.bind(this))"><span [innerHTML]="'sameWidth' | weReportIcon"></span>{{ s.fitToText }}</button>
       }
       <button type="button" role="menuitem" (click)="menu(state.duplicateSelection.bind(state))"><span [innerHTML]="'copy' | weReportIcon"></span>{{ s.duplicate }}<kbd>Ctrl+D</kbd></button>
+      @if (state.selectedControls().length > 1) {
+        <button type="button" role="menuitem" (click)="menu(tidySelection.bind(this))" [title]="s.tidyUpHint"><span [innerHTML]="'wand' | weReportIcon"></span>{{ s.tidyUp }}</button>
+      }
       <hr />
       <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'front'))"><span [innerHTML]="'bringToFront' | weReportIcon"></span>{{ s.bringToFront }}</button>
       <button type="button" role="menuitem" (click)="menu(state.arrange.bind(state, 'back'))"><span [innerHTML]="'sendToBack' | weReportIcon"></span>{{ s.sendToBack }}</button>
@@ -261,6 +264,9 @@
         <button type="button" role="menuitem" (click)="menu(state.toggleCollapsed.bind(state, m.bandId))"><span [innerHTML]="'fitHeight' | weReportIcon"></span>{{ state.collapsed().has(m.bandId) ? s.expandBand : s.collapseBand }}</button>
       }
       <button type="button" role="menuitem" (click)="menu(fitBand.bind(this, m.bandId))"><span [innerHTML]="'fitHeight' | weReportIcon"></span>{{ s.fitBandToContent }}</button>
+      @if (m.bandId) {
+        <button type="button" role="menuitem" (click)="menu(tidyBand.bind(this, m.bandId))" [title]="s.tidyUpHint"><span [innerHTML]="'wand' | weReportIcon"></span>{{ s.tidyUp }}</button>
+      }
       @if (state.selectedBand()?.kind !== 'detail') {
         <hr />
         <button type="button" role="menuitem" class="wd__danger" (click)="menu(state.deleteSelection.bind(state))"><span [innerHTML]="'trash' | weReportIcon"></span>{{ s.removeBand }}</button>
