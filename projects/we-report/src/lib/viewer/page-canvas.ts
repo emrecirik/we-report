@@ -26,14 +26,18 @@ export async function pictureDataUri(blob: Blob, doc: Document = document): Prom
       reader.readAsDataURL(b);
     });
   if (blob.type === 'image/png' || blob.type === 'image/jpeg') return read(blob);
-  const img = await loadImage(URL.createObjectURL(blob));
-  if (!img) throw new Error('Not a picture.');
-  const canvas = doc.createElement('canvas');
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-  canvas.getContext('2d')!.drawImage(img, 0, 0);
-  URL.revokeObjectURL(img.src);
-  return canvas.toDataURL('image/png');
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await loadImage(url);
+    if (!img) throw new Error('Not a picture.');
+    const canvas = doc.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d')!.drawImage(img, 0, 0);
+    return canvas.toDataURL('image/png');
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /**

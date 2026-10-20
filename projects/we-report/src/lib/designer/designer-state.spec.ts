@@ -46,6 +46,11 @@ describe('DesignerState', () => {
     expect([l.x, l.y, l.height]).toEqual([0, 20, 0.6]); // a line keeps its thickness
     state.undo();
     expect(state.report()).toBe(before);
+
+    // On a 5 mm grid, rows a grid step apart stay apart.
+    state.addControls('detail', [{ ...text('r1'), y: 0 }, { ...text('r2'), y: 5 }]);
+    state.tidy(['r1', 'r2'], 5);
+    expect(state.report().bands[1].controls.filter((c) => c.id.startsWith('r')).map((c) => c.y)).toEqual([0, 5]);
   });
 
   it('coalesces a burst of edits with the same key into one undo step', () => {

@@ -29,6 +29,8 @@ import { AlignEdge, DesignerState } from './designer-state';
 import { columnOf, deleteColumn, deleteRow, insertColumn, insertRow, mergeRight, splitCell, syncSize } from './table-ops';
 import { buildCondition, CONDITION_OPS, parseCondition, SimpleCondition } from './formatting-rule';
 
+let panelCount = 0;
+
 const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
   { value: '', key: 'formatNone' },
   { value: 'n0', key: 'formatNumber0' },
@@ -101,6 +103,8 @@ export class PropertyPanelComponent {
   readonly lists = input<string[]>([]);
 
   protected readonly state = inject(DesignerState);
+  /** Prefix of this panel's datalist ids: two designers may share a page. */
+  protected readonly listId = `we-report-pp-${++panelCount}`;
   protected readonly papers = PAPER_SIZES;
   protected readonly symbologies = BARCODE_SYMBOLOGIES;
   protected readonly formats = FORMATS;

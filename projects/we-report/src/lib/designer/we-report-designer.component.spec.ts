@@ -43,6 +43,11 @@ describe('WeReportDesignerComponent', () => {
     // The inner designer shows the first order where the formula is.
     expect(dialog.querySelector('[data-control-id="no"]')?.textContent).toContain('S-1');
 
+    // Keys that reach the outer designer while the window is open do not touch the outer page.
+    state.selection.set({ kind: 'controls', ids: ['sub'] });
+    el().dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    expect(state.report().bands[1].controls.length).toBe(1);
+
     const innerState = fixture.debugElement.queryAll((d) => d.name === 'we-report-designer')[0].injector.get(DesignerState);
     innerState.updateControls(['no'], (c) => (c.x = 12));
     innerState.updateControls(['no'], (c) => (c.width = 40));
@@ -52,6 +57,14 @@ describe('WeReportDesignerComponent', () => {
     expect(innerState.canUndo()).toBeTrue(); // the inner designer was not reloaded
     state.undo();
     expect(sub().report.bands[0].controls[0]).toEqual(jasmine.objectContaining({ x: 0, width: 30 }));
+
+    // The window closes when its sub-report is gone.
+    state.subreportOpen.set(null);
+    state.selection.set({ kind: 'controls', ids: ['sub'] });
+    state.deleteSelection();
+    state.subreportOpen.set('sub');
+    fixture.detectChanges();
+    expect(state.subreportOpen()).toBeNull();
   });
 
   it('warns about a text the print would cut off and fixes it by letting it grow', async () => {

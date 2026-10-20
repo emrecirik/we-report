@@ -307,7 +307,8 @@ export class DesignerState {
    */
   tidy(ids: string[], step: number): void {
     const grid = step > 0 ? step : 1;
-    const near = Math.max(2, grid);
+    // Sloppy placement (under 2 mm) counts as one row or column; a whole grid step apart never does.
+    const near = Math.min(2, Math.max(grid * 0.9, 1.5));
     const snap = (v: number) => round(Math.round(v / grid) * grid);
     /** Clusters values that lie within `near` of the cluster's first one; maps each id to its cluster's smallest value. */
     const cluster = (items: { id: string; v: number }[]) => {
@@ -315,7 +316,7 @@ export class DesignerState {
       const sorted = [...items].sort((a, b) => a.v - b.v);
       for (let i = 0; i < sorted.length; ) {
         let j = i;
-        while (j < sorted.length && sorted[j].v - sorted[i].v <= near) j++;
+        while (j < sorted.length && sorted[j].v - sorted[i].v < near) j++;
         for (const it of sorted.slice(i, j)) out.set(it.id, snap(sorted[i].v));
         i = j;
       }

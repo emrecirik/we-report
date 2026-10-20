@@ -10,6 +10,9 @@ const BACKEND_KEY = 'we-report-studio.backendUrl';
 const AUTOSAVE_KEY = 'we-report-studio.autosave';
 const LANGUAGE_KEY = 'we-report-studio.language';
 const HISTORY_KEY = 'we-report-studio.history';
+/** History limits in characters: browsers give a site about 5 MB, and the current design comes first. */
+const MAX_ENTRY_CHARS = 500_000;
+const MAX_HISTORY_CHARS = 2_000_000;
 /** While editing, a snapshot at most this often. */
 const SNAPSHOT_MS = 5 * 60_000;
 
@@ -107,7 +110,12 @@ export class AppComponent {
       const t = TEMPLATES.find((x) => x.id === this.templateId());
       // Data that is not the template's own (pasted, shared) is kept too, when it fits in storage.
       const data = this.data() === t?.data ? undefined : this.data();
-      writeStorage(AUTOSAVE_KEY, JSON.stringify({ templateId: this.templateId(), report: this.report(), data }));
+      const saved = JSON.stringify({ templateId: this.templateId(), report: this.report(), data });
+      // The current design comes first: when storage is full, older history makes room for it.
+      if (!tryWrite(AUTOSAVE_KEY, saved) && this.history().length) {
+        untracked(() => this.writeHistory(this.history().slice(0, Math.floor(this.history().length / 2))));
+        tryWrite(AUTOSAVE_KEY, saved);
+      }
       if (Date.now() - this.lastSnapshot > SNAPSHOT_MS) untracked(() => this.remember());
     });
   }
@@ -116,10 +124,23 @@ export class AppComponent {
   private remember(): void {
     this.lastSnapshot = Date.now();
     const t = TEMPLATES.find((x) => x.id === this.templateId());
-    const entry: HistoryEntry = { time: Date.now(), name: this.report().name, templateId: this.templateId(), report: this.report(), data: this.data() === t?.data ? undefined : this.data() };
-    let list = pushHistory(this.history(), entry);
-    // Storage is small: the oldest designs make room for the newest.
-    while (list.length && !tryWrite(HISTORY_KEY, JSON.stringify(list))) list = list.slice(0, -1);
+    let entry: HistoryEntry = { time: Date.now(), name: this.report().name, templateId: this.templateId(), report: this.report(), data: this.data() === t?.data ? undefined : this.data() };
+    // Large pasted data is not kept in the history (the design is); a huge design is not kept at all.
+    if (JSON.stringify(entry).length > MAX_ENTRY_CHARS) entry = { ...entry, data: undefined };
+    if (JSON.stringify(entry).length > MAX_ENTRY_CHARS) return;
+    this.writeHistory(pushHistory(this.history(), entry));
+  }
+
+  /** Stores the history within its share of the storage; the oldest designs make room for the newest. */
+  private writeHistory(list: HistoryEntry[]): void {
+    while (list.length && (JSON.stringify(list).length > MAX_HISTORY_CHARS || !tryWrite(HISTORY_KEY, JSON.stringify(list)))) list = list.slice(0, -1);
+    if (!list.length) {
+      try {
+        localStorage.removeItem(HISTORY_KEY);
+      } catch {
+        /* storage unavailable */
+      }
+    }
     this.history.set(list);
   }
 
@@ -145,10 +166,11 @@ export class AppComponent {
   /** A design from a share link: an untrusted report file, so it goes through the same migration as Open. */
   private async openShared(hash: string): Promise<void> {
     this.opening.set(true);
+    // The design the user had (autosaved) goes into the history before the link replaces it.
+    if (this.restore()) this.remember();
     try {
       const shared = (await decodeShare(hash)) as { report?: unknown; data?: unknown } | null;
       const report = migrateDefinition(shared?.report);
-      this.remember();
       this.report.set(report);
       this.data.set(shared?.data);
       this.templateId.set('blank');

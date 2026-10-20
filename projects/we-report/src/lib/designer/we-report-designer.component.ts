@@ -428,11 +428,20 @@ export class WeReportDesignerComponent {
     const c = this.openSubreport();
     if (!c) return null;
     const p = c.report.page;
-    const m = p?.margins;
-    if (p?.paper === 'custom' && p.width === c.width && p.height == null && m && !m.top && !m.right && !m.bottom && !m.left) return c.report;
+    // Only paper and size are fixed by the box; other page settings stay as edited (so editing
+    // them inside does not reload the inner designer). The layout ignores them for a sub-report.
+    if (p?.paper === 'custom' && p.width === c.width && p.height == null) return c.report;
     return {
       ...c.report,
-      page: { paper: 'custom', orientation: 'portrait', width: c.width, height: null, margins: { top: 0, right: 0, bottom: 0, left: 0 }, displayUnit: p?.displayUnit ?? 'mm' },
+      page: {
+        ...p,
+        orientation: p?.orientation ?? 'portrait',
+        displayUnit: p?.displayUnit ?? 'mm',
+        paper: 'custom',
+        width: c.width,
+        height: null,
+        margins: p?.margins ?? { top: 0, right: 0, bottom: 0, left: 0 },
+      },
     } satisfies ReportDefinition;
   });
 
@@ -458,6 +467,16 @@ export class WeReportDesignerComponent {
     const outer = this.state.report().dataSources.find((s) => s.id === id);
     return outer ? sourceValue(outer) : undefined;
   });
+
+  /** The window closes when its sub-report is gone (deleted, or undone away), and takes the focus when it opens. */
+  private readonly subreportWindow = effect(() => {
+    const id = this.state.subreportOpen();
+    if (id && !this.openSubreport()) {
+      untracked(() => this.state.subreportOpen.set(null));
+      return;
+    }
+    if (id) setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>('.wd__subreport')?.focus());
+  }, { allowSignalWrites: true });
 
   /** Edits from the sub-report's designer; one undo step per burst of edits here. */
   protected setSubreport(id: string, report: ReportDefinition): void {
@@ -542,6 +561,8 @@ export class WeReportDesignerComponent {
   @HostListener('cut', ['$event'])
   protected onCopy(e: ClipboardEvent): void {
     this.pendingClipboardKey = null;
+    // While a sub-report window is open, the inner designer has the clipboard.
+    if (this.state.subreportOpen()) return;
     // Text selected on the page (a label, a hint) is copied as text, not as report items.
     if (this.tab() !== 'design' || this.isTyping(e) || !document.getSelection()?.isCollapsed || !this.state.copySelection()) return;
     e.preventDefault();
@@ -553,6 +574,7 @@ export class WeReportDesignerComponent {
   @HostListener('paste', ['$event'])
   protected onPaste(e: ClipboardEvent): void {
     this.pendingClipboardKey = null;
+    if (this.state.subreportOpen()) return;
     if (this.tab() !== 'design' || this.isTyping(e)) return;
     const data = e.clipboardData;
     const text = data?.getData('text/plain') ?? '';
@@ -745,6 +767,8 @@ export class WeReportDesignerComponent {
 
   @HostListener('keydown', ['$event'])
   protected onKeydown(e: KeyboardEvent): void {
+    // Keys pressed while a sub-report window is open belong to it, even when focus stayed behind it.
+    if (this.state.subreportOpen()) return;
     if (e.key === 'F5') {
       // Desktop designers preview with F5; here it switches between design and preview.
       e.preventDefault();

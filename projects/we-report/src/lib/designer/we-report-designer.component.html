@@ -360,7 +360,7 @@
 @if (openSubreport(); as sub) {
   <div class="wd__sheet-backdrop"></div>
   <!-- Keys and clipboard events stay with the inner designer; the outer one would act on its own page. -->
-  <div class="wd__sheet wd__subreport" role="dialog" aria-modal="true" [attr.aria-label]="s.subreportTitle.replace('{0}', sub.report.name)"
+  <div class="wd__sheet wd__subreport" tabindex="-1" role="dialog" aria-modal="true" [attr.aria-label]="s.subreportTitle.replace('{0}', sub.report.name)"
     (keydown)="$event.stopPropagation()" (copy)="$event.stopPropagation()" (cut)="$event.stopPropagation()" (paste)="$event.stopPropagation()">
     <div class="wd__subreport-head">
       <h2>{{ s.subreportTitle.replace('{0}', sub.report.name) }}</h2>

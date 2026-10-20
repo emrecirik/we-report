@@ -851,8 +851,12 @@ button {
 .wd__subreport {
   display: flex;
   flex-direction: column;
-  width: calc(100vw - 32px);
-  height: calc(100vh - 32px);
+  // No transform: it would make the inner designer's fixed menus position against this window.
+  inset: 16px;
+  transform: none;
+  width: auto;
+  height: auto;
+  max-height: none;
   padding: 12px;
   overflow: hidden;
 }

@@ -304,6 +304,17 @@ export class DataSourcesDialogComponent {
     });
   }
 
+  /** Names are used as [name]: the box shows the cleaned name right away. */
+  protected setCalculatedName(index: number, input: HTMLInputElement): void {
+    this.setCalculated(index, 'name', input.value);
+    input.value = this.report().calculatedFields?.[index]?.name ?? '';
+  }
+
+  protected setParameterName(index: number, input: HTMLInputElement): void {
+    this.setParameter(index, 'name', input.value);
+    input.value = this.report().parameters?.[index]?.name ?? '';
+  }
+
   protected setCalculated(index: number, key: 'name' | 'expression', value: string): void {
     this.state.update((d) => {
       const f = d.calculatedFields?.[index];

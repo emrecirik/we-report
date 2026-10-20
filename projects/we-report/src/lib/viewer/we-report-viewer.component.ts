@@ -473,7 +473,7 @@ export class WeReportViewerComponent {
 
   private fonts?: FontRegistry;
   private run = 0;
-  /** Pictures fetched for image addresses (URL → data URI, `''` when it failed), kept between runs. */
+  /** Pictures fetched for image addresses (URL → data URI), kept between runs; failures are tried again next run. */
   private readonly pictures = new Map<string, string>();
   /** What the current preview was laid out from, so exports use exactly the same data. */
   private lastInput: { data: unknown; sources: Record<string, unknown>; params: Record<string, unknown>; now?: Date } = { data: undefined, sources: {}, params: {} };
@@ -654,6 +654,7 @@ export class WeReportViewerComponent {
       this.loadedSources.set(loaded.sources);
       this.loadErrors.set(loaded.errors.map((e) => e.message));
       this.loadWarnings.set(loaded.warnings.map((e) => e.message));
+      const failed = new Map<string, string>();
       const lay = () =>
         layoutReport(report, {
           fonts: this.fonts!,
@@ -661,14 +662,14 @@ export class WeReportViewerComponent {
           data,
           sources: loaded.sources,
           params,
-          images: Object.fromEntries(this.pictures),
+          images: Object.fromEntries([...this.pictures, ...failed]),
           locale: this.config.locale,
           currency: this.config.currency,
         });
       let doc = lay();
       // Pictures from addresses: fetch the ones the layout asked for, then lay out again.
       if (doc.imageUrls?.length) {
-        await this.fetchPictures(doc.imageUrls);
+        await this.fetchPictures(doc.imageUrls, failed);
         if (run !== this.run) return;
         doc = lay();
       }
@@ -683,11 +684,11 @@ export class WeReportViewerComponent {
     }
   }
 
-  private async fetchPictures(urls: string[]): Promise<void> {
+  private async fetchPictures(urls: string[], failed: Map<string, string>): Promise<void> {
     const fetchFn = this.fetchFn() ?? fetch;
     const wanted = urls.filter((u) => !this.pictures.has(u));
     // Beyond the limit a picture counts as failed: it shows as a problem, not as a silent gap.
-    for (const url of wanted.slice(MAX_PICTURES)) this.pictures.set(url, '');
+    for (const url of wanted.slice(MAX_PICTURES)) failed.set(url, '');
     await Promise.all(
       wanted.slice(0, MAX_PICTURES).map(async (url) => {
         try {
@@ -697,10 +698,15 @@ export class WeReportViewerComponent {
           if (blob.size > MAX_PICTURE_BYTES) throw new Error('Too large.');
           this.pictures.set(url, await pictureDataUri(blob, this.dom));
         } catch {
-          this.pictures.set(url, '');
+          failed.set(url, '');
         }
       }),
     );
+    // Keep the cache to the most recent pictures (a Map keeps insertion order).
+    for (const url of this.pictures.keys()) {
+      if (this.pictures.size <= MAX_PICTURES * 2) break;
+      this.pictures.delete(url);
+    }
   }
 
   /** The current preview as PDF bytes. */

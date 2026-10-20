@@ -528,8 +528,8 @@
           @if (advanced() || c.rows) {
             <label class="pp__row pp__row--stack">
               <span>{{ s.chartRows }}</span>
-              <input class="pp__mono" list="pp-chart-lists" [value]="c.rows?.expression ?? ''" placeholder="[months]" (input)="setOptionalChartRows($any($event.target).value)" spellcheck="false" />
-              <datalist id="pp-chart-lists">
+              <input class="pp__mono" [attr.list]="listId + '-chart'" [value]="c.rows?.expression ?? ''" placeholder="[months]" (input)="setOptionalChartRows($any($event.target).value)" spellcheck="false" />
+              <datalist [id]="listId + '-chart'">
                 @for (l of lists(); track l) {
                   <option [value]="'[' + l + ']'"></option>
                 }
@@ -621,8 +621,8 @@
           }
           <label class="pp__row pp__row--stack">
             <span>{{ s.subreportRows }}</span>
-            <input class="pp__mono" list="pp-sub-lists" [value]="c.rows?.expression ?? ''" placeholder="[orders]" (input)="setOptionalExpression('rows', $any($event.target).value)" spellcheck="false" />
-            <datalist id="pp-sub-lists">
+            <input class="pp__mono" [attr.list]="listId + '-sub'" [value]="c.rows?.expression ?? ''" placeholder="[orders]" (input)="setOptionalExpression('rows', $any($event.target).value)" spellcheck="false" />
+            <datalist [id]="listId + '-sub'">
               @for (l of lists(); track l) {
                 <option [value]="'[' + l + ']'"></option>
               }

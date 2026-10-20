@@ -27,7 +27,7 @@
       <p class="dsd__hint">{{ s.parametersHint }}</p>
       @for (p of report().parameters ?? []; track $index; let i = $index) {
         <div class="dsd__param">
-          <input [value]="p.name" (input)="setParameter(i, 'name', $any($event.target).value)" [attr.aria-label]="s.parameterName" spellcheck="false" />
+          <input [value]="p.name" (input)="setParameterName(i, $any($event.target))" [attr.aria-label]="s.parameterName" spellcheck="false" />
           <select (change)="setParameter(i, 'type', $any($event.target).value)" [attr.aria-label]="s.parameterType">
             @for (t of types; track t) {
               <option [value]="t" [selected]="t === p.type">{{ typeLabel(t) }}</option>
@@ -56,7 +56,7 @@
       <p class="dsd__hint">{{ s.calculatedFieldsHint }}</p>
       @for (f of report().calculatedFields ?? []; track $index; let i = $index) {
         <div class="dsd__param">
-          <input class="dsd__calc-name" [value]="f.name" (input)="setCalculated(i, 'name', $any($event.target).value)" [attr.aria-label]="s.calculatedFieldName" spellcheck="false" />
+          <input class="dsd__calc-name" [value]="f.name" (input)="setCalculatedName(i, $any($event.target))" [attr.aria-label]="s.calculatedFieldName" spellcheck="false" />
           <button type="button" class="dsd__icon dsd__calc-remove" (click)="removeCalculated(i)" [attr.aria-label]="s.delete">×</button>
           <input class="dsd__choices dsd__mono" [value]="f.expression" (input)="setCalculated(i, 'expression', $any($event.target).value)" placeholder="[qty] * [price]" [attr.aria-label]="s.expression" spellcheck="false" />
           <code class="dsd__use">[{{ f.name }}]</code>
