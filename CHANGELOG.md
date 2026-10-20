@@ -32,6 +32,8 @@
 
 ### Layout
 
+- A number wider than its text box or table cell is printed smaller on one line, or as `###` when it would be
+  unreadable; it was cut off or wrapped, which can read as a different amount.
 - A section taller than a page continues on the next pages, cut between items and text lines
   (boxes and lines are split, pictures never), instead of running off the page. A section that
   fits on no page starts right after the previous one; side-by-side cells are never cut.

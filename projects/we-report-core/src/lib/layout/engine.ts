@@ -7,7 +7,6 @@ import {
   Bindable,
   ChartControl,
   CrosstabControl,
-  TableCell,
   TableControl,
   isExpression,
   ReportControl,
@@ -594,7 +593,12 @@ class LayoutRun {
           const height = c.canGrow ? Math.max(c.height, this.richHeight(runs, style, c.width)) : c.height;
           return { items: this.richTextBox(runs, style, { ...box, height }), height };
         }
-        const text = this.textOf(c, scope);
+        const { text, numeric } = this.valueText(c.text, c.format, scope, c.id);
+        // Numbers never wrap (a broken number reads as two numbers), even in a growing text.
+        if (numeric) {
+          const fitted = this.fitNumber(text, style, c.width);
+          return { items: this.textBox(fitted.text, fitted.style, box), height: c.height };
+        }
         const height = c.canGrow ? Math.max(c.height, this.measureTextHeight(text, style, c.width)) : c.height;
         return { items: this.textBox(text, style, { ...box, height }), height };
       }
@@ -823,18 +827,7 @@ class LayoutRun {
     const cell = (text: string, st: ResolvedStyle, column: number, line: number, isNumber = false) => {
       const x = column < 0 ? c.x : c.x + headerWidth + column * columnWidth;
       const width = column < 0 ? headerWidth : columnWidth;
-      if (isNumber && text) {
-        // A cut-off number reads as another number: shrink it to fit, and when that would make it
-        // unreadable show ### like a spreadsheet.
-        const font = this.options.fonts.resolve(st.fontFamily, st.bold, st.italic);
-        const room = width - 2 * st.padding;
-        const needed = font.widthOf(text, st.fontSize);
-        if (needed > room) {
-          const size = (st.fontSize * room) / needed;
-          if (size >= st.fontSize * 0.6) st = { ...st, fontSize: Math.floor(size * 100) / 100 };
-          else text = '###';
-        }
-      }
+      if (isNumber) ({ text, style: st } = this.fitNumber(text, st, width));
       items.push(...this.textBox(text, st, { x, y: c.y + line * rowHeight, width, height: rowHeight }));
     };
     cell(c.title ?? '', head, -1, 0);
@@ -923,7 +916,8 @@ class LayoutRun {
         const span = Math.max(1, Math.min(cell.colSpan ?? 1, c.columns.length - column));
         const width = c.columns.slice(column, column + span).reduce((a, b) => a + b, 0);
         const style = resolveStyle(this.def, c.style, { ...tableOverrides, ...cell.styleOverrides });
-        cells.push({ text: this.cellText(cell, scope, c.id), style, x, width });
+        const { text, numeric } = this.valueText(cell.text, cell.format, scope, c.id);
+        cells.push({ ...(numeric ? this.fitNumber(text, style, width) : { text, style }), x, width });
         x += width;
         column += span;
       }
@@ -934,18 +928,26 @@ class LayoutRun {
     return { items, height: y - c.y };
   }
 
-  private cellText(cell: TableCell, scope: Scope, controlId: string): string {
-    const value = this.bind(cell.text, scope, controlId);
-    if (value === ERROR_TEXT) return ERROR_TEXT;
-    if (typeof value === 'string' && !cell.format) return value;
-    return formatValue(value, cell.format, { locale: this.locale, currency: this.currency });
+  /** The printed text of a text or table cell, and whether it is a number (see `fitNumber`). */
+  private valueText(binding: Bindable<unknown>, format: string | undefined, scope: Scope, controlId: string): { text: string; numeric: boolean } {
+    const value = this.bind(binding, scope, controlId);
+    if (value === ERROR_TEXT) return { text: ERROR_TEXT, numeric: false };
+    if (typeof value === 'string' && !format) return { text: value, numeric: false };
+    return { text: formatValue(value, format, { locale: this.locale, currency: this.currency }), numeric: typeof value === 'number' };
   }
 
-  private textOf(c: TextControl, scope: Scope): string {
-    const value = this.bind(c.text, scope, c.id);
-    if (value === ERROR_TEXT) return ERROR_TEXT;
-    if (typeof value === 'string' && !c.format) return value;
-    return formatValue(value, c.format, { locale: this.locale, currency: this.currency });
+  /**
+   * A number wider than its box, shrunk to one line. A cut-off or wrapped number reads as another
+   * number; below 60 % of its size it is unreadable, so it shows ### like a spreadsheet.
+   */
+  private fitNumber(text: string, style: ResolvedStyle, width: number): { text: string; style: ResolvedStyle } {
+    if (!text) return { text, style };
+    const font = this.options.fonts.resolve(style.fontFamily, style.bold, style.italic);
+    const room = width - 2 * style.padding;
+    const needed = font.widthOf(text, style.fontSize);
+    if (needed <= room) return { text, style };
+    const size = (style.fontSize * room) / needed;
+    return size >= style.fontSize * 0.6 ? { text, style: { ...style, fontSize: Math.floor(size * 100) / 100 } } : { text: '###', style };
   }
 
   /** The runs of a rich text: its fixed text or formula result, with `{formula}` fields filled in. */

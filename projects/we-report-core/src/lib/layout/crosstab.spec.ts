@@ -142,3 +142,29 @@ describe('cross table', () => {
     expect(avg[3][0]).toBe('Toplam');
   });
 });
+
+describe('numbers in narrow boxes', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('prints a number that does not fit smaller or as ###, never cut or wrapped; text is left alone', () => {
+    const texts = (width: number, value: string) => {
+      const r = createBlankReport('Narrow');
+      r.bands[1].controls.push({ id: 't', type: 'text', x: 0, y: 0, width, height: 12, text: { expression: value }, format: 'n2' });
+      return layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text');
+    };
+    const wide = texts(60, '1234567.89')[0];
+    const narrow = texts(16, '1234567.89')[0];
+    expect(narrow.lines.map((l) => l.text)).toEqual([wide.lines[0].text]);
+    expect(narrow.size).toBeLessThan(wide.size);
+    expect(texts(8, '1234567.89')[0].lines[0].text).toBe('###');
+    expect(texts(8, "'Uzun bir açıklama'")[0].lines[0].text).not.toBe('###');
+    // Table cells too, also when the row grows.
+    const r = createBlankReport('Table');
+    r.bands[1].controls.push({ id: 'g', type: 'table', x: 0, y: 0, width: 24, height: 6, canGrow: true, columns: [8, 16], rows: [{ height: 6, cells: [{ text: { expression: '1234567.89' }, format: 'n2' }, { text: { expression: '1234567.89' }, format: 'n2' }] }] });
+    const cells = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text');
+    expect(cells.map((t) => t.lines.length)).toEqual([1, 1]);
+    expect(cells[0].lines[0].text).toBe('###');
+    expect(cells[1].lines[0].text).toBe(narrow.lines[0].text);
+  });
+});
