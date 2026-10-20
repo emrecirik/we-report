@@ -220,7 +220,7 @@ export class PropertyPanelComponent {
     if (band) this.state.updateBand(band.id, (b) => (b.bookmark = empty ? undefined : value), 'band-bookmark');
   }
 
-  protected toggleBand(key: 'keepTogether' | 'repeatOnEveryPage' | 'resetPageNumber' | 'pageBreakBefore' | 'pageBreakAfter', value: boolean): void {
+  protected toggleBand(key: 'keepTogether' | 'keepWithFirstRow' | 'repeatOnEveryPage' | 'resetPageNumber' | 'pageBreakBefore' | 'pageBreakAfter', value: boolean): void {
     const band = this.band();
     if (band) this.state.updateBand(band.id, (b) => (b[key] = value || undefined));
   }

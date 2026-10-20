@@ -217,6 +217,7 @@
       },
       "sort": "asc",
       "keepTogether": false,
+      "keepWithFirstRow": true,
       "repeatOnEveryPage": true,
       "bookmark": {
         "expression": "[city]"

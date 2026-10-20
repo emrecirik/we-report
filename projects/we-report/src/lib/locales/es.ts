@@ -192,6 +192,7 @@ export const weReportLocaleEs: WeReportLocale = {
   sortNone: 'Como en los datos',
   keepTogether: 'Mantener el grupo en una página',
   keepTogetherHint: 'Mueve todo el grupo a la página siguiente en lugar de dividirlo.',
+  keepWithFirstRow: 'Mantener el encabezado con la primera fila',
   bookmark: 'Marcador',
   bookmarkHint: 'Una entrada en los marcadores del PDF y el mapa del documento de la vista previa, p. ej. el nombre del cliente.',
   alternateBackground: 'Una fila de cada dos',

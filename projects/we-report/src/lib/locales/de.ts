@@ -192,6 +192,7 @@ export const weReportLocaleDe: WeReportLocale = {
   sortNone: 'Wie in den Daten',
   keepTogether: 'Gruppe auf einer Seite halten',
   keepTogetherHint: 'Verschiebt die ganze Gruppe auf die nächste Seite, statt sie zu teilen.',
+  keepWithFirstRow: 'Kopf mit der ersten Zeile zusammenhalten',
   bookmark: 'Lesezeichen',
   bookmarkHint: 'Ein Eintrag in den PDF-Lesezeichen und der Dokumentstruktur der Vorschau, z. B. der Kundenname.',
   alternateBackground: 'Jede zweite Zeile',

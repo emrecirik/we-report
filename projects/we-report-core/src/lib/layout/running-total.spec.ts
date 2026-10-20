@@ -75,6 +75,28 @@ describe('page numbers per group', () => {
   });
 });
 
+describe('group header with its first row', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('moves a header that would end a page alone to the next page', () => {
+    const r = createBlankReport('Orphans');
+    // 242 mm of body: A's header and 38 rows end at 234, so B's header fits but its row does not.
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [...Array.from({ length: 38 }, (_, i) => ({ g: 'A', n: String(i) })), { g: 'B', n: 'B-first' }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands.splice(1, 0, { id: 'gh', kind: 'groupHeader', height: 6, groupBy: { expression: '[g]' }, controls: [{ id: 'h', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: "'Group ' + [g]" } }] });
+    r.bands[2].height = 6;
+    r.bands[2].controls.push({ id: 'n', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: "'row ' + [n]" } });
+    const where = () => {
+      const pages = layoutReport(r, { fonts, now: NOW }).pages.map((p) => p.items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text));
+      return [pages.findIndex((p) => p.includes('Group B')), pages.findIndex((p) => p.includes('row B-first'))];
+    };
+    expect(where()).toEqual([0, 1]); // the header ends page 1 alone
+    r.bands[1].keepWithFirstRow = true;
+    expect(where()).toEqual([1, 1]);
+  });
+});
+
 describe('section options', () => {
   let fonts: FontRegistry;
   beforeAll(async () => (fonts = await loadTestFonts()));

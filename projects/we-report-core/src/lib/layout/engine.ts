@@ -363,8 +363,19 @@ class LayoutRun {
       // Side-by-side cells are never cut, so they still move to a new page.
       const fitsAPage = columns > 1 || r.height <= bodyBottom - headerHeight;
       const resets = r.band.kind === 'groupHeader' && !!r.band.resetPageNumber && entry.groupLevel !== undefined;
+      // A header that keeps with its first row needs room for everything up to that row.
+      let withFirstRow = r.height;
+      if (r.band.kind === 'groupHeader' && r.band.keepWithFirstRow && !fresh) {
+        for (let j = i + 1; j < entries.length; j++) {
+          const e = entries[j];
+          if (e.type !== 'band') continue;
+          withFirstRow += e.rendered.height;
+          if (e.rendered.band.kind === 'detail') break;
+        }
+      }
+      const orphan = withFirstRow > r.height && y + withFirstRow > bodyBottom && headerHeight + withFirstRow <= bodyBottom;
       // The first group stays under the report header; every later one starts a page of its own.
-      if (column === 0 && (breakPending || ((r.band.pageBreakBefore || (resets && run > 0)) && !fresh) || (!fresh && y + r.height > bodyBottom && (fitsAPage || bodyBottom - y < 10)))) {
+      if (column === 0 && (breakPending || orphan || ((r.band.pageBreakBefore || (resets && run > 0)) && !fresh) || (!fresh && y + r.height > bodyBottom && (fitsAPage || bodyBottom - y < 10)))) {
         if (entry.groupLevel !== undefined) repeating.length = entry.groupLevel;
         startPage();
       }

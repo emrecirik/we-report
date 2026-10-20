@@ -192,6 +192,7 @@ export const weReportLocaleFr: WeReportLocale = {
   sortNone: 'Comme dans les données',
   keepTogether: 'Garder le groupe sur une page',
   keepTogetherHint: 'Déplace tout le groupe sur la page suivante au lieu de le couper.',
+  keepWithFirstRow: 'Garder l’en-tête avec la première ligne',
   bookmark: 'Signet',
   bookmarkHint: 'Une entrée des signets PDF et du plan du document de l’aperçu, ex. le nom du client.',
   alternateBackground: 'Une ligne sur deux',

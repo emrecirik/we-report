@@ -30,6 +30,8 @@
 - Import: RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
 - Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and
   *Print only when* (`visible` formula on any section but the page header/footer).
+- Groups: *Keep the header with the first row* (`keepWithFirstRow`) — no group header left alone at
+  the bottom of a page. The grouped sales template uses it, and its city headers are bookmarks.
 - **Document map**: a `bookmark` on group headers and the detail section becomes PDF bookmarks
   (nested by group, the PDF opens with them shown) and a list in the preview that jumps to the
   section (`LayoutDocument.bookmarks`).

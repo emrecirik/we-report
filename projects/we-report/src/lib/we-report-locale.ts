@@ -176,6 +176,7 @@ export interface WeReportLocale {
   sortNone: string;
   keepTogether: string;
   keepTogetherHint: string;
+  keepWithFirstRow: string;
   bookmark: string;
   bookmarkHint: string;
   alternateBackground: string;
@@ -601,6 +602,7 @@ export const weReportLocaleEn: WeReportLocale = {
   sortNone: 'As in data',
   keepTogether: 'Keep group on one page',
   keepTogetherHint: 'Moves the whole group to the next page instead of splitting it.',
+  keepWithFirstRow: 'Keep the header with the first row',
   bookmark: 'Bookmark',
   bookmarkHint: 'An entry in the PDF bookmarks and the preview’s document map, e.g. the customer’s name.',
   alternateBackground: 'Every second row',
@@ -1067,6 +1069,7 @@ export const weReportLocaleTr: WeReportLocale = {
   sortNone: 'Verideki sırayla',
   keepTogether: 'Grubu tek sayfada tut',
   keepTogetherHint: 'Grup bölünecekse tamamını sonraki sayfaya taşır.',
+  keepWithFirstRow: 'Başlığı ilk satırla birlikte tut',
   bookmark: 'Yer imi',
   bookmarkHint: 'PDF yer imlerinde ve önizlemenin belge haritasında bir satır; örn. müşterinin adı.',
   alternateBackground: 'Her ikinci satır',
