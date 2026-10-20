@@ -96,7 +96,8 @@
         <button type="button" class="gallery__card" (click)="chooseTemplate(tpl.id)">
           <div class="gallery__thumb">
             @if (thumbnails()[tpl.id]; as page) {
-              <we-report-page [page]="page" [zoom]="0.28" />
+              <!-- Wider than A4 (landscape) is shrunk to the same width so it is not cut off. -->
+              <we-report-page [page]="page" [zoom]="page.width > 210 ? (0.28 * 210) / page.width : 0.28" />
             }
           </div>
           <strong>{{ language() === 'tr' ? tpl.name.tr : tpl.name.en }}</strong>
