@@ -72,13 +72,15 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
 | Chart | Column, bar, line, pie or doughnut of the section's rows grouped by a field (sum, count, average, min, max). In a report header/footer it shows every row, in a group footer the group's rows. |
 | Cross table | A pivot of the section's rows: one row per value of a field, one column per value of another, each cell the sum (count, average, min, max) of the rows that have both, with a total row and column (`Σ`, or your `totalLabel`). Like a chart it reads every row in a report header/footer, the group's rows in a group footer; it grows downwards and its columns share the width. |
 | Sub-report | A separate report inside a box; see *Sub-reports* above. |
-| Barcode / QR | Code 128, EAN-13, QR, DataMatrix, PDF417 and more; the value can come from data. |
+| Barcode / QR | Code 128, EAN-13, QR, DataMatrix, PDF417 and more; the value can come from data. A fixed EAN/UPC with a wrong check digit shows under Problems, with the right digit. |
 | Image, line, shape, checkbox, page number / date | |
 
 ## Look
 
 - **Conditional formatting** — on any item: *when [Amount] < 0, red and bold*. Rules apply in
   order; built from field, comparison and value, or any formula in Advanced mode.
+- **Page** — paper, orientation and margins; in Advanced mode a page colour (`page.color`) and
+  mirrored margins for booklets (`page.mirrorMargins`: even pages swap left and right).
 - **Watermark** — large faint text behind every page (`watermark`), fixed or from data, e.g. `PAID`
   only on paid invoices.
 - **Language and region** — a report can carry its own `locale` and `currency`, so it writes
