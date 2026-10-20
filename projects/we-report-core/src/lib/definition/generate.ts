@@ -41,6 +41,11 @@ const idLike = (name: string) => ID_LIKE.test(name) || CAMEL_ID.test(name);
 const PERIOD_LIKE = /^(ay|yıl|yil|gün|gun|hafta|çeyrek|ceyrek|dönem|donem|month|year|day|week|quarter|period)$/i;
 const MAX_COLUMNS = 12;
 
+/** Whether a number field is worth totalling: not an identifier (`orderNo`, `Kod`) or a calendar part (`Ay`, `year`). */
+export function isSummableField(name: string): boolean {
+  return !idLike(name) && !PERIOD_LIKE.test(name.trim());
+}
+
 /** Relative column width by data type: text needs the most room. */
 const weight = (f: FieldSchema) => (f.type === 'string' ? 2.2 : f.type === 'date' ? 1.3 : f.type === 'boolean' ? 0.8 : 1);
 
@@ -76,7 +81,7 @@ export function generateListReport(
   });
 
   const numeric = (f: FieldSchema) => f.type === 'number';
-  const summable = (f: FieldSchema) => numeric(f) && !idLike(f.name) && !PERIOD_LIKE.test(f.name.trim());
+  const summable = (f: FieldSchema) => numeric(f) && isSummableField(f.name);
   // Whole-number columns (quantities, counts) get no decimals; the sample rows decide.
   const wholeNumbers = (f: FieldSchema) =>
     rows.length > 0 && rows.every((r) => {

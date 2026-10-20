@@ -3,12 +3,12 @@ import { gapsAround, guessBindings } from './design-surface.component';
 describe('guessBindings', () => {
   it('groups by repeating texts and sums the largest number field', () => {
     const rows = [
-      { city: 'Ankara', customer: 'A', month: 1, amount: 120.5 },
-      { city: 'Ankara', customer: 'B', month: 2, amount: 80 },
-      { city: 'İzmir', customer: 'C', month: 1, amount: 300 },
-      { city: 'İzmir', customer: 'D', month: 3, amount: 45 },
+      { orderNo: 1001, city: 'Ankara', customer: 'A', month: 1, amount: 120.5 },
+      { orderNo: 1002, city: 'Ankara', customer: 'B', month: 2, amount: 80 },
+      { orderNo: 1003, city: 'İzmir', customer: 'C', month: 1, amount: 300 },
+      { orderNo: 1004, city: 'İzmir', customer: 'D', month: 3, amount: 45 },
     ];
-    expect(guessBindings(rows)).toEqual({ groups: ['city'], amount: 'amount' });
+    expect(guessBindings(rows)).toEqual({ groups: ['city'], amount: 'amount' }); // never the order number
     expect(guessBindings([])).toEqual({ groups: [], amount: undefined });
   });
 });

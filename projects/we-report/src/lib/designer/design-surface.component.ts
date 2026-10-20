@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, OnDestroy, signal } from '@angular/core';
-import { Band, Bindable, createBlankReport, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, LayoutPage, layoutReport, parseRichText, ReportControl, ReportControlType, ReportDefinition, ReportStyle, resolvePageGeometry, resolveStyle, RichRun } from 'we-report-core';
+import { Band, Bindable, createBlankReport, DEFAULT_WATERMARK_COLOR, evaluate, readImage, fitLines, formatValue, isExpression, isSummableField, LayoutPage, layoutReport, parseRichText, ReportControl, ReportControlType, ReportDefinition, ReportStyle, resolvePageGeometry, resolveStyle, RichRun } from 'we-report-core';
 import { WeReportPageComponent } from '../viewer/we-report-page.component';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -43,7 +43,7 @@ export function guessBindings(rows: readonly unknown[]): { groups: string[]; amo
     .sort((a, b) => a.distinct - b.distinct)
     .map((t) => t.k);
   const amount = keys
-    .filter((k) => sample.some((r) => typeof r[k] === 'number'))
+    .filter((k) => isSummableField(k) && sample.some((r) => typeof r[k] === 'number'))
     .map((k) => ({ k, total: sample.reduce((s, r) => s + Math.abs(typeof r[k] === 'number' ? (r[k] as number) : 0), 0) }))
     .sort((a, b) => b.total - a.total)[0]?.k;
   return { groups: texts, amount };
@@ -1522,9 +1522,12 @@ export class DesignSurfaceComponent implements OnDestroy {
       // summing the number field with the largest total (an amount rather than a month or a count).
       const { groups, amount } = guessBindings(this.sample()?.rows ?? []);
       if (control.type === 'crosstab' && groups.length >= 2 && amount) {
-        control.rows = { expression: `[${groups[0]}]` };
-        control.columns = { expression: `[${groups[1]}]` };
+        // The field with the fewest values goes across, so the table stays narrow; the other grows down.
+        control.rows = { expression: `[${groups[1]}]` };
+        control.columns = { expression: `[${groups[0]}]` };
         control.value = { expression: `[${amount}]` };
+        // Totals without decimals fit the narrow cells; the format can be changed afterwards.
+        control.format ??= 'n0';
       }
       if (control.type === 'chart' && groups.length && amount) {
         control.category = { expression: `[${groups[0]}]` };
