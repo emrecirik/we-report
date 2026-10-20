@@ -23,6 +23,12 @@
   from the same layout and fonts as the preview and the PDF.
 - Barcodes: the bars of linear codes end clearly above their digits (they touched when the box
   was wide and low).
+- Page settings: page colour (`page.color`) and mirrored margins for booklets
+  (`page.mirrorMargins`: even pages swap left and right), under Advanced.
+- Problems: a fixed EAN-13 / EAN-8 / UPC-A / ITF-14 with a wrong check digit is reported with the
+  right digit, and *Fix* corrects it (`gtinCheckDigit` in core; `ReportIssueCode` gains
+  `checkDigit` — a `switch` over every code needs the new case).
+- Sub-report: *Its rows come from* suggests the lists in the data.
 - **Rich text** (`markup: true` on a text): `**bold**`, `*italic*`, `__underline__` and `{formula}`
   fields inside one text, wrapped and measured with the right font per word; the designer shows it
   formatted, Excel exports the words. `parseRichText`, `wrapRichText` and `plainRichText` are

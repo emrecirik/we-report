@@ -96,6 +96,9 @@ export interface WeReportLocale {
   marginRight: string;
   marginBottom: string;
   marginLeft: string;
+  pageColor: string;
+  mirrorMargins: string;
+  mirrorMarginsHint: string;
   left: string;
   top: string;
   content: string;
@@ -246,6 +249,7 @@ export interface WeReportLocale {
   issueEmptyFormula: string;
   issueOverlap: string;
   issueOutsideColumn: string;
+  issueCheckDigit: string;
   fixIt: string;
   noProblems: string;
   chartType: string;
@@ -506,6 +510,9 @@ export const weReportLocaleEn: WeReportLocale = {
   marginRight: 'Right',
   marginBottom: 'Bottom',
   marginLeft: 'Left',
+  pageColor: 'Page colour',
+  mirrorMargins: 'Mirror margins',
+  mirrorMarginsHint: 'For booklets: on even pages the left and right margins swap.',
   left: 'From left',
   top: 'From top',
   content: 'Content',
@@ -656,6 +663,7 @@ export const weReportLocaleEn: WeReportLocale = {
   issueEmptyFormula: 'has an empty formula',
   issueOverlap: 'overlaps {0}',
   issueOutsideColumn: 'goes past its column into the next label',
+  issueCheckDigit: 'has a wrong check digit (the last digit should be {0}); it will not scan',
   fixIt: 'Fix',
   noProblems: 'No problems found.',
   chartType: 'Chart type',
@@ -951,6 +959,9 @@ export const weReportLocaleTr: WeReportLocale = {
   marginRight: 'Sağ',
   marginBottom: 'Alt',
   marginLeft: 'Sol',
+  pageColor: 'Sayfa rengi',
+  mirrorMargins: 'Ayna kenar boşlukları',
+  mirrorMarginsHint: 'Kitapçık için: çift sayfalarda sol ve sağ boşluk yer değiştirir.',
   left: 'Soldan',
   top: 'Üstten',
   content: 'İçerik',
@@ -1101,6 +1112,7 @@ export const weReportLocaleTr: WeReportLocale = {
   issueEmptyFormula: 'formülü boş',
   issueOverlap: '{0} ile üst üste biniyor',
   issueOutsideColumn: 'sütununu aşıp yandaki etikete taşıyor',
+  issueCheckDigit: 'kontrol hanesi yanlış (son hane {0} olmalı); okunmaz',
   fixIt: 'Düzelt',
   noProblems: 'Sorun bulunamadı.',
   chartType: 'Grafik türü',

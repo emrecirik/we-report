@@ -693,6 +693,7 @@ export class WeReportDesignerComponent {
       overlap: s.issueOverlap,
       outsideColumn: s.issueOutsideColumn,
       textCut: s.issueTextCut,
+      checkDigit: s.issueCheckDigit,
     }[issue.code];
     return text.replace('{0}', issue.detail ?? '');
   }
@@ -703,6 +704,12 @@ export class WeReportDesignerComponent {
 
   /** Moves (and if needed narrows) an item back inside the paper; a cut text grows to fit instead. */
   protected fixIssue(issue: ReportIssue): void {
+    if (issue.code === 'checkDigit') {
+      this.state.updateControls([issue.controlId], (c) => {
+        if (c.type === 'barcode' && typeof c.value === 'string') c.value = c.value.slice(0, -1) + issue.detail;
+      });
+      return;
+    }
     if (issue.code === 'textCut') {
       this.state.updateControls([issue.controlId], (c) => {
         if (c.type === 'text') c.canGrow = true;

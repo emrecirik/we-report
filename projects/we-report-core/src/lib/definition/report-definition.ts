@@ -37,6 +37,10 @@ export interface PageSettings {
   height?: number | null;
   /** Unit the designer shows rulers and sizes in. Storage stays millimetres. */
   displayUnit: LengthUnit;
+  /** Colour of the whole page, printed behind everything. */
+  color?: string;
+  /** Booklets: on even pages the left and right margins swap. */
+  mirrorMargins?: boolean;
 }
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify';

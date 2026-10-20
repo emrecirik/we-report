@@ -42,3 +42,26 @@ describe('running totals', () => {
     expect(carried).toBe(100);
   });
 });
+
+describe('page settings', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('paints the page colour first and mirrors the margins on even pages', () => {
+    const rows = Array.from({ length: 60 }, (_, i) => ({ n: i }));
+    const r = createBlankReport('Booklet');
+    r.page.margins = { top: 15, right: 10, bottom: 15, left: 25 };
+    r.page.mirrorMargins = true;
+    r.page.color = '#fffbe6';
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: rows }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands[0].controls.push({ id: 'h', type: 'text', x: 0, y: 0, width: 40, height: 6, text: 'Head' });
+    r.bands[1].controls.push({ id: 'n', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: '[n]' } });
+    const pages = layoutReport(r, { fonts, now: NOW }).pages;
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages[0].items[0]).toEqual(jasmine.objectContaining({ kind: 'rect', x: 0, y: 0, fill: '#fffbe6' }));
+    const firstX = (i: number) => pages[i].items.filter((t): t is TextItem => t.kind === 'text').map((t) => t.x);
+    expect(new Set(firstX(0))).toEqual(new Set([25]));
+    expect(new Set(firstX(1))).toEqual(new Set([10]));
+  });
+});

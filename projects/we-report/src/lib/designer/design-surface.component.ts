@@ -114,7 +114,7 @@ interface DragOp {
         <text [attr.x]="l.x + 2" y="9">{{ l.text }}</text>
       }
     </svg>
-    <div class="ds__page" (pointermove)="trackPointer($event)" (pointerleave)="state.pointer.set(null)" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()" [style.--ds-margin-right.mm]="state.report().page.margins.right * zoom()">
+    <div class="ds__page" (pointermove)="trackPointer($event)" (pointerleave)="state.pointer.set(null)" role="region" [attr.aria-label]="strings().designerLabel" [style.width.mm]="geometry().width * zoom()" [style.min-height.mm]="(geometry().height ?? 0) * zoom()" [style.padding]="padding()" [style.--ds-margin-right.mm]="state.report().page.margins.right * zoom()" [style.background-color]="state.report().page.color || null">
       @if (watermarkText(); as wm) {
         <div class="ds__watermark" aria-hidden="true" [style.color]="state.report().watermark?.color ?? defaultWatermarkColor" [style.font-size.mm]="geometry().width * zoom() * 0.12" [style.transform]="'translate(-50%, -50%) rotate(' + -(state.report().watermark?.angle ?? 45) + 'deg)'">{{ wm }}</div>
       }

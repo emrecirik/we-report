@@ -391,16 +391,20 @@ class LayoutRun {
       before.push(...state.rows);
       const items: LayoutItem[] = [];
       const pageHeight = this.geometry.height ?? margins.top + state.endY + footerHeight + margins.bottom;
+      // Mirrored margins: even pages move the content over by the difference of the two margins.
+      const shift = this.def.page.mirrorMargins && index % 2 === 1 ? margins.right - margins.left : 0;
+      const left = margins.left + shift;
       const place = (band: Band | undefined, top: number) => {
         if (!band) return;
         const r = this.renderBand(band, scope);
-        for (const item of r.items) items.push(translate(item, margins.left, top));
-        for (const render of r.deferred) for (const item of render(info)) items.push(translate(item, margins.left, top));
+        for (const item of r.items) items.push(translate(item, left, top));
+        for (const render of r.deferred) for (const item of render(info)) items.push(translate(item, left, top));
       };
+      if (this.def.page.color) items.push({ kind: 'rect', x: 0, y: 0, width, height: pageHeight, fill: this.def.page.color });
       items.push(...this.watermark(scope, width, pageHeight));
       place(pageHeader, margins.top);
-      items.push(...state.items);
-      for (const d of state.deferred) for (const item of d.render(info)) items.push(translate(item, margins.left, d.y));
+      items.push(...(shift ? state.items.map((item) => translate(item, shift, 0)) : state.items));
+      for (const d of state.deferred) for (const item of d.render(info)) items.push(translate(item, left, d.y));
       place(pageFooter, contentHeight === null ? margins.top + state.endY : margins.top + contentHeight - footerHeight);
       return { width, height: pageHeight, items };
     });

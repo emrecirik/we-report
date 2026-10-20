@@ -3,7 +3,17 @@ import { resolvePageGeometry } from './page';
 import { Bindable, isExpression, ReportControl, ReportDefinition } from './report-definition';
 
 /** `textCut` is found by the designer, which measures with the loaded fonts; `checkReport` does not report it. */
-export type ReportIssueCode = 'outsidePage' | 'outsideColumn' | 'formulaError' | 'unknownField' | 'emptyFormula' | 'overlap' | 'textCut';
+export type ReportIssueCode = 'outsidePage' | 'outsideColumn' | 'formulaError' | 'unknownField' | 'emptyFormula' | 'overlap' | 'textCut' | 'checkDigit';
+
+/** Lengths (check digit included) of the barcodes whose last digit is a GS1 check digit. */
+const GTIN_LENGTHS: Record<string, number> = { ean13: 13, ean8: 8, upca: 12, itf14: 14 };
+
+/** The GS1 check digit for `digits` (the code without its check digit). */
+export function gtinCheckDigit(digits: string): number {
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) sum += Number(digits[digits.length - 1 - i]) * (i % 2 === 0 ? 3 : 1);
+  return (10 - (sum % 10)) % 10;
+}
 
 /** A design problem the designer can explain and often fix. Messages are localized by `code`. */
 export interface ReportIssue {
@@ -86,6 +96,11 @@ export function checkReport(def: ReportDefinition, rowFields?: string[], parentF
       if (c.x + c.width > width + 0.01) issues.push({ code: 'outsidePage', severity: 'error', bandId: band.id, controlId: c.id });
       // Side-by-side rows: an item wider than its column runs into the next label.
       else if (c.x + c.width > columnWidth + 0.01) issues.push({ code: 'outsideColumn', severity: 'warning', bandId: band.id, controlId: c.id });
+      // A fixed EAN/UPC whose last digit is wrong would not scan (and does not print).
+      if (c.type === 'barcode' && typeof c.value === 'string' && c.value.length === GTIN_LENGTHS[c.symbology] && /^\d+$/.test(c.value)) {
+        const expected = gtinCheckDigit(c.value.slice(0, -1));
+        if (Number(c.value[c.value.length - 1]) !== expected) issues.push({ code: 'checkDigit', severity: 'error', bandId: band.id, controlId: c.id, detail: String(expected) });
+      }
       for (const b of bindings(c)) {
         if (!isExpression(b)) continue;
         if (!b.expression.trim()) {

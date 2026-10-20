@@ -62,7 +62,7 @@
               <button type="button" class="wd__problem-text" (click)="showIssue(issue)">
                 <code>{{ issue.controlId }}</code> {{ issueText(issue) }}
               </button>
-              @if (issue.code === 'outsidePage' || issue.code === 'textCut') {
+              @if (issue.code === 'outsidePage' || issue.code === 'textCut' || issue.code === 'checkDigit') {
                 <button type="button" class="wd__fix" (click)="fixIssue(issue)">{{ s.fixIt }}</button>
               }
             </div>

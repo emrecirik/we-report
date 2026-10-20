@@ -56,6 +56,19 @@
         <label><small>{{ s.marginLeft }}</small><input type="number" min="0" step="1" [value]="num(report().page.margins.left)" (input)="setMargin('left', $any($event.target).value)" /></label>
       </div>
     </div>
+    @if (advanced()) {
+      <label class="pp__check">
+        <input type="checkbox" [checked]="!!report().page.mirrorMargins" (change)="setPageOption('mirrorMargins', $any($event.target).checked || undefined)" />
+        <span>{{ s.mirrorMargins }}<small class="pp__hint">{{ s.mirrorMarginsHint }}</small></span>
+      </label>
+      <label class="pp__row">
+        <span>{{ s.pageColor }}</span>
+        <span class="pp__color">
+          <input type="color" [value]="report().page.color ?? '#ffffff'" (input)="setPageOption('color', $any($event.target).value)" />
+          <button type="button" class="pp__link" (click)="setPageOption('color', undefined)">{{ s.noColor }}</button>
+        </span>
+      </label>
+    }
   </section>
   <section class="pp__section">
     <h3>{{ s.reportLocale }}</h3>
@@ -567,7 +580,12 @@
           }
           <label class="pp__row pp__row--stack">
             <span>{{ s.subreportRows }}</span>
-            <input class="pp__mono" [value]="c.rows?.expression ?? ''" placeholder="[orders]" (input)="setOptionalExpression('rows', $any($event.target).value)" spellcheck="false" />
+            <input class="pp__mono" list="pp-sub-lists" [value]="c.rows?.expression ?? ''" placeholder="[orders]" (input)="setOptionalExpression('rows', $any($event.target).value)" spellcheck="false" />
+            <datalist id="pp-sub-lists">
+              @for (l of lists(); track l) {
+                <option [value]="'[' + l + ']'"></option>
+              }
+            </datalist>
           </label>
           <small class="pp__hint">{{ s.subreportRowsHint }}</small>
           <label class="pp__row pp__row--stack">

@@ -175,6 +175,14 @@ export class PropertyPanelComponent {
     }, `page-${key}`);
   }
 
+  protected setPageOption(key: 'color' | 'mirrorMargins', value: string | boolean | undefined): void {
+    this.state.update((d) => {
+      if (value === undefined || value === '') delete d.page[key];
+      else if (key === 'color') d.page.color = String(value);
+      else d.page.mirrorMargins = true;
+    }, `page-${key}`);
+  }
+
   protected setMargin(side: 'top' | 'right' | 'bottom' | 'left', value: string): void {
     this.state.update((d) => (d.page.margins[side] = nonNegative(value)), `margin-${side}`);
   }
