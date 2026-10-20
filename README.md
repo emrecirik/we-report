@@ -35,14 +35,14 @@ backend required**.
 
 | | |
 |---|---|
-| Paper | ISO A0–A6, B4/B5, Letter, Legal, Tabloid, Executive, envelopes, 58/80 mm receipt rolls (page grows with content), business cards, any custom size, portrait/landscape, margins |
-| Sections | Report header/footer, page header/footer, nested groups (sort, keep together, repeat on every page), detail, page breaks |
-| Items | Text, data fields, lines, rectangles/ellipses, images (fit/fill/stretch), 1D/2D barcodes and QR codes (Code128, EAN, UPC, ITF, GS1-128, DataMatrix, PDF417, Aztec …, as vectors), checkboxes, page number / page X of Y / print date |
-| Formulas | `[Price] * [Qty]`, `Iif`, `Sum/Count/Avg/Min/Max` per group/page/report, text, math and date functions, Turkish casing, `[^.invoiceNo]` parent fields, `[?param]` parameters — no `eval` |
+| Paper | ISO A0–A6, B4/B5, Letter, Legal, Tabloid, Executive, envelopes, 58/80 mm receipt rolls (page grows with content), label sheets, business cards, any custom size, portrait/landscape, margins, mirrored margins, page colour |
+| Sections | Report header/footer, page header/footer, nested groups (sort, keep together, repeat on every page), detail, inner lists, side-by-side labels, page breaks; a section taller than a page continues on the next |
+| Items | Text and data fields (rich text with **bold**/*italic* and fields inside), tables, charts, cross tables (pivot), sub-reports, lines, rectangles/ellipses, images (embedded or from an address), 1D/2D barcodes and QR codes (Code128, EAN, UPC, ITF, GS1-128, DataMatrix, PDF417, Aztec …, as vectors), checkboxes, page number / page X of Y / print date |
+| Formulas | `[Price] * [Qty]`, `Iif`, `Sum/Count/Avg/Min/Max` per group/page/report, running and carried-forward totals, amounts in words, text, math and date functions, Turkish casing, `[^.invoiceNo]` parent fields, `[?param]` parameters — no `eval` |
 | Formats | Numbers, money, percent, dates — with the locale (`1.234,50 ₺`, `5 Ocak 2026`) |
-| Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend), SQL Server, PostgreSQL, SQLite (via a backend), report parameters |
-| Designer | Drag from toolbox and field list, move/resize with grid and alignment-guide snapping, multi-select, undo/redo, keyboard nudging, properties panel, preview tab, light/dark |
-| Output | Paged preview, print, PDF (embedded subset fonts), Excel (typed cells) |
+| Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend), SQL Server, PostgreSQL, MySQL, SQLite (via a backend), report parameters with drop-down lists |
+| Designer | Drag from toolbox and field list, move/resize with grid and alignment-guide snapping, multi-select, undo/redo, in-place editing, format painter, *Tidy up*, report wizard, problems list with one-click fixes, properties panel, preview tab, light/dark |
+| Output | Paged preview, print, PDF (embedded subset fonts), Excel (typed cells), PNG, label printers (ZPL) and receipt printers (ESC/POS) |
 
 ## Packages
 
@@ -54,7 +54,7 @@ backend required**.
 ## Documentation
 
 - [Getting started](docs/getting-started.md)
-- [Designing reports](docs/designing.md) — sections, inner lists, labels, tables, charts
+- [Designing reports](docs/designing.md) — sections, inner lists, sub-reports, labels, tables, charts, cross tables
 - [Moving reports from other tools](docs/migrating.md) — open RDLC/RDL and DevExpress REPX files
 - [Formulas](docs/expressions.md)
 - [Data sources](docs/data-sources.md)
