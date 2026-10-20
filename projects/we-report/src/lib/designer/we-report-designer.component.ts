@@ -79,6 +79,8 @@ export class WeReportDesignerComponent {
   readonly zoom = input(1);
   /** Fetch used for web-service data sources (testing in the designer and the preview). */
   readonly fetchFn = input<typeof fetch | undefined>(undefined);
+  /** When the report is a sub-report: a sample of the row around it, which its `[^.field]` reads. */
+  readonly outerRow = input<unknown>(undefined);
 
   protected readonly state = inject(DesignerState);
   private readonly fontsService = inject(WeReportFontsService);
@@ -252,7 +254,7 @@ export class WeReportDesignerComponent {
   protected readonly showData = signal(readSaved('showData', true, (v) => typeof v === 'boolean'));
   protected readonly sample = computed<DesignSample | null>(() => (this.showData() ? this.state.sample() : null));
 
-  protected readonly fields = computed(() => designerFields(this.state.report(), this.data()));
+  protected readonly fields = computed(() => designerFields(this.state.report(), this.data(), this.outerRow()));
   protected readonly fieldFilter = signal('');
   /** The field list narrowed to names containing the filter text. */
   protected readonly shownFields = computed(() => {
@@ -291,7 +293,8 @@ export class WeReportDesignerComponent {
       let sample: DesignSample | null = null;
       try {
         const { rows, parent } = resolveReportData(this.state.report(), this.data());
-        if (rows?.length || (parent !== undefined && parent !== null)) sample = { row: rows?.[0], rows: rows ?? [], parent, calculated: calculatedFieldMap(this.state.report()) };
+        const around = this.outerRow() ?? parent;
+        if (rows?.length || (around !== undefined && around !== null)) sample = { row: rows?.[0], rows: rows ?? [], parent: around, calculated: calculatedFieldMap(this.state.report()) };
       } catch {
         sample = null;
       }

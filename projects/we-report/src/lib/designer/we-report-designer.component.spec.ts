@@ -42,6 +42,9 @@ describe('WeReportDesignerComponent', () => {
     expect(dialog.querySelector('h2')?.textContent).toContain('Siparişler');
     // The inner designer shows the first order where the formula is.
     expect(dialog.querySelector('[data-control-id="no"]')?.textContent).toContain('S-1');
+    // ...and knows the row around the sub-report: [^.name] is no unknown field.
+    const innerDesigner = fixture.debugElement.queryAll((d) => d.name === 'we-report-designer')[0].componentInstance as { fields(): { parent: { path: string }[] } };
+    expect(innerDesigner.fields().parent.map((f) => f.path)).toContain('name');
 
     // Keys that reach the outer designer while the window is open do not touch the outer page.
     state.selection.set({ kind: 'controls', ids: ['sub'] });

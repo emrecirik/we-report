@@ -8,7 +8,8 @@
   window (double-click), or loaded from a saved report / RDLC / REPX file. Rows come from a formula
   over the outer row (`rows`) or the sub-report's own data, matched with `filter`
   (`[CustomerId] = [^.Id]`); `parameters` pass values from the outer row; *Its rows come from*
-  suggests the lists in the data. The box grows and pushes the items below it. Remote sources of
+  suggests the lists in the data; its designer knows the row around it, so `[^.field]` shows a
+  sample value and is no unknown field (`outerRow` input). The box grows and pushes the items below it. Remote sources of
   sub-reports are loaded with the report (`allDataSources`). Nested sub-reports migrate with the
   file around them; more than five levels are refused.
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /

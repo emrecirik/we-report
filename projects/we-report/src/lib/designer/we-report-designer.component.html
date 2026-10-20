@@ -366,6 +366,6 @@
       <h2>{{ s.subreportTitle.replace('{0}', sub.report.name) }}</h2>
       <button type="button" class="wd__primary" (click)="state.subreportOpen.set(null)">{{ s.subreportDone }}</button>
     </div>
-    <we-report-designer class="wd__subreport-designer" [report]="subreportDesign()!" (reportChange)="setSubreport(sub.id, $event)" [data]="subreportData()" [locale]="locale()" [fetchFn]="fetchFn()" />
+    <we-report-designer class="wd__subreport-designer" [report]="subreportDesign()!" (reportChange)="setSubreport(sub.id, $event)" [data]="subreportData()" [outerRow]="state.sample()?.row" [locale]="locale()" [fetchFn]="fetchFn()" />
   </div>
 }

@@ -44,6 +44,8 @@ function listPaths(fields: FieldSchema[], prefix = ''): { path: string; fields: 
 export function designerFields(
   report: ReportDefinition,
   data?: unknown,
+  /** Inside a sub-report: the row around it, whose fields `[^.field]` reads. */
+  outerRow?: unknown,
 ): { rows: DesignerField[]; parent: DesignerField[]; lists: string[]; inner: DesignerField[] } {
   let resolved;
   try {
@@ -69,7 +71,7 @@ export function designerFields(
   const lists = listPaths(schema);
   const innerPath = report.bands.find((b) => b.kind === 'subDetail')?.rowsPath;
   const inner = flatten(lists.find((l) => l.path === innerPath)?.fields ?? [], false);
-  const parentValue = resolved.parent;
+  const parentValue = outerRow ?? resolved.parent;
   const listName = report.dataMember?.path?.split('.').pop();
   const parent =
     parentValue && typeof parentValue === 'object' && !Array.isArray(parentValue)
