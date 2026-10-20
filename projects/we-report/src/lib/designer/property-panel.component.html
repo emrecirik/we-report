@@ -144,6 +144,11 @@
         </span>
       </label>
     }
+    @if (b.kind === 'groupHeader' || b.kind === 'detail') {
+      <span class="pp__label">{{ s.bookmark }}</span>
+      <we-report-bindable-input [value]="bookmarkValue(b)" [fields]="fields()" [strings]="s" (valueChange)="setBookmark($event)" />
+      <small class="pp__hint">{{ s.bookmarkHint }}</small>
+    }
     @if (advanced() && b.kind !== 'pageHeader' && b.kind !== 'pageFooter') {
       <label class="pp__row pp__row--stack">
         <span>{{ s.bandVisible }}</span>

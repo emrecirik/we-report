@@ -210,6 +210,16 @@ export class PropertyPanelComponent {
     }, `band-${key}`);
   }
 
+  protected bookmarkValue(b: Band): Bindable<string> {
+    return b.bookmark ?? '';
+  }
+
+  protected setBookmark(value: Bindable<string>): void {
+    const band = this.band();
+    const empty = isExpression(value) ? !value.expression.trim() : !value;
+    if (band) this.state.updateBand(band.id, (b) => (b.bookmark = empty ? undefined : value), 'band-bookmark');
+  }
+
   protected toggleBand(key: 'keepTogether' | 'repeatOnEveryPage' | 'resetPageNumber' | 'pageBreakBefore' | 'pageBreakAfter', value: boolean): void {
     const band = this.band();
     if (band) this.state.updateBand(band.id, (b) => (b[key] = value || undefined));

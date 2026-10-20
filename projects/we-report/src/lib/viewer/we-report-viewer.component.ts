@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, toMonoBitmap, writeXlsx, zplFromBitmaps } from 'we-report-core';
+import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, toMonoBitmap, writeXlsx, zplFromBitmaps } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -36,6 +36,9 @@ import { WeReportPageComponent } from './we-report-page.component';
       @if (pageTotal() > 1) {
         <span class="we-report-viewer__sep"></span>
         <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showThumbs()" (click)="showThumbs.set(!showThumbs())" [title]="strings().thumbnails" [attr.aria-label]="strings().thumbnails" [attr.aria-pressed]="showThumbs()" [innerHTML]="'thumbnails' | weReportIcon"></button>
+        @if (document()?.bookmarks?.length) {
+          <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showMap()" (click)="showMap.set(!showMap())" [title]="strings().documentMap" [attr.aria-label]="strings().documentMap" [attr.aria-pressed]="showMap()" [innerHTML]="'outline' | weReportIcon"></button>
+        }
         <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(1)" [title]="strings().firstPage + ' (Home)'" [attr.aria-label]="strings().firstPage" [innerHTML]="'firstPage' | weReportIcon"></button>
         <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)" [title]="strings().previousPage + ' (PgUp)'" [attr.aria-label]="strings().previousPage" [innerHTML]="'previousPage' | weReportIcon"></button>
         <input class="we-report-viewer__pagebox" type="number" min="1" [max]="pageTotal()" [value]="currentPage()" (change)="goToPage(+$any($event.target).value)" [attr.aria-label]="strings().pageNumber" />
@@ -126,6 +129,13 @@ import { WeReportPageComponent } from './we-report-page.component';
       </details>
     }
     <div class="we-report-viewer__main">
+    @if (showMap() && document()?.bookmarks?.length) {
+      <nav class="we-report-viewer__map" [attr.aria-label]="strings().documentMap">
+        @for (mark of document()!.bookmarks!; track $index) {
+          <button type="button" class="we-report-viewer__mark" [style.padding-left.px]="8 + mark.level * 14" (click)="goToBookmark(mark)">{{ mark.title }}</button>
+        }
+      </nav>
+    }
     @if (showThumbs() && pageTotal() > 1) {
       <nav #thumbs class="we-report-viewer__thumbs" [attr.aria-label]="strings().thumbnails">
         @for (page of document()!.pages; track $index; let p = $index) {
@@ -273,6 +283,33 @@ import { WeReportPageComponent } from './we-report-page.component';
       flex: 1;
       display: flex;
       min-height: 0;
+    }
+    .we-report-viewer__map {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      width: 220px;
+      overflow: auto;
+      padding: 8px 4px;
+      border-right: 0.5px solid var(--we-report-separator, rgba(60, 60, 67, 0.14));
+      background: var(--we-report-panel-bg, #fbfbfd);
+    }
+    .we-report-viewer__mark {
+      border: 0;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: none;
+      color: inherit;
+      font: inherit;
+      font-size: 12px;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .we-report-viewer__mark:hover {
+      background: var(--we-report-hover-bg, rgba(118, 118, 128, 0.12));
     }
     .we-report-viewer__thumbs {
       flex: none;
@@ -460,6 +497,8 @@ export class WeReportViewerComponent {
 
   protected readonly zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
   protected readonly showThumbs = signal(false);
+  /** The document map: the bookmarked groups and rows, for jumping to them. */
+  protected readonly showMap = signal(false);
   protected readonly thumbZoom = 0.18;
   protected readonly currentPage = signal(1);
   protected readonly pageTotal = computed(() => this.document()?.pages.length ?? 0);
@@ -509,6 +548,15 @@ export class WeReportViewerComponent {
       const rect = page?.querySelector(`[data-hit="${hit.item}-${hit.line}"]`) ?? page;
       rect?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     });
+  }
+
+  /** Scrolls to a document-map entry: its page, then down to the section on it. */
+  protected goToBookmark(mark: LayoutBookmark): void {
+    this.goToPage(mark.pageIndex + 1);
+    const box = this.scroller()?.nativeElement;
+    const pageEl = box?.querySelector<HTMLElement>(`[data-page="${mark.pageIndex + 1}"]`);
+    const page = this.document()?.pages[mark.pageIndex];
+    if (box && pageEl && page) box.scrollTop += (mark.y / page.height) * pageEl.getBoundingClientRect().height;
   }
 
   protected goToPage(n: number): void {

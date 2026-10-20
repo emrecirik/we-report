@@ -310,6 +310,8 @@ export interface Band {
   pageBreakBefore?: boolean;
   pageBreakAfter?: boolean;
   backgroundColor?: string;
+  /** groupHeader / detail: an entry of the document map (PDF bookmarks, the viewer's list), e.g. `[Customer]`. */
+  bookmark?: Bindable<string>;
   /** detail / inner list: background of every second row (zebra stripes). */
   alternateBackgroundColor?: string;
   /** Prints the section only when this formula is true, e.g. `[Discount] > 0`; totals still count its rows. */

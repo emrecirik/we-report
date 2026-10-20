@@ -21,7 +21,7 @@ import { formatValue } from '../format';
 import { barcodeItem } from './barcode';
 import { aggregate, ChartPoint, chartItems } from './chart';
 import { readImage } from './images';
-import { LayoutDocument, LayoutItem, LayoutPage, LayoutProblem, TextItem } from './layout-types';
+import { LayoutBookmark, LayoutDocument, LayoutItem, LayoutPage, LayoutProblem, TextItem } from './layout-types';
 import { resolveStyle, ResolvedStyle } from './style';
 import { fitLines, wrapText } from './text-wrap';
 import { parseRichText, RichRun, wrapRichText } from './rich-text';
@@ -70,6 +70,8 @@ interface RenderedBand {
   items: LayoutItem[];
   /** Items that need the page number (page info controls), rendered once pages are known. */
   deferred: ((page: PageInfo) => LayoutItem[])[];
+  /** The section's entry in the document map. */
+  bookmark?: string;
 }
 
 type Entry =
@@ -96,6 +98,7 @@ export function layoutReport(definition: ReportDefinition, options: LayoutOption
 class LayoutRun {
   private readonly problems: LayoutProblem[] = [];
   private readonly imageUrls = new Set<string>();
+  private readonly bookmarks: LayoutBookmark[] = [];
   private readonly reported = new Set<string>();
   private readonly geometry: PageGeometry;
   private readonly locale: string;
@@ -159,7 +162,12 @@ class LayoutRun {
     }
 
     const pages = this.paginate(entries, byKind('pageHeader'), byKind('pageFooter'), first);
-    return this.imageUrls.size ? { pages, problems: this.problems, imageUrls: [...this.imageUrls] } : { pages, problems: this.problems };
+    return {
+      pages,
+      problems: this.problems,
+      ...(this.imageUrls.size ? { imageUrls: [...this.imageUrls] } : {}),
+      ...(this.bookmarks.length ? { bookmarks: this.bookmarks } : {}),
+    };
   }
 
   // ── Grouping ────────────────────────────────────────────────────────────────
@@ -361,6 +369,10 @@ class LayoutRun {
         startPage();
       }
       if (resets) page.run = ++run;
+      if (r.bookmark && !this.nesting) {
+        const level = r.band.kind === 'groupHeader' ? (entry.groupLevel ?? 0) : this.def.bands.filter((b) => b.kind === 'groupHeader').length;
+        this.bookmarks.push({ title: r.bookmark, pageIndex: pages.length - 1, y: margins.top + (columns > 1 && column > 0 ? rowTop : y), level });
+      }
       if (columns > 1) {
         // shortcut: the first cell of a row decides the page break; a taller can-grow cell later in
         // the row may overlap the page footer. Measure the whole row first if that becomes a need.
@@ -470,6 +482,8 @@ class LayoutRun {
     if (band.visible?.expression.trim() && !this.truthy(this.eval(band.visible.expression, scope, band.id))) {
       return { band, scope, height: 0, items, deferred };
     }
+    const mark = band.bookmark === undefined ? undefined : this.bind(band.bookmark, scope, band.id);
+    const bookmark = mark === null || mark === undefined || mark === ERROR_TEXT || mark === '' ? undefined : mark instanceof Date ? formatValue(mark, undefined, { locale: this.locale, currency: this.currency }) : String(mark);
     let height = band.height;
     const shown = band.controls.filter((c) => c.visible === undefined || this.truthy(this.bind(c.visible, scope, c.id)));
     // An item that grows pushes down the items below it (that share its columns), as in desktop
@@ -508,7 +522,7 @@ class LayoutRun {
     if (fill) {
       items.unshift({ kind: 'rect', x: 0, y: 0, width: this.cellWidth(band), height, fill });
     }
-    return { band, scope, height, items, deferred };
+    return { band, scope, height, items, deferred, bookmark };
   }
 
   private renderControl(

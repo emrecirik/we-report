@@ -30,6 +30,9 @@
 - Import: RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
 - Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and
   *Print only when* (`visible` formula on any section but the page header/footer).
+- **Document map**: a `bookmark` on group headers and the detail section becomes PDF bookmarks
+  (nested by group, the PDF opens with them shown) and a list in the preview that jumps to the
+  section (`LayoutDocument.bookmarks`).
 - Groups: *New page and page numbers per group* (`resetPageNumber`) — every group starts on a new
   page, page X of Y counts the group's pages and carried totals restart: batch-printed statements.
 - Page settings: page colour (`page.color`) and mirrored margins for booklets

@@ -1,9 +1,9 @@
-import type { PDFFont, PDFImage, PDFPage, RGB } from 'pdf-lib';
+import type { PDFDocument, PDFFont, PDFImage, PDFPage, PDFRef, RGB } from 'pdf-lib';
 import { parseHexColor } from '../color';
 import { fromMm } from '../units';
 import { FontRegistry } from '../fonts/font-registry';
 import { readImage } from '../layout/images';
-import { LayoutDocument, LayoutItem } from '../layout/layout-types';
+import { LayoutBookmark, LayoutDocument, LayoutItem } from '../layout/layout-types';
 
 const PT = fromMm(1, 'pt');
 
@@ -62,14 +62,64 @@ export async function renderPdf(doc: LayoutDocument, fonts: FontRegistry, option
     return image;
   };
 
+  const pages: PDFPage[] = [];
   for (const layoutPage of doc.pages) {
     const page = pdf.addPage([layoutPage.width * PT, layoutPage.height * PT]);
+    pages.push(page);
     const H = layoutPage.height * PT;
     for (const item of layoutPage.items) {
       await drawItem(page, H, item, fontFor, imageFor);
     }
   }
+  if (doc.bookmarks?.length) addOutline(pdf, pages, doc);
   return pdf.save();
+}
+
+/** The document map as PDF bookmarks, nested by level; the reader opens with them shown. */
+function addOutline(pdf: PDFDocument, pages: PDFPage[], doc: LayoutDocument): void {
+  const { PDFName, PDFHexString, PDFNumber, PDFNull } = lib;
+  const ctx = pdf.context;
+  type Node = { mark: LayoutBookmark; ref: PDFRef; children: Node[] };
+  const top: Node[] = [];
+  const stack: Node[] = [];
+  for (const mark of doc.bookmarks ?? []) {
+    if (!pages[mark.pageIndex]) continue;
+    const node: Node = { mark, ref: ctx.nextRef(), children: [] };
+    while (stack.length && stack[stack.length - 1].mark.level >= mark.level) stack.pop();
+    (stack.length ? stack[stack.length - 1].children : top).push(node);
+    stack.push(node);
+  }
+  const count = (nodes: Node[]): number => nodes.reduce((n, c) => n + 1 + count(c.children), 0);
+  const write = (nodes: Node[], parent: PDFRef) => {
+    nodes.forEach((node, i) => {
+      const page = pages[node.mark.pageIndex];
+      const dict = ctx.obj({});
+      dict.set(PDFName.of('Title'), PDFHexString.fromText(node.mark.title));
+      dict.set(PDFName.of('Parent'), parent);
+      if (i > 0) dict.set(PDFName.of('Prev'), nodes[i - 1].ref);
+      if (i < nodes.length - 1) dict.set(PDFName.of('Next'), nodes[i + 1].ref);
+      if (node.children.length) {
+        dict.set(PDFName.of('First'), node.children[0].ref);
+        dict.set(PDFName.of('Last'), node.children[node.children.length - 1].ref);
+        dict.set(PDFName.of('Count'), PDFNumber.of(count(node.children)));
+      }
+      const height = doc.pages[node.mark.pageIndex].height;
+      dict.set(PDFName.of('Dest'), ctx.obj([page.ref, PDFName.of('XYZ'), PDFNull, PDFNumber.of((height - node.mark.y) * PT), PDFNull]));
+      ctx.assign(node.ref, dict);
+      write(node.children, node.ref);
+    });
+  };
+  if (!top.length) return;
+  const outlines = ctx.nextRef();
+  write(top, outlines);
+  const root = ctx.obj({});
+  root.set(PDFName.of('Type'), PDFName.of('Outlines'));
+  root.set(PDFName.of('First'), top[0].ref);
+  root.set(PDFName.of('Last'), top[top.length - 1].ref);
+  root.set(PDFName.of('Count'), PDFNumber.of(count(top)));
+  ctx.assign(outlines, root);
+  pdf.catalog.set(PDFName.of('Outlines'), outlines);
+  pdf.catalog.set(PDFName.of('PageMode'), PDFName.of('UseOutlines'));
 }
 
 function withClip(page: PDFPage, H: number, box: { x: number; y: number; width: number; height: number }, draw: () => void): void {

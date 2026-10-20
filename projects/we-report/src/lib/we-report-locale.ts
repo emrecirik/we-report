@@ -13,6 +13,7 @@ export interface WeReportLocale {
   print: string;
   downloadPdf: string;
   downloadExcel: string;
+  documentMap: string;
   downloadPng: string;
   printerOutput: string;
   printerOutputHint: string;
@@ -175,6 +176,8 @@ export interface WeReportLocale {
   sortNone: string;
   keepTogether: string;
   keepTogetherHint: string;
+  bookmark: string;
+  bookmarkHint: string;
   alternateBackground: string;
   bandVisible: string;
   bandVisibleHint: string;
@@ -440,6 +443,7 @@ export const weReportLocaleEn: WeReportLocale = {
   print: 'Print',
   downloadPdf: 'Download PDF',
   downloadExcel: 'Excel',
+  documentMap: 'Document map',
   downloadPng: 'PNG',
   printerOutput: 'Printer file',
   printerOutputHint: 'For label and receipt printers: the pages as an image the printer prints directly.',
@@ -597,6 +601,8 @@ export const weReportLocaleEn: WeReportLocale = {
   sortNone: 'As in data',
   keepTogether: 'Keep group on one page',
   keepTogetherHint: 'Moves the whole group to the next page instead of splitting it.',
+  bookmark: 'Bookmark',
+  bookmarkHint: 'An entry in the PDF bookmarks and the preview’s document map, e.g. the customer’s name.',
   alternateBackground: 'Every second row',
   bandVisible: 'Print only when',
   bandVisibleHint: 'A formula, e.g. [Discount] > 0: otherwise the section is left out (its rows still count in totals).',
@@ -903,6 +909,7 @@ export const weReportLocaleTr: WeReportLocale = {
   print: 'Yazdır',
   downloadPdf: 'PDF indir',
   downloadExcel: 'Excel',
+  documentMap: 'Belge haritası',
   downloadPng: 'PNG',
   printerOutput: 'Yazıcı dosyası',
   printerOutputHint: 'Etiket ve fiş yazıcıları için: sayfalar yazıcının doğrudan bastığı bir görüntü olarak.',
@@ -1060,6 +1067,8 @@ export const weReportLocaleTr: WeReportLocale = {
   sortNone: 'Verideki sırayla',
   keepTogether: 'Grubu tek sayfada tut',
   keepTogetherHint: 'Grup bölünecekse tamamını sonraki sayfaya taşır.',
+  bookmark: 'Yer imi',
+  bookmarkHint: 'PDF yer imlerinde ve önizlemenin belge haritasında bir satır; örn. müşterinin adı.',
   alternateBackground: 'Her ikinci satır',
   bandVisible: 'Yalnızca şu durumda yazdır',
   bandVisibleHint: 'Bir formül, örn. [Indirim] > 0; değilse bölüm basılmaz (satırları toplamlarda yine sayılır).',

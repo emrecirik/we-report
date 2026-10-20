@@ -11,6 +11,17 @@ export interface LayoutDocument {
    * fetch them, pass them in `images` and lay out again. Absent when there are none.
    */
   imageUrls?: string[];
+  /** The document map: one entry per printed section with a `bookmark`, in print order. */
+  bookmarks?: LayoutBookmark[];
+}
+
+export interface LayoutBookmark {
+  title: string;
+  /** 0-based page and the top of the section on it (mm). */
+  pageIndex: number;
+  y: number;
+  /** 0 for the outermost group; entries of deeper groups and of detail rows nest under it. */
+  level: number;
 }
 
 export interface LayoutPage {

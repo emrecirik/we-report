@@ -85,6 +85,9 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
 - **Sections** — a background colour, zebra stripes for detail rows (*Every second row*,
   `alternateBackgroundColor`) and, in Advanced mode, *Print only when* (`visible`, e.g.
   `[Discount] > 0`).
+- **Bookmarks** — a group header or the detail section can carry a `bookmark` (fixed text or a
+  formula such as `[Customer]`): the entries become PDF bookmarks and the preview's *Document map*,
+  nested by group (`LayoutDocument.bookmarks` in code).
 - **Watermark** — large faint text behind every page (`watermark`), fixed or from data, e.g. `PAID`
   only on paid invoices.
 - **Language and region** — a report can carry its own `locale` and `currency`, so it writes

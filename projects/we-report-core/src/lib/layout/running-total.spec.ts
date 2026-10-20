@@ -3,6 +3,7 @@ import { createBlankReport } from '../definition/blank-report';
 import { evaluate } from '../expression/evaluate';
 import { FontRegistry } from '../fonts/font-registry';
 import { layoutReport } from './engine';
+import { renderPdf } from '../render/pdf';
 import { TextItem } from './layout-types';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
@@ -90,6 +91,36 @@ describe('section options', () => {
     expect(page.items.some((i) => i.kind === 'text' && i.lines[0].text === 'many')).toBeFalse();
     (r.bands[2].visible as { expression: string }).expression = 'Count() = 4';
     expect(layoutReport(r, { fonts, now: NOW }).pages[0].items.some((i) => i.kind === 'text' && i.lines[0].text === 'many')).toBeTrue();
+  });
+});
+
+describe('document map', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('lists bookmarked groups and rows with their page, nested by level, and writes PDF bookmarks', async () => {
+    const rows = [...Array.from({ length: 40 }, (_, i) => ({ c: 'Ankara', n: `A${i}` })), ...Array.from({ length: 3 }, (_, i) => ({ c: 'İzmir', n: `I${i}` }))];
+    const r = createBlankReport('Map');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: rows }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands.splice(1, 0, { id: 'g', kind: 'groupHeader', height: 8, groupBy: { expression: '[c]' }, bookmark: { expression: '[c]' }, controls: [] });
+    r.bands[2].bookmark = { expression: '[n]' };
+    r.bands[2].height = 7;
+    const doc = layoutReport(r, { fonts, now: NOW });
+    const marks = doc.bookmarks!;
+    expect(marks.length).toBe(2 + 43);
+    expect(marks[0]).toEqual(jasmine.objectContaining({ title: 'Ankara', pageIndex: 0, level: 0 }));
+    expect(marks[1]).toEqual(jasmine.objectContaining({ title: 'A0', level: 1 }));
+    const izmir = marks.find((m) => m.title === 'İzmir')!;
+    expect(izmir.pageIndex).toBe(doc.pages.length - 1);
+    expect(marks.find((m) => m.title === 'A39')!.pageIndex).toBeGreaterThan(0);
+
+    const { PDFDocument, PDFName, PDFDict } = await import('pdf-lib');
+    const pdf = await PDFDocument.load(await renderPdf(doc, fonts));
+    const outlines = pdf.catalog.lookup(PDFName.of('Outlines'), PDFDict);
+    expect(outlines.get(PDFName.of('Count'))!.toString()).toBe('45');
+    const first = outlines.lookup(PDFName.of('First'), PDFDict);
+    expect(first.lookup(PDFName.of('Title'))!.toString()).toContain('FEFF'); // UTF-16 text
   });
 });
 

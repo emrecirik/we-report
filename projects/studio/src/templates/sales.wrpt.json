@@ -218,6 +218,9 @@
       "sort": "asc",
       "keepTogether": false,
       "repeatOnEveryPage": true,
+      "bookmark": {
+        "expression": "[city]"
+      },
       "controls": [
         {
           "id": "cityName",
