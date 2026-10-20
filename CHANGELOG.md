@@ -52,6 +52,7 @@
 
 ### Formulas and data
 
+- Pasted dates whose day starts with a zero (`05.01.2026`) are read as dates; they stayed text.
 - **Calculated fields** (`calculatedFields`): a formula per row used like a data field (`[total]`)
   in texts, totals, sorting, groups and exports; edited under Data sources, listed with the fields.
 - `RunningSum(value)` — a running balance in a row (within its group), the amount carried forward

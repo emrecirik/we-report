@@ -24,6 +24,13 @@ const PLAIN_NUMBER = /^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
 export function inferValue(raw: string): unknown {
   const s = raw.trim();
   if (s === '') return null;
+  // Before the leading-zero rule: 05.01.2026 is a date, not a code.
+  const m = DOTTED_DATE.exec(s);
+  if (m) {
+    const [day, month, year] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const d = new Date(year, month - 1, day, Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0));
+    if (d.getMonth() === month - 1 && d.getDate() === day) return d;
+  }
   if (/^-?0\d/.test(s) && !/^-?0[.,]/.test(s)) return raw;
   if (PLAIN_NUMBER.test(s)) return Number(s);
   if (COMMA_DECIMAL.test(s)) return Number(s.replace(/\./g, '').replace(',', '.'));
@@ -31,12 +38,6 @@ export function inferValue(raw: string): unknown {
   const lower = s.toLocaleLowerCase('tr');
   if (lower === 'true' || lower === 'evet') return true;
   if (lower === 'false' || lower === 'hayır') return false;
-  const m = DOTTED_DATE.exec(s);
-  if (m) {
-    const [day, month, year] = [Number(m[1]), Number(m[2]), Number(m[3])];
-    const d = new Date(year, month - 1, day, Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0));
-    if (d.getMonth() === month - 1 && d.getDate() === day) return d;
-  }
   return toDate(s) ?? raw;
 }
 

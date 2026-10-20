@@ -43,6 +43,8 @@ describe('inferValue', () => {
     expect(inferValue('HAYIR')).toBeFalse();
     expect(inferValue('31.02.2026')).toBe('31.02.2026');
     expect(inferValue('5/3/2026 14:30')).toEqual(new Date(2026, 2, 5, 14, 30));
+    expect(inferValue('05.01.2026')).toEqual(new Date(2026, 0, 5)); // a leading zero does not make it a code
+    expect(inferValue('00123')).toBe('00123');
   });
 });
 
