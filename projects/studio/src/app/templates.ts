@@ -1,5 +1,7 @@
 import { createBlankReport, migrateDefinition, ReportDefinition } from 'we-report-core';
 import certificate from '../templates/certificate.wrpt.json';
+import chequesData from '../templates/cheques.data.json';
+import cheques from '../templates/cheques.wrpt.json';
 import deliveryNote from '../templates/delivery-note.wrpt.json';
 import earsivData from '../templates/earsiv-invoice.data.json';
 import earsiv from '../templates/earsiv-invoice.wrpt.json';
@@ -85,6 +87,13 @@ export const TEMPLATES: StudioTemplate[] = [
     description: { tr: 'Termal etiket: alıcı, şube, barkod ve QR', en: 'Thermal label: receiver, branch, barcode and QR' },
     report: () => migrateDefinition(structuredClone(shippingLabel)),
     data: shippingLabelData,
+  },
+  {
+    id: 'cheques',
+    name: { tr: 'Çek / senet bordrosu', en: 'Cheques and notes (Turkey)' },
+    description: { tr: 'Vade ayına göre gruplar, kalan gün, kümülatif toplam, nakli yekûn', en: 'Grouped by due month, days left, running total carried forward' },
+    report: () => migrateDefinition(structuredClone(cheques)),
+    data: chequesData,
   },
   {
     id: 'labels',

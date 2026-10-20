@@ -1,0 +1,198 @@
+{
+  "company": "Demir Ofis Malzemeleri A.Ş.",
+  "date": "2026-10-21",
+  "items": [
+    {
+      "no": "CK-1002",
+      "kind": "Çek",
+      "bank": "Karadeniz Bankası · Trabzon",
+      "drawer": "Kuzey Tekstil San.",
+      "due": "2026-11-02",
+      "amount": 15426.44
+    },
+    {
+      "no": "CK-1005",
+      "kind": "Çek",
+      "bank": "Karadeniz Bankası · Trabzon",
+      "drawer": "Kuzey Tekstil San.",
+      "due": "2026-11-08",
+      "amount": 48081.26
+    },
+    {
+      "no": "CK-1007",
+      "kind": "Çek",
+      "bank": "Ege Katılım · Alsancak",
+      "drawer": "Akdeniz Gıda Ltd.",
+      "due": "2026-11-09",
+      "amount": 57621.0
+    },
+    {
+      "no": "CK-1003",
+      "kind": "Çek",
+      "bank": "Karadeniz Bankası · Trabzon",
+      "drawer": "Ege Mobilya San. Tic.",
+      "due": "2026-11-12",
+      "amount": 55253.62
+    },
+    {
+      "no": "SN-1001",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Akdeniz Gıda Ltd.",
+      "due": "2026-11-17",
+      "amount": 26390.9
+    },
+    {
+      "no": "CK-1000",
+      "kind": "Çek",
+      "bank": "Toros Bankası · Mersin",
+      "drawer": "Doğu İnşaat A.Ş.",
+      "due": "2026-11-18",
+      "amount": 19094.35
+    },
+    {
+      "no": "CK-1004",
+      "kind": "Çek",
+      "bank": "Ege Katılım · Alsancak",
+      "drawer": "Akdeniz Gıda Ltd.",
+      "due": "2026-11-18",
+      "amount": 58682.57
+    },
+    {
+      "no": "CK-1006",
+      "kind": "Çek",
+      "bank": "Toros Bankası · Mersin",
+      "drawer": "Kuzey Tekstil San.",
+      "due": "2026-11-19",
+      "amount": 26789.76
+    },
+    {
+      "no": "SN-1011",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Doğu İnşaat A.Ş.",
+      "due": "2026-12-11",
+      "amount": 25376.95
+    },
+    {
+      "no": "SN-1010",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Ege Mobilya San. Tic.",
+      "due": "2026-12-12",
+      "amount": 11125.01
+    },
+    {
+      "no": "CK-1012",
+      "kind": "Çek",
+      "bank": "Karadeniz Bankası · Trabzon",
+      "drawer": "Akdeniz Gıda Ltd.",
+      "due": "2026-12-14",
+      "amount": 18673.0
+    },
+    {
+      "no": "CK-1008",
+      "kind": "Çek",
+      "bank": "Marmara Bankası · Kadıköy",
+      "drawer": "Ege Mobilya San. Tic.",
+      "due": "2026-12-16",
+      "amount": 36257.87
+    },
+    {
+      "no": "SN-1013",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Ege Mobilya San. Tic.",
+      "due": "2026-12-20",
+      "amount": 45365.11
+    },
+    {
+      "no": "CK-1009",
+      "kind": "Çek",
+      "bank": "Toros Bankası · Mersin",
+      "drawer": "Yıldız Kırtasiye Ltd. Şti.",
+      "due": "2026-12-21",
+      "amount": 44536.03
+    },
+    {
+      "no": "CK-1015",
+      "kind": "Çek",
+      "bank": "Marmara Bankası · Kadıköy",
+      "drawer": "Yıldız Kırtasiye Ltd. Şti.",
+      "due": "2026-12-22",
+      "amount": 58407.66
+    },
+    {
+      "no": "SN-1014",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Kuzey Tekstil San.",
+      "due": "2026-12-28",
+      "amount": 44724.75
+    },
+    {
+      "no": "CK-1016",
+      "kind": "Çek",
+      "bank": "Karadeniz Bankası · Trabzon",
+      "drawer": "Doğu İnşaat A.Ş.",
+      "due": "2027-01-01",
+      "amount": 10314.28
+    },
+    {
+      "no": "CK-1020",
+      "kind": "Çek",
+      "bank": "Karadeniz Bankası · Trabzon",
+      "drawer": "Ege Mobilya San. Tic.",
+      "due": "2027-01-01",
+      "amount": 15759.83
+    },
+    {
+      "no": "SN-1021",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Ege Mobilya San. Tic.",
+      "due": "2027-01-01",
+      "amount": 31242.79
+    },
+    {
+      "no": "CK-1017",
+      "kind": "Çek",
+      "bank": "Anadolu Bankası · Kızılay",
+      "drawer": "Yıldız Kırtasiye Ltd. Şti.",
+      "due": "2027-01-05",
+      "amount": 44159.07
+    },
+    {
+      "no": "CK-1022",
+      "kind": "Çek",
+      "bank": "Ege Katılım · Alsancak",
+      "drawer": "Yıldız Kırtasiye Ltd. Şti.",
+      "due": "2027-01-05",
+      "amount": 39743.82
+    },
+    {
+      "no": "SN-1023",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Mavi Yazılım A.Ş.",
+      "due": "2027-01-13",
+      "amount": 14192.81
+    },
+    {
+      "no": "SN-1019",
+      "kind": "Senet",
+      "bank": "—",
+      "drawer": "Yıldız Kırtasiye Ltd. Şti.",
+      "due": "2027-01-17",
+      "amount": 32101.94
+    },
+    {
+      "no": "CK-1018",
+      "kind": "Çek",
+      "bank": "Anadolu Bankası · Kızılay",
+      "drawer": "Yıldız Kırtasiye Ltd. Şti.",
+      "due": "2027-01-25",
+      "amount": 56604.47
+    }
+  ]
+}

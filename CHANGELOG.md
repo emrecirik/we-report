@@ -99,9 +99,9 @@
 
 - *History*: the design is kept in the browser whenever a template, file or shared link replaces it
   and every few minutes while editing (20 kept); *Restore* brings one back.
-- New templates: customer statement (sub-report), e-Archive (e-Arşiv) invoice look, mail merge
-  letter (rich text), business cards (A4, 10 per sheet), payment receipt (A5) and shipping label
-  (100×150). The grouped sales template keeps its headers with their first row and has bookmarks.
+- New templates: customer statement (sub-report), e-Archive (e-Arşiv) invoice look, cheques and
+  notes list (grouped by due month, days left, totals carried forward), mail merge letter (rich
+  text), business cards (A4, 10 per sheet), payment receipt (A5) and shipping label (100×150). The grouped sales template keeps its headers with their first row and has bookmarks.
 - Opening a shared link that fetches from a web service or database (also inside a sub-report)
   shows a warning; a design too large for a link says so instead of producing a link that will not
   open. Studio has unit tests (`npm test` runs them).

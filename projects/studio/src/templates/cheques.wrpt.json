@@ -1,0 +1,687 @@
+{
+  "version": 1,
+  "name": "Çek / senet bordrosu",
+  "page": {
+    "paper": "A4",
+    "orientation": "landscape",
+    "margins": {
+      "top": 12,
+      "right": 15,
+      "bottom": 10,
+      "left": 15
+    },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": {
+      "fontFamily": "Noto Sans",
+      "fontSize": 9,
+      "color": "#1f2328",
+      "padding": 0.8
+    },
+    "brand": {
+      "fontSize": 13,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "title": {
+      "fontSize": 16,
+      "bold": true,
+      "color": "#0f766e",
+      "textAlign": "right"
+    },
+    "muted": {
+      "fontSize": 8,
+      "color": "#6b7280"
+    },
+    "label": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "bold": true
+    },
+    "big": {
+      "fontSize": 18,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "sign": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "textAlign": "center",
+      "border": {
+        "width": 0.3,
+        "color": "#1f2328",
+        "sides": {
+          "top": true,
+          "right": false,
+          "bottom": false,
+          "left": false
+        }
+      }
+    },
+    "th": {
+      "fontSize": 8,
+      "bold": true,
+      "color": "#0f766e",
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.4,
+        "color": "#0f766e",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "cell": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "num": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "textAlign": "right",
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    }
+  },
+  "dataSources": [
+    {
+      "id": "cheques",
+      "name": "Evraklar",
+      "kind": "json",
+      "data": null
+    }
+  ],
+  "dataMember": {
+    "dataSourceId": "cheques",
+    "path": "items"
+  },
+  "locale": "tr-TR",
+  "currency": "TRY",
+  "bands": [
+    {
+      "id": "pageHeader",
+      "kind": "pageHeader",
+      "height": 27,
+      "controls": [
+        {
+          "id": "company",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 160,
+          "height": 8,
+          "text": {
+            "expression": "[^.company]"
+          },
+          "style": "brand"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "x": 160,
+          "y": 0,
+          "width": 107,
+          "height": 9,
+          "text": "ÇEK / SENET BORDROSU",
+          "style": "title"
+        },
+        {
+          "id": "date",
+          "type": "text",
+          "x": 160,
+          "y": 9,
+          "width": 107,
+          "height": 5,
+          "text": {
+            "expression": "'Düzenleme: ' + Format([^.date], 'dd.MM.yyyy')"
+          },
+          "style": "muted",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "rule",
+          "type": "line",
+          "x": 0,
+          "y": 15,
+          "width": 267,
+          "height": 1,
+          "direction": "horizontal",
+          "lineWidth": 0.4,
+          "color": "#0f766e"
+        },
+        {
+          "id": "th0",
+          "type": "text",
+          "x": 0,
+          "y": 18,
+          "width": 22,
+          "height": 8,
+          "text": "No",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "th1",
+          "type": "text",
+          "x": 22,
+          "y": 18,
+          "width": 16,
+          "height": 8,
+          "text": "Tür",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "th2",
+          "type": "text",
+          "x": 38,
+          "y": 18,
+          "width": 62,
+          "height": 8,
+          "text": "Banka · Şube",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "th3",
+          "type": "text",
+          "x": 100,
+          "y": 18,
+          "width": 62,
+          "height": 8,
+          "text": "Keşideci",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "th4",
+          "type": "text",
+          "x": 162,
+          "y": 18,
+          "width": 24,
+          "height": 8,
+          "text": "Vade",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "th5",
+          "type": "text",
+          "x": 186,
+          "y": 18,
+          "width": 22,
+          "height": 8,
+          "text": "Kalan gün",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "th6",
+          "type": "text",
+          "x": 208,
+          "y": 18,
+          "width": 30,
+          "height": 8,
+          "text": "Tutar",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "th7",
+          "type": "text",
+          "x": 238,
+          "y": 18,
+          "width": 29,
+          "height": 8,
+          "text": "Kümülatif",
+          "styleOverrides": {
+            "fontSize": 8,
+            "bold": true,
+            "color": "#ffffff",
+            "backgroundColor": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          }
+        }
+      ]
+    },
+    {
+      "id": "month",
+      "kind": "groupHeader",
+      "height": 9,
+      "groupBy": {
+        "expression": "Format([due], 'yyyy-MM')"
+      },
+      "keepWithFirstRow": true,
+      "bookmark": {
+        "expression": "Format([due], 'MMMM yyyy')"
+      },
+      "controls": [
+        {
+          "id": "gname",
+          "type": "text",
+          "x": 0,
+          "y": 1,
+          "width": 160,
+          "height": 7,
+          "text": {
+            "expression": "Format([due], 'MMMM yyyy')"
+          },
+          "styleOverrides": {
+            "bold": true,
+            "fontSize": 10,
+            "color": "#0f766e",
+            "verticalAlign": "middle"
+          }
+        },
+        {
+          "id": "gcount",
+          "type": "text",
+          "x": 160,
+          "y": 1,
+          "width": 107,
+          "height": 7,
+          "text": {
+            "expression": "Count() + ' evrak'"
+          },
+          "style": "muted",
+          "styleOverrides": {
+            "textAlign": "right",
+            "verticalAlign": "middle"
+          }
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 6.5,
+      "alternateBackgroundColor": "#f0fdfa",
+      "controls": [
+        {
+          "id": "td0",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 22,
+          "height": 6.5,
+          "text": {
+            "expression": "[no]"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "td1",
+          "type": "text",
+          "x": 22,
+          "y": 0,
+          "width": 16,
+          "height": 6.5,
+          "text": {
+            "expression": "[kind]"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "td2",
+          "type": "text",
+          "x": 38,
+          "y": 0,
+          "width": 62,
+          "height": 6.5,
+          "text": {
+            "expression": "[bank]"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "td3",
+          "type": "text",
+          "x": 100,
+          "y": 0,
+          "width": 62,
+          "height": 6.5,
+          "text": {
+            "expression": "[drawer]"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "left"
+          }
+        },
+        {
+          "id": "td4",
+          "type": "text",
+          "x": 162,
+          "y": 0,
+          "width": 24,
+          "height": 6.5,
+          "text": {
+            "expression": "[due]"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          },
+          "format": "dd.MM.yyyy"
+        },
+        {
+          "id": "td5",
+          "type": "text",
+          "x": 186,
+          "y": 0,
+          "width": 22,
+          "height": 6.5,
+          "text": {
+            "expression": "DateDiff('day', [^.date], [due])"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          },
+          "format": "n0",
+          "formatting": [
+            {
+              "when": "DateDiff('day', [^.date], [due]) <= 7",
+              "style": {
+                "color": "#b91c1c",
+                "bold": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "td6",
+          "type": "text",
+          "x": 208,
+          "y": 0,
+          "width": 30,
+          "height": 6.5,
+          "text": {
+            "expression": "[amount]"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          },
+          "format": "n2"
+        },
+        {
+          "id": "td7",
+          "type": "text",
+          "x": 238,
+          "y": 0,
+          "width": 29,
+          "height": 6.5,
+          "text": {
+            "expression": "RunningSum([amount])"
+          },
+          "styleOverrides": {
+            "fontSize": 8.5,
+            "verticalAlign": "middle",
+            "padding": 1.2,
+            "textAlign": "right"
+          },
+          "format": "n2"
+        }
+      ]
+    },
+    {
+      "id": "monthFooter",
+      "kind": "groupFooter",
+      "groupHeaderId": "month",
+      "height": 9,
+      "controls": [
+        {
+          "id": "gl",
+          "type": "text",
+          "x": 162,
+          "y": 0.5,
+          "width": 46,
+          "height": 6,
+          "text": {
+            "expression": "Format([due], 'MMMM') + ' toplamı'"
+          },
+          "style": "label",
+          "styleOverrides": {
+            "textAlign": "right",
+            "verticalAlign": "middle"
+          }
+        },
+        {
+          "id": "gt",
+          "type": "text",
+          "x": 208,
+          "y": 0.5,
+          "width": 30,
+          "height": 6,
+          "text": {
+            "expression": "Sum([amount])"
+          },
+          "format": "n2",
+          "styleOverrides": {
+            "bold": true,
+            "textAlign": "right",
+            "verticalAlign": "middle",
+            "padding": 1.2
+          }
+        },
+        {
+          "id": "gr",
+          "type": "line",
+          "x": 162,
+          "y": 0,
+          "width": 105,
+          "height": 1,
+          "direction": "horizontal",
+          "lineWidth": 0.3,
+          "color": "#0f766e"
+        }
+      ]
+    },
+    {
+      "id": "reportFooter",
+      "kind": "reportFooter",
+      "height": 30,
+      "controls": [
+        {
+          "id": "fr",
+          "type": "line",
+          "x": 0,
+          "y": 1,
+          "width": 267,
+          "height": 1,
+          "direction": "horizontal",
+          "lineWidth": 0.5,
+          "color": "#0f766e"
+        },
+        {
+          "id": "fl",
+          "type": "text",
+          "x": 100,
+          "y": 3,
+          "width": 108,
+          "height": 7,
+          "text": {
+            "expression": "'Genel toplam · ' + Count() + ' evrak'"
+          },
+          "styleOverrides": {
+            "bold": true,
+            "textAlign": "right",
+            "verticalAlign": "middle"
+          }
+        },
+        {
+          "id": "ft",
+          "type": "text",
+          "x": 208,
+          "y": 3,
+          "width": 30,
+          "height": 7,
+          "text": {
+            "expression": "Sum([amount])"
+          },
+          "format": "c2",
+          "styleOverrides": {
+            "bold": true,
+            "textAlign": "right",
+            "color": "#0f766e",
+            "verticalAlign": "middle",
+            "padding": 1.2
+          }
+        },
+        {
+          "id": "fs1",
+          "type": "text",
+          "x": 20,
+          "y": 22,
+          "width": 70,
+          "height": 5,
+          "text": "Teslim eden",
+          "style": "sign"
+        },
+        {
+          "id": "fs2",
+          "type": "text",
+          "x": 170,
+          "y": 22,
+          "width": 70,
+          "height": 5,
+          "text": "Teslim alan",
+          "style": "sign"
+        }
+      ]
+    },
+    {
+      "id": "pageFooter",
+      "kind": "pageFooter",
+      "height": 7,
+      "controls": [
+        {
+          "id": "pg",
+          "type": "pageInfo",
+          "x": 200,
+          "y": 1,
+          "width": 67,
+          "height": 5,
+          "style": "muted",
+          "info": "pageNofM",
+          "format": "Sayfa {0} / {1}",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "carry",
+          "type": "text",
+          "x": 0,
+          "y": 1,
+          "width": 160,
+          "height": 5,
+          "text": {
+            "expression": "'Nakli yekûn: ' + Format(RunningSum([amount]), 'n2')"
+          },
+          "style": "muted"
+        }
+      ]
+    }
+  ]
+}
