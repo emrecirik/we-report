@@ -176,10 +176,14 @@ interface DragOp {
                     }
                   }
                   @case ('barcode') {
-                    <div class="ds__placeholder">
-                      <span [innerHTML]="(isQr(c) ? 'qrcode' : 'barcode') | weReportIcon"></span>
-                      <small>{{ barcodeLabel(c) }}</small>
-                    </div>
+                    @if (previewPages().get(c.id); as preview) {
+                      <div class="ds__subpreview" [title]="barcodeLabel(c)"><we-report-page [page]="preview" [zoom]="zoom()" /></div>
+                    } @else {
+                      <div class="ds__placeholder">
+                        <span [innerHTML]="(isQr(c) ? 'qrcode' : 'barcode') | weReportIcon"></span>
+                        <small>{{ barcodeLabel(c) }}</small>
+                      </div>
+                    }
                   }
                   @case ('table') {
                     @for (cell of tableCells(c, band); track $index) {
@@ -657,7 +661,9 @@ export class DesignSurfaceComponent implements OnDestroy {
     const report = this.state.report();
     const sample = this.sample();
     const subs = report.bands.flatMap((band) =>
-      band.controls.filter((c) => c.type === 'subreport' || ((c.type === 'crosstab' || c.type === 'chart') && sample)).map((c) => ({ c, band })),
+      band.controls
+        .filter((c) => c.type === 'subreport' || ((c.type === 'crosstab' || c.type === 'chart') && sample) || (c.type === 'barcode' && (sample || !isExpression(c.value))))
+        .map((c) => ({ c, band })),
     );
     const run = ++this.previewRun;
     if (!subs.length) {
