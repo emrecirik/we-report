@@ -48,6 +48,8 @@ interface Scope {
   rows: readonly unknown[];
   /** What `[^.field]` reads; the report's parent object unless inside an inner list. */
   parent?: unknown;
+  /** Position of `row` in `rows`, for `RowNumber()`. */
+  rowIndex?: number;
 }
 
 /** A band rendered at the origin; items are relative to its top-left corner. */
@@ -187,8 +189,9 @@ class LayoutRun {
   ): void {
     if (level === headers.length) {
       if (detail) {
-        for (const row of rows) {
-          entries.push({ type: 'band', rendered: this.renderBand(detail, { row, rows }) });
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          entries.push({ type: 'band', rendered: this.renderBand(detail, { row, rows, rowIndex: i }) });
           this.emitInnerList(entries, row);
         }
       }
@@ -237,18 +240,18 @@ class LayoutRun {
     if (!items.length) return;
     const header = bands.find((b) => b.kind === 'subHeader');
     const footer = bands.find((b) => b.kind === 'subFooter');
-    const scope = (item: unknown) => ({ row: item, rows: items, parent: row });
+    const scope = (index: number) => ({ row: items[index], rows: items, parent: row, rowIndex: index });
     if (header) {
       // A keep-together block of the header and the first item (level past every group: no repeats touched).
       const level = bands.filter((b) => b.kind === 'groupHeader').length;
       const start = entries.length;
       entries.push({ type: 'groupStart', level, keepTogether: true, end: -1 });
-      entries.push({ type: 'band', rendered: this.renderBand(header, scope(items[0])) });
-      entries.push({ type: 'band', rendered: this.renderBand(sub, scope(items[0])) });
+      entries.push({ type: 'band', rendered: this.renderBand(header, scope(0)) });
+      entries.push({ type: 'band', rendered: this.renderBand(sub, scope(0)) });
       entries.push({ type: 'groupEnd', level });
       (entries[start] as Extract<Entry, { type: 'groupStart' }>).end = entries.length - 1;
     }
-    for (const item of header ? items.slice(1) : items) entries.push({ type: 'band', rendered: this.renderBand(sub, scope(item)) });
+    for (let i = header ? 1 : 0; i < items.length; i++) entries.push({ type: 'band', rendered: this.renderBand(sub, scope(i)) });
     if (footer) entries.push({ type: 'band', rendered: this.renderBand(footer, { row: items[items.length - 1], rows: items, parent: row }) });
   }
 
@@ -416,10 +419,10 @@ class LayoutRun {
     const growths: { x1: number; x2: number; bottom: number; delta: number }[] = [];
     const shiftOf = (c: ReportControl) =>
       growths.reduce((m, g) => (g.bottom <= c.y + 0.01 && g.x1 < c.x + c.width && g.x2 > c.x ? Math.max(m, g.delta) : m), 0);
-    // Fixed items first decide the height; stretching items then reach down to it.
+    // Every item first at its natural size decides the height; stretching items then grow by as
+    // much as the section grew, so they keep reaching its bottom.
     const results = new Map<ReportControl, ReturnType<typeof this.renderControl>>();
     for (const control of [...shown].sort((a, b) => a.y - b.y)) {
-      if (control.stretch) continue;
       const shift = shiftOf(control);
       const result = this.renderControl(shift ? { ...control, y: control.y + shift } : control, scope);
       results.set(control, result);
@@ -428,12 +431,13 @@ class LayoutRun {
       }
       height = Math.max(height, control.y + shift + result.height);
     }
+    const growth = height - band.height;
     for (const control of shown) {
-      if (!control.stretch) continue;
+      // A horizontal line marks a row's edge; stretching would move it to the middle.
+      if (!control.stretch || growth <= 0.01 || (control.type === 'line' && control.direction === 'horizontal')) continue;
       const y = control.y + shiftOf(control);
-      const result = this.renderControl({ ...control, y, height: Math.max(control.height, height - y) }, scope);
-      results.set(control, result);
-      height = Math.max(height, y + result.height);
+      const natural = results.get(control)!.height;
+      results.set(control, this.renderControl({ ...control, y, height: Math.max(natural, control.height + growth) }, scope));
     }
     for (const control of shown) {
       const result = results.get(control)!;
@@ -688,6 +692,7 @@ class LayoutRun {
     const ctx: EvaluationContext = {
       row: scope.row,
       rows: scope.rows,
+      rowIndex: scope.rowIndex,
       parent: scope.parent ?? this.parent,
       params: this.params,
       locale: this.locale,

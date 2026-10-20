@@ -68,6 +68,8 @@ export class AppComponent {
   protected readonly galleryOpen = signal(false);
   /** First page of every template, laid out by the real engine, for the gallery. */
   protected readonly thumbnails = signal<Record<string, LayoutPage>>({});
+  /** A shared link is being decoded; autosave waits for it. */
+  private readonly opening = signal(false);
   private readonly fonts = inject(WeReportFontsService);
   private readonly config = inject(WE_REPORT_CONFIG);
 
@@ -87,11 +89,19 @@ export class AppComponent {
     if (location.hash.startsWith(SHARE_PREFIX)) void this.openShared(location.hash);
     else if (this.restore()) this.message.set(this.text().restored);
     else this.openGallery();
-    effect(() => writeStorage(AUTOSAVE_KEY, JSON.stringify({ templateId: this.templateId(), report: this.report() })));
+    effect(() => {
+      // Not while a shared link is still opening: that would overwrite the last design.
+      if (this.opening()) return;
+      const t = TEMPLATES.find((x) => x.id === this.templateId());
+      // Data that is not the template's own (pasted, shared) is kept too, when it fits in storage.
+      const data = this.data() === t?.data ? undefined : this.data();
+      writeStorage(AUTOSAVE_KEY, JSON.stringify({ templateId: this.templateId(), report: this.report(), data }));
+    });
   }
 
   /** A design from a share link: an untrusted report file, so it goes through the same migration as Open. */
   private async openShared(hash: string): Promise<void> {
+    this.opening.set(true);
     try {
       const shared = (await decodeShare(hash)) as { report?: unknown; data?: unknown } | null;
       this.report.set(migrateDefinition(shared?.report));
@@ -102,15 +112,22 @@ export class AppComponent {
       this.message.set(this.text().sharedFailed);
       if (!this.restore()) this.openGallery();
     }
-    // Later edits are autosaved; the link stays only until the page is reloaded.
+    // Later edits (with the shared data) are autosaved; the link itself leaves the address bar.
     history.replaceState(null, '', location.pathname + location.search);
+    this.opening.set(false);
+  }
+
+  /** A share link pasted into an open studio tab. */
+  @HostListener('window:hashchange')
+  protected onHashChange(): void {
+    if (location.hash.startsWith(SHARE_PREFIX)) void this.openShared(location.hash);
   }
 
   /** Puts the design and its data in the address bar (and on the clipboard) as a link. */
   protected async share(): Promise<void> {
     const url = location.origin + location.pathname + location.search + (await encodeShare({ report: this.report(), data: this.data() }));
-    history.replaceState(null, '', url);
     try {
+      history.replaceState(null, '', url);
       await navigator.clipboard.writeText(url);
       this.message.set(this.text().shareCopied);
     } catch {
@@ -120,12 +137,12 @@ export class AppComponent {
 
   private restore(): boolean {
     try {
-      const saved = JSON.parse(readStorage(AUTOSAVE_KEY) ?? 'null') as { templateId: string; report: unknown } | null;
+      const saved = JSON.parse(readStorage(AUTOSAVE_KEY) ?? 'null') as { templateId: string; report: unknown; data?: unknown } | null;
       if (!saved?.report) return false;
       const t = TEMPLATES.find((x) => x.id === saved.templateId);
       this.templateId.set(t?.id ?? 'blank');
       this.report.set(migrateDefinition(saved.report));
-      this.data.set(t?.data);
+      this.data.set(saved.data ?? t?.data);
       return true;
     } catch {
       return false;

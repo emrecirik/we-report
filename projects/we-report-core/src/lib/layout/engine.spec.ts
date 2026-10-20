@@ -133,6 +133,34 @@ describe('layout engine', () => {
     expect(beside.y).toBeCloseTo(name.y + 8, 5); // other columns stay put
   });
 
+  it('numbers rows per group, the same on every run', () => {
+    const rows = [{ Name: 'a', G: 1 }, { Name: 'b', G: 1 }, { Name: 'c', G: 2 }];
+    const report = listReport(rows);
+    report.bands.splice(1, 0, { id: 'gh', kind: 'groupHeader', height: 8, groupBy: { expression: '[G]' }, controls: [] });
+    report.bands.find((b) => b.kind === 'detail')!.controls = [{ id: 'n', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: "RowNumber() + '. ' + [Name]" } }];
+    const run = () => texts(layoutReport(report, { fonts, data: rows, now: NOW }).pages[0]).filter((t) => /^\d\./.test(t));
+    expect(run()).toEqual(['1. a', '2. b', '1. c']);
+    rows.push({ Name: 'd', G: 2 });
+    expect(run()).toEqual(['1. a', '2. b', '1. c', '2. d']);
+  });
+
+  it('carries a push on down: an item pushed by one pushes the next', () => {
+    const report = listReport([{ Name: 'A long name that wraps onto several lines in a narrow box', Price: 1 }]);
+    const detail = report.bands.find((b) => b.kind === 'detail')!;
+    detail.height = 20;
+    detail.controls = [
+      { id: 'a', type: 'text', x: 0, y: 0, width: 20, height: 6, canGrow: true, text: { expression: '[Name]' } },
+      { id: 'b', type: 'text', x: 0, y: 7, width: 20, height: 6, text: 'B' },
+      { id: 'c', type: 'text', x: 10, y: 14, width: 20, height: 6, text: 'C' },
+    ];
+    const items = layoutReport(report, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text');
+    const a = items.find((t) => t.lines[0]?.text.startsWith('A long'))!;
+    const b = items.find((t) => t.lines[0]?.text === 'B')!;
+    const c = items.find((t) => t.lines[0]?.text === 'C')!;
+    expect(b.y).toBeCloseTo(a.y + a.height + 1, 5);
+    expect(c.y).toBeCloseTo(b.y + 7, 5);
+  });
+
   it('stretches marked items to the bottom of a grown section', () => {
     const report = listReport([{ Name: 'A long name that wraps onto several lines in a narrow box', Price: 1 }]);
     const detail = report.bands.find((b) => b.kind === 'detail')!;
@@ -145,6 +173,23 @@ describe('layout engine', () => {
     const rects = doc.pages[0].items.filter((i) => i.kind === 'rect') as { height: number }[];
     expect(rects[0].height).toBeGreaterThan(12);
     expect(rects[1].height).toBe(6);
+
+    // A section that does not grow leaves stretching items at their own size.
+    detail.controls[0] = { id: 'name', type: 'text', x: 0, y: 0, width: 20, height: 6, canGrow: true, text: 'Short' };
+    detail.height = 10;
+    const still = layoutReport(report, { fonts, now: NOW }).pages[0].items.filter((i) => i.kind === 'rect') as { height: number }[];
+    expect(still[0].height).toBe(6);
+
+    // A stretching text that grows itself also moves its stretching neighbours.
+    detail.height = 6;
+    detail.controls = [
+      { id: 'name', type: 'text', x: 0, y: 0, width: 20, height: 6, canGrow: true, stretch: true, text: { expression: '[Name]' } },
+      { id: 'box', type: 'shape', shape: 'rectangle', x: 20, y: 0, width: 10, height: 6, stretch: true },
+    ];
+    const both = layoutReport(report, { fonts, now: NOW }).pages[0];
+    const grown = both.items.find((i): i is TextItem => i.kind === 'text' && i.lines.length > 1)!;
+    const box = both.items.find((i) => i.kind === 'rect') as { height: number };
+    expect(box.height).toBeCloseTo(grown.height, 5);
   });
 
   it('sorts detail rows inside their group', () => {

@@ -7,6 +7,8 @@ export interface EvaluationContext {
   row?: unknown;
   /** Rows in scope (group, page or report) for aggregates such as `Sum([Total])`. */
   rows?: readonly unknown[];
+  /** Position of `row` in `rows` (0-based), for `RowNumber()`; looked up when omitted. */
+  rowIndex?: number;
   /** The object holding the detail rows (e.g. the invoice around its lines), read with `[^.Field]`. */
   parent?: unknown;
   /** Report parameter values, read with `[?name]`. */
@@ -19,20 +21,11 @@ export interface EvaluationContext {
 
 type Value = unknown;
 
-/** Row positions per row list, built once per list: numbering stays linear for large reports. */
-const rowIndexes = new WeakMap<readonly unknown[], Map<unknown, number>>();
-
 /** 1-based position of the current row among the rows in scope (its group, or its inner list). */
 function rowNumber(ctx: EvaluationContext): number | null {
-  const rows = ctx.rows;
-  if (!rows) return null;
-  let index = rowIndexes.get(rows);
-  if (!index) {
-    index = new Map();
-    rows.forEach((r, i) => index!.has(r) || index!.set(r, i + 1));
-    rowIndexes.set(rows, index);
-  }
-  return index.get(ctx.row) ?? null;
+  // The engine passes the position; a lone context (designer sample) looks the row up.
+  const index = ctx.rowIndex ?? ctx.rows?.indexOf(ctx.row) ?? -1;
+  return index >= 0 ? index + 1 : null;
 }
 
 interface FunctionDef {
