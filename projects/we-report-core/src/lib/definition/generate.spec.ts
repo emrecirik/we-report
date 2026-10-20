@@ -8,6 +8,16 @@ import { resolvePageGeometry } from './page';
 
 const labels = { title: 'Orders', total: 'Total', pageOf: 'Page {0} of {1}' };
 
+describe('list generator totals', () => {
+  it('does not total calendar parts such as month or year', () => {
+    const rows = [{ Şehir: 'Ankara', Ay: 1, Yıl: 2026, Tutar: 120.5 }, { Şehir: 'İzmir', Ay: 2, Yıl: 2026, Tutar: 80 }];
+    const report = generateListReport(createBlankReport(), inferSchema(rows), labels, '', rows);
+    const footer = report.bands.find((b) => b.kind === 'reportFooter')!;
+    const sums = JSON.stringify(footer.controls).match(/Sum\(\[[^\]]+\]\)/g) ?? [];
+    expect(sums).toEqual(['Sum([Tutar])']);
+  });
+});
+
 describe('generateListReport', () => {
   const rows = Array.from({ length: 45 }, (_, i) => ({ id: i + 1, customer: `Customer ${i + 1}`, orderDate: '2026-03-01', amount: 10.5, paid: true }));
 

@@ -37,6 +37,8 @@ const ID_LIKE = /(^|[\s_\-.])(id|no|nr|code|kod|number|numara|numarası)$/i;
 // camelCase identifiers: "customerId", "orderNo" (case-sensitive, so "casino" is not one).
 const CAMEL_ID = /[a-z](Id|ID|No|Nr|Code|Number)$/;
 const idLike = (name: string) => ID_LIKE.test(name) || CAMEL_ID.test(name);
+// Calendar parts are numbers too, but a total of months or years means nothing: "Ay", "Year", "Gün" …
+const PERIOD_LIKE = /^(ay|yıl|yil|gün|gun|hafta|çeyrek|ceyrek|dönem|donem|month|year|day|week|quarter|period)$/i;
 const MAX_COLUMNS = 12;
 
 /** Relative column width by data type: text needs the most room. */
@@ -74,7 +76,7 @@ export function generateListReport(
   });
 
   const numeric = (f: FieldSchema) => f.type === 'number';
-  const summable = (f: FieldSchema) => numeric(f) && !idLike(f.name);
+  const summable = (f: FieldSchema) => numeric(f) && !idLike(f.name) && !PERIOD_LIKE.test(f.name.trim());
   // Whole-number columns (quantities, counts) get no decimals; the sample rows decide.
   const wholeNumbers = (f: FieldSchema) =>
     rows.length > 0 && rows.every((r) => {

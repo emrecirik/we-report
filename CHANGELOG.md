@@ -89,6 +89,7 @@
   right digit, and *Fix* corrects it (`gtinCheckDigit` in core; `ReportIssueCode` gains
   `checkDigit` — a `switch` over every code needs the new case).
 - *Fit size to text* measures what a bound text prints, also while *Show data* is off.
+- The report wizard and *Design from data* no longer total calendar fields (month, year, day …).
 - Sub-reports, charts, cross tables, barcodes, check boxes and pictures from data are drawn on the
   design page as they print, from the sample data (clipped to their box), instead of an icon.
 
