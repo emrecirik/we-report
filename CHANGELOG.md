@@ -31,6 +31,7 @@
   the viewer and drawn in the preview, PDF and PNG (WebP/SVG converted; at most 200 pictures of
   10 MB, 15 s each; through the viewer's `fetchFn`). Core: `LayoutOptions.images` and
   `LayoutDocument.imageUrls` for a host's own fetching. The design page shows a placeholder.
+- Import: DevExpress calculated fields become calculated fields of the report.
 - Import: RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
 - Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and
   *Print only when* (`visible` formula on any section but the page header/footer).

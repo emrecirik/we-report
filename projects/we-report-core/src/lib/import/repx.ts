@@ -101,9 +101,17 @@ class RepxImport {
       }
     }
     Object.assign(report.styles, this.styles);
-    for (const f of this.items(child(this.root, 'CalculatedFields'))) {
-      if (f.attrs['Name'] && f.attrs['Expression']) this.calculated.set(f.attrs['Name'], f.attrs['Expression']);
+    // Calculated fields with a plain name stay calculated fields; any other is put in place where used.
+    const fields = this.items(child(this.root, 'CalculatedFields')).filter((f) => f.attrs['Name'] && f.attrs['Expression']);
+    for (const f of fields) if (!/^[\p{L}\p{N}_]+$/u.test(f.attrs['Name'])) this.calculated.set(f.attrs['Name'], f.attrs['Expression']);
+    const kept: { name: string; expression: string }[] = [];
+    for (const f of fields) {
+      if (this.calculated.has(f.attrs['Name'])) continue;
+      const expression = devExpressToFormula(f.attrs['Expression'], this.calculated);
+      if (expression === null) this.warnings.push(`Calculated field "${f.attrs['Name']}": the expression ${f.attrs['Expression']} could not be converted.`);
+      else kept.push({ name: f.attrs['Name'], expression });
     }
+    if (kept.length) report.calculatedFields = kept;
     report.parameters = this.items(child(this.root, 'Parameters'))
       .filter((p) => /^\w+$/.test(p.attrs['Name'] ?? ''))
       .map((p) => this.parameter(p));

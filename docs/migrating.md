@@ -47,7 +47,7 @@ and saved again in a current designer first.
 | Labels and table cells | Text, expression bindings (and older data bindings), `TextFormatString` (`{0:c2}`, `Total: {0:n0}`), summaries, fonts, colours, alignment, padding, borders, *Can grow*, *Visible* bindings. |
 | Tables, panels, lines, shapes, pictures (embedded, from a field or a web address), barcodes, check boxes, page info | |
 | Style sheet | Named styles keep their names. |
-| Calculated fields | Their formula is put in place where they are used. |
+| Calculated fields | Become calculated fields of the report (a name with spaces or dots is put in place where it is used instead). |
 | Parameters | `?name` and `[Parameters.name]` become `[?name]`. |
 
 Not converted (listed in the warnings): charts, rich text, subreports, cross tabs, pivot grids,

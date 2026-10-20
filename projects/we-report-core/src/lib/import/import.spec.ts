@@ -216,10 +216,11 @@ describe('report import', () => {
     expect(footer.groupHeaderId).toBe(group.id);
     const table = detail.controls[0] as TableControl;
     expect(table.columns).toEqual([101.6, 50.8]);
-    expect(table.rows[0].cells[1]).toEqual(jasmine.objectContaining({ text: { expression: '([Qty] * [Price])' }, format: 'n2' }));
+    expect(report.calculatedFields).toEqual([{ name: 'LineTotal', expression: '[Qty] * [Price]' }]);
+    expect(table.rows[0].cells[1]).toEqual(jasmine.objectContaining({ text: { expression: '[LineTotal]' }, format: 'n2' }));
     expect(table.styleOverrides?.border?.color).toBe('#c0c0c0');
     expect(detail.controls[1]).toEqual(jasmine.objectContaining({ type: 'barcode', symbology: 'code128', value: { expression: '[Code]' }, showText: false }));
-    expect((footer.controls[0] as TextControl).text).toEqual({ expression: "'Total: ' + Format(Sum(([Qty] * [Price])), 'c2')" });
+    expect((footer.controls[0] as TextControl).text).toEqual({ expression: "'Total: ' + Format(Sum([LineTotal]), 'c2')" });
     expect(inner).toEqual(jasmine.objectContaining({ rowsPath: 'Returns' }));
     expect(report.parameters).toEqual([{ name: 'minAmount', type: 'string', label: 'Minimum amount', defaultValue: '100' }]);
     expect(warnings.join(' ')).toContain('XRChart');
