@@ -289,6 +289,18 @@ export class PropertyPanelComponent {
     }, 'bind-visible');
   }
 
+  /** A sparkline is a line-height chart: a full-size chart box shrinks to fit a row. */
+  protected setChartType(type: ChartType): void {
+    this.state.updateControls(this.ids(), (c) => {
+      if (c.type !== 'chart') return;
+      c.chartType = type;
+      if (type === 'sparkline' && c.height > 12) {
+        c.height = 8;
+        c.width = Math.min(c.width, 40);
+      }
+    });
+  }
+
   protected setOptionalChartRows(expression: string): void {
     this.set('rows', expression.trim() ? { expression } : undefined, 'chart-rows');
   }

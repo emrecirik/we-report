@@ -460,7 +460,7 @@
           <small class="pp__hint">{{ s.chartHint }}</small>
           <div class="pp__segmented" role="radiogroup" [attr.aria-label]="s.chartType">
             @for (t of chartTypes; track t.type) {
-              <button type="button" role="radio" [attr.aria-checked]="c.chartType === t.type" [class.pp__on]="c.chartType === t.type" (click)="set('chartType', t.type)">{{ s[t.label] }}</button>
+              <button type="button" role="radio" [attr.aria-checked]="c.chartType === t.type" [class.pp__on]="c.chartType === t.type" (click)="setChartType(t.type)">{{ s[t.label] }}</button>
             }
           </div>
           <label class="pp__row pp__row--stack">
