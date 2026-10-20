@@ -28,8 +28,9 @@ const PAD = 1.5;
 export function aggregate(kind: ChartAggregate, values: number[]): number {
   if (kind === 'count') return values.length;
   if (!values.length) return 0;
-  if (kind === 'min') return Math.min(...values);
-  if (kind === 'max') return Math.max(...values);
+  // A loop, not Math.min(...values): spreading a very long list overflows the stack.
+  if (kind === 'min') return values.reduce((m, v) => (v < m ? v : m), Infinity);
+  if (kind === 'max') return values.reduce((m, v) => (v > m ? v : m), -Infinity);
   const sum = values.reduce((a, b) => a + b, 0);
   return kind === 'avg' ? sum / values.length : sum;
 }

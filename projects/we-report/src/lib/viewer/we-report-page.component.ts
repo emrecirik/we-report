@@ -81,6 +81,8 @@ const PT_TO_MM = 25.4 / 72;
                   [attr.font-style]="text(item).italic ? 'italic' : 'normal'"
                   [attr.fill]="textColor(text(item).color)"
                   [attr.text-decoration]="text(item).underline ? 'underline' : null"
+                  [attr.textLength]="line.width > 0 ? line.width : null"
+                  lengthAdjust="spacingAndGlyphs"
                 >{{ line.text }}</text>
               }
             </svg>

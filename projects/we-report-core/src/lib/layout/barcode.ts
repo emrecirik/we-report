@@ -64,25 +64,37 @@ export function barcodeItem(
   }
 
   // Linear codes stretch their bars to the box, but the human-readable digits keep their shape:
-  // scaled evenly, centred under the bars and resting on the bottom edge.
-  const text = TWO_D.has(symbology) ? [] : parsed.filter((p) => !p.stroke);
-  const nums = text.flatMap((p) => p.d.match(/-?[\d.]+/g)?.map(Number) ?? []);
-  const xs = nums.filter((_, i) => i % 2 === 0);
-  const ys = nums.filter((_, i) => i % 2 === 1);
+  // scaled evenly, centred under the bars and resting on the bottom edge. Text above the bars
+  // (ISBN) keeps its shape too, hanging from the top edge.
+  const coords = (p: { d: string }) => p.d.match(/-?[\d.]+/g)?.map(Number) ?? [];
+  const ysOf = (list: { d: string }[]) => list.flatMap((p) => coords(p).filter((_, i) => i % 2 === 1));
+  const barYs = ysOf(parsed.filter((p) => p.stroke));
+  const barMiddle = barYs.length ? (Math.min(...barYs) + Math.max(...barYs)) / 2 : vh / 2;
+  const textPaths = TWO_D.has(symbology) ? [] : parsed.filter((p) => !p.stroke);
+  const text = textPaths.filter((p) => Math.min(...ysOf([p])) > barMiddle);
+  const above = textPaths.filter((p) => !text.includes(p));
+  const xs = text.flatMap((p) => coords(p).filter((_, i) => i % 2 === 0));
+  const ys = ysOf(text);
   const cx = xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
   const bottom = ys.length ? Math.max(...ys) : 0;
   const even = Math.min(sx, sy);
   // bwip-js leaves almost no gap above the digits; once they are scaled down less than the bars
   // they would touch, so the bars end a quarter of a digit's height above them.
   const textTop = ys.length ? Math.min(...ys) : 0;
-  const barScale = text.length && textTop > 0 ? (bottom * sy - (bottom - textTop) * even * 1.25) / textTop : sy;
+  const fitted = textTop > 0 ? (bottom * sy - (bottom - textTop) * even * 1.25) / textTop : sy;
+  const barScale = text.length && fitted > 0 ? fitted : sy;
+  const aboveXs = above.flatMap((p) => coords(p).filter((_, i) => i % 2 === 0));
+  const aboveCx = aboveXs.length ? (Math.min(...aboveXs) + Math.max(...aboveXs)) / 2 : 0;
+  const aboveTop = above.length ? Math.min(...ysOf(above)) : 0;
 
   const paths: PathItem['paths'] = parsed.map((p) => {
     // SVG fills a path black unless told otherwise; bwip-js relies on that for 2D symbols.
     const stroked = !!p.stroke;
     const d = text.includes(p)
       ? mapPath(p.d, (px, py) => [cx * sx + (px - cx) * even, bottom * sy + (py - bottom) * even])
-      : scalePath(p.d, sx, barScale);
+      : above.includes(p)
+        ? mapPath(p.d, (px, py) => [aboveCx * sx + (px - aboveCx) * even, aboveTop * sy + (py - aboveTop) * even])
+        : scalePath(p.d, sx, barScale);
     return {
       d,
       fill: p.fill || !stroked ? color : undefined,

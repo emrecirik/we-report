@@ -38,7 +38,7 @@ Arithmetic with an empty value gives an empty value; dividing by zero is an erro
 | `Year`, `Month`, `Day`, `AddDays(d, n)` | `AddDays([^.date], 30)` | |
 | `Sum`, `Count`, `Avg`, `Min`, `Max` | `Sum([Qty] * [Price])` | Over the rows in scope |
 | `RowNumber()` | `RowNumber()` | `1`, `2`, `3` … — restarts in every group and inner list |
-| `RunningSum(v)` | `RunningSum([Debit] - [Credit])` | Total so far: in a row, up to that row (a running balance); in a page footer, up to the end of the page — the amount carried forward |
+| `RunningSum(v)` | `RunningSum([Debit] - [Credit])` | Total so far: in a row, up to that row within its group (a running balance that starts again in every group, like `RowNumber()`); in a page footer, over the whole report up to the end of the page — the amount carried forward |
 | `CarriedSum(v)` | `CarriedSum([Total])` | In a page header: the total of the earlier pages, brought forward (`0` on the first page) |
 | `AmountInWords(n, currency?)` | `AmountInWords(Sum([Total]))` | `Bin İki Yüz Elli Türk Lirası Elli Kuruş` (`tr-TR`, TRY) · `twelve dollars and five cents` (other locales); the configured currency when omitted |
 | `NumberToWords(n)` | `NumberToWords(1234)` | `Bin İki Yüz Otuz Dört` / `one thousand two hundred thirty-four` |

@@ -83,7 +83,8 @@ export function parameterChoices(definition: ReportDefinition, parameter: Report
     for (const v of choices.values) if ((typeof v === 'string' && v !== '') || typeof v === 'number') out.set(v, String(v));
   } else if (choices?.dataSourceId && choices.valueField) {
     const source = definition.dataSources.find((s) => s.id === choices.dataSourceId);
-    for (const row of source ? toRows(sourceValue(source, sources)) : []) {
+    const path = choices.path ?? (definition.dataMember?.dataSourceId === choices.dataSourceId ? definition.dataMember?.path : undefined);
+    for (const row of source ? toRows(readPath(sourceValue(source, sources), path)) : []) {
       const value = readPath(row, choices.valueField);
       if ((typeof value !== 'string' || value === '') && typeof value !== 'number') continue;
       if (out.has(value)) continue;

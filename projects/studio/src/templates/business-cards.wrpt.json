@@ -1,0 +1,287 @@
+{
+  "version": 1,
+  "name": "Kartvizit",
+  "page": {
+    "paper": "A4",
+    "orientation": "portrait",
+    "margins": {
+      "top": 11,
+      "right": 20,
+      "bottom": 11,
+      "left": 20
+    },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": {
+      "fontFamily": "Noto Sans",
+      "fontSize": 9,
+      "color": "#1f2328",
+      "padding": 0.8
+    },
+    "brand": {
+      "fontSize": 13,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "title": {
+      "fontSize": 16,
+      "bold": true,
+      "color": "#0f766e",
+      "textAlign": "right"
+    },
+    "muted": {
+      "fontSize": 8,
+      "color": "#6b7280"
+    },
+    "label": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "bold": true
+    },
+    "big": {
+      "fontSize": 18,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "sign": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "textAlign": "center",
+      "border": {
+        "width": 0.3,
+        "color": "#1f2328",
+        "sides": {
+          "top": true,
+          "right": false,
+          "bottom": false,
+          "left": false
+        }
+      }
+    },
+    "th": {
+      "fontSize": 8,
+      "bold": true,
+      "color": "#0f766e",
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.4,
+        "color": "#0f766e",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "cell": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "num": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "textAlign": "right",
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    }
+  },
+  "dataSources": [
+    {
+      "id": "people",
+      "name": "Kişiler",
+      "kind": "json",
+      "data": [
+        {
+          "name": "Elif Demir",
+          "title": "Müşteri İlişkileri Müdürü",
+          "phone": "+90 532 111 22 33",
+          "email": "elif.demir@example.com"
+        },
+        {
+          "name": "Can Öztürk",
+          "title": "Satış Temsilcisi",
+          "phone": "+90 533 444 55 66",
+          "email": "can.ozturk@example.com"
+        },
+        {
+          "name": "Zeynep Arslan",
+          "title": "Muhasebe Uzmanı",
+          "phone": "+90 535 777 88 99",
+          "email": "zeynep.arslan@example.com"
+        },
+        {
+          "name": "Mert Şahin",
+          "title": "Depo Sorumlusu",
+          "phone": "+90 536 222 33 44",
+          "email": "mert.sahin@example.com"
+        }
+      ]
+    }
+  ],
+  "dataMember": {
+    "dataSourceId": "people"
+  },
+  "locale": "tr-TR",
+  "currency": "TRY",
+  "bands": [
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 55,
+      "columns": {
+        "count": 2,
+        "gap": 0
+      },
+      "controls": [
+        {
+          "id": "edge",
+          "type": "shape",
+          "x": 0,
+          "y": 0,
+          "width": 85,
+          "height": 55,
+          "shape": "rectangle",
+          "styleOverrides": {
+            "border": {
+              "width": 0.1,
+              "color": "#d1d5db",
+              "sides": {
+                "top": true,
+                "right": true,
+                "bottom": true,
+                "left": true
+              }
+            }
+          }
+        },
+        {
+          "id": "bar",
+          "type": "shape",
+          "x": 0,
+          "y": 0,
+          "width": 4,
+          "height": 55,
+          "shape": "rectangle",
+          "styleOverrides": {
+            "backgroundColor": "#0f766e"
+          }
+        },
+        {
+          "id": "name",
+          "type": "text",
+          "x": 9,
+          "y": 8,
+          "width": 50,
+          "height": 7,
+          "text": {
+            "expression": "[name]"
+          },
+          "styleOverrides": {
+            "bold": true,
+            "fontSize": 13
+          }
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "x": 9,
+          "y": 15,
+          "width": 50,
+          "height": 5,
+          "text": {
+            "expression": "[title]"
+          },
+          "style": "muted"
+        },
+        {
+          "id": "company",
+          "type": "text",
+          "x": 9,
+          "y": 30,
+          "width": 72,
+          "height": 5,
+          "text": "Demir Ofis Malzemeleri A.Ş.",
+          "styleOverrides": {
+            "bold": true,
+            "color": "#0f766e",
+            "fontSize": 8.5
+          }
+        },
+        {
+          "id": "phone",
+          "type": "text",
+          "x": 9,
+          "y": 36,
+          "width": 50,
+          "height": 4.5,
+          "text": {
+            "expression": "[phone]"
+          },
+          "styleOverrides": {
+            "fontSize": 8
+          }
+        },
+        {
+          "id": "email",
+          "type": "text",
+          "x": 9,
+          "y": 40.5,
+          "width": 50,
+          "height": 4.5,
+          "text": {
+            "expression": "[email]"
+          },
+          "styleOverrides": {
+            "fontSize": 8
+          }
+        },
+        {
+          "id": "web",
+          "type": "text",
+          "x": 9,
+          "y": 45,
+          "width": 50,
+          "height": 4.5,
+          "text": "www.example.com",
+          "styleOverrides": {
+            "fontSize": 8
+          }
+        },
+        {
+          "id": "qr",
+          "type": "barcode",
+          "x": 61,
+          "y": 31,
+          "width": 19,
+          "height": 19,
+          "symbology": "qrcode",
+          "value": {
+            "expression": "'MECARD:N:' + [name] + ';TEL:' + Replace([phone], ' ', '') + ';EMAIL:' + [email] + ';;'"
+          },
+          "showText": false
+        }
+      ]
+    }
+  ]
+}

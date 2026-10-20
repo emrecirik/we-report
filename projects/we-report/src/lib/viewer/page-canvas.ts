@@ -95,7 +95,17 @@ export async function drawPage(page: LayoutPage, pxPerMm: number, doc: Document 
         ctx.fontKerning = 'none';
         ctx.fillStyle = hex(item.color) ?? '#000000';
         for (const line of item.lines) {
-          ctx.fillText(line.text, line.x, line.baseline);
+          // Browsers draw text a little narrower or wider than the font metrics; keep the engine's width.
+          const drawn = ctx.measureText(line.text).width;
+          if (drawn > 0 && line.width > 0 && Math.abs(drawn - line.width) > 0.01) {
+            ctx.save();
+            ctx.translate(line.x, line.baseline);
+            ctx.scale(line.width / drawn, 1);
+            ctx.fillText(line.text, 0, 0);
+            ctx.restore();
+          } else {
+            ctx.fillText(line.text, line.x, line.baseline);
+          }
           if (item.underline) ctx.fillRect(line.x, line.baseline + item.size * PT_TO_MM * 0.12, line.width, item.size * PT_TO_MM * 0.06);
         }
         ctx.restore();

@@ -7,6 +7,7 @@ import {
   findListPaths,
   inferSchema,
   ParameterType,
+  readPath,
   ReportParameter,
   resolveParameters,
   sourceValue,
@@ -74,7 +75,8 @@ export class DataSourcesDialogComponent {
   /** Plain fields of every source, offered as a parameter's list ("source|field"). */
   protected readonly choiceFields = computed(() =>
     this.report().dataSources.flatMap((s) =>
-      inferSchema(toRows(sourceValue(s)).slice(0, 50))
+      // The main source lists its rows (`dataMember.path`), as parameterChoices reads them.
+      inferSchema(toRows(readPath(sourceValue(s), this.report().dataMember?.dataSourceId === s.id ? this.report().dataMember?.path : undefined)).slice(0, 50))
         .filter((f) => f.type !== 'object' && f.type !== 'array' && f.type !== 'image')
         .map((f) => ({ key: `${s.id}|${f.name}`, label: `${s.name} › ${f.name}` })),
     ),

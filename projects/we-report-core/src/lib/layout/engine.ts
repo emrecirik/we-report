@@ -349,7 +349,8 @@ class LayoutRun {
       if (columns === 1) endRow();
       // Later cells of a row sit beside the first one, which already decided the page.
       // A band that fits on no page starts right here and is cut, rather than leaving this page empty.
-      const fitsAPage = r.height <= bodyBottom - headerHeight;
+      // Side-by-side cells are never cut, so they still move to a new page.
+      const fitsAPage = columns > 1 || r.height <= bodyBottom - headerHeight;
       if (column === 0 && (breakPending || (r.band.pageBreakBefore && !fresh) || (!fresh && y + r.height > bodyBottom && (fitsAPage || bodyBottom - y < 10)))) {
         if (entry.groupLevel !== undefined) repeating.length = entry.groupLevel;
         startPage();
@@ -372,10 +373,14 @@ class LayoutRun {
         while (y + rest.height > bodyBottom && bodyBottom - y > 1) {
           const cut = cutPoint(rest.items, bodyBottom - y);
           const [top, bottom] = splitItems(rest.items, cut);
-          put({ ...rest, items: top, height: cut });
+          // Page numbers go with the piece they start in (found by drawing them for a sample page).
+          const below = (render: (page: PageInfo) => LayoutItem[]) => Math.min(...render({ number: 1, count: 1 }).map((i) => extent(i)[0])) >= cut - EPS;
+          const upper = rest.deferred.filter((render) => !below(render));
+          const lower = rest.deferred.filter(below).map((render) => (page: PageInfo) => render(page).map((i) => translate(i, 0, -cut)));
+          put({ ...rest, items: top, deferred: upper, height: cut });
           startPage();
           // The row counts on the page where it starts.
-          rest = { ...rest, scope: { ...rest.scope, row: undefined }, items: bottom, deferred: [], height: rest.height - cut };
+          rest = { ...rest, scope: { ...rest.scope, row: undefined }, items: bottom, deferred: lower, height: rest.height - cut };
         }
         put(rest);
       }
@@ -674,6 +679,14 @@ class LayoutRun {
     const rowKeys = new Map<string, Key>();
     const colKeys = new Map<string, Key>();
     const cells = new Map<string, number[]>();
+    const rowTotals = new Map<string, number[]>();
+    const colTotals = new Map<string, number[]>();
+    const grand: number[] = [];
+    const add = (map: Map<string, number[]>, key: string, value: number) => {
+      const list = map.get(key);
+      if (list) list.push(value);
+      else map.set(key, [value]);
+    };
     const keyOf = (v: unknown): Key => {
       if (v instanceof Date) return { label: formatValue(v, undefined, options), sort: v.getTime() };
       return { label: v === null || v === undefined || v === ERROR_TEXT ? '' : typeof v === 'string' ? v : formatValue(v, undefined, options), sort: v ?? '' };
@@ -683,13 +696,18 @@ class LayoutRun {
       const rowScope = { row, rows: scope.rows };
       const r = keyOf(this.eval(c.rows.expression, rowScope, c.id));
       const k = keyOf(this.eval(c.columns.expression, rowScope, c.id));
-      const value = Number(this.eval(c.value.expression, rowScope, c.id));
+      const value = numberOrNull(this.eval(c.value.expression, rowScope, c.id));
       if (!rowKeys.has(r.label)) rowKeys.set(r.label, r);
       if (!colKeys.has(k.label)) colKeys.set(k.label, k);
       const cell = `${r.label}\u0000${k.label}`;
       if (!cells.has(cell)) cells.set(cell, []);
-      // Count counts rows, whatever the value formula returns.
-      if (Number.isFinite(value) || kind === 'count') cells.get(cell)!.push(Number.isFinite(value) ? value : 0);
+      // Count counts rows, whatever the value formula returns; the others skip empty values.
+      if (value === null && kind !== 'count') continue;
+      const v = value ?? 0;
+      cells.get(cell)!.push(v);
+      add(rowTotals, r.label, v);
+      add(colTotals, k.label, v);
+      grand.push(v);
     }
     const collator = new Intl.Collator(this.locale, { numeric: true });
     const order = (a: Key, b: Key) =>
@@ -700,10 +718,7 @@ class LayoutRun {
     const rows = [...rowKeys.values()].sort(order).slice(0, MAX_CROSSTAB_ROWS).map((k) => k.label);
     const cols = [...colKeys.values()].sort(order).slice(0, MAX_CROSSTAB_COLUMNS).map((k) => k.label);
     const values = (r?: string, k?: string) =>
-      [...cells].filter(([key]) => {
-        const [cr, ck] = key.split('\u0000');
-        return (r === undefined || cr === r) && (k === undefined || ck === k);
-      }).flatMap(([, v]) => v);
+      (r !== undefined && k !== undefined ? cells.get(`${r}\u0000${k}`) : r !== undefined ? rowTotals.get(r) : k !== undefined ? colTotals.get(k) : grand) ?? [];
     const show = (list: number[], always: boolean) => (list.length || always ? formatValue(aggregate(kind, list), c.format || undefined, options) : '');
 
     const headerWidth = c.rowHeaderWidth ?? Math.min(40, c.width / 3);
@@ -757,10 +772,10 @@ class LayoutRun {
       const rowScope = { row, rows: scope.rows };
       const category = this.eval(c.category.expression, rowScope, c.id);
       const label = category instanceof Date ? formatValue(category, undefined, options) : String(category ?? '');
-      const value = Number(this.eval(c.value.expression, rowScope, c.id));
+      const value = numberOrNull(this.eval(c.value.expression, rowScope, c.id));
       if (!groups.has(label)) groups.set(label, []);
-      // Count counts rows, whatever the value formula returns.
-      if (Number.isFinite(value) || c.aggregate === 'count') groups.get(label)!.push(Number.isFinite(value) ? value : 0);
+      // Count counts rows, whatever the value formula returns; the others skip empty values.
+      if (value !== null || c.aggregate === 'count') groups.get(label)!.push(value ?? 0);
     }
     return [...groups].map(([label, values]) => ({ label, value: aggregate(c.aggregate ?? 'sum', values) }));
   }
@@ -821,7 +836,8 @@ class LayoutRun {
 
   private richHeight(runs: RichRun[], style: ResolvedStyle, width: number): number {
     const lines = wrapRichText(runs, (r) => this.richFont(style, r), style.fontSize, Math.max(0, width - 2 * style.padding));
-    return lines.length * this.richFont(style, runs[0] ?? { text: '', bold: false, italic: false, underline: false }).lineHeight(style.fontSize) + 2 * style.padding;
+    // Lines are spaced by the base font, as `richTextBox` places them.
+    return lines.length * this.richFont(style, { text: '', bold: false, italic: false, underline: false }).lineHeight(style.fontSize) + 2 * style.padding;
   }
 
   /** Like `textBox`, one text item per styled piece of a line. */
@@ -983,6 +999,13 @@ function fitImage(
 }
 
 const EPS = 0.01;
+
+/** A number for aggregating, or `null` for an empty or non-numeric value (which is skipped). */
+function numberOrNull(v: unknown): number | null {
+  if (v === null || v === undefined || v === '' || v === ERROR_TEXT) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
 /** Top and bottom of an item. */
 function extent(item: LayoutItem): [number, number] {

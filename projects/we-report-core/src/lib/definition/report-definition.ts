@@ -387,6 +387,8 @@ export interface ReportParameter {
 export interface ParameterChoices {
   values?: (string | number)[];
   dataSourceId?: string;
+  /** Path to the rows inside the source, e.g. `items`; the report's own rows path for its main source. */
+  path?: string;
   /** Field holding the value, e.g. `id`. */
   valueField?: string;
   /** Field shown for it, e.g. `name`; the value when omitted. */

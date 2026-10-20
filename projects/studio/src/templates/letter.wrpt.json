@@ -1,0 +1,272 @@
+{
+  "version": 1,
+  "name": "Bakiye mektubu",
+  "page": {
+    "paper": "A4",
+    "orientation": "portrait",
+    "margins": {
+      "top": 15,
+      "right": 15,
+      "bottom": 15,
+      "left": 15
+    },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": {
+      "fontFamily": "Noto Sans",
+      "fontSize": 9,
+      "color": "#1f2328",
+      "padding": 0.8
+    },
+    "brand": {
+      "fontSize": 13,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "title": {
+      "fontSize": 16,
+      "bold": true,
+      "color": "#0f766e",
+      "textAlign": "right"
+    },
+    "muted": {
+      "fontSize": 8,
+      "color": "#6b7280"
+    },
+    "label": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "bold": true
+    },
+    "big": {
+      "fontSize": 18,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "sign": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "textAlign": "center",
+      "border": {
+        "width": 0.3,
+        "color": "#1f2328",
+        "sides": {
+          "top": true,
+          "right": false,
+          "bottom": false,
+          "left": false
+        }
+      }
+    },
+    "th": {
+      "fontSize": 8,
+      "bold": true,
+      "color": "#0f766e",
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.4,
+        "color": "#0f766e",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "cell": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "num": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "textAlign": "right",
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    }
+  },
+  "dataSources": [
+    {
+      "id": "letters",
+      "name": "Alıcılar",
+      "kind": "json",
+      "data": null
+    }
+  ],
+  "dataMember": {
+    "dataSourceId": "letters",
+    "path": "recipients"
+  },
+  "locale": "tr-TR",
+  "currency": "TRY",
+  "bands": [
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 126,
+      "pageBreakAfter": true,
+      "controls": [
+        {
+          "id": "brand",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 120,
+          "height": 8,
+          "text": {
+            "expression": "[^.company.name]"
+          },
+          "style": "brand"
+        },
+        {
+          "id": "contact",
+          "type": "text",
+          "x": 0,
+          "y": 8,
+          "width": 180,
+          "height": 5,
+          "text": {
+            "expression": "[^.company.address] + ' · ' + [^.company.phone] + ' · ' + [^.company.web]"
+          },
+          "style": "muted"
+        },
+        {
+          "id": "rule",
+          "type": "line",
+          "x": 0,
+          "y": 15,
+          "width": 180,
+          "height": 1,
+          "direction": "horizontal",
+          "lineWidth": 0.4,
+          "color": "#0f766e"
+        },
+        {
+          "id": "date",
+          "type": "text",
+          "x": 120,
+          "y": 20,
+          "width": 60,
+          "height": 6,
+          "text": {
+            "expression": "[date]"
+          },
+          "format": "dd MMMM yyyy",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "to",
+          "type": "text",
+          "x": 0,
+          "y": 26,
+          "width": 110,
+          "height": 6,
+          "text": {
+            "expression": "[company]"
+          },
+          "styleOverrides": {
+            "bold": true
+          }
+        },
+        {
+          "id": "toName",
+          "type": "text",
+          "x": 0,
+          "y": 32,
+          "width": 110,
+          "height": 5,
+          "text": {
+            "expression": "'Sn. ' + [name]"
+          }
+        },
+        {
+          "id": "toAddr",
+          "type": "text",
+          "x": 0,
+          "y": 37,
+          "width": 110,
+          "height": 10,
+          "text": {
+            "expression": "[address]"
+          },
+          "style": "muted",
+          "canGrow": true
+        },
+        {
+          "id": "subject",
+          "type": "text",
+          "x": 0,
+          "y": 52,
+          "width": 180,
+          "height": 6,
+          "text": "**Konu:** Cari hesap bakiyesi hakkında",
+          "markup": true
+        },
+        {
+          "id": "body",
+          "type": "text",
+          "x": 0,
+          "y": 62,
+          "width": 180,
+          "height": 40,
+          "text": "Sayın **{[name]}**,\n\n{[company]} ile sürdürdüğümüz iş birliği için teşekkür ederiz. {Format([date], 'dd MMMM yyyy')} itibarıyla cari hesabınızda **{Format([balance], 'c2')}** tutarında bakiye bulunmaktadır.\n\nBu tutarın en geç *{Format([dueDate], 'dd MMMM yyyy')}* tarihine kadar ödenmesini rica eder; ödemenizi yaptıysanız bu mektubu dikkate almamanızı dileriz. Sorularınız için __{[^.company.phone]}__ numaralı telefondan bize ulaşabilirsiniz.\n\nSaygılarımızla,",
+          "markup": true,
+          "canGrow": true,
+          "styleOverrides": {
+            "fontSize": 10.5
+          }
+        },
+        {
+          "id": "signer",
+          "type": "text",
+          "x": 120,
+          "y": 112,
+          "width": 60,
+          "height": 6,
+          "text": {
+            "expression": "[^.signer.name]"
+          },
+          "styleOverrides": {
+            "bold": true,
+            "textAlign": "center"
+          }
+        },
+        {
+          "id": "signerTitle",
+          "type": "text",
+          "x": 120,
+          "y": 118,
+          "width": 60,
+          "height": 5,
+          "text": {
+            "expression": "[^.signer.title]"
+          },
+          "style": "sign"
+        }
+      ]
+    }
+  ]
+}

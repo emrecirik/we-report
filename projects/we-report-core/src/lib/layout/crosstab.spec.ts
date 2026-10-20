@@ -62,6 +62,17 @@ describe('cross table', () => {
     expect(header.length).toBe(1 + 50 + 1);
   });
 
+  it('skips empty values in averages and stays fast at its size limit', () => {
+    const r = report({ aggregate: 'avg', totals: false });
+    (r.dataSources[0] as { data: unknown }).data = [{ city: 'A', month: 1, amount: 10 }, { city: 'A', month: 1, amount: null }, { city: 'A', month: 1, amount: '' }];
+    expect(grid(r, fonts)[1]).toEqual(['A', '10']);
+    const big = report({ columns: { expression: '[n] % 50' }, rows: { expression: '[n] % 500' } });
+    (big.dataSources[0] as { data: unknown }).data = Array.from({ length: 25000 }, (_, n) => ({ n, amount: 1 }));
+    const start = performance.now();
+    layoutReport(big, { fonts, now: NOW });
+    expect(performance.now() - start).toBeLessThan(5000);
+  });
+
   it('aggregates by count or average and can leave the totals out', () => {
     expect(grid(report({ aggregate: 'count', totals: false }), fonts).slice(0, 3)).toEqual([
       ['Şehir', '1', '2', '10'],

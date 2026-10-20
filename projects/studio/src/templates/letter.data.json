@@ -1,0 +1,30 @@
+{
+  "company": {
+    "name": "Demir Ofis Malzemeleri A.Ş.",
+    "address": "Atatürk Cad. No: 12, Çankaya / Ankara",
+    "phone": "0312 555 01 23",
+    "web": "www.example.com"
+  },
+  "signer": {
+    "name": "Elif Demir",
+    "title": "Müşteri İlişkileri Müdürü"
+  },
+  "recipients": [
+    {
+      "name": "Ayşe Kaya",
+      "company": "Yıldız Kırtasiye Ltd. Şti.",
+      "address": "Kızılay Mah. Gazi Mustafa Kemal Bulv. No: 45, Ankara",
+      "date": "2026-10-20",
+      "balance": 8250,
+      "dueDate": "2026-11-15"
+    },
+    {
+      "name": "Mehmet Yılmaz",
+      "company": "Ege Mobilya San. Tic.",
+      "address": "Alsancak Mah. Kıbrıs Şehitleri Cad. No: 88, İzmir",
+      "date": "2026-10-20",
+      "balance": 26550.4,
+      "dueDate": "2026-11-30"
+    }
+  ]
+}

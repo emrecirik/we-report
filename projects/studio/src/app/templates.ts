@@ -6,6 +6,9 @@ import earsiv from '../templates/earsiv-invoice.wrpt.json';
 import invoiceData from '../templates/invoice.data.json';
 import invoice from '../templates/invoice.wrpt.json';
 import labels from '../templates/labels.wrpt.json';
+import letterData from '../templates/letter.data.json';
+import letter from '../templates/letter.wrpt.json';
+import businessCards from '../templates/business-cards.wrpt.json';
 import ordersData from '../templates/orders.data.json';
 import paymentReceiptData from '../templates/payment-receipt.data.json';
 import paymentReceipt from '../templates/payment-receipt.wrpt.json';
@@ -96,6 +99,19 @@ export const TEMPLATES: StudioTemplate[] = [
     description: { tr: 'Sürekli rulo, içeriğe göre uzar', en: 'Continuous roll that grows with the content' },
     report: () => migrateDefinition(structuredClone(receipt)),
     data: receiptData,
+  },
+  {
+    id: 'letter',
+    name: { tr: 'Toplu mektup (zengin metin)', en: 'Mail merge letter (rich text)' },
+    description: { tr: 'Her alıcıya bir sayfa; metnin içinde kalın, italik ve veri alanları', en: 'A page per recipient; bold, italic and data fields inside the text' },
+    report: () => migrateDefinition(structuredClone(letter)),
+    data: letterData,
+  },
+  {
+    id: 'business-cards',
+    name: { tr: 'Kartvizit (A4, 10’lu)', en: 'Business cards (A4, 10 per sheet)' },
+    description: { tr: '85×55 mm, kişi başına bir kart ve karekod', en: '85×55 mm, a card and QR code per person' },
+    report: () => migrateDefinition(structuredClone(businessCards)),
   },
   {
     id: 'certificate',

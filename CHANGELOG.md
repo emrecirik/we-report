@@ -37,7 +37,11 @@
   fields inside one text, wrapped and measured with the right font per word; the designer shows it
   formatted, Excel exports the words. `parseRichText`, `wrapRichText` and `plainRichText` are
   exported from core. The payment receipt template uses it.
-- Cross table: at most 500 rows and 50 columns (a problem says when more were cut).
+- Cross table: at most 500 rows and 50 columns (a problem says when more were cut). Cross tables
+  and charts skip empty values in averages, minimums and maximums (they counted as 0).
+- Preview: every text line is drawn exactly as wide as the engine measured it (SVG `textLength`,
+  and in PNG), so the screen matches the PDF; styled words no longer leave gaps.
+- ISBN and other barcodes with text above the bars stay inside their box.
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, total row and column, numbers sorted numerically; grows downwards and
   pushes the items below. Dropping one binds it to the first two text fields and a number field.
@@ -46,7 +50,8 @@
 - Layout: an item placed up to 1 mm inside a growing text is pushed down with it.
 - Studio: *History* — the design is kept in the browser whenever a template, file or shared link
   replaces it and every few minutes while editing (20 kept); *Restore* brings one back.
-- Studio: customer statement (sub-report), e-Archive (e-Arşiv) invoice look, payment receipt (A5) and shipping label (100×150)
+- Studio: customer statement (sub-report), e-Archive (e-Arşiv) invoice look, mail merge letter (rich
+  text), business cards (A4, 10 per sheet), payment receipt (A5) and shipping label (100×150)
   templates.
 - Studio: opening a shared link that fetches from a web service or database shows a warning; a
   design too large for a link says so instead of producing a link that will not open. Studio has

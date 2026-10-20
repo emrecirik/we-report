@@ -153,6 +153,37 @@ describe('sections taller than a page', () => {
     expect(pages[0]).toContain('L-1');
   });
 
+  it('puts a page number inside a cut section on the page of its piece', () => {
+    const r = createBlankReport('Tall');
+    r.bands = [{ id: 'detail', kind: 'detail', height: 600, controls: [
+      { id: 'top', type: 'text', x: 0, y: 0, width: 40, height: 6, text: 'top' },
+      { id: 'pi', type: 'pageInfo', x: 0, y: 500, width: 40, height: 6, info: 'pageNumber' },
+    ] }];
+    const pages = layoutReport(r, { fonts, now: NOW }).pages;
+    const where = pages.map((p) => p.items.filter((i): i is TextItem => i.kind === 'text').map((t) => [t.lines[0].text, t.y] as const));
+    const number = where.findIndex((items) => items.some(([text]) => /^\d$/.test(text)));
+    expect(number).toBeGreaterThan(0);
+    const [text, y] = where[number].find(([t]) => /^\d$/.test(t))!;
+    expect(text).toBe(String(number + 1));
+    expect(y).toBeLessThan(297);
+  });
+
+  it('still moves a side-by-side cell taller than the page to a new page', () => {
+    const r = createBlankReport('Cards');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [{ n: 1 }, { n: 2 }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands = [
+      { id: 'rh', kind: 'reportHeader', height: 20, controls: [{ id: 'h', type: 'text', x: 0, y: 0, width: 40, height: 6, text: 'head' }] },
+      { id: 'detail', kind: 'detail', height: 280, columns: { count: 2, gap: 0 }, controls: [
+        { id: 'n', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: '[n]' } },
+      ] },
+    ];
+    const pages = layoutReport(r, { fonts, now: NOW }).pages.map((p) => p.items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text));
+    // Cells are never cut: the row starts on a new page instead of under the header.
+    expect(pages[0]).toEqual(['head']);
+    expect(pages[1]).toEqual(['1', '2']);
+  });
+
   it('flows a very long text over pages between its lines', () => {
     const r = createBlankReport('Long text');
     const words = Array.from({ length: 1500 }, (_, i) => `word${i}`).join(' ');

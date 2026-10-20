@@ -429,6 +429,11 @@ describe('layout engine', () => {
     expect(wide.right).toBeLessThanOrEqual(57.5);
     expect(wide.bottom).toBeLessThanOrEqual(14.001);
     expect(wide.item.width).toBe(57.5);
+    // Text above the bars (ISBN) stays inside the box too.
+    const isbn = barcodeItem('isbn', '978-1-56581-231-4', true, { x: 0, y: 0, width: 40, height: 30 }, '#000000');
+    const isbnYs = isbn.paths.flatMap((p) => p.d.match(/-?[\d.]+/g)!.map(Number).filter((_, k) => k % 2 === 1));
+    expect(Math.min(...isbnYs)).toBeGreaterThanOrEqual(-0.01);
+    expect(Math.max(...isbnYs)).toBeLessThanOrEqual(30.01);
     // The bars stop clearly above the digits.
     const barYs = wide.item.paths.filter((p) => p.stroke).flatMap((p) => p.d.match(/-?[\d.]+/g)!.map(Number).filter((_, k) => k % 2 === 1));
     expect(Math.max(...barYs)).toBeLessThan(wide.bottom - wide.h - wide.h * 0.2);

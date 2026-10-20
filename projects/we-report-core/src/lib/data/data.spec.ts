@@ -110,6 +110,14 @@ describe('parameter choices', () => {
     ]);
   });
 
+  it('reads rows inside a source: its own path, or the report rows path for the main source', () => {
+    const r = report();
+    r.dataSources.push({ id: 'n', name: 'Nested', kind: 'json', data: { items: [{ code: 'A' }, { code: 'B' }] } });
+    expect(parameterChoices(r, { name: 'p', type: 'string', choices: { dataSourceId: 'n', path: 'items', valueField: 'code' } }).map((c) => c.value)).toEqual(['A', 'B']);
+    r.dataMember = { dataSourceId: 'n', path: 'items' };
+    expect(parameterChoices(r, { name: 'p', type: 'string', choices: { dataSourceId: 'n', valueField: 'code' } }).map((c) => c.value)).toEqual(['A', 'B']);
+  });
+
   it('uses loaded responses over samples, and nothing for an unknown source or no list', () => {
     const p = { name: 'p', type: 'string' as const, choices: { dataSourceId: 'db', valueField: 'city' } };
     expect(parameterChoices(report(), p).map((c) => c.value)).toEqual(['Ankara']);
