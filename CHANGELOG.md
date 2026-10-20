@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-10-20
 
 - Data protocol 1.1 (backward compatible, still `/v1`): query `offset` and `distinct`, the
   case-insensitive `contains` / `startsWith` operators, `count: true` → `total`, and
