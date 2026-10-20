@@ -225,6 +225,12 @@ export class PropertyPanelComponent {
     if (band) this.state.updateBand(band.id, (b) => (b.orderBy = expression.trim() ? { expression, ...(descending ? { descending: true } : {}) } : undefined), 'band-order');
   }
 
+  protected setGroupTop(value: string): void {
+    const band = this.band();
+    const n = Math.floor(Number(value));
+    if (band) this.state.updateBand(band.id, (b) => (b.top = value !== '' && n > 0 ? n : undefined), 'band-top');
+  }
+
   protected bookmarkValue(b: Band): Bindable<string> {
     return b.bookmark ?? '';
   }

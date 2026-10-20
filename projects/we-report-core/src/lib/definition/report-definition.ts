@@ -296,6 +296,8 @@ export interface Band {
    * `Sum([amount])` descending for the largest customers first. Equal values keep `sort` order.
    */
   orderBy?: SortKey;
+  /** groupHeader only: print only the first this many groups (after ordering), e.g. the top 10 customers. */
+  top?: number;
   /** detail only: rows are sorted by these values in turn (inside their group). */
   sortBy?: SortKey[];
   /**

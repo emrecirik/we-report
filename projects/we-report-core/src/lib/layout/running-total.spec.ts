@@ -118,6 +118,11 @@ describe('groups ordered by a formula', () => {
     );
     const texts = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text).filter((t) => /^[CP] /.test(t));
     expect(texts).toEqual(['C İzmir', 'P Çay', 'P Kahve', 'C Ankara', 'P Kahve', 'P Çay', 'C Bursa', 'P Çay']);
+    // Top 2 cities only.
+    r.bands[1].top = 2;
+    const top = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text).filter((t) => t.startsWith('C '));
+    expect(top).toEqual(['C İzmir', 'C Ankara']);
+    delete r.bands[1].top;
     // Exports list the rows in the same order.
     r.bands.find((b) => b.kind === 'detail')!.controls = [{ id: 'a', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[a]' } }];
     expect(reportTable(r, { now: NOW }).rows.map((x) => x[0])).toEqual([100, 1, 50, 10, 30]);

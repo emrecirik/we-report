@@ -195,6 +195,7 @@ export const weReportLocaleDe: WeReportLocale = {
   sortNone: 'Wie in den Daten',
   keepTogether: 'Gruppe auf einer Seite halten',
   keepTogetherHint: 'Verschiebt die ganze Gruppe auf die nächste Seite, statt sie zu teilen.',
+  groupTop: 'Nur die ersten … Gruppen',
   groupOrderBy: 'Gruppen ordnen nach',
   groupOrderByHint: 'Eine Formel je Gruppe, z. B. Sum([amount]): die größten Kunden zuerst.',
   largestFirst: 'Größte zuerst',

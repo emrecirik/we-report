@@ -179,6 +179,7 @@ export interface WeReportLocale {
   sortNone: string;
   keepTogether: string;
   keepTogetherHint: string;
+  groupTop: string;
   groupOrderBy: string;
   groupOrderByHint: string;
   largestFirst: string;
@@ -621,6 +622,7 @@ export const weReportLocaleEn: WeReportLocale = {
   sortNone: 'As in data',
   keepTogether: 'Keep group on one page',
   keepTogetherHint: 'Moves the whole group to the next page instead of splitting it.',
+  groupTop: 'Only the first … groups',
   groupOrderBy: 'Order groups by',
   groupOrderByHint: 'A formula over each group, e.g. Sum([amount]): the biggest customers first.',
   largestFirst: 'Largest first',
@@ -1106,6 +1108,7 @@ export const weReportLocaleTr: WeReportLocale = {
   sortNone: 'Verideki sırayla',
   keepTogether: 'Grubu tek sayfada tut',
   keepTogetherHint: 'Grup bölünecekse tamamını sonraki sayfaya taşır.',
+  groupTop: 'Yalnızca ilk … grup',
   groupOrderBy: 'Grupları şuna göre sırala',
   groupOrderByHint: 'Her grubun üzerinde bir formül; örn. Sum([tutar]): en büyük müşteriler önce.',
   largestFirst: 'Büyükten küçüğe',

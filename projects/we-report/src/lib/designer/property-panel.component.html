@@ -254,6 +254,10 @@
           </label>
         }
         <small class="pp__hint">{{ s.groupOrderByHint }}</small>
+        <label class="pp__row">
+          <span>{{ s.groupTop }}</span>
+          <input type="number" min="1" step="1" [value]="b.top ?? ''" (input)="setGroupTop($any($event.target).value)" />
+        </label>
       }
       <label class="pp__check">
         <input type="checkbox" [checked]="!!b.keepTogether" (change)="toggleBand('keepTogether', $any($event.target).checked)" />

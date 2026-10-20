@@ -262,7 +262,9 @@ class LayoutRun {
     const header = headers[level];
     const footer = this.def.bands.find((b) => b.kind === 'groupFooter' && b.groupHeaderId === header.id);
     let start = 0;
-    while (start < rows.length) {
+    // "Top N": the rest of the groups is left out (report totals still count every row).
+    const top = typeof header.top === 'number' && header.top > 0 ? Math.floor(header.top) : Infinity;
+    for (let printed = 0; start < rows.length && printed < top; printed++) {
       const key = keys.get(rows[start])![level];
       let end = start + 1;
       while (end < rows.length && keys.get(rows[end])![level] === key) end++;
