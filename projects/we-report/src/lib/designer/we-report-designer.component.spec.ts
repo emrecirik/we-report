@@ -3,6 +3,7 @@ import { createBlankReport, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_LOCALE, weReportLocaleTr } from '../we-report-locale';
 import { DesignSurfaceComponent } from './design-surface.component';
 import { DesignerState } from './designer-state';
+import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportDesignerComponent } from './we-report-designer.component';
 
 describe('WeReportDesignerComponent', () => {
@@ -51,6 +52,24 @@ describe('WeReportDesignerComponent', () => {
     expect(innerState.canUndo()).toBeTrue(); // the inner designer was not reloaded
     state.undo();
     expect(sub().report.bands[0].controls[0]).toEqual(jasmine.objectContaining({ x: 0, width: 30 }));
+  });
+
+  it('warns about a text the print would cut off and fixes it by letting it grow', async () => {
+    const report = createBlankReport();
+    report.bands[1].controls.push(
+      { id: 'cut', type: 'text', x: 0, y: 0, width: 20, height: 5, text: 'one two three four five six seven eight' },
+      { id: 'fits', type: 'text', x: 30, y: 0, width: 60, height: 5, text: 'short' },
+    );
+    create(report);
+    await TestBed.inject(WeReportFontsService).ready();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    const designer = fixture.componentInstance as unknown as { issues(): { code: string; controlId: string }[]; fixIssue(i: unknown): void };
+    const cut = designer.issues().filter((i) => i.code === 'textCut');
+    expect(cut.map((i) => i.controlId)).toEqual(['cut']);
+    expect(el().querySelector('[data-control-id="cut"]')?.classList.contains('ds__control--cut')).toBeTrue();
+    designer.fixIssue(cut[0]);
+    expect(state.report().bands[1].controls[0]).toEqual(jasmine.objectContaining({ id: 'cut', canGrow: true }));
   });
 
   it('renders the page at real size with localized bands', () => {
