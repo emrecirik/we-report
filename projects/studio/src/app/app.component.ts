@@ -250,7 +250,9 @@ export class AppComponent {
     const t = TEMPLATES.find((x) => x.id === id)!;
     this.remember();
     this.templateId.set(id);
-    this.report.set(t.report());
+    const report = t.report();
+    // A blank report is named in the language of the page (the designer's default title).
+    this.report.set(id === 'blank' ? { ...report, name: this.locale().newReportTitle } : report);
     this.data.set(t.data);
   }
 
