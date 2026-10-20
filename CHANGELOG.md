@@ -92,7 +92,8 @@
 - `hide` input: leave toolbar parts out (`print`, `pdf`, `excel`, `png`, `more`, `search`,
   `thumbnails`, `map`). The document-map button also shows on single-page reports.
 - A page wider than the preview (zoomed in, landscape) can be scrolled to its left edge; it was
-  centred with its left part out of reach.
+  centred with its left part out of reach. On a phone the first preview fits the page's width
+  (when `zoom` is left at 1); *Fit width* leaves room for the scrollbar.
 - `WeReportLocale` has new keys; a custom locale that spreads an existing one
   (`{ ...weReportLocaleEn, … }`, see docs/localization.md) gets them automatically.
 

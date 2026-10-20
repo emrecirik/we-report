@@ -35,6 +35,16 @@ describe('WeReportViewerComponent', () => {
     return doc;
   }
 
+  it('fits the page to the width the first time on a narrow screen', async () => {
+    const host = fixture.nativeElement as HTMLElement;
+    host.style.width = '360px';
+    host.style.height = '600px';
+    await render(listReport(), [{ name: 'a' }]);
+    const zoom = (fixture.componentInstance as unknown as { zoomLevel(): number }).zoomLevel();
+    expect(zoom).toBeLessThan(0.5);
+    expect(zoom).toBeGreaterThan(0.25);
+  });
+
   it('lays out with the bundled fonts and draws every page as SVG', async () => {
     const rows = Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` }));
     const doc = await render(listReport(), rows);

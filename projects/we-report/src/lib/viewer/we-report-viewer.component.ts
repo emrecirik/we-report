@@ -453,6 +453,7 @@ export class WeReportViewerComponent {
   readonly report = input.required<ReportDefinition>();
   /** Rows (or an object holding them) to print; replaces the report's own data source data. */
   readonly data = input<unknown>(undefined);
+  /** Default 1; at 1, a page wider than the viewer (a phone) first shows at its width. */
   readonly zoom = input(1);
   /** Overrides the `WE_REPORT_LOCALE` token. */
   readonly locale = input<WeReportLocale | undefined>(undefined);
@@ -608,12 +609,24 @@ export class WeReportViewerComponent {
     this.thumbs()?.nativeElement.children[page - 1]?.scrollIntoView({ block: 'nearest' });
   }
 
+  private fittedOnce = false;
+  /** On a screen narrower than the page (a phone), the first preview at the default zoom fits the page's width. */
+  private fitNarrowScreen(doc: LayoutDocument): void {
+    const box = this.scroller()?.nativeElement;
+    const page = doc.pages[0];
+    if (this.fittedOnce || !box?.clientWidth || !page) return;
+    this.fittedOnce = true;
+    if (this.zoomLevel() === 1 && page.width * (96 / 25.4) + 64 > box.clientWidth) this.pickZoom('width');
+  }
+
   protected pickZoom(value: string): void {
     const box = this.scroller()?.nativeElement;
     const page = this.document()?.pages[0];
     if ((value === 'width' || value === 'page') && box && page) {
       const pxPerMm = 96 / 25.4;
-      const byWidth = (box.clientWidth - 64) / (page.width * pxPerMm);
+      // Room for the vertical scrollbar the zoomed pages will bring, when it is not there yet.
+      const scrollbar = box.offsetWidth > box.clientWidth ? 0 : 16;
+      const byWidth = (box.clientWidth - 64 - scrollbar) / (page.width * pxPerMm);
       const byHeight = (box.clientHeight - 64) / (page.height * pxPerMm);
       this.setZoom(value === 'width' ? byWidth : Math.min(byWidth, byHeight));
     } else if (value) {
@@ -704,6 +717,7 @@ export class WeReportViewerComponent {
       }
       this.error.set(null);
       this.document.set(doc);
+      this.fitNarrowScreen(doc);
       this.problems.emit(doc.problems);
       this.rendered.emit(doc);
     } catch (e) {
