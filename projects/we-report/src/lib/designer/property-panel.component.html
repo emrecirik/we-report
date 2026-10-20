@@ -525,6 +525,12 @@
               }
             </select>
           </label>
+          @if (c.chartType === 'databar') {
+            <label class="pp__row">
+              <span>{{ s.chartMax }}</span>
+              <input type="number" [value]="c.max ?? ''" (input)="set('max', $any($event.target).value === '' ? undefined : +$any($event.target).value)" />
+            </label>
+          }
           @if (advanced() || c.rows) {
             <label class="pp__row pp__row--stack">
               <span>{{ s.chartRows }}</span>

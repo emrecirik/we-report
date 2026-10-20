@@ -62,9 +62,23 @@ export function chartItems(c: ChartControl, points: ChartPoint[], style: Resolve
   }
   if (!points.length || area.width <= 0 || area.height <= 0) return items;
   const small: ResolvedStyle = { ...style, fontSize: Math.max(5, style.fontSize * 0.8), bold: false, italic: false, underline: false, padding: 0 };
-  if (c.chartType === 'sparkline') items.push(...sparkline(points, area, palette[0]));
+  if (c.chartType === 'databar') items.push(...dataBar(c, points, area, small, palette[0], env));
+  else if (c.chartType === 'sparkline') items.push(...sparkline(points, area, palette[0]));
   else if (c.chartType === 'pie' || c.chartType === 'doughnut') items.push(...pie(c, points, area, small, palette, env));
   else items.push(...axes(c, points, area, small, palette, env));
+  return items;
+}
+
+/** One row's value as a bar along the box, full at `points[1]` (the maximum); the value written at its end. */
+function dataBar(c: ChartControl, points: ChartPoint[], area: Box, small: ResolvedStyle, color: string, env: ChartEnv): LayoutItem[] {
+  const [value, max] = [points[0]?.value ?? 0, points[1]?.value ?? 0];
+  const share = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
+  const items: LayoutItem[] = [{ kind: 'rect', ...area, fill: c.gridColor ?? DEFAULT_CHART_GRID_COLOR }];
+  if (share > 0) items.push({ kind: 'rect', ...area, width: area.width * share, fill: color });
+  if (c.showValues) {
+    const st: ResolvedStyle = { ...small, textAlign: 'right', verticalAlign: 'middle' };
+    items.push(...env.text(env.format(value), st, { ...area, width: area.width - 0.5 }));
+  }
   return items;
 }
 

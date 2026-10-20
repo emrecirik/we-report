@@ -694,7 +694,7 @@ export class DesignSurfaceComponent implements OnDestroy {
         const bandSample = this.sampleFor(band);
         const row = bandSample?.row;
         // A chart over a list inside the row (a sparkline) is drawn for the sample row, like a sub-report.
-        const ofRows = c.type === 'crosstab' || (c.type === 'chart' && !c.rows?.expression.trim());
+        const ofRows = c.type === 'crosstab' || (c.type === 'chart' && !c.rows?.expression.trim() && c.chartType !== 'databar');
         // The box alone on a page of its own width: a sub-report with the sample row around it,
         // a cross table or chart in a report footer over the sample rows.
         const def: ReportDefinition = {
@@ -1450,7 +1450,7 @@ export class DesignSurfaceComponent implements OnDestroy {
   protected chartLabel(c: ReportControl): string {
     if (c.type !== 'chart') return '';
     const s = this.strings();
-    const type = { column: s.chartColumn, bar: s.chartBar, line: s.chartLine, pie: s.chartPie, doughnut: s.chartDoughnut, sparkline: s.chartSparkline }[c.chartType];
+    const type = { column: s.chartColumn, bar: s.chartBar, line: s.chartLine, pie: s.chartPie, doughnut: s.chartDoughnut, sparkline: s.chartSparkline, databar: s.chartDataBar }[c.chartType];
     return c.category.expression ? `${type}: ${c.value.expression} / ${c.category.expression}` : type;
   }
 

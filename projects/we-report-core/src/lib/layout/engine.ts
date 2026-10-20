@@ -811,6 +811,13 @@ class LayoutRun {
 
   /** The band's rows grouped by the chart's category, in order of first appearance. */
   private chartPoints(c: ChartControl, scope: Scope): ChartPoint[] {
+    // A data bar: this row's value, then the value of a full bar.
+    if (c.chartType === 'databar') {
+      if (!c.value.expression.trim()) return [];
+      const value = numberOrNull(this.eval(c.value.expression, scope, c.id)) ?? 0;
+      const max = c.max ?? scope.rows.reduce<number>((m, row) => Math.max(m, numberOrNull(this.eval(c.value.expression, { row, rows: scope.rows }, c.id)) ?? 0), value);
+      return [{ label: '', value }, { label: '', value: max }];
+    }
     // A sparkline may leave the category empty: then every row is one point, in order.
     const byRow = c.chartType === 'sparkline' && !c.category.expression.trim();
     if ((!byRow && !c.category.expression.trim()) || !c.value.expression.trim()) return [];

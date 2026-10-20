@@ -1,9 +1,9 @@
 import { loadTestFonts } from '../../testing/test-fonts';
 import { createBlankReport } from '../definition/blank-report';
-import { CrosstabControl, ReportDefinition } from '../definition/report-definition';
+import { ChartControl, CrosstabControl, ReportDefinition } from '../definition/report-definition';
 import { FontRegistry } from '../fonts/font-registry';
 import { layoutReport } from './engine';
-import { TextItem } from './layout-types';
+import { RectItem, TextItem } from './layout-types';
 
 const NOW = new Date(2026, 9, 19, 10, 0);
 const SALES = [
@@ -59,6 +59,25 @@ describe('sparkline', () => {
     const ys = path.match(/-?[\d.]+/g)!.map(Number).filter((_, k) => k % 2 === 1);
     expect(ys[1]).toBeLessThan(ys[2]); // 3 is drawn higher than 2
     expect(ys[0]).toBeGreaterThan(ys[2]); // 1 is the lowest
+  });
+});
+
+describe('data bar', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('draws each row as a share of the largest value in its section', () => {
+    const r = createBlankReport('Bars');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [{ v: 50 }, { v: 100 }, { v: -5 }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands[1].height = 6;
+    r.bands[1].controls.push({ id: 'b', type: 'chart', chartType: 'databar', x: 0, y: 0, width: 40, height: 5, category: { expression: '' }, value: { expression: '[v]' }, colors: ['#123456'] });
+    const bars = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is RectItem => i.kind === 'rect' && i.fill === '#123456');
+    expect(bars.length).toBe(2); // the negative value draws no bar
+    expect(bars[1].width / bars[0].width).toBeCloseTo(2, 5);
+    r.bands[1].controls[0] = { ...(r.bands[1].controls[0] as ChartControl), max: 200 };
+    const half = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is RectItem => i.kind === 'rect' && i.fill === '#123456');
+    expect(half[1].width).toBeLessThan(bars[1].width);
   });
 });
 

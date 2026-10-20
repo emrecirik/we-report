@@ -48,6 +48,7 @@ const CHART_TYPES: { type: ChartType; label: keyof WeReportLocale }[] = [
   { type: 'pie', label: 'chartPie' },
   { type: 'doughnut', label: 'chartDoughnut' },
   { type: 'sparkline', label: 'chartSparkline' },
+  { type: 'databar', label: 'chartDataBar' },
 ];
 
 const AGGREGATES: { value: ChartAggregate; label: keyof WeReportLocale }[] = [
@@ -310,7 +311,7 @@ export class PropertyPanelComponent {
     this.state.updateControls(this.ids(), (c) => {
       if (c.type !== 'chart') return;
       c.chartType = type;
-      if (type === 'sparkline' && c.height > 12) {
+      if ((type === 'sparkline' || type === 'databar') && c.height > 12) {
         c.height = 8;
         c.width = Math.min(c.width, 40);
       }

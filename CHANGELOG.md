@@ -21,6 +21,7 @@
   exported from core.
 - Charts: **sparkline** type (a bare line with a dot on the last value) and `rows` — a chart in
   every detail row from a list inside that row (`[months]`). Choosing *Sparkline* shrinks the box.
+- Charts: **data bar** type — the row's value as a bar, full at `max` or the section's largest value.
 
 ### Layout
 

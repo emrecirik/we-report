@@ -290,6 +290,8 @@ export const weReportLocaleFr: WeReportLocale = {
   chartLine: 'Ligne',
   chartPie: 'Secteurs',
   chartDoughnut: 'Anneau',
+  chartMax: 'Barre pleine à',
+  chartDataBar: 'Barre de données',
   chartSparkline: 'Sparkline',
   chartRows: 'Lignes depuis une liste de la ligne',
   chartRowsHint: 'Par ex. [months] : un petit graphique dans chaque ligne de détail, depuis sa propre liste. Ses champs en Grouper par / Valeur (vide pour une sparkline).',
