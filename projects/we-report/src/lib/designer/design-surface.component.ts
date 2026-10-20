@@ -670,7 +670,8 @@ export class DesignSurfaceComponent implements OnDestroy {
       if (this.previewPages().size) setTimeout(() => run === this.previewRun && this.previewPages.set(new Map()));
       return;
     }
-    void this.fontsService.ready().then((fonts) => {
+    // A moment after the last edit, so dragging and typing do not lay out on every step.
+    void Promise.all([this.fontsService.ready(), new Promise((resolve) => setTimeout(resolve, 120))]).then(([fonts]) => {
       if (run !== this.previewRun) return;
       const pages = new Map<string, LayoutPage>();
       for (const { c, band } of subs) {
