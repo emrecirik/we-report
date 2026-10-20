@@ -28,6 +28,8 @@
   10 MB, 15 s each; through the viewer's `fetchFn`). Core: `LayoutOptions.images` and
   `LayoutDocument.imageUrls` for a host's own fetching. The design page shows a placeholder.
 - Import: RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
+- Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and
+  *Print only when* (`visible` formula on any section but the page header/footer).
 - Groups: *New page and page numbers per group* (`resetPageNumber`) — every group starts on a new
   page, page X of Y counts the group's pages and carried totals restart: batch-printed statements.
 - Page settings: page colour (`page.color`) and mirrored margins for booklets

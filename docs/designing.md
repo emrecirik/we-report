@@ -82,6 +82,9 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
   order; built from field, comparison and value, or any formula in Advanced mode.
 - **Page** — paper, orientation and margins; in Advanced mode a page colour (`page.color`) and
   mirrored margins for booklets (`page.mirrorMargins`: even pages swap left and right).
+- **Sections** — a background colour, zebra stripes for detail rows (*Every second row*,
+  `alternateBackgroundColor`) and, in Advanced mode, *Print only when* (`visible`, e.g.
+  `[Discount] > 0`).
 - **Watermark** — large faint text behind every page (`watermark`), fixed or from data, e.g. `PAID`
   only on paid invoices.
 - **Language and region** — a report can carry its own `locale` and `currency`, so it writes

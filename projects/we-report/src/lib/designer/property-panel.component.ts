@@ -196,7 +196,7 @@ export class PropertyPanelComponent {
 
   // ── Band ────────────────────────────────────────────────────────────────────
 
-  protected setBand(key: 'height' | 'groupBy' | 'sort' | 'backgroundColor' | 'rowsPath', value: string): void {
+  protected setBand(key: 'height' | 'groupBy' | 'sort' | 'backgroundColor' | 'alternateBackgroundColor' | 'visible' | 'rowsPath', value: string): void {
     const band = this.band();
     if (!band) return;
     this.state.updateBand(band.id, (b) => {
@@ -204,6 +204,8 @@ export class PropertyPanelComponent {
       else if (key === 'groupBy') b.groupBy = { expression: value };
       else if (key === 'sort') b.sort = value as Band['sort'];
       else if (key === 'rowsPath') b.rowsPath = value || undefined;
+      else if (key === 'alternateBackgroundColor') b.alternateBackgroundColor = value || undefined;
+      else if (key === 'visible') b.visible = value.trim() ? { expression: value } : undefined;
       else b.backgroundColor = value || undefined;
     }, `band-${key}`);
   }

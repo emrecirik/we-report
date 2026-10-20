@@ -466,6 +466,10 @@ class LayoutRun {
   private renderBand(band: Band, scope: Scope): RenderedBand {
     const items: LayoutItem[] = [];
     const deferred: RenderedBand['deferred'] = [];
+    // A hidden section takes no room (its rows still count in totals: they are data, not print).
+    if (band.visible?.expression.trim() && !this.truthy(this.eval(band.visible.expression, scope, band.id))) {
+      return { band, scope, height: 0, items, deferred };
+    }
     let height = band.height;
     const shown = band.controls.filter((c) => c.visible === undefined || this.truthy(this.bind(c.visible, scope, c.id)));
     // An item that grows pushes down the items below it (that share its columns), as in desktop
@@ -499,8 +503,10 @@ class LayoutRun {
       if (result.deferred) deferred.push(result.deferred);
       items.push(...result.items);
     }
-    if (band.backgroundColor) {
-      items.unshift({ kind: 'rect', x: 0, y: 0, width: this.cellWidth(band), height, fill: band.backgroundColor });
+    const striped = band.alternateBackgroundColor && scope.rowIndex !== undefined && scope.rowIndex % 2 === 1;
+    const fill = striped ? band.alternateBackgroundColor : band.backgroundColor;
+    if (fill) {
+      items.unshift({ kind: 'rect', x: 0, y: 0, width: this.cellWidth(band), height, fill });
     }
     return { band, scope, height, items, deferred };
   }

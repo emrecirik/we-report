@@ -135,6 +135,22 @@
         <button type="button" class="pp__link" (click)="setBand('backgroundColor', '')">{{ s.noColor }}</button>
       </span>
     </label>
+    @if (b.kind === 'detail' || b.kind === 'subDetail') {
+      <label class="pp__row">
+        <span>{{ s.alternateBackground }}</span>
+        <span class="pp__color">
+          <input type="color" [value]="b.alternateBackgroundColor ?? '#f6f8fa'" (input)="setBand('alternateBackgroundColor', $any($event.target).value)" />
+          <button type="button" class="pp__link" (click)="setBand('alternateBackgroundColor', '')">{{ s.noColor }}</button>
+        </span>
+      </label>
+    }
+    @if (advanced() && b.kind !== 'pageHeader' && b.kind !== 'pageFooter') {
+      <label class="pp__row pp__row--stack">
+        <span>{{ s.bandVisible }}</span>
+        <input class="pp__mono" [value]="b.visible?.expression ?? ''" placeholder="[Discount] > 0" (input)="setBand('visible', $any($event.target).value)" spellcheck="false" />
+      </label>
+      <small class="pp__hint">{{ s.bandVisibleHint }}</small>
+    }
   </section>
   @if (b.kind === 'subDetail') {
     <section class="pp__section">

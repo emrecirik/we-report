@@ -310,6 +310,10 @@ export interface Band {
   pageBreakBefore?: boolean;
   pageBreakAfter?: boolean;
   backgroundColor?: string;
+  /** detail / inner list: background of every second row (zebra stripes). */
+  alternateBackgroundColor?: string;
+  /** Prints the section only when this formula is true, e.g. `[Discount] > 0`; totals still count its rows. */
+  visible?: Expression;
   /**
    * detail only: print rows side by side, e.g. labels. The band's controls fit one column, which
    * is `(content width - gap × (count - 1)) / count` wide; rows fill across, then down.

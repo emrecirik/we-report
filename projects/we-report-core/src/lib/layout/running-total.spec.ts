@@ -74,6 +74,25 @@ describe('page numbers per group', () => {
   });
 });
 
+describe('section options', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('stripes every second detail row and leaves out sections whose formula is false', () => {
+    const r = createBlankReport('Stripes');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands[1].alternateBackgroundColor = '#eeeeee';
+    r.bands[1].controls.push({ id: 'n', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: '[n]' } });
+    r.bands.splice(2, 0, { id: 'rf', kind: 'reportFooter', height: 8, visible: { expression: 'Count() > 10' }, controls: [{ id: 't', type: 'text', x: 0, y: 0, width: 40, height: 6, text: 'many' }] });
+    const page = layoutReport(r, { fonts, now: NOW }).pages[0];
+    expect(page.items.filter((i) => i.kind === 'rect' && i.fill === '#eeeeee').length).toBe(2);
+    expect(page.items.some((i) => i.kind === 'text' && i.lines[0].text === 'many')).toBeFalse();
+    (r.bands[2].visible as { expression: string }).expression = 'Count() = 4';
+    expect(layoutReport(r, { fonts, now: NOW }).pages[0].items.some((i) => i.kind === 'text' && i.lines[0].text === 'many')).toBeTrue();
+  });
+});
+
 describe('page settings', () => {
   let fonts: FontRegistry;
   beforeAll(async () => (fonts = await loadTestFonts()));

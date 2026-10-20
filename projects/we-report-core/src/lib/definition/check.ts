@@ -88,6 +88,13 @@ export function checkReport(def: ReportDefinition, rowFields?: string[], parentF
   const inner = innerFields && new Set(innerFields);
 
   for (const band of def.bands) {
+    if (band.visible?.expression.trim()) {
+      try {
+        parseExpression(band.visible.expression);
+      } catch (e) {
+        issues.push({ code: 'formulaError', severity: 'error', bandId: band.id, controlId: band.id, detail: (e as Error).message });
+      }
+    }
     const count = band.kind === 'detail' ? Math.max(1, Math.floor(band.columns?.count ?? 1)) : 1;
     const columnWidth = count > 1 ? (width - (band.columns?.gap ?? 0) * (count - 1)) / count : Infinity;
     // Inside an inner list a field is an item's, and `^.` reads the detail row around it.
