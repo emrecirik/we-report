@@ -346,6 +346,7 @@ export class AppComponent {
     try {
       const { report, warnings } = importReport(await file.text(), file.name);
       this.remember();
+      this.templateId.set('blank');
       this.report.set(report);
       this.data.set(undefined);
       this.importWarnings.set(warnings);
