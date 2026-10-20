@@ -131,6 +131,8 @@ export const weReportLocaleDe: WeReportLocale = {
   formatPercent: 'Prozent',
   formatDate: 'Datum',
   formatDateTime: 'Datum und Uhrzeit',
+  formatLongDate: 'Langes Datum (5. Januar 2026)',
+  formatDayDate: 'Mit Wochentag (Montag, 5. Januar 2026)',
   font: 'Schrift',
   fontSize: 'Größe',
   bold: 'Fett',

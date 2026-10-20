@@ -39,6 +39,8 @@ const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
   { value: 'p0', key: 'formatPercent' },
   { value: 'dd.MM.yyyy', key: 'formatDate' },
   { value: 'dd.MM.yyyy HH:mm', key: 'formatDateTime' },
+  { value: 'd MMMM yyyy', key: 'formatLongDate' },
+  { value: 'dddd, d MMMM yyyy', key: 'formatDayDate' },
 ];
 
 const CHART_TYPES: { type: ChartType; label: keyof WeReportLocale }[] = [

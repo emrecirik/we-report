@@ -115,6 +115,8 @@ export interface WeReportLocale {
   formatPercent: string;
   formatDate: string;
   formatDateTime: string;
+  formatLongDate: string;
+  formatDayDate: string;
   font: string;
   fontSize: string;
   bold: string;
@@ -550,6 +552,8 @@ export const weReportLocaleEn: WeReportLocale = {
   formatPercent: 'Percent',
   formatDate: 'Date',
   formatDateTime: 'Date and time',
+  formatLongDate: 'Long date (5 January 2026)',
+  formatDayDate: 'With the day (Monday, 5 January 2026)',
   font: 'Font',
   fontSize: 'Size',
   bold: 'Bold',
@@ -1028,6 +1032,8 @@ export const weReportLocaleTr: WeReportLocale = {
   formatPercent: 'Yüzde',
   formatDate: 'Tarih',
   formatDateTime: 'Tarih ve saat',
+  formatLongDate: 'Uzun tarih (5 Ocak 2026)',
+  formatDayDate: 'Gün adıyla (Pazartesi, 5 Ocak 2026)',
   font: 'Yazı tipi',
   fontSize: 'Boyut',
   bold: 'Kalın',
