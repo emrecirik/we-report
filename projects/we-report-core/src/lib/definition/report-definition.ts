@@ -302,6 +302,11 @@ export interface Band {
   repeatOnEveryPage?: boolean;
   /** groupHeader: move the whole group to the next page if it would otherwise be split. */
   keepTogether?: boolean;
+  /**
+   * groupHeader: every group starts on a new page and its pages are numbered on their own
+   * ("page 1 of 2" per customer); totals carried from earlier pages restart too.
+   */
+  resetPageNumber?: boolean;
   pageBreakBefore?: boolean;
   pageBreakAfter?: boolean;
   backgroundColor?: string;

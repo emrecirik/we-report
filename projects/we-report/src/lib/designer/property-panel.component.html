@@ -222,6 +222,10 @@
         <input type="checkbox" [checked]="!!b.repeatOnEveryPage" (change)="toggleBand('repeatOnEveryPage', $any($event.target).checked)" />
         <span>{{ s.repeatOnEveryPage }}</span>
       </label>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="!!b.resetPageNumber" (change)="toggleBand('resetPageNumber', $any($event.target).checked)" />
+        <span>{{ s.resetPageNumber }}<small class="pp__hint">{{ s.resetPageNumberHint }}</small></span>
+      </label>
     </section>
   }
   @if (advanced() && b.kind !== 'pageHeader' && b.kind !== 'pageFooter') {

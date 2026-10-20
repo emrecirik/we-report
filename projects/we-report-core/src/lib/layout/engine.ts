@@ -288,7 +288,10 @@ class LayoutRun {
       rows: unknown[];
       deferred: { y: number; render: (page: PageInfo) => LayoutItem[] }[];
       endY: number;
+      /** Pages are numbered within their run; a group that resets the numbering starts a new run. */
+      run: number;
     }
+    let run = 0;
     const pages: PageState[] = [];
     let page!: PageState;
     let y = 0;
@@ -316,7 +319,7 @@ class LayoutRun {
       page.endY = y;
     };
     const startPage = () => {
-      page = { items: [], rows: [], deferred: [], endY: 0 };
+      page = { items: [], rows: [], deferred: [], endY: 0, run };
       pages.push(page);
       column = 0;
       rowHeight = 0;
@@ -351,10 +354,13 @@ class LayoutRun {
       // A band that fits on no page starts right here and is cut, rather than leaving this page empty.
       // Side-by-side cells are never cut, so they still move to a new page.
       const fitsAPage = columns > 1 || r.height <= bodyBottom - headerHeight;
-      if (column === 0 && (breakPending || (r.band.pageBreakBefore && !fresh) || (!fresh && y + r.height > bodyBottom && (fitsAPage || bodyBottom - y < 10)))) {
+      const resets = r.band.kind === 'groupHeader' && !!r.band.resetPageNumber && entry.groupLevel !== undefined;
+      // The first group stays under the report header; every later one starts a page of its own.
+      if (column === 0 && (breakPending || ((r.band.pageBreakBefore || (resets && run > 0)) && !fresh) || (!fresh && y + r.height > bodyBottom && (fitsAPage || bodyBottom - y < 10)))) {
         if (entry.groupLevel !== undefined) repeating.length = entry.groupLevel;
         startPage();
       }
+      if (resets) page.run = ++run;
       if (columns > 1) {
         // shortcut: the first cell of a row decides the page break; a taller can-grow cell later in
         // the row may overlap the page footer. Measure the whole row first if that becomes a need.
@@ -396,8 +402,15 @@ class LayoutRun {
     const count = pages.length;
     const width = this.geometry.width;
     const before: unknown[] = [];
+    const runLength = new Map<number, number>();
+    for (const p of pages) runLength.set(p.run, (runLength.get(p.run) ?? 0) + 1);
+    let runStart = 0;
     return pages.map((state, index) => {
-      const info: PageInfo = { number: index + 1, count };
+      if (index > 0 && state.run !== pages[index - 1].run) {
+        runStart = index;
+        before.length = 0;
+      }
+      const info: PageInfo = runLength.size > 1 ? { number: index - runStart + 1, count: runLength.get(state.run)! } : { number: index + 1, count };
       const scope: Scope = { row: state.rows[0] ?? firstRow, rows: state.rows, before: [...before] };
       before.push(...state.rows);
       const items: LayoutItem[] = [];

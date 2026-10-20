@@ -191,6 +191,8 @@ export const weReportLocaleFr: WeReportLocale = {
   sortNone: 'Comme dans les données',
   keepTogether: 'Garder le groupe sur une page',
   keepTogetherHint: 'Déplace tout le groupe sur la page suivante au lieu de le couper.',
+  resetPageNumber: 'Nouvelle page et numéros par groupe',
+  resetPageNumberHint: 'Chaque groupe commence sur une nouvelle page numérotée à partir de 1 — ex. un relevé par client, chacun « page 1 sur 2 ».',
   repeatOnEveryPage: 'Répéter sur chaque page',
   pageBreakBefore: 'Commencer sur une nouvelle page',
   pageBreakAfter: 'Nouvelle page après',

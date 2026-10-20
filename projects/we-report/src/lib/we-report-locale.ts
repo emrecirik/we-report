@@ -175,6 +175,8 @@ export interface WeReportLocale {
   sortNone: string;
   keepTogether: string;
   keepTogetherHint: string;
+  resetPageNumber: string;
+  resetPageNumberHint: string;
   repeatOnEveryPage: string;
   pageBreakBefore: string;
   pageBreakAfter: string;
@@ -592,6 +594,8 @@ export const weReportLocaleEn: WeReportLocale = {
   sortNone: 'As in data',
   keepTogether: 'Keep group on one page',
   keepTogetherHint: 'Moves the whole group to the next page instead of splitting it.',
+  resetPageNumber: 'New page and page numbers per group',
+  resetPageNumberHint: 'Each group starts on a new page counted from 1 — e.g. one statement per customer, each “page 1 of 2”.',
   repeatOnEveryPage: 'Repeat on every page',
   pageBreakBefore: 'Start on a new page',
   pageBreakAfter: 'New page after',
@@ -1050,6 +1054,8 @@ export const weReportLocaleTr: WeReportLocale = {
   sortNone: 'Verideki sırayla',
   keepTogether: 'Grubu tek sayfada tut',
   keepTogetherHint: 'Grup bölünecekse tamamını sonraki sayfaya taşır.',
+  resetPageNumber: 'Her grup yeni sayfada, kendi sayfa numarasıyla',
+  resetPageNumberHint: 'Her grup yeni sayfada başlar ve 1’den numaralanır; örn. her müşteriye ayrı ekstre, her biri “sayfa 1 / 2”.',
   repeatOnEveryPage: 'Her sayfada tekrarla',
   pageBreakBefore: 'Yeni sayfada başlasın',
   pageBreakAfter: 'Sonrasında yeni sayfa',

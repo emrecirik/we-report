@@ -43,6 +43,37 @@ describe('running totals', () => {
   });
 });
 
+describe('page numbers per group', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('starts every group on a new page numbered from 1, with its own carried total', () => {
+    const rows = [
+      ...Array.from({ length: 50 }, (_, i) => ({ c: 'A', n: i, amount: 1 })),
+      ...Array.from({ length: 10 }, (_, i) => ({ c: 'B', n: i, amount: 2 })),
+    ];
+    const r = createBlankReport('Statements');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: rows }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands.splice(1, 0, { id: 'g', kind: 'groupHeader', height: 8, groupBy: { expression: '[c]' }, resetPageNumber: true, controls: [{ id: 'gt', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: "'Customer ' + [c]" } }] });
+    r.bands[0].controls.push({ id: 'bf', type: 'text', x: 0, y: 0, width: 60, height: 6, text: { expression: "'BF ' + CarriedSum([amount])" } });
+    r.bands[3].controls.push({ id: 'pg', type: 'pageInfo', x: 100, y: 0, width: 40, height: 6, info: 'pageNofM' });
+    const pages = layoutReport(r, { fonts, now: NOW }).pages.map((p) => p.items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines.map((l) => l.text).join(' ')));
+    const a = pages.filter((p) => !p.includes('Customer B') && !pages.slice(0, pages.indexOf(p)).some((q) => q.includes('Customer B')));
+    expect(a.length).toBe(2);
+    expect(pages.map((p) => p.find((t) => /^\d+ \/ \d+$/.test(t)))).toEqual(['1 / 2', '2 / 2', '1 / 1']);
+    expect(pages[2]).toContain('Customer B');
+    expect(pages[2]).toContain('BF 0'); // B's carried total starts again
+    expect(pages[1]).not.toContain('BF 0');
+
+    // A report header shares the first group's first page instead of standing alone.
+    r.bands.unshift({ id: 'rh', kind: 'reportHeader', height: 10, controls: [{ id: 'rt', type: 'text', x: 0, y: 0, width: 60, height: 6, text: 'Statements' }] });
+    const withHeader = layoutReport(r, { fonts, now: NOW }).pages.map((p) => p.items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines.map((l) => l.text).join(' ')));
+    expect(withHeader[0]).toContain('Statements');
+    expect(withHeader[0]).toContain('Customer A');
+  });
+});
+
 describe('page settings', () => {
   let fonts: FontRegistry;
   beforeAll(async () => (fonts = await loadTestFonts()));

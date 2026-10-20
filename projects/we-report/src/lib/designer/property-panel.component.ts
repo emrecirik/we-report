@@ -208,7 +208,7 @@ export class PropertyPanelComponent {
     }, `band-${key}`);
   }
 
-  protected toggleBand(key: 'keepTogether' | 'repeatOnEveryPage' | 'pageBreakBefore' | 'pageBreakAfter', value: boolean): void {
+  protected toggleBand(key: 'keepTogether' | 'repeatOnEveryPage' | 'resetPageNumber' | 'pageBreakBefore' | 'pageBreakAfter', value: boolean): void {
     const band = this.band();
     if (band) this.state.updateBand(band.id, (b) => (b[key] = value || undefined));
   }

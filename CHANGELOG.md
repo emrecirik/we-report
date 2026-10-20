@@ -28,6 +28,8 @@
   10 MB, 15 s each; through the viewer's `fetchFn`). Core: `LayoutOptions.images` and
   `LayoutDocument.imageUrls` for a host's own fetching. The design page shows a placeholder.
 - Import: RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
+- Groups: *New page and page numbers per group* (`resetPageNumber`) — every group starts on a new
+  page, page X of Y counts the group's pages and carried totals restart: batch-printed statements.
 - Page settings: page colour (`page.color`) and mirrored margins for booklets
   (`page.mirrorMargins`: even pages swap left and right), under Advanced.
 - Problems: a fixed EAN-13 / EAN-8 / UPC-A / ITF-14 with a wrong check digit is reported with the
