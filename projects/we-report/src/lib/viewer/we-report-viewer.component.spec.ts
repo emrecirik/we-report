@@ -147,6 +147,14 @@ describe('WeReportViewerComponent', () => {
     expect(signal!.aborted).toBeFalse();
   });
 
+  it('exports the rows as CSV in the report region', async () => {
+    const report = listReport();
+    report.locale = 'tr-TR';
+    await render(report, [{ name: 'Çay; siyah' }, { name: '=1+1' }]);
+    const csv = fixture.componentInstance.toCsv();
+    expect(csv.slice(1).split('\r\n').slice(1, 3)).toEqual(['"Çay; siyah"', "'=1+1"]);
+  });
+
   it('makes label and receipt printer files of every page', async () => {
     const rows = Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` }));
     const doc = await render(listReport(), rows);

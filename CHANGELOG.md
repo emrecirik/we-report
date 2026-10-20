@@ -16,6 +16,9 @@
   `parameterChoices()`. The viewer now also loads the remote sources of sub-reports.
 - Designer: *Tidy up* (right-click a section or several items) — snaps to the grid, lines up items
   that are nearly in a row or column, one height per row of texts; one undo step.
+- Viewer: **CSV** under *More formats* — the rows for spreadsheets, with `;` and decimal commas in
+  comma-decimal regions, a UTF-8 byte-order mark and formula-like text defused (`toCsv()`,
+  `writeCsv()` in core).
 - Viewer: *Printer file* — Zebra **ZPL** (203 dpi) for label printers and **ESC/POS** (58 / 80 mm)
   for receipt printers, the pages sent as an image so they print exactly as previewed
   (`toZpl()`, `toEscPos()`; encoders `toMonoBitmap`, `zplFromBitmaps`, `escPosFromBitmaps` in core).

@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, toMonoBitmap, writeXlsx, zplFromBitmaps } from 'we-report-core';
+import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, toMonoBitmap, writeCsv, writeXlsx, zplFromBitmaps } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -67,6 +67,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       </button>
       <select class="we-report-viewer__more" [disabled]="!document()" (change)="downloadForPrinter($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="strings().printerOutput" [title]="strings().printerOutputHint">
         <option value="" selected>{{ strings().printerOutput }}…</option>
+        <option value="csv">CSV</option>
         <option value="zpl">{{ strings().printerZpl }}</option>
         <option value="escpos58">{{ strings().printerEscPos }} · 58 mm</option>
         <option value="escpos80">{{ strings().printerEscPos }} · 80 mm</option>
@@ -751,8 +752,16 @@ export class WeReportViewerComponent {
     return escPosFromBitmaps(await this.bitmaps((width) => dots / width));
   }
 
+  /** The report's rows as CSV for spreadsheets (`;` and decimal commas in regions that write them). */
+  toCsv(): string {
+    const { data, sources, params, now } = this.lastInput;
+    const locale = this.report().locale || this.config.locale;
+    return writeCsv(reportTable(this.report(), { data, sources, params, now: now ?? new Date(), locale }), { locale });
+  }
+
   protected async downloadForPrinter(kind: string): Promise<void> {
-    if (kind === 'zpl') this.save(new Blob([await this.toZpl()], { type: 'text/plain' }), 'zpl');
+    if (kind === 'csv') this.save(new Blob([this.toCsv()], { type: 'text/csv' }), 'csv');
+    else if (kind === 'zpl') this.save(new Blob([await this.toZpl()], { type: 'text/plain' }), 'zpl');
     else if (kind === 'escpos58' || kind === 'escpos80') this.save(new Blob([await this.toEscPos(kind === 'escpos58' ? 384 : 576)], { type: 'application/octet-stream' }), 'bin');
   }
 

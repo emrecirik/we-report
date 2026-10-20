@@ -100,14 +100,20 @@ import { WeReportViewerComponent } from 'we-report-angular';
 export class InvoicePage { /* … */ }
 ```
 
-The viewer shows pages exactly as the PDF will print them, with zoom, **Print**, **PDF**,
-**Excel** and **PNG** (the current page as an image) buttons; in code `toPdf()`, `toXlsx()` and
-`toPng(pageIndex, dpi)`. *Printer file* saves the pages for label printers (Zebra ZPL,
-`toZpl(dpi)`) and receipt printers (ESC/POS, `toEscPos(dots)`) — as an image the printer prints
-directly, so fonts and barcodes come out as previewed. Send the file to the printer's raw port
-(e.g. `copy /b label.zpl \\host\zebra` on Windows, `lp -o raw` elsewhere); in core,
-`toMonoBitmap`, `zplFromBitmaps` and `escPosFromBitmaps` do the encoding. `parameters` passes [report parameters](data-sources.md#parameters),
-`printDate` fixes the print time for reproducible output.
+The viewer shows pages exactly as the PDF will print them, with zoom, a document map, find,
+**Print**, **PDF**, **Excel** and **PNG** (the current page as an image) buttons; in code
+`toPdf()`, `toXlsx()` and `toPng(pageIndex, dpi)`. `parameters` passes
+[report parameters](data-sources.md#parameters), `printDate` fixes the print time for
+reproducible output.
+
+*More formats* saves:
+
+- the rows as **CSV** (`toCsv()`), with `;` and decimal commas in regions that use them;
+- the pages for **label printers** (Zebra ZPL, `toZpl(dpi)`) and **receipt printers** (ESC/POS,
+  `toEscPos(dots)`) as an image the printer prints directly, so fonts and barcodes come out as
+  previewed. Send the file to the printer's raw port (e.g. `copy /b label.zpl \\host\zebra` on
+  Windows, `lp -o raw` elsewhere). In core, `toMonoBitmap`, `zplFromBitmaps` and
+  `escPosFromBitmaps` do the encoding.
 
 ## Without Angular (Node, a worker, a CLI)
 
@@ -123,7 +129,7 @@ const pdf = await renderPdf(doc, fonts, { title: report.name });
 ```
 
 `layoutReport` is synchronous and deterministic: the same report, data, fonts and `now` always
-produce the same pages. `reportTable` + `writeXlsx` produce an Excel workbook of the rows.
+produce the same pages. `reportTable` + `writeXlsx` (or `writeCsv`) produce a spreadsheet of the rows.
 
 ## Next
 
