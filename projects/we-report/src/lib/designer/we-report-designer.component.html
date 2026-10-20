@@ -225,7 +225,7 @@
     <span>{{ (zoomLevel() * 100).toFixed(0) }}%</span>
   </footer>
 } @else {
-  <we-report-viewer class="wd__preview" [report]="state.report()" [data]="data()" [locale]="s" [fetchFn]="fetchFn()" />
+  <we-report-viewer class="wd__preview" [report]="state.report()" [data]="data()" [outerRow]="outerRow()" [locale]="s" [fetchFn]="fetchFn()" />
 }
 
 @if (dataDialogOpen()) {

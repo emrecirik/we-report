@@ -489,6 +489,12 @@ describe('layout engine', () => {
     expect(checkReport(report, ['Name'], [], [], ['no']).map((i) => i.detail)).toContain('amount');
   });
 
+  it('reads [^.field] from the parent the host passes (a sub-report previewed on its own)', () => {
+    const report = listReport([{ Name: 'Ayşe' }]);
+    report.bands[1].controls[0] = { id: 'n', type: 'text', x: 0, y: 0, width: 80, height: 5, text: { expression: "[Name] + ' / ' + [^.city]" } };
+    expect(texts(layoutReport(report, { fonts, now: NOW, parent: { city: 'İzmir' } }).pages[0])).toContain('Ayşe / İzmir');
+  });
+
   it('fits exactly rows × columns labels on every sheet layout', () => {
     for (const sheet of LABEL_SHEETS) {
       const per = sheet.rows * sheet.columns;

@@ -453,6 +453,8 @@ export class WeReportViewerComponent {
   readonly report = input.required<ReportDefinition>();
   /** Rows (or an object holding them) to print; replaces the report's own data source data. */
   readonly data = input<unknown>(undefined);
+  /** The row around the report, read with `[^.field]` (e.g. previewing a sub-report on its own). */
+  readonly outerRow = input<unknown>(undefined);
   /** Default 1; at 1, a page wider than the viewer (a phone) first shows at its width. */
   readonly zoom = input(1);
   /** Overrides the `WE_REPORT_LOCALE` token. */
@@ -515,6 +517,7 @@ export class WeReportViewerComponent {
     effect(() => {
       const report = this.report();
       const data = this.data();
+      this.outerRow(); // lays out again when the row around changes
       const now = this.printDate();
       const params = this.appliedParams();
       untracked(() => this.layout(report, data, now, params));
@@ -704,6 +707,7 @@ export class WeReportViewerComponent {
           data,
           sources: loaded.sources,
           params,
+          parent: this.outerRow(),
           images: Object.fromEntries([...this.pictures, ...failed]),
           locale: this.config.locale,
           currency: this.config.currency,

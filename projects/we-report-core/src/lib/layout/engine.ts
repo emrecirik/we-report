@@ -41,6 +41,11 @@ export interface LayoutOptions {
   images?: Record<string, string>;
   /** Print time for `Today()`, `Now()` and print-date page info. Required so output is reproducible. */
   now: Date;
+  /**
+   * What `[^.field]` reads outside inner lists; default the object holding the rows (the invoice
+   * around its lines). Set it to preview a sub-report with a row around it.
+   */
+  parent?: unknown;
   locale?: string;
   currency?: string;
 }
@@ -127,7 +132,7 @@ class LayoutRun {
 
   run(): LayoutDocument {
     const { rows, parent } = resolveReportData(this.def, this.options.data, this.options.sources);
-    this.parent = this.nesting ? this.nesting.parent : parent;
+    this.parent = this.nesting ? this.nesting.parent : (this.options.parent ?? parent);
     const allRows = rows ?? [];
     const first = allRows[0];
     const bands = this.def.bands;
