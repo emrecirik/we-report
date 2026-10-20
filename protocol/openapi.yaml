@@ -1,12 +1,17 @@
 openapi: 3.1.0
 info:
   title: we-report data protocol
-  version: 1.0.0
+  version: 1.1.0
   license: { name: MIT }
   description: |
     The only contract between we-report (designer, viewer) and a data backend. Any language can
     implement it; reference implementations live in `samples/backends/*` and are verified by
     `tools/protocol-conformance`.
+
+    1.1 (backward compatible, still `/v1`, `protocol: 1`) adds what a data grid needs: `offset`,
+    `distinct`, the `contains` / `startsWith` operators and `count` → `total` for server-side
+    paging (capability `grid`), and `/v1/layouts/{key}` to keep a user's saved grid layouts, views
+    and sheets on the server (capability `layouts`). Both are used by we-grid-angular.
 
     Security rules every implementation follows (see the samples):
     - Connection strings and secrets never leave the backend; only ids and names are returned.
@@ -74,6 +79,39 @@ paths:
         '403': { $ref: '#/components/responses/Error' }
         '404': { $ref: '#/components/responses/Error' }
         '504': { $ref: '#/components/responses/Error' }
+  /v1/layouts/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        description: Letters, digits and `_ . : -`, 1-100 characters, not starting with a dot.
+        schema: { type: string, pattern: '^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,99}$' }
+    get:
+      summary: (1.1) A saved layout, view set or sheet — the JSON exactly as it was stored
+      responses:
+        '200': { description: The stored JSON object, content: { application/json: { schema: { type: object } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    put:
+      summary: (1.1) Stores a JSON object (at most 256 KB) under the key, replacing what was there
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '204': { description: Stored }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '413': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
+    delete:
+      summary: (1.1) Removes the key; succeeds when it did not exist
+      responses:
+        '204': { description: Removed }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
   /v1/webservice/fetch:
     post:
       summary: Fetch a web service on the caller's behalf (CORS-blocked APIs, server-side secrets)
@@ -116,6 +154,8 @@ components:
           properties:
             webServiceFetch: { type: boolean }
             demo: { type: boolean, description: Public demo mode — fixed read-only connections }
+            grid: { type: boolean, description: '1.1 — query offset, distinct, contains/startsWith and count are supported' }
+            layouts: { type: boolean, description: '1.1 — /v1/layouts is available (off in demo mode)' }
     Connection:
       type: object
       required: [id, name, dialect, freeSql]
@@ -152,6 +192,9 @@ components:
           type: object
           additionalProperties: true
           description: Values for parameter references in `query.where[].param` or `:name` in `sql`
+        count:
+          type: boolean
+          description: 1.1 — also return `total`, the number of rows the query matches without `offset` and `limit`
       oneOf:
         - required: [query]
         - required: [sql]
@@ -171,6 +214,7 @@ components:
           type: array
           items: { type: object, additionalProperties: true }
         truncated: { type: boolean, description: The row limit was reached; more rows exist }
+        total: { type: integer, description: '1.1 — present when the request asked for `count`' }
     FetchRequest:
       type: object
       required: [url]

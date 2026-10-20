@@ -1,7 +1,9 @@
 # we-report backend — .NET (ASP.NET Core)
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml). SQL Server, PostgreSQL and SQLite; one
+[we-report data protocol](../../../protocol/openapi.yaml) 1.1 — including the grid additions
+(`offset`, `distinct`, `contains` / `startsWith`, `count` → `total`) and saved grid layouts
+(`/v1/layouts/{key}`) used by we-grid-angular. SQL Server, PostgreSQL and SQLite; one
 `Program.cs` with minimal APIs — copy it into your own ASP.NET Core app or run it as is.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)
@@ -56,7 +58,8 @@ Same environment variables as every we-report sample backend:
 | `WE_REPORT_FETCH` | on | `0` disables the web service proxy. |
 | `WE_REPORT_FETCH_ALLOW_HOSTS` | — | Internal hostnames the proxy may reach anyway. |
 | `WE_REPORT_RATE_LIMIT` | `600` (`60` in demo) | Requests per minute per IP. |
-| `WE_REPORT_DEMO` | — | `1` = public demo: fixed connections, no free SQL, no proxy. |
+| `WE_REPORT_LAYOUTS_DIR` | `<temp>/we-report-layouts` | Where saved grid layouts are kept: one JSON file per key (max 256 KB), named by the key in hex. |
+| `WE_REPORT_DEMO` | — | `1` = public demo: fixed connections, no free SQL, no proxy, no saved layouts. |
 
 ## Authentication
 
@@ -75,7 +78,7 @@ cookie or JWT authentication. Without a token the backend only answers local cal
 - Errors never echo internals; unexpected errors are logged on the server only.
 
 Known limit: free SQL on SQL Server cannot contain its own `ORDER BY` without `TOP` (the row limit
-wraps it in a derived table). The query builder is not affected.
+and `count` wrap it in a derived table). The query builder is not affected.
 
 ## Prove it
 

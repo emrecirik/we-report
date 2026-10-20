@@ -31,8 +31,14 @@ public abstract class Dialect {
     return "\"" + name.replace("\"", "\"\"") + "\"";
   }
 
-  public String select(String columns, String table, String where, String orderBy, int top) {
-    return "SELECT " + columns + " FROM " + table + where + orderBy + " LIMIT " + top;
+  /** The quoted table name as used after FROM. */
+  public String table(String quoted) {
+    return quoted;
+  }
+
+  /** {@code top} rows of {@code select} after skipping {@code offset}. */
+  public String page(String select, String orderBy, int top, long offset) {
+    return select + orderBy + " LIMIT " + top + (offset > 0 ? " OFFSET " + offset : "");
   }
 
   public String wrapLimit(String sql, int top) {
@@ -189,8 +195,15 @@ public abstract class Dialect {
     }
 
     @Override
-    public String select(String columns, String table, String where, String orderBy, int top) {
-      return "SELECT TOP (" + top + ") " + columns + " FROM " + quote(schemaName()) + "." + table + where + orderBy;
+    public String table(String quoted) {
+      return quote(schemaName()) + "." + quoted;
+    }
+
+    // OFFSET/FETCH needs an ORDER BY; with DISTINCT only selected columns may appear there, hence ordinal 1.
+    @Override
+    public String page(String select, String orderBy, int top, long offset) {
+      String order = !orderBy.isEmpty() ? orderBy : select.startsWith("SELECT DISTINCT ") ? " ORDER BY 1" : " ORDER BY (SELECT NULL)";
+      return select + order + " OFFSET " + offset + " ROWS FETCH NEXT " + top + " ROWS ONLY";
     }
 
     // shortcut: free SQL with its own ORDER BY needs TOP on SQL Server; parse it if that becomes common.

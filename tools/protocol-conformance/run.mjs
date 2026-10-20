@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// we-report protocol conformance suite. A sample backend is "supported" only while it passes.
+// we-report protocol conformance suite (protocol 1.1 — the 1.1 checks run when the backend's
+// capabilities say it offers them). A sample backend is "supported" only while it passes.
 // Usage: node tools/protocol-conformance/run.mjs http://127.0.0.1:5480 [--token=...]
 // The backend must expose a connection with the sample dataset (samples/data/seed.sql).
 
@@ -120,6 +121,48 @@ if (connection) {
     assert(count.json.rows.length === 40, `customers table changed: ${count.json.rows.length} rows`);
   });
 
+  if (info?.capabilities?.grid) {
+    await check('1.1 paging: offset, limit and count → total', async () => {
+      const r = await call('POST', `${path}/query`, {
+        query: { table: 'customers', columns: ['id'], orderBy: [{ column: 'id' }], offset: 5, limit: 5 },
+        count: true,
+      });
+      assert(r.status === 200, `HTTP ${r.status}: ${r.text.slice(0, 200)}`);
+      assert(r.json.rows.map((x) => x.id).join() === '6,7,8,9,10', `rows ${r.json.rows.map((x) => x.id).join()}`);
+      assert(r.json.total === 40, `total is ${r.json.total}`);
+      assert(r.json.truncated === true, 'truncated should be true — more rows follow the page');
+      const filtered = await call('POST', `${path}/query`, {
+        query: { table: 'customers', where: [{ column: 'city', op: '=', value: 'Fallowick' }], offset: 0, limit: 1 },
+        count: true,
+      });
+      assert(filtered.json.rows.length === 1 && filtered.json.total > 1, `filtered total ${filtered.json.total}`);
+      const none = await call('POST', `${path}/query`, { query: { table: 'customers', limit: 2 } });
+      assert(none.json.total === undefined, 'total must only be sent when count is asked for');
+      expectError(await call('POST', `${path}/query`, { query: { table: 'customers', offset: -1 } }), 400);
+    });
+
+    await check('1.1 distinct values and case-insensitive contains / startsWith', async () => {
+      const d = await call('POST', `${path}/query`, {
+        query: { table: 'customers', columns: ['city'], distinct: true, orderBy: [{ column: 'city' }] },
+        count: true,
+      });
+      assert(d.status === 200, `HTTP ${d.status}: ${d.text.slice(0, 200)}`);
+      const cities = d.json.rows.map((x) => x.city);
+      assert(cities.length > 1 && new Set(cities).size === cities.length, `distinct returned duplicates: ${cities.join()}`);
+      assert(cities.every((c, i) => i === 0 || cities[i - 1] <= c), 'distinct values not ordered');
+      assert(d.json.total === cities.length, `distinct total ${d.json.total} vs ${cities.length}`);
+      expectError(await call('POST', `${path}/query`, { query: { table: 'customers', distinct: true } }), 400);
+      const c = await call('POST', `${path}/query`, { query: { table: 'customers', where: [{ column: 'email', op: 'contains', value: 'EXAMPLE.COM' }] }, count: true });
+      assert(c.json.total === 40, `contains matched ${c.json.total}`);
+      const s = await call('POST', `${path}/query`, { query: { table: 'customers', where: [{ column: 'email', op: 'startsWith', value: 'CUSTOMER1' }] }, count: true });
+      assert(s.json.total === 11, `startsWith matched ${s.json.total} (customer1, customer10-19)`);
+      const literal = await call('POST', `${path}/query`, { query: { table: 'customers', where: [{ column: 'email', op: 'contains', value: '%' }] }, count: true });
+      assert(literal.json.total === 0, `% must match literally, matched ${literal.json.total}`);
+    });
+  } else {
+    console.log('  – grid queries (1.1) not offered by this backend (skipped)');
+  }
+
   if (!connection.freeSql) {
     await check('free SQL is refused when the connection does not allow it', async () => {
       expectError(await call('POST', `${path}/query`, { sql: 'SELECT 1' }), 403);
@@ -171,6 +214,29 @@ if (info?.capabilities?.webServiceFetch) {
   });
 } else {
   console.log('  – web service proxy disabled on this backend (skipped)');
+}
+
+if (info?.capabilities?.layouts) {
+  await check('1.1 layouts: put, get, delete; keys, size and content type are checked', async () => {
+    const key = `conformance:${Date.now()}`;
+    const doc = { gridKey: 'x', version: 1, columns: [{ field: 'a', visible: true, order: 0, pinned: null }], note: 'İ ş "q"' };
+    const put = await call('PUT', `/v1/layouts/${encodeURIComponent(key)}`, doc);
+    assert(put.status === 204, `PUT answered ${put.status}: ${put.text.slice(0, 120)}`);
+    const get = await call('GET', `/v1/layouts/${encodeURIComponent(key)}`);
+    assert(get.status === 200 && JSON.stringify(get.json) === JSON.stringify(doc), `GET returned ${get.status} ${get.text.slice(0, 120)}`);
+    const del = await call('DELETE', `/v1/layouts/${encodeURIComponent(key)}`);
+    assert(del.status === 204, `DELETE answered ${del.status}`);
+    expectError(await call('GET', `/v1/layouts/${encodeURIComponent(key)}`), 404);
+    assert((await call('DELETE', `/v1/layouts/${encodeURIComponent(key)}`)).status === 204, 'deleting a missing key must succeed');
+    expectError(await call('GET', '/v1/layouts/.hidden'), 400);
+    expectError(await call('PUT', `/v1/layouts/${'k'.repeat(101)}`, {}), 400);
+    expectError(await call('PUT', `/v1/layouts/${encodeURIComponent(key)}`, [1, 2]), 400);
+    expectError(await call('PUT', `/v1/layouts/${encodeURIComponent(key)}`, { big: 'x'.repeat(300 * 1024) }), 413);
+    const text = await fetch(`${base}/v1/layouts/${encodeURIComponent(key)}`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'text/plain' }, body: '{}' });
+    assert(text.status === 415, `text/plain PUT answered ${text.status}`);
+  });
+} else {
+  console.log('  – layouts (1.1) not offered by this backend (skipped)');
 }
 
 console.log(`\n${passed} passed, ${failures.length} failed`);

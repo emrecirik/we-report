@@ -8,7 +8,10 @@ export class HttpError extends Error {
   }
 }
 
-const OPS = new Set(['=', '!=', '<', '<=', '>', '>=', 'like', 'in', 'isNull', 'notNull']);
+const OPS = new Set(['=', '!=', '<', '<=', '>', '>=', 'like', 'contains', 'startsWith', 'in', 'isNull', 'notNull']);
+
+/** `contains` / `startsWith` match the text literally: LIKE's wildcards and the escape character are escaped. */
+const likeLiteral = (v) => String(v ?? '').replace(/[\\%_]/g, (ch) => `\\${ch}`);
 const MAX_IN_VALUES = 1000;
 
 /** Parameter values sent as text are typed here; drivers only see numbers, strings, null. */
@@ -42,8 +45,11 @@ export function buildSelect(query, schema, dialect, params = {}, maxRows = 1000)
     return dialect.placeholder(values.length);
   };
 
+  if (query.distinct !== undefined && typeof query.distinct !== 'boolean') throw new HttpError(400, 'distinct must be true or false.');
+  if (query.distinct && !query.columns?.length) throw new HttpError(400, 'distinct needs the columns to return.');
+  if (query.offset !== undefined && !(Number.isInteger(query.offset) && query.offset >= 0)) throw new HttpError(400, 'offset must be a whole number of 0 or more.');
   const columns = query.columns?.length ? query.columns.map(column) : table.columns.map((c) => dialect.quote(c.name));
-  let sql = `SELECT ${columns.join(', ')} FROM ${dialect.quote(table.name)}`;
+  let sql = `SELECT ${query.distinct ? 'DISTINCT ' : ''}${columns.join(', ')} FROM ${dialect.quote(table.name)}`;
 
   const conditions = [];
   for (const w of query.where ?? []) {
@@ -57,11 +63,16 @@ export function buildSelect(query, schema, dialect, params = {}, maxRows = 1000)
       conditions.push(`${col} IN (${value.map(bind).join(', ')})`);
     } else if (w.op === 'like') {
       conditions.push(`${col} LIKE ${bind(value)}`);
+    } else if (w.op === 'contains' || w.op === 'startsWith') {
+      const pattern = `${w.op === 'contains' ? '%' : ''}${likeLiteral(value)}%`;
+      conditions.push(`LOWER(${col}) LIKE LOWER(${bind(pattern)}) ESCAPE '\\'`);
     } else {
       conditions.push(`${col} ${w.op === '!=' ? '<>' : w.op} ${bind(value)}`);
     }
   }
   if (conditions.length) sql += ` WHERE ${conditions.join(' AND ')}`;
+  // The same rows without order, offset and limit — counted when the caller asks for `total`
+  const count = { sql: `SELECT COUNT(*) AS total FROM (${sql}) AS we_report_c`, values: [...values] };
 
   const order = (query.orderBy ?? []).map((o) => {
     if (o.dir !== undefined && o.dir !== 'asc' && o.dir !== 'desc') throw new HttpError(400, 'orderBy.dir must be asc or desc.');
@@ -72,7 +83,8 @@ export function buildSelect(query, schema, dialect, params = {}, maxRows = 1000)
   const limit = Math.min(Number.isInteger(query.limit) && query.limit > 0 ? query.limit : maxRows, maxRows);
   // One extra row tells us whether the result was truncated.
   sql += ` LIMIT ${limit + 1}`;
-  return { sql, values, limit };
+  if (query.offset) sql += ` OFFSET ${query.offset}`;
+  return { sql, values, limit, count };
 }
 
 // Standard strings, quoted and [bracketed] identifiers, comments — matched left to right.
@@ -104,7 +116,12 @@ export function buildFreeSql(sql, dialect, params = {}, maxRows = 1000) {
     values.push(driverValue(Object.prototype.hasOwnProperty.call(params, name) ? params[name] : null));
     return dialect.placeholder(values.length);
   });
-  return { sql: `SELECT * FROM (${text}) AS we_report_q LIMIT ${maxRows + 1}`, values, limit: maxRows };
+  return {
+    sql: `SELECT * FROM (${text}) AS we_report_q LIMIT ${maxRows + 1}`,
+    values,
+    limit: maxRows,
+    count: { sql: `SELECT COUNT(*) AS total FROM (${text}) AS we_report_c`, values: [...values] },
+  };
 }
 
 /** Rows are trimmed to the limit; `truncated` says more existed. */

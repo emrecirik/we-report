@@ -21,6 +21,8 @@ from fetch_guard import guarded_fetch
 from query import ApiError, build_free_sql, build_select
 
 MAX_BODY = 1024 * 1024
+MAX_LAYOUT_BYTES = 256 * 1024
+LAYOUT_KEY = re.compile(r"[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,99}")
 
 
 def _list(value: str | None) -> list[str]:
@@ -64,13 +66,15 @@ def load_config(env=os.environ) -> dict:
         "web_service_fetch": not demo and env.get("WE_REPORT_FETCH") != "0",
         "fetch_allow_hosts": {h.lower() for h in _list(env.get("WE_REPORT_FETCH_ALLOW_HOSTS"))},
         "rate_limit": int(env.get("WE_REPORT_RATE_LIMIT") or (60 if demo else 600)),
+        # Saved grid layouts and sheets (protocol 1.1) — one JSON file per key; off in demo mode.
+        "layouts_dir": env.get("WE_REPORT_LAYOUTS_DIR") or os.path.join(tempfile.gettempdir(), "we-report-layouts"),
         "connections": connections,
     }
 
 
 config = load_config()
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-app.add_middleware(CORSMiddleware, allow_origins=config["cors_origins"], allow_methods=["GET", "POST"],
+app.add_middleware(CORSMiddleware, allow_origins=config["cors_origins"], allow_methods=["GET", "POST", "PUT", "DELETE"],
                    allow_headers=["Content-Type", "Authorization"], max_age=600)
 _databases: dict = {}
 _hits: dict = defaultdict(int)
@@ -151,13 +155,22 @@ def _connection(cid: str) -> tuple[dict, object]:
     return c, _databases[cid]
 
 
-async def _json(request: Request) -> dict:
+async def _json(request: Request, max_bytes: int = MAX_BODY) -> dict:
+    # POST is also checked in access(); PUT (layouts) is checked here, after the key.
+    if not re.match(r"application/json\b", request.headers.get("content-type", ""), re.IGNORECASE):
+        raise ApiError(415, "Send the body as application/json.")
     # Read with a running count: chunked bodies have no Content-Length to check up front.
     raw = bytearray()
+    size = 0
     async for chunk in request.stream():
-        raw += chunk
-        if len(raw) > MAX_BODY:
-            raise ApiError(413, "Request body too large.")
+        size += len(chunk)
+        if size <= max_bytes:
+            raw += chunk
+        elif size > max_bytes + 8 * MAX_BODY:
+            break  # a body that goes on and on is cut off
+    # Read to the end, so the client gets the 413 instead of a reset connection.
+    if size > max_bytes:
+        raise ApiError(413, "Request body too large.")
     try:
         body = json.loads(raw or b"{}")
     except ValueError as e:
@@ -170,7 +183,8 @@ async def _json(request: Request) -> dict:
 @app.get("/v1/info")
 def info():
     return {"protocol": 1, "server": "we-report-python",
-            "capabilities": {"webServiceFetch": config["web_service_fetch"], "demo": config["demo"]}}
+            "capabilities": {"webServiceFetch": config["web_service_fetch"], "demo": config["demo"],
+                             "grid": True, "layouts": not config["demo"]}}
 
 
 @app.get("/v1/connections")
@@ -209,7 +223,57 @@ async def query(cid: str, request: Request):
     rows = rows[: built.limit]
     columns = [{"name": k, "type": "unknown" if v is None else "boolean" if isinstance(v, bool) else
                 "number" if isinstance(v, (int, float)) else "string"} for k, v in (rows[0].items() if rows else [])]
-    return {"columns": columns, "rows": rows, "truncated": truncated}
+    result = {"columns": columns, "rows": rows, "truncated": truncated}
+    if body.get("count") is True:
+        try:
+            counted = await run_in_threadpool(db.query, built.count, c["timeoutSeconds"])
+        except ApiError:
+            raise
+        except Exception as e:
+            print(f'Count on "{cid}" failed: {e!r}', file=sys.stderr)
+            raise ApiError(400, "The query failed. The backend log has the details.") from e
+        result["total"] = int(counted[0]["total"]) if counted else 0
+    return result
+
+
+def _layout_file(key: str) -> str:
+    """Validates the key; the file name is the key in hex, so no key can reach outside the directory."""
+    if not LAYOUT_KEY.fullmatch(key):
+        raise ApiError(400, "Layout keys are 1-100 letters, digits and _ . : - characters.")
+    if config["demo"]:
+        raise ApiError(403, "Saved layouts are disabled on this backend.")
+    return os.path.join(config["layouts_dir"], key.encode("utf-8").hex() + ".json")
+
+
+@app.get("/v1/layouts/{key}")
+def get_layout(key: str):
+    try:
+        with open(_layout_file(key), "rb") as f:
+            return Response(content=f.read(), media_type="application/json")
+    except FileNotFoundError as e:
+        raise ApiError(404, "No layout saved under this key.") from e
+
+
+@app.put("/v1/layouts/{key}")
+async def put_layout(key: str, request: Request):
+    path = _layout_file(key)
+    doc = await _json(request, MAX_LAYOUT_BYTES)
+    os.makedirs(config["layouts_dir"], exist_ok=True)
+    # Written next to the target and renamed, so a reader never sees half a file.
+    fd, tmp = tempfile.mkstemp(dir=config["layouts_dir"], suffix=".tmp")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(doc, f, ensure_ascii=False)
+    os.replace(tmp, path)
+    return Response(status_code=204)
+
+
+@app.delete("/v1/layouts/{key}")
+def delete_layout(key: str):
+    try:
+        os.remove(_layout_file(key))
+    except FileNotFoundError:
+        pass
+    return Response(status_code=204)
 
 
 @app.post("/v1/webservice/fetch")

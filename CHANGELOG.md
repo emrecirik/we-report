@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Data protocol 1.1 (backward compatible, still `/v1`): query `offset` and `distinct`, the
+  case-insensitive `contains` / `startsWith` operators, `count: true` → `total`, and
+  `GET/PUT/DELETE /v1/layouts/{key}` for saved grid layouts and sheets (capabilities `grid` and
+  `layouts`; layouts are off in demo mode, keys 1-100 characters, bodies up to 256 KB). All six
+  sample backends implement it and pass the extended conformance suite (15 checks) on SQLite and
+  PostgreSQL. Used by we-grid-angular 0.11 for server-side paging and server-saved layouts.
+
 - Designer: texts that will be cut off in print are underlined in orange and listed under
   Problems (measured with the report's fonts); *Fix* turns on *Grow to fit text*. `wrapText` is
   exported from core, with `fitLines` (the rule the engine cuts text by).

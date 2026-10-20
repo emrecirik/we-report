@@ -6,9 +6,11 @@ package main
 import (
 	"context"
 	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"mime"
 	"net"
@@ -23,7 +25,12 @@ import (
 	"time"
 )
 
-const maxBody = 1024 * 1024
+const (
+	maxBody       = 1024 * 1024
+	maxLayoutBody = 256 * 1024
+)
+
+var layoutKeyPattern = regexp.MustCompile(`^[A-Za-z0-9_:-][A-Za-z0-9_.:-]{0,99}$`)
 
 type connectionConfig struct {
 	ID           string `json:"id"`
@@ -39,6 +46,7 @@ type connectionConfig struct {
 
 type config struct {
 	host, port, authToken   string
+	layoutsDir              string
 	demo, webServiceFetch   bool
 	corsOrigins, fetchAllow map[string]bool
 	rateLimit               int
@@ -118,7 +126,9 @@ func loadConfig() (*config, error) {
 		host:      env("WE_REPORT_HOST", "127.0.0.1"),
 		port:      env("WE_REPORT_PORT", env("PORT", "5480")),
 		authToken: os.Getenv("WE_REPORT_AUTH_TOKEN"),
-		demo:      demo,
+		// Saved grid layouts and sheets (protocol 1.1): one JSON file per key; off in demo mode.
+		layoutsDir: env("WE_REPORT_LAYOUTS_DIR", filepath.Join(os.TempDir(), "we-report-layouts")),
+		demo:       demo,
 		// The fetch proxy would be an open proxy on a public demo.
 		webServiceFetch: !demo && os.Getenv("WE_REPORT_FETCH") != "0",
 		corsOrigins:     list(env("WE_REPORT_CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200")),
@@ -161,7 +171,7 @@ func (s *server) access(next http.Handler) http.Handler {
 			w.Header().Set("Vary", "Origin")
 		}
 		if r.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			w.Header().Set("Access-Control-Max-Age", "600")
 			w.WriteHeader(http.StatusNoContent)
@@ -200,7 +210,7 @@ func (s *server) access(next http.Handler) http.Handler {
 			return
 		}
 		// A page elsewhere can POST a plain form (text/plain) without a CORS preflight; JSON it cannot.
-		if r.Method == http.MethodPost {
+		if r.Method == http.MethodPost || r.Method == http.MethodPut {
 			if mt, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || mt != "application/json" {
 				writeError(w, fail(415, "Send the body as application/json."))
 				return
@@ -245,7 +255,7 @@ func readBody(r *http.Request, v any) *apiError {
 
 func (s *server) info(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, 200, map[string]any{"protocol": 1, "server": "we-report-go",
-		"capabilities": map[string]bool{"webServiceFetch": s.cfg.webServiceFetch, "demo": s.cfg.demo}})
+		"capabilities": map[string]bool{"webServiceFetch": s.cfg.webServiceFetch, "demo": s.cfg.demo, "grid": true, "layouts": !s.cfg.demo}})
 }
 
 func (s *server) listConnections(w http.ResponseWriter, _ *http.Request) {
@@ -283,6 +293,7 @@ func (s *server) query(w http.ResponseWriter, r *http.Request) {
 		Query  *structuredQuery `json:"query"`
 		SQL    *string          `json:"sql"`
 		Params map[string]any   `json:"params"`
+		Count  any              `json:"count"`
 	}
 	if apiErr := readBody(r, &body); apiErr != nil {
 		writeError(w, apiErr)
@@ -329,7 +340,118 @@ func (s *server) query(w http.ResponseWriter, r *http.Request) {
 			columns = append(columns, map[string]string{"name": name, "type": jsonType(rows[0].values[i])})
 		}
 	}
-	writeJSON(w, 200, map[string]any{"columns": columns, "rows": rows, "truncated": truncated})
+	result := map[string]any{"columns": columns, "rows": rows, "truncated": truncated}
+	if body.Count == true {
+		counted, err := db.query(r.Context(), &built{sql: b.countSQL, values: b.values}, time.Duration(c.TimeoutMs)*time.Millisecond)
+		if errors.Is(err, errTimedOut) {
+			writeError(w, fail(504, "The query took too long and was stopped."))
+			return
+		}
+		if err != nil || len(counted) != 1 || len(counted[0].values) != 1 {
+			log.Printf("Count on %q failed: %v", id, err)
+			writeError(w, fail(400, "The query failed. The backend log has the details."))
+			return
+		}
+		switch n := counted[0].values[0].(type) {
+		case int64:
+			result["total"] = n
+		case float64:
+			result["total"] = int64(n)
+		default:
+			result["total"] = 0
+		}
+	}
+	writeJSON(w, 200, result)
+}
+
+// layoutFile maps a key to its file; the name is the key in hex, so no key can reach outside the directory.
+func (s *server) layoutFile(r *http.Request) (string, *apiError) {
+	key := r.PathValue("key")
+	if !layoutKeyPattern.MatchString(key) {
+		return "", fail(400, "Layout keys are 1-100 letters, digits and _ . : - characters.")
+	}
+	if s.cfg.demo {
+		return "", fail(403, "Saved layouts are disabled on this backend.")
+	}
+	return filepath.Join(s.cfg.layoutsDir, hex.EncodeToString([]byte(key))+".json"), nil
+}
+
+func (s *server) getLayout(w http.ResponseWriter, r *http.Request) {
+	file, apiErr := s.layoutFile(r)
+	if apiErr != nil {
+		writeError(w, apiErr)
+		return
+	}
+	data, err := os.ReadFile(file)
+	if errors.Is(err, os.ErrNotExist) {
+		writeError(w, fail(404, "No layout saved under this key."))
+		return
+	}
+	if err != nil {
+		log.Printf("Reading layout failed: %v", err)
+		writeError(w, fail(500, "Internal error."))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(data)
+}
+
+func (s *server) putLayout(w http.ResponseWriter, r *http.Request) {
+	file, apiErr := s.layoutFile(r)
+	if apiErr != nil {
+		writeError(w, apiErr)
+		return
+	}
+	// Read in full (up to the 1 MB cap) so the client gets the 413 instead of a reset connection.
+	data, err := io.ReadAll(r.Body)
+	var tooBig *http.MaxBytesError
+	if errors.As(err, &tooBig) || len(data) > maxLayoutBody {
+		writeError(w, fail(413, "Request body too large."))
+		return
+	}
+	var doc map[string]any
+	if err != nil || json.Unmarshal(data, &doc) != nil || doc == nil {
+		writeError(w, fail(400, "A layout is a JSON object."))
+		return
+	}
+	// Written next to the target and renamed, so a reader never sees half a file.
+	err = os.MkdirAll(s.cfg.layoutsDir, 0o700)
+	var tmp *os.File
+	if err == nil {
+		tmp, err = os.CreateTemp(s.cfg.layoutsDir, filepath.Base(file)+".*.tmp")
+	}
+	if err == nil {
+		_, err = tmp.Write(data)
+		if closeErr := tmp.Close(); err == nil {
+			err = closeErr
+		}
+		if err == nil {
+			err = os.Rename(tmp.Name(), file)
+		}
+		if err != nil {
+			_ = os.Remove(tmp.Name())
+		}
+	}
+	if err != nil {
+		log.Printf("Saving layout failed: %v", err)
+		writeError(w, fail(500, "Internal error."))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *server) deleteLayout(w http.ResponseWriter, r *http.Request) {
+	file, apiErr := s.layoutFile(r)
+	if apiErr != nil {
+		writeError(w, apiErr)
+		return
+	}
+	if err := os.Remove(file); err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Printf("Deleting layout failed: %v", err)
+		writeError(w, fail(500, "Internal error."))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func jsonType(v any) string {
@@ -390,7 +512,21 @@ func main() {
 	mux.HandleFunc("GET /v1/connections/{id}/schema", s.schema)
 	mux.HandleFunc("POST /v1/connections/{id}/query", s.query)
 	mux.HandleFunc("POST /v1/webservice/fetch", s.fetch)
-	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) { writeError(w, fail(404, "Not found.")) })
+	mux.HandleFunc("GET /v1/layouts/{key}", s.getLayout)
+	mux.HandleFunc("PUT /v1/layouts/{key}", s.putLayout)
+	mux.HandleFunc("DELETE /v1/layouts/{key}", s.deleteLayout)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// 405 only when the path exists for another method.
+		for _, method := range []string{"GET", "POST", "PUT", "DELETE"} {
+			probe := r.Clone(r.Context())
+			probe.Method = method
+			if _, pattern := mux.Handler(probe); pattern != "/" {
+				writeError(w, fail(405, "Method not allowed."))
+				return
+			}
+		}
+		writeError(w, fail(404, "Not found."))
+	})
 
 	var names []string
 	for _, c := range cfg.connections {
