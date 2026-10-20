@@ -1,0 +1,87 @@
+{
+  "number": "DOF2026000000042",
+  "date": "2026-10-19",
+  "time": "14:32",
+  "ettn": "3f2b8c1e-7a4d-4e5f-9b6a-0c1d2e3f4a5b",
+  "seller": {
+    "name": "Demir Ofis Malzemeleri A.Ş.",
+    "address": "Atatürk Cad. No: 12, Çankaya / Ankara",
+    "phone": "0312 555 01 23",
+    "taxOffice": "Çankaya",
+    "taxNo": "1234567890",
+    "mersis": "0123456789000015"
+  },
+  "customer": {
+    "name": "Yıldız Kırtasiye Ltd. Şti.",
+    "address": "Kızılay Mah. Gazi Mustafa Kemal Bulv. No: 45",
+    "city": "Çankaya / Ankara",
+    "taxOffice": "Maltepe",
+    "taxNo": "9876543210"
+  },
+  "lines": [
+    {
+      "product": "Türk kahvesi 250 g",
+      "qty": 14,
+      "unit": "Adet",
+      "price": 269.51,
+      "vat": 20
+    },
+    {
+      "product": "Çay (siyah) 1 kg",
+      "qty": 17,
+      "unit": "Adet",
+      "price": 381.48,
+      "vat": 20
+    },
+    {
+      "product": "Zeytinyağı 1 L",
+      "qty": 13,
+      "unit": "Adet",
+      "price": 92.88,
+      "vat": 1
+    },
+    {
+      "product": "Kuru kayısı 500 g",
+      "qty": 6,
+      "unit": "Adet",
+      "price": 157.93,
+      "vat": 20
+    },
+    {
+      "product": "Fındık içi 1 kg",
+      "qty": 18,
+      "unit": "Adet",
+      "price": 342.26,
+      "vat": 10
+    },
+    {
+      "product": "Lokum çeşitleri 400 g",
+      "qty": 7,
+      "unit": "Adet",
+      "price": 70.19,
+      "vat": 20
+    },
+    {
+      "product": "Pul biber 200 g",
+      "qty": 21,
+      "unit": "Adet",
+      "price": 423.08,
+      "vat": 10
+    },
+    {
+      "product": "Bal (çiçek) 850 g",
+      "qty": 7,
+      "unit": "Adet",
+      "price": 423.96,
+      "vat": 1
+    },
+    {
+      "product": "Tahin 600 g",
+      "qty": 19,
+      "unit": "Adet",
+      "price": 482.32,
+      "vat": 20
+    }
+  ],
+  "note": "Bu belge we-report ile hazırlanmış örnek bir e-Arşiv fatura görünümüdür; tüm bilgiler kurgusaldır ve resmî geçerliliği yoktur."
+}

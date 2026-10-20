@@ -1,6 +1,8 @@
 import { createBlankReport, migrateDefinition, ReportDefinition } from 'we-report-core';
 import certificate from '../templates/certificate.wrpt.json';
 import deliveryNote from '../templates/delivery-note.wrpt.json';
+import earsivData from '../templates/earsiv-invoice.data.json';
+import earsiv from '../templates/earsiv-invoice.wrpt.json';
 import invoiceData from '../templates/invoice.data.json';
 import invoice from '../templates/invoice.wrpt.json';
 import labels from '../templates/labels.wrpt.json';
@@ -32,6 +34,13 @@ export const TEMPLATES: StudioTemplate[] = [
     description: { tr: 'Logo, müşteri, kalemler, KDV ve barkod', en: 'Logo, customer, lines, VAT and a barcode' },
     report: () => migrateDefinition(structuredClone(invoice)),
     data: invoiceData,
+  },
+  {
+    id: 'earsiv-invoice',
+    name: { tr: 'e-Arşiv fatura görünümü', en: 'e-Archive invoice (Turkey)' },
+    description: { tr: 'ETTN, GİB karekodu, KDV oranlarına göre döküm, yazıyla tutar', en: 'ETTN, GİB QR code, VAT by rate, amount in words' },
+    report: () => migrateDefinition(structuredClone(earsiv)),
+    data: earsivData,
   },
   {
     id: 'delivery-note',
