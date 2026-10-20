@@ -158,6 +158,9 @@ describe('numbers in narrow boxes', () => {
     expect(narrow.lines.map((l) => l.text)).toEqual([wide.lines[0].text]);
     expect(narrow.size).toBeLessThan(wide.size);
     expect(texts(8, '1234567.89')[0].lines[0].text).toBe('###');
+    const sliver = texts(4, '1234567.89')[0].lines[0];
+    expect(sliver.text).toMatch(/^#{1,2}$/); // the mark itself is never cut
+    expect(sliver.width).toBeLessThanOrEqual(4);
     expect(texts(8, "'Uzun bir açıklama'")[0].lines[0].text).not.toBe('###');
     // Table cells too, also when the row grows.
     const r = createBlankReport('Table');

@@ -964,7 +964,10 @@ class LayoutRun {
     const needed = font.widthOf(text, style.fontSize);
     if (needed <= room) return { text, style };
     const size = (style.fontSize * room) / needed;
-    return size >= style.fontSize * 0.6 ? { text, style: { ...style, fontSize: Math.floor(size * 100) / 100 } } : { text: '###', style };
+    if (size >= style.fontSize * 0.6) return { text, style: { ...style, fontSize: Math.floor(size * 100) / 100 } };
+    // As many # as the box holds (one to three), so the mark itself is never cut.
+    const hashes = Math.max(1, Math.min(3, Math.floor(room / font.widthOf('#', style.fontSize))));
+    return { text: '#'.repeat(hashes), style };
   }
 
   /** The runs of a rich text: its fixed text or formula result, with `{formula}` fields filled in. */
