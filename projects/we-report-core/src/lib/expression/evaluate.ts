@@ -9,6 +9,8 @@ export interface EvaluationContext {
   rows?: readonly unknown[];
   /** Position of `row` in `rows` (0-based), for `RowNumber()`; looked up when omitted. */
   rowIndex?: number;
+  /** Detail rows printed on the pages before this one (page header and footer), for `CarriedSum()` and `RunningSum()`. */
+  before?: readonly unknown[];
   /** The object holding the detail rows (e.g. the invoice around its lines), read with `[^.Field]`. */
   parent?: unknown;
   /** Report parameter values, read with `[?name]`. */
@@ -122,6 +124,8 @@ const FUNCTIONS: Record<string, FunctionDef> = {
 };
 
 const AGGREGATES = new Set(['sum', 'count', 'avg', 'min', 'max']);
+/** Totals that run on: through the current row, or over the earlier pages. */
+const RUNNING = new Set(['runningsum', 'carriedsum']);
 
 export type FunctionCategory = 'logic' | 'text' | 'number' | 'date' | 'aggregate';
 
@@ -168,6 +172,8 @@ export const EXPRESSION_FUNCTIONS: readonly FunctionInfo[] = [
   { name: 'Avg', signature: 'Avg(value)', category: 'aggregate' },
   { name: 'Min', signature: 'Min(value)', category: 'aggregate' },
   { name: 'Max', signature: 'Max(value)', category: 'aggregate' },
+  { name: 'RunningSum', signature: 'RunningSum(value)', category: 'aggregate' },
+  { name: 'CarriedSum', signature: 'CarriedSum(value)', category: 'aggregate' },
 ];
 
 /** Function names only, in catalogue order. */
@@ -175,7 +181,7 @@ export const EXPRESSION_FUNCTION_NAMES: readonly string[] = EXPRESSION_FUNCTIONS
 
 /** Lower-case names the interpreter implements; the catalogue test keeps both lists in step. */
 export function implementedFunctionNames(): string[] {
-  return [...Object.keys(FUNCTIONS), ...AGGREGATES, 'iif'];
+  return [...Object.keys(FUNCTIONS), ...AGGREGATES, ...RUNNING, 'iif'];
 }
 
 /** Resolves a field path on own properties only, so `[__proto__]` or `[constructor]` read nothing. */
@@ -276,6 +282,17 @@ function evalCall(node: Extract<ExpressionNode, { kind: 'call' }>, ctx: Evaluati
   if (name === 'iif') {
     if (args.length !== 3) throw new Error('Iif needs 3 arguments: condition, value if true, value if false.');
     return evalNode(truthy(evalNode(args[0], ctx)) ? args[1] : args[2], ctx);
+  }
+
+  if (RUNNING.has(name)) {
+    if (args.length !== 1) throw new Error(`${node.name} needs 1 argument, e.g. ${node.name}([Total]).`);
+    const rows = ctx.rows ?? [];
+    // A row adds up to itself; a footer (no row position) adds up all its rows.
+    const upTo = name === 'carriedsum' ? [] : ctx.rowIndex === undefined ? rows : rows.slice(0, ctx.rowIndex + 1);
+    return [...(ctx.before ?? []), ...upTo]
+      .map((row) => evalNode(args[0], { ...ctx, row }))
+      .filter((v) => v !== null && v !== undefined)
+      .reduce<number>((s, v) => s + num(v, node.name), 0);
   }
 
   // Min/Max with two arguments are scalar; with one argument they aggregate like Sum.

@@ -409,6 +409,8 @@ export const weReportLocaleEs: WeReportLocale = {
     AddDays: 'Una fecha desplazada unos días, p. ej. un vencimiento.',
     Sum: 'Total de las filas del ámbito (grupo, página o informe).',
     RowNumber: 'Posición de la fila: 1, 2, 3 … (se reinicia en cada grupo).',
+    RunningSum: 'Total acumulado: en una fila, hasta esa fila; en el pie de página, hasta el final de la página (suma y sigue).',
+    CarriedSum: 'Total de las filas de las páginas anteriores — «suma anterior» en el encabezado de página.',
     Count: 'Número de filas del ámbito.',
     Avg: 'Promedio de las filas del ámbito.',
     Min: 'Valor más pequeño del ámbito (o de dos valores).',

@@ -51,6 +51,8 @@ interface Scope {
   parent?: unknown;
   /** Position of `row` in `rows`, for `RowNumber()`. */
   rowIndex?: number;
+  /** Page header/footer: detail rows of the earlier pages, for `CarriedSum()`. */
+  before?: readonly unknown[];
 }
 
 /** A band rendered at the origin; items are relative to its top-left corner. */
@@ -361,7 +363,8 @@ class LayoutRun {
           const [top, bottom] = splitItems(rest.items, cut);
           put({ ...rest, items: top, height: cut });
           startPage();
-          rest = { ...rest, items: bottom, deferred: [], height: rest.height - cut };
+          // The row counts on the page where it starts.
+          rest = { ...rest, scope: { ...rest.scope, row: undefined }, items: bottom, deferred: [], height: rest.height - cut };
         }
         put(rest);
       }
@@ -376,9 +379,11 @@ class LayoutRun {
 
     const count = pages.length;
     const width = this.geometry.width;
+    const before: unknown[] = [];
     return pages.map((state, index) => {
       const info: PageInfo = { number: index + 1, count };
-      const scope: Scope = { row: state.rows[0] ?? firstRow, rows: state.rows };
+      const scope: Scope = { row: state.rows[0] ?? firstRow, rows: state.rows, before: [...before] };
+      before.push(...state.rows);
       const items: LayoutItem[] = [];
       const pageHeight = this.geometry.height ?? margins.top + state.endY + footerHeight + margins.bottom;
       const place = (band: Band | undefined, top: number) => {
@@ -774,6 +779,7 @@ class LayoutRun {
       row: scope.row,
       rows: scope.rows,
       rowIndex: scope.rowIndex,
+      before: scope.before,
       parent: scope.parent ?? this.parent,
       params,
       locale: this.locale,

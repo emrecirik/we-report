@@ -409,6 +409,8 @@ export const weReportLocaleDe: WeReportLocale = {
     AddDays: 'Ein um Tage verschobenes Datum, z. B. ein Fälligkeitsdatum.',
     Sum: 'Summe über die Zeilen im Bereich (Gruppe, Seite oder Bericht).',
     RowNumber: 'Position der Zeile: 1, 2, 3 … (beginnt in jeder Gruppe neu).',
+    RunningSum: 'Bisherige Summe: in einer Zeile bis zu dieser Zeile, im Seitenfuß bis zum Seitenende (Übertrag).',
+    CarriedSum: 'Summe der Zeilen auf den vorigen Seiten — „Übertrag“ im Seitenkopf.',
     Count: 'Anzahl der Zeilen im Bereich.',
     Avg: 'Durchschnitt über die Zeilen im Bereich.',
     Min: 'Kleinster Wert im Bereich (oder von zwei Werten).',

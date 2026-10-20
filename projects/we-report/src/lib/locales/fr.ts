@@ -409,6 +409,8 @@ export const weReportLocaleFr: WeReportLocale = {
     AddDays: 'Une date décalée d’un nombre de jours, ex. une échéance.',
     Sum: 'Total des lignes concernées (groupe, page ou rapport).',
     RowNumber: 'Position de la ligne : 1, 2, 3 … (recommence dans chaque groupe).',
+    RunningSum: 'Total cumulé : dans une ligne, jusqu’à cette ligne ; en pied de page, jusqu’à la fin de la page (à reporter).',
+    CarriedSum: 'Total des lignes des pages précédentes — « report » en en-tête de page.',
     Count: 'Nombre de lignes concernées.',
     Avg: 'Moyenne des lignes concernées.',
     Min: 'Plus petite valeur des lignes concernées (ou de deux valeurs).',
