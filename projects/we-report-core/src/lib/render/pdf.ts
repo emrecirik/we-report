@@ -12,6 +12,8 @@ export interface PdfOptions {
   author?: string;
   /** Written as creation/modification date; pass the layout's print time for reproducible files. */
   date?: Date;
+  /** Language of the text (BCP 47, e.g. `tr-TR`), for screen readers and search. */
+  lang?: string;
 }
 
 // pdf-lib is loaded on first export only, keeping it out of the initial bundle of apps that just preview.
@@ -33,6 +35,7 @@ export async function renderPdf(doc: LayoutDocument, fonts: FontRegistry, option
   pdf.setCreator('we-report');
   if (options.title) pdf.setTitle(options.title);
   if (options.author) pdf.setAuthor(options.author);
+  if (options.lang) pdf.setLanguage(options.lang);
   if (options.date) {
     pdf.setCreationDate(options.date);
     pdf.setModificationDate(options.date);

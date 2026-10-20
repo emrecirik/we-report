@@ -706,7 +706,7 @@ export class WeReportViewerComponent {
   async toPdf(): Promise<Uint8Array> {
     const doc = this.document();
     if (!doc || !this.fonts) throw new Error('The report is not rendered yet.');
-    return renderPdf(doc, this.fonts, { title: this.report().name, date: this.printDate() });
+    return renderPdf(doc, this.fonts, { title: this.report().name, date: this.printDate(), lang: this.report().locale || this.config.locale });
   }
 
   /** The report's rows as an Excel workbook (one column per detail field, typed values). */

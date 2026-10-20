@@ -28,6 +28,8 @@ Arithmetic with an empty value gives an empty value; dividing by zero is an erro
 |---|---|---|
 | `Iif(cond, a, b)` | `Iif([Qty] > 10, 'Wholesale', 'Retail')` | Only the chosen branch is evaluated |
 | `IsNull(v, fallback)` | `IsNull([Note], '-')` | |
+| `Switch(v, match, result, …, otherwise?)` | `Switch([Status], 1, 'Open', 2, 'Closed', 'Other')` | The result of the first match; `null` without `otherwise` |
+| `In(v, a, b, …)` | `In([City], 'Ankara', 'İzmir')` | True when `v` equals one of them |
 | `Concat(a, b, …)` | `Concat([First], ' ', [Last])` | |
 | `Len`, `Upper`, `Lower`, `Trim` | `Upper([City])` | Turkish casing with the `tr-TR` locale: `i → İ` |
 | `Substring(s, start, length?)` | `Substring([Code], 0, 3)` | |

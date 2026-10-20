@@ -121,6 +121,7 @@ const FUNCTIONS: Record<string, FunctionDef> = {
       return new Date(d.getFullYear(), d.getMonth(), d.getDate() + num(days, 'AddDays'), d.getHours(), d.getMinutes(), d.getSeconds());
     },
   },
+  in: { min: 2, max: 100, fn: ([v, ...list]) => list.some((x) => applyBinary('=', v, x) === true) },
   addmonths: { min: 2, max: 2, fn: ([v, n]) => addMonths(date(v, 'AddMonths'), num(n, 'AddMonths')) },
   addyears: { min: 2, max: 2, fn: ([v, n]) => addMonths(date(v, 'AddYears'), 12 * num(n, 'AddYears')) },
   datediff: {
@@ -173,6 +174,8 @@ export interface FunctionInfo {
 export const EXPRESSION_FUNCTIONS: readonly FunctionInfo[] = [
   { name: 'Iif', signature: 'Iif(condition, then, else)', category: 'logic' },
   { name: 'IsNull', signature: 'IsNull(value, fallback)', category: 'logic' },
+  { name: 'Switch', signature: 'Switch(value, match, result, …, otherwise?)', category: 'logic' },
+  { name: 'In', signature: 'In(value, a, b, …)', category: 'logic' },
   { name: 'Concat', signature: 'Concat(a, b, …)', category: 'text' },
   { name: 'Len', signature: 'Len(text)', category: 'text' },
   { name: 'Upper', signature: 'Upper(text)', category: 'text' },
@@ -219,7 +222,7 @@ export const EXPRESSION_FUNCTION_NAMES: readonly string[] = EXPRESSION_FUNCTIONS
 
 /** Lower-case names the interpreter implements; the catalogue test keeps both lists in step. */
 export function implementedFunctionNames(): string[] {
-  return [...Object.keys(FUNCTIONS), ...AGGREGATES, ...RUNNING, 'iif'];
+  return [...Object.keys(FUNCTIONS), ...AGGREGATES, ...RUNNING, 'iif', 'switch'];
 }
 
 /** Resolves a field path on own properties only, so `[__proto__]` or `[constructor]` read nothing. */
@@ -320,6 +323,14 @@ function evalCall(node: Extract<ExpressionNode, { kind: 'call' }>, ctx: Evaluati
   if (name === 'iif') {
     if (args.length !== 3) throw new Error('Iif needs 3 arguments: condition, value if true, value if false.');
     return evalNode(truthy(evalNode(args[0], ctx)) ? args[1] : args[2], ctx);
+  }
+  // Switch(value, match1, result1, match2, result2, …, otherwise?): only the chosen result is evaluated.
+  if (name === 'switch') {
+    if (args.length < 3) throw new Error('Switch needs a value and at least one match and result: Switch([Status], 1, "Open", "Other").');
+    const value = evalNode(args[0], ctx);
+    let i = 1;
+    for (; i + 1 < args.length; i += 2) if (applyBinary('=', value, evalNode(args[i], ctx))) return evalNode(args[i + 1], ctx);
+    return i < args.length ? evalNode(args[i], ctx) : null;
   }
 
   if (RUNNING.has(name)) {

@@ -21,6 +21,18 @@ describe('expression language', () => {
     expect(() => ev("DateDiff('week', '2026-01-01', '2026-02-01')")).toThrow();
   });
 
+  it('picks a result by value and tests membership', () => {
+    const ev = (e: string, row: unknown) => evaluate(e, { row });
+    expect(ev("Switch([s], 1, 'Open', 2, 'Closed', 'Other')", { s: 2 })).toBe('Closed');
+    expect(ev("Switch([s], 1, 'Open', 2, 'Closed', 'Other')", { s: 9 })).toBe('Other');
+    expect(ev("Switch([s], 1, 'Open')", { s: 9 })).toBeNull();
+    // Only the chosen result is evaluated: the broken one is never reached.
+    expect(ev("Switch([s], 1, 'ok', 2, 1 / 'x')", { s: 1 })).toBe('ok');
+    expect(ev("In([c], 'Ankara', 'İzmir')", { c: 'İzmir' })).toBeTrue();
+    expect(ev("In([c], 'Ankara', 'İzmir')", { c: 'Bursa' })).toBeFalse();
+    expect(ev('In([n], 1, 2, 3)', { n: '2' })).toBeTrue();
+  });
+
   it('takes the left and right ends of a text and pads it', () => {
     const ev = (e: string) => evaluate(e, { row: { no: 42 } });
     expect(ev("Left('İstanbul', 3)")).toBe('İst');

@@ -32,6 +32,8 @@
   *Print only when* (`visible` formula on any section but the page header/footer).
 - Groups: *Keep the header with the first row* (`keepWithFirstRow`) — no group header left alone at
   the bottom of a page. The grouped sales template uses it, and its city headers are bookmarks.
+- PDF: the report's language is written into the file (`PdfOptions.lang`; the viewer passes the
+  report's region), for screen readers.
 - **Document map**: a `bookmark` on group headers and the detail section becomes PDF bookmarks
   (nested by group, the PDF opens with them shown) and a list in the preview that jumps to the
   section (`LayoutDocument.bookmarks`).
@@ -58,6 +60,7 @@
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, total row and column, numbers sorted numerically; grows downwards and
   pushes the items below. Dropping one binds it to the first two text fields and a number field.
+- Formulas: `Switch(value, match, result, …, otherwise)` and `In(value, a, b, …)`.
 - Formulas: `AddMonths`, `AddYears`, `DateDiff('day' | 'month' | 'year', start, end)` (days
   overdue, ages), `Left`, `Right` and `PadLeft`.
 - Formulas: `RunningSum(value)` — running balance in a row, amount carried forward in a page

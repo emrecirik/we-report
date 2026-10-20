@@ -827,6 +827,8 @@ export const weReportLocaleEn: WeReportLocale = {
   functionHelp: {
     Iif: 'Chooses between two values: the first when the condition is true, otherwise the second.',
     IsNull: 'The value, or the fallback when it is empty.',
+    Switch: 'Picks the result for the first match, e.g. Switch([Status], 1, \'Open\', 2, \'Closed\', \'Other\').',
+    In: 'True when the value is one of the others, e.g. In([City], \'Ankara\', \'İzmir\').',
     Concat: 'Joins texts together.',
     Len: 'Number of characters.',
     Upper: 'CAPITAL LETTERS (Turkish İ/ı handled).',
@@ -1294,6 +1296,8 @@ export const weReportLocaleTr: WeReportLocale = {
   functionHelp: {
     Iif: 'İki değer arasında seçer: koşul doğruysa ilki, değilse ikincisi.',
     IsNull: 'Değer boşsa yerine konacak değeri verir.',
+    Switch: 'İlk eşleşenin sonucunu verir; örn. Switch([Durum], 1, \'Açık\', 2, \'Kapalı\', \'Diğer\').',
+    In: 'Değer diğerlerinden biriyse doğru; örn. In([Sehir], \'Ankara\', \'İzmir\').',
     Concat: 'Metinleri birleştirir.',
     Len: 'Karakter sayısı.',
     Upper: 'BÜYÜK HARF (Türkçe İ/ı doğru).',

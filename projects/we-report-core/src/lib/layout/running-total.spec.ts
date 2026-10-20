@@ -138,7 +138,8 @@ describe('document map', () => {
     expect(marks.find((m) => m.title === 'A39')!.pageIndex).toBeGreaterThan(0);
 
     const { PDFDocument, PDFName, PDFDict } = await import('pdf-lib');
-    const pdf = await PDFDocument.load(await renderPdf(doc, fonts));
+    const pdf = await PDFDocument.load(await renderPdf(doc, fonts, { lang: 'tr-TR' }));
+    expect(pdf.catalog.get(PDFName.of('Lang'))!.toString()).toContain('tr-TR');
     const outlines = pdf.catalog.lookup(PDFName.of('Outlines'), PDFDict);
     expect(outlines.get(PDFName.of('Count'))!.toString()).toBe('45');
     const first = outlines.lookup(PDFName.of('First'), PDFDict);

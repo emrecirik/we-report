@@ -417,6 +417,8 @@ export const weReportLocaleFr: WeReportLocale = {
   functionHelp: {
     Iif: 'Choisit entre deux valeurs : la première si la condition est vraie, sinon la seconde.',
     IsNull: 'La valeur, ou la valeur de repli si elle est vide.',
+    Switch: 'Le résultat de la première correspondance, ex. Switch([Status], 1, \'Ouvert\', 2, \'Fermé\', \'Autre\').',
+    In: 'Vrai si la valeur est l’une des autres, ex. In([City], \'Paris\', \'Lyon\').',
     Concat: 'Assemble des textes.',
     Len: 'Nombre de caractères.',
     Upper: 'MAJUSCULES (İ/ı turcs gérés).',
