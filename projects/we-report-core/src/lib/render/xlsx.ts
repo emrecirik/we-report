@@ -71,35 +71,65 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
   const { rows, parent } = resolveReportData(definition, options.data, options.sources);
   const params = resolveParameters(definition.parameters, options.params);
   const ctxBase = { parent, params, locale: options.locale, now: options.now, rows: rows ?? [], calculated: calculatedFieldMap(definition) };
-  // The rows in the order the report prints them: by group, then by the detail's own sort keys.
-  const keys = [
-    ...definition.bands.filter((b) => b.kind === 'groupHeader' && b.groupBy?.expression.trim() && b.sort !== 'none').map((b) => ({ expression: b.groupBy!.expression, descending: b.sort === 'desc' })),
-    ...(Array.isArray(detail?.sortBy) ? detail.sortBy.filter((k) => typeof k?.expression === 'string' && k.expression.trim()) : []),
-  ];
-  const keyOf = (row: unknown, expression: string) => {
+  // The rows in the order the report prints them: by group (by key, or by a formula over the
+  // group with `orderBy`), then by the detail's own sort keys.
+  const keyOf = (row: unknown, expression: string, groupRows?: unknown[]) => {
     try {
-      const v = evaluate(expression, { ...ctxBase, row });
+      const v = evaluate(expression, { ...ctxBase, row, ...(groupRows ? { rows: groupRows } : {}) });
       return v instanceof Date ? v.getTime() : v;
     } catch {
       return null;
     }
   };
+  const groups = definition.bands.filter((b) => b.kind === 'groupHeader' && b.groupBy?.expression.trim());
+  const detailKeys = Array.isArray(detail?.sortBy) ? detail.sortBy.filter((k) => typeof k?.expression === 'string' && k.expression.trim()) : [];
+  const all = rows ?? [];
+  const groupKeys = new Map(all.map((row) => [row, groups.map((g) => keyOf(row, g.groupBy!.expression))]));
+  // A group's `orderBy` value, worked out over the rows of that group (inside its parent groups).
+  const groupValue = groups.map((g, level) => {
+    const value = new Map<string, unknown>();
+    if (!g.orderBy?.expression?.trim()) return value;
+    const members = new Map<string, unknown[]>();
+    for (const row of all) {
+      const path = JSON.stringify(groupKeys.get(row)!.slice(0, level + 1));
+      members.set(path, [...(members.get(path) ?? []), row]);
+    }
+    for (const [path, groupRows] of members) value.set(path, keyOf(groupRows[0], g.orderBy.expression, groupRows));
+    return value;
+  });
+  const sortKeys: { descending: boolean }[] = [];
+  const rowKeys = new Map(
+    all.map((row) => {
+      const gk = groupKeys.get(row)!;
+      const k: unknown[] = [];
+      groups.forEach((g, level) => {
+        if (g.orderBy?.expression?.trim()) k.push(groupValue[level].get(JSON.stringify(gk.slice(0, level + 1))));
+        if (g.sort !== 'none' || g.orderBy?.expression?.trim()) k.push(gk[level]);
+      });
+      for (const d of detailKeys) k.push(keyOf(row, d.expression));
+      return [row, k];
+    }),
+  );
+  groups.forEach((g) => {
+    if (g.orderBy?.expression?.trim()) sortKeys.push({ descending: !!g.orderBy.descending });
+    if (g.sort !== 'none' || g.orderBy?.expression?.trim()) sortKeys.push({ descending: g.sort === 'desc' });
+  });
+  for (const d of detailKeys) sortKeys.push({ descending: !!d.descending });
   const collator = new Intl.Collator(options.locale || 'en-US', { numeric: true });
-  const ordered = !keys.length
-    ? (rows ?? [])
-    : (rows ?? [])
-        .map((row) => ({ row, k: keys.map((k) => keyOf(row, k.expression)) }))
-        .sort((a, b) => {
-          for (let i = 0; i < keys.length; i++) {
-            const x = a.k[i];
-            const y = b.k[i];
-            if (x === y) continue;
-            const c = x === null || x === undefined ? -1 : y === null || y === undefined ? 1 : typeof x === 'number' && typeof y === 'number' ? x - y : collator.compare(String(x), String(y));
-            if (c) return keys[i].descending ? -c : c;
-          }
-          return 0;
-        })
-        .map((e) => e.row);
+  const ordered = !sortKeys.length
+    ? all
+    : [...all].sort((ra, rb) => {
+        const a = rowKeys.get(ra)!;
+        const b = rowKeys.get(rb)!;
+        for (let i = 0; i < sortKeys.length; i++) {
+          const x = a[i];
+          const y = b[i];
+          if (x === y) continue;
+          const c = x === null || x === undefined ? -1 : y === null || y === undefined ? 1 : typeof x === 'number' && typeof y === 'number' ? x - y : collator.compare(String(x), String(y));
+          if (c) return sortKeys[i].descending ? -c : c;
+        }
+        return 0;
+      });
   const table = ordered.map((row) =>
     cells.map((c) => {
       const ctx = { ...ctxBase, row };

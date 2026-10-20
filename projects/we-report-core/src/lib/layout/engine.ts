@@ -154,7 +154,41 @@ class LayoutRun {
         ...groupHeaders.map((h) => (h.groupBy ? (h.sort ?? 'asc') : 'none')),
         ...sortBy.map((k) => (k.descending ? 'desc' : 'asc') as 'asc' | 'desc'),
       ];
-      const sorted = this.sortRows(rows, orders, keys);
+      // Groups ordered by a formula over their rows (their total, say) sort by that value first and
+      // by their key next, so groups with equal values stay apart. Grouping itself still uses `keys`.
+      const byValue = groupHeaders.map((h) => (h.groupBy && typeof h.orderBy?.expression === 'string' && h.orderBy.expression.trim() ? h.orderBy : undefined));
+      let sortKeys = keys;
+      let sortOrders = orders;
+      if (byValue.some(Boolean)) {
+        const values = groupHeaders.map((h, level) => {
+          const orderBy = byValue[level];
+          const value = new Map<string, unknown>();
+          if (!orderBy) return value;
+          const members = new Map<string, unknown[]>();
+          for (const row of rows) {
+            const path = JSON.stringify(keys.get(row)!.slice(0, level + 1));
+            members.set(path, [...(members.get(path) ?? []), row]);
+          }
+          for (const [path, groupRows] of members) {
+            const v = this.eval(orderBy.expression, { row: groupRows[0], rows: groupRows }, h.id);
+            value.set(path, v instanceof Date ? v.getTime() : v);
+          }
+          return value;
+        });
+        sortKeys = new Map();
+        for (const row of rows) {
+          const k = keys.get(row)!;
+          sortKeys.set(row, [
+            ...groupHeaders.flatMap((_, level) => (byValue[level] ? [values[level].get(JSON.stringify(k.slice(0, level + 1))), k[level]] : [k[level]])),
+            ...k.slice(groupHeaders.length),
+          ]);
+        }
+        sortOrders = [
+          ...groupHeaders.flatMap((h, level) => (byValue[level] ? [byValue[level]!.descending ? 'desc' : 'asc', h.sort === 'desc' ? 'desc' : 'asc'] as ('asc' | 'desc')[] : [orders[level]])),
+          ...orders.slice(groupHeaders.length),
+        ];
+      }
+      const sorted = this.sortRows(rows, sortOrders, sortKeys);
       this.emitGroups(entries, 0, sorted, groupHeaders, keys, detail);
     }
 

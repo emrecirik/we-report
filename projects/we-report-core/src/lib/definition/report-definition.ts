@@ -291,6 +291,11 @@ export interface Band {
   groupBy?: Expression;
   /** groupHeader only: order of the groups; rows keep their order inside a group. Default `asc`. */
   sort?: 'asc' | 'desc' | 'none';
+  /**
+   * groupHeader only: order the groups by a formula over each group's rows instead, e.g.
+   * `Sum([amount])` descending for the largest customers first. Equal values keep `sort` order.
+   */
+  orderBy?: SortKey;
   /** detail only: rows are sorted by these values in turn (inside their group). */
   sortBy?: SortKey[];
   /**

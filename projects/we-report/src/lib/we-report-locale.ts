@@ -179,6 +179,9 @@ export interface WeReportLocale {
   sortNone: string;
   keepTogether: string;
   keepTogetherHint: string;
+  groupOrderBy: string;
+  groupOrderByHint: string;
+  largestFirst: string;
   keepWithFirstRow: string;
   bookmark: string;
   bookmarkHint: string;
@@ -618,6 +621,9 @@ export const weReportLocaleEn: WeReportLocale = {
   sortNone: 'As in data',
   keepTogether: 'Keep group on one page',
   keepTogetherHint: 'Moves the whole group to the next page instead of splitting it.',
+  groupOrderBy: 'Order groups by',
+  groupOrderByHint: 'A formula over each group, e.g. Sum([amount]): the biggest customers first.',
+  largestFirst: 'Largest first',
   keepWithFirstRow: 'Keep the header with the first row',
   bookmark: 'Bookmark',
   bookmarkHint: 'An entry in the PDF bookmarks and the preview’s document map, e.g. the customer’s name.',
@@ -1100,6 +1106,9 @@ export const weReportLocaleTr: WeReportLocale = {
   sortNone: 'Verideki sırayla',
   keepTogether: 'Grubu tek sayfada tut',
   keepTogetherHint: 'Grup bölünecekse tamamını sonraki sayfaya taşır.',
+  groupOrderBy: 'Grupları şuna göre sırala',
+  groupOrderByHint: 'Her grubun üzerinde bir formül; örn. Sum([tutar]): en büyük müşteriler önce.',
+  largestFirst: 'Büyükten küçüğe',
   keepWithFirstRow: 'Başlığı ilk satırla birlikte tut',
   bookmark: 'Yer imi',
   bookmarkHint: 'PDF yer imlerinde ve önizlemenin belge haritasında bir satır; örn. müşterinin adı.',

@@ -10,7 +10,7 @@ reports in code. Lengths are millimetres, font sizes points.
 |---|---|
 | Report header / footer | once, at the start / end |
 | Page header / footer | on every page |
-| Group header / footer | around every group of rows (`groupBy`, nested groups allowed); *New page and page numbers per group* (`resetPageNumber`) prints each group as its own document — one statement per customer, each "page 1 of 2" |
+| Group header / footer | around every group of rows (`groupBy`, nested groups allowed; ordered by key or, with `orderBy`, by a formula over each group such as `Sum([amount])` — the biggest first); *New page and page numbers per group* (`resetPageNumber`) prints each group as its own document — one statement per customer, each "page 1 of 2" |
 | Detail | once for every row, in data order or sorted (`sortBy`, inside each group) |
 | Inner list header / inner list / inner list footer | for a list *inside* every row — see below |
 

@@ -99,6 +99,31 @@ describe('group header with its first row', () => {
   });
 });
 
+describe('groups ordered by a formula', () => {
+  let fonts: FontRegistry;
+  beforeAll(async () => (fonts = await loadTestFonts()));
+
+  it('puts the group with the largest total first, nested groups ordered within their parent', () => {
+    const rows = [
+      { c: 'Ankara', p: 'Çay', a: 10 }, { c: 'Ankara', p: 'Kahve', a: 50 },
+      { c: 'İzmir', p: 'Çay', a: 100 }, { c: 'İzmir', p: 'Kahve', a: 1 },
+      { c: 'Bursa', p: 'Çay', a: 30 },
+    ];
+    const r = createBlankReport('Top');
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: rows }];
+    r.dataMember = { dataSourceId: 'd' };
+    r.bands.splice(1, 0,
+      { id: 'gc', kind: 'groupHeader', height: 6, groupBy: { expression: '[c]' }, orderBy: { expression: 'Sum([a])', descending: true }, controls: [{ id: 'ct', type: 'text', x: 0, y: 0, width: 60, height: 6, text: { expression: "'C ' + [c]" } }] },
+      { id: 'gp', kind: 'groupHeader', height: 6, groupBy: { expression: '[p]' }, orderBy: { expression: 'Sum([a])', descending: true }, controls: [{ id: 'pt', type: 'text', x: 0, y: 0, width: 60, height: 6, text: { expression: "'P ' + [p]" } }] },
+    );
+    const texts = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text).filter((t) => /^[CP] /.test(t));
+    expect(texts).toEqual(['C İzmir', 'P Çay', 'P Kahve', 'C Ankara', 'P Kahve', 'P Çay', 'C Bursa', 'P Çay']);
+    // Exports list the rows in the same order.
+    r.bands.find((b) => b.kind === 'detail')!.controls = [{ id: 'a', type: 'text', x: 0, y: 0, width: 30, height: 6, text: { expression: '[a]' } }];
+    expect(reportTable(r, { now: NOW }).rows.map((x) => x[0])).toEqual([100, 1, 50, 10, 30]);
+  });
+});
+
 describe('section options', () => {
   let fonts: FontRegistry;
   beforeAll(async () => (fonts = await loadTestFonts()));

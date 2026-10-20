@@ -242,6 +242,19 @@
           <option value="none" [selected]="b.sort === 'none'">{{ s.sortNone }}</option>
         </select>
       </label>
+      @if (advanced() || b.orderBy) {
+        <label class="pp__row pp__row--stack">
+          <span>{{ s.groupOrderBy }}</span>
+          <input class="pp__mono" [value]="b.orderBy?.expression ?? ''" placeholder="Sum([amount])" (input)="setGroupOrder($any($event.target).value, !!b.orderBy?.descending)" spellcheck="false" />
+        </label>
+        @if (b.orderBy) {
+          <label class="pp__check">
+            <input type="checkbox" [checked]="!!b.orderBy.descending" (change)="setGroupOrder(b.orderBy.expression, $any($event.target).checked)" />
+            <span>{{ s.largestFirst }}</span>
+          </label>
+        }
+        <small class="pp__hint">{{ s.groupOrderByHint }}</small>
+      }
       <label class="pp__check">
         <input type="checkbox" [checked]="!!b.keepTogether" (change)="toggleBand('keepTogether', $any($event.target).checked)" />
         <span>{{ s.keepTogether }}<small class="pp__hint">{{ s.keepTogetherHint }}</small></span>

@@ -219,6 +219,12 @@ export class PropertyPanelComponent {
     }, `band-${key}`);
   }
 
+  /** Groups in the order of a formula over their rows; an empty formula goes back to the key order. */
+  protected setGroupOrder(expression: string, descending: boolean): void {
+    const band = this.band();
+    if (band) this.state.updateBand(band.id, (b) => (b.orderBy = expression.trim() ? { expression, ...(descending ? { descending: true } : {}) } : undefined), 'band-order');
+  }
+
   protected bookmarkValue(b: Band): Bindable<string> {
     return b.bookmark ?? '';
   }

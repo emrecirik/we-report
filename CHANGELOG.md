@@ -33,6 +33,8 @@
   fits on no page starts right after the previous one; side-by-side cells are never cut.
 - Groups: *New page and page numbers per group* (`resetPageNumber`) — every group starts on a new
   page, page X of Y counts the group's pages and carried totals restart: batch-printed statements.
+- Groups: *Order groups by* (`orderBy`) — a formula over each group's rows, e.g. `Sum([amount])`
+  descending: the biggest customers first (nested groups within their parent).
 - Groups: *Keep the header with the first row* (`keepWithFirstRow`) — no group header left alone
   at the bottom of a page.
 - Sections: zebra stripes (`alternateBackgroundColor` on detail and inner-list sections) and
