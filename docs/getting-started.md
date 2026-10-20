@@ -102,7 +102,9 @@ export class InvoicePage { /* … */ }
 
 The viewer shows pages exactly as the PDF will print them, with zoom, a document map, find,
 **Print**, **PDF**, **Excel** and **PNG** (the current page as an image) buttons; in code
-`toPdf()`, `toXlsx()` and `toPng(pageIndex, dpi)`. `parameters` passes
+`toPdf()`, `toXlsx()` and `toPng(pageIndex, dpi)`. `hide` leaves toolbar parts out, e.g.
+`[hide]="['excel', 'more']"` (`print`, `pdf`, `excel`, `png`, `more`, `search`, `thumbnails`,
+`map`). `parameters` passes
 [report parameters](data-sources.md#parameters), `printDate` fixes the print time for
 reproducible output.
 

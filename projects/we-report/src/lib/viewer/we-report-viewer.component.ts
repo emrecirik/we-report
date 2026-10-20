@@ -8,6 +8,9 @@ import { WeReportIconPipe } from '../we-report-icon.pipe';
 import { WE_REPORT_LOCALE, WeReportLocale } from '../we-report-locale';
 import { drawPage, pictureDataUri } from './page-canvas';
 
+/** A part of the viewer's toolbar that the host can leave out (`hide`). */
+export type WeReportViewerTool = 'print' | 'pdf' | 'excel' | 'png' | 'more' | 'search' | 'thumbnails' | 'map';
+
 /** Pictures from addresses: at most this many per report, each at most this big. */
 const MAX_PICTURES = 200;
 const MAX_PICTURE_BYTES = 10 * 1024 * 1024;
@@ -33,11 +36,13 @@ import { WeReportPageComponent } from './we-report-page.component';
         <option value="page">{{ strings().fitPage }}</option>
       </select>
       <button type="button" class="we-report-viewer__btn" (click)="setZoom(zoomLevel() + 0.1)" [attr.aria-label]="strings().zoomIn" [title]="strings().zoomIn + ' (Ctrl+=)'" [innerHTML]="'zoomIn' | weReportIcon"></button>
+      @if (document()?.bookmarks?.length && !hidden('map')) {
+        <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showMap()" (click)="showMap.set(!showMap())" [title]="strings().documentMap" [attr.aria-label]="strings().documentMap" [attr.aria-pressed]="showMap()" [innerHTML]="'outline' | weReportIcon"></button>
+      }
       @if (pageTotal() > 1) {
         <span class="we-report-viewer__sep"></span>
-        <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showThumbs()" (click)="showThumbs.set(!showThumbs())" [title]="strings().thumbnails" [attr.aria-label]="strings().thumbnails" [attr.aria-pressed]="showThumbs()" [innerHTML]="'thumbnails' | weReportIcon"></button>
-        @if (document()?.bookmarks?.length) {
-          <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showMap()" (click)="showMap.set(!showMap())" [title]="strings().documentMap" [attr.aria-label]="strings().documentMap" [attr.aria-pressed]="showMap()" [innerHTML]="'outline' | weReportIcon"></button>
+        @if (!hidden('thumbnails')) {
+          <button type="button" class="we-report-viewer__btn" [class.we-report-viewer__btn--on]="showThumbs()" (click)="showThumbs.set(!showThumbs())" [title]="strings().thumbnails" [attr.aria-label]="strings().thumbnails" [attr.aria-pressed]="showThumbs()" [innerHTML]="'thumbnails' | weReportIcon"></button>
         }
         <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(1)" [title]="strings().firstPage + ' (Home)'" [attr.aria-label]="strings().firstPage" [innerHTML]="'firstPage' | weReportIcon"></button>
         <button type="button" class="we-report-viewer__btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)" [title]="strings().previousPage + ' (PgUp)'" [attr.aria-label]="strings().previousPage" [innerHTML]="'previousPage' | weReportIcon"></button>
@@ -48,23 +53,32 @@ import { WeReportPageComponent } from './we-report-page.component';
       } @else {
         <span class="we-report-viewer__pages">{{ pageLabel() }}</span>
       }
+      @if (!hidden('search')) {
       <span class="we-report-viewer__sep"></span>
       <input #searchBox class="we-report-viewer__search" type="search" [placeholder]="strings().search + ' (Ctrl+F)'" [value]="query()" (input)="setQuery($any($event.target).value)" (keydown.enter)="nextMatch($any($event).shiftKey ? -1 : 1)" [attr.aria-label]="strings().search" />
+      }
       @if (query().trim()) {
         <span class="we-report-viewer__pages">{{ matches().length ? strings().matches.replace('{0}', '' + (matchIndex() + 1)).replace('{1}', '' + matches().length) : strings().noMatches }}</span>
         <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(-1)" [attr.aria-label]="strings().previousMatch" [title]="strings().previousMatch + ' (Shift+Enter)'" [innerHTML]="'chevronUp' | weReportIcon"></button>
         <button type="button" class="we-report-viewer__btn" [disabled]="!matches().length" (click)="nextMatch(1)" [attr.aria-label]="strings().nextMatch" [title]="strings().nextMatch + ' (Enter)'" [innerHTML]="'chevronDown' | weReportIcon"></button>
       }
       <span class="we-report-viewer__spacer"></span>
-      <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="print()" [disabled]="!document()">
-        <span [innerHTML]="'print' | weReportIcon"></span>{{ strings().print }}
-      </button>
-      <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadExcel()" [disabled]="!document()">
-        <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadExcel }}
-      </button>
-      <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPng()" [disabled]="!document()" [title]="strings().downloadPng + ' · ' + strings().pageNumber + ' ' + currentPage()">
-        <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPng }}
-      </button>
+      @if (!hidden('print')) {
+        <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="print()" [disabled]="!document()">
+          <span [innerHTML]="'print' | weReportIcon"></span>{{ strings().print }}
+        </button>
+      }
+      @if (!hidden('excel')) {
+        <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadExcel()" [disabled]="!document()">
+          <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadExcel }}
+        </button>
+      }
+      @if (!hidden('png')) {
+        <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPng()" [disabled]="!document()" [title]="strings().downloadPng + ' · ' + strings().pageNumber + ' ' + currentPage()">
+          <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPng }}
+        </button>
+      }
+      @if (!hidden('more')) {
       <select class="we-report-viewer__more" [disabled]="!document()" (change)="downloadForPrinter($any($event.target).value); $any($event.target).value = ''" [attr.aria-label]="strings().printerOutput" [title]="strings().printerOutputHint">
         <option value="" selected>{{ strings().printerOutput }}…</option>
         <option value="csv">CSV</option>
@@ -72,9 +86,12 @@ import { WeReportPageComponent } from './we-report-page.component';
         <option value="escpos58">{{ strings().printerEscPos }} · 58 mm</option>
         <option value="escpos80">{{ strings().printerEscPos }} · 80 mm</option>
       </select>
-      <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPdf()" [disabled]="!document()">
-        <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPdf }}
-      </button>
+      }
+      @if (!hidden('pdf')) {
+        <button type="button" class="we-report-viewer__btn we-report-viewer__btn--text" (click)="downloadPdf()" [disabled]="!document()">
+          <span [innerHTML]="'download' | weReportIcon"></span>{{ strings().downloadPdf }}
+        </button>
+      }
     </div>
     @if (report().parameters?.length) {
       <form class="we-report-viewer__params" (submit)="$event.preventDefault(); applyParams()">
@@ -438,6 +455,8 @@ export class WeReportViewerComponent {
   readonly printDate = input<Date | undefined>(undefined);
   /** Report parameter values from the host; the user can still change them in the parameter bar. */
   readonly parameters = input<Record<string, unknown>>({});
+  /** Toolbar parts to leave out, e.g. `['excel', 'more']`; the methods (`toPdf()` …) stay available. */
+  readonly hide = input<readonly WeReportViewerTool[]>([]);
   /** Fetch used for web-service data sources (add auth, or route through your backend). */
   readonly fetchFn = input<typeof fetch | undefined>(undefined);
 
@@ -621,6 +640,10 @@ export class WeReportViewerComponent {
       e.preventDefault();
       this.goToPage(e.key === 'Home' ? 1 : this.pageTotal());
     }
+  }
+
+  protected hidden(tool: WeReportViewerTool): boolean {
+    return this.hide().includes(tool);
   }
 
   protected setZoom(value: number): void {

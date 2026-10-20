@@ -74,6 +74,8 @@
   PNG), so the screen matches the PDF; styled words no longer leave gaps.
 - PDF: the report's language is written into the file (`PdfOptions.lang`), for screen readers.
 - The viewer loads the remote sources of sub-reports.
+- `hide` input: leave toolbar parts out (`print`, `pdf`, `excel`, `png`, `more`, `search`,
+  `thumbnails`, `map`). The document-map button also shows on single-page reports.
 
 ### Designer
 

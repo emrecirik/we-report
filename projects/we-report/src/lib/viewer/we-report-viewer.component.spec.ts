@@ -84,6 +84,15 @@ describe('WeReportViewerComponent', () => {
     expect(texts).toContain('City 35');
   });
 
+  it('leaves out the toolbar parts the host hides', async () => {
+    fixture.componentRef.setInput('hide', ['excel', 'more', 'search']);
+    await render(listReport(), [{ name: 'x' }]);
+    const labels = Array.from(fixture.nativeElement.querySelectorAll('.we-report-viewer__btn--text') as NodeListOf<HTMLElement>).map((b) => b.textContent!.trim());
+    expect(labels).toEqual(['Yazdır', 'PNG', 'PDF indir']);
+    expect(fixture.nativeElement.querySelector('.we-report-viewer__more')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.we-report-viewer__search')).toBeNull();
+  });
+
   it('uses the prefixed font family so an installed font cannot replace the measured one', async () => {
     await render(listReport(), [{ name: 'x' }]);
     const text = fixture.nativeElement.querySelector('svg.we-report-page text') as SVGTextElement;
