@@ -1,4 +1,9 @@
+import { createBlankReport, DataSourceDefinition, ReportDefinition } from 'we-report-core';
 import { decodeShare, encodeShare, hasRemoteSources, SHARE_PREFIX } from './share-link';
+
+function withSources(...sources: DataSourceDefinition[]): ReportDefinition {
+  return { ...createBlankReport(), dataSources: sources };
+}
 
 async function gzipBase64Url(text: string): Promise<string> {
   const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
@@ -33,9 +38,14 @@ describe('share link', () => {
   });
 
   it('spots reports that call a web service or database', () => {
-    expect(hasRemoteSources({ dataSources: [{ kind: 'json' }, { kind: 'csv' }] })).toBeFalse();
-    expect(hasRemoteSources({})).toBeFalse();
-    expect(hasRemoteSources({ dataSources: [{ kind: 'webService' }] })).toBeTrue();
-    expect(hasRemoteSources({ dataSources: [{ kind: 'database' }] })).toBeTrue();
+    const json: DataSourceDefinition = { id: 'j', name: 'J', kind: 'json', data: [] };
+    const web: DataSourceDefinition = { id: 'w', name: 'W', kind: 'webService', url: 'https://example.com' };
+    expect(hasRemoteSources(withSources(json, { id: 'c', name: 'C', kind: 'csv', text: 'a' }))).toBeFalse();
+    expect(hasRemoteSources(withSources(web))).toBeTrue();
+    expect(hasRemoteSources(withSources({ id: 'd', name: 'D', kind: 'database', connectionId: 'x' }))).toBeTrue();
+    // Hidden in a sub-report.
+    const outer = withSources(json);
+    outer.bands[1].controls.push({ id: 's', type: 'subreport', x: 0, y: 0, width: 50, height: 10, report: withSources(web) });
+    expect(hasRemoteSources(outer)).toBeTrue();
   });
 });

@@ -1,0 +1,459 @@
+{
+  "version": 1,
+  "name": "Tahsilat makbuzu",
+  "page": {
+    "paper": "A5",
+    "orientation": "landscape",
+    "margins": {
+      "top": 10,
+      "right": 10,
+      "bottom": 8,
+      "left": 10
+    },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": {
+      "fontFamily": "Noto Sans",
+      "fontSize": 9,
+      "color": "#1f2328",
+      "padding": 0.8
+    },
+    "brand": {
+      "fontSize": 13,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "title": {
+      "fontSize": 16,
+      "bold": true,
+      "color": "#0f766e",
+      "textAlign": "right"
+    },
+    "muted": {
+      "fontSize": 8,
+      "color": "#6b7280"
+    },
+    "label": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "bold": true
+    },
+    "big": {
+      "fontSize": 18,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "sign": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "textAlign": "center",
+      "border": {
+        "width": 0.3,
+        "color": "#1f2328",
+        "sides": {
+          "top": true,
+          "right": false,
+          "bottom": false,
+          "left": false
+        }
+      }
+    },
+    "th": {
+      "fontSize": 8,
+      "bold": true,
+      "color": "#0f766e",
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.4,
+        "color": "#0f766e",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "cell": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "num": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "textAlign": "right",
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    }
+  },
+  "dataSources": [
+    {
+      "id": "receipts",
+      "name": "Makbuzlar",
+      "kind": "json",
+      "data": null
+    }
+  ],
+  "dataMember": {
+    "dataSourceId": "receipts",
+    "path": "receipts"
+  },
+  "locale": "tr-TR",
+  "currency": "TRY",
+  "bands": [
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 120,
+      "pageBreakAfter": true,
+      "controls": [
+        {
+          "id": "company",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 110,
+          "height": 7,
+          "text": {
+            "expression": "[^.company.name]"
+          },
+          "style": "brand"
+        },
+        {
+          "id": "addr",
+          "type": "text",
+          "x": 0,
+          "y": 7,
+          "width": 120,
+          "height": 5,
+          "text": {
+            "expression": "[^.company.address] + ' · ' + [^.company.phone]"
+          },
+          "style": "muted"
+        },
+        {
+          "id": "tax",
+          "type": "text",
+          "x": 0,
+          "y": 11.5,
+          "width": 120,
+          "height": 5,
+          "text": {
+            "expression": "[^.company.taxOffice] + ' V.D. ' + [^.company.taxNo]"
+          },
+          "style": "muted"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "x": 120,
+          "y": 0,
+          "width": 70,
+          "height": 9,
+          "text": "TAHSİLAT MAKBUZU",
+          "style": "title"
+        },
+        {
+          "id": "noLbl",
+          "type": "text",
+          "x": 130,
+          "y": 10,
+          "width": 25,
+          "height": 5,
+          "text": "Makbuz No",
+          "style": "label"
+        },
+        {
+          "id": "no",
+          "type": "text",
+          "x": 155,
+          "y": 10,
+          "width": 35,
+          "height": 5,
+          "text": {
+            "expression": "[no]"
+          },
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "dateLbl",
+          "type": "text",
+          "x": 130,
+          "y": 15,
+          "width": 25,
+          "height": 5,
+          "text": "Tarih",
+          "style": "label"
+        },
+        {
+          "id": "date",
+          "type": "text",
+          "x": 155,
+          "y": 15,
+          "width": 35,
+          "height": 5,
+          "text": {
+            "expression": "[date]"
+          },
+          "format": "dd.MM.yyyy",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "rule",
+          "type": "line",
+          "x": 0,
+          "y": 22,
+          "width": 190,
+          "height": 1,
+          "direction": "horizontal",
+          "lineWidth": 0.4,
+          "color": "#0f766e"
+        },
+        {
+          "id": "box",
+          "type": "shape",
+          "x": 0,
+          "y": 26,
+          "width": 190,
+          "height": 22,
+          "shape": "roundedRectangle",
+          "cornerRadius": 2,
+          "styleOverrides": {
+            "backgroundColor": "#f0fdfa",
+            "border": {
+              "width": 0.2,
+              "color": "#99f6e4",
+              "sides": {
+                "top": true,
+                "right": true,
+                "bottom": true,
+                "left": true
+              }
+            }
+          }
+        },
+        {
+          "id": "toLbl",
+          "type": "text",
+          "x": 3,
+          "y": 28,
+          "width": 30,
+          "height": 5,
+          "text": "Sayın",
+          "style": "label"
+        },
+        {
+          "id": "customer",
+          "type": "text",
+          "x": 3,
+          "y": 33,
+          "width": 180,
+          "height": 6,
+          "text": {
+            "expression": "[customer]"
+          },
+          "styleOverrides": {
+            "bold": true,
+            "fontSize": 11
+          }
+        },
+        {
+          "id": "custAddr",
+          "type": "text",
+          "x": 3,
+          "y": 40,
+          "width": 180,
+          "height": 5,
+          "text": {
+            "expression": "[customerAddress]"
+          },
+          "style": "muted"
+        },
+        {
+          "id": "intro",
+          "type": "text",
+          "x": 0,
+          "y": 52,
+          "width": 190,
+          "height": 5,
+          "text": "Aşağıda belirtilen tutar tarafımızdan tahsil edilmiştir."
+        },
+        {
+          "id": "amountLbl",
+          "type": "text",
+          "x": 0,
+          "y": 60,
+          "width": 40,
+          "height": 5,
+          "text": "Tutar",
+          "style": "label"
+        },
+        {
+          "id": "amount",
+          "type": "text",
+          "x": 0,
+          "y": 65,
+          "width": 90,
+          "height": 10,
+          "text": {
+            "expression": "[amount]"
+          },
+          "style": "big",
+          "format": "c2"
+        },
+        {
+          "id": "words",
+          "type": "text",
+          "x": 0,
+          "y": 76,
+          "width": 98,
+          "height": 6,
+          "text": {
+            "expression": "'Yalnız ' + AmountInWords([amount], 'TRY')"
+          },
+          "styleOverrides": {
+            "italic": true
+          }
+        },
+        {
+          "id": "methodLbl",
+          "type": "text",
+          "x": 100,
+          "y": 60,
+          "width": 50,
+          "height": 5,
+          "text": "Ödeme şekli",
+          "style": "label"
+        },
+        {
+          "id": "m0",
+          "type": "checkbox",
+          "x": 100,
+          "y": 66.0,
+          "width": 4.5,
+          "height": 4.5,
+          "checked": {
+            "expression": "[method] = 'Nakit'"
+          }
+        },
+        {
+          "id": "mLbl0",
+          "type": "text",
+          "x": 105,
+          "y": 65.8,
+          "width": 40,
+          "height": 5,
+          "text": "Nakit"
+        },
+        {
+          "id": "m1",
+          "type": "checkbox",
+          "x": 100,
+          "y": 71.5,
+          "width": 4.5,
+          "height": 4.5,
+          "checked": {
+            "expression": "[method] = 'Kredi kartı'"
+          }
+        },
+        {
+          "id": "mLbl1",
+          "type": "text",
+          "x": 105,
+          "y": 71.3,
+          "width": 40,
+          "height": 5,
+          "text": "Kredi kartı"
+        },
+        {
+          "id": "m2",
+          "type": "checkbox",
+          "x": 100,
+          "y": 77.0,
+          "width": 4.5,
+          "height": 4.5,
+          "checked": {
+            "expression": "[method] = 'Havale/EFT'"
+          }
+        },
+        {
+          "id": "mLbl2",
+          "type": "text",
+          "x": 105,
+          "y": 76.8,
+          "width": 40,
+          "height": 5,
+          "text": "Havale/EFT"
+        },
+        {
+          "id": "descLbl",
+          "type": "text",
+          "x": 0,
+          "y": 86,
+          "width": 40,
+          "height": 5,
+          "text": "Açıklama",
+          "style": "label"
+        },
+        {
+          "id": "desc",
+          "type": "text",
+          "x": 0,
+          "y": 91,
+          "width": 190,
+          "height": 10,
+          "text": {
+            "expression": "[description]"
+          },
+          "canGrow": true
+        },
+        {
+          "id": "giver",
+          "type": "text",
+          "x": 10,
+          "y": 112,
+          "width": 60,
+          "height": 5,
+          "text": "Teslim eden",
+          "style": "sign"
+        },
+        {
+          "id": "taker",
+          "type": "text",
+          "x": 120,
+          "y": 112,
+          "width": 60,
+          "height": 5,
+          "text": {
+            "expression": "'Teslim alan · ' + [collector]"
+          },
+          "style": "sign"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "sender": {
+    "name": "Demir Ofis Malzemeleri A.Ş.",
+    "address": "Atatürk Cad. No: 12",
+    "city": "Çankaya / Ankara",
+    "phone": "0312 555 01 23"
+  },
+  "shipments": [
+    {
+      "tracking": "2901234567890",
+      "receiver": "Zeynep Arslan",
+      "address": "Bağdat Cad. No: 210 D: 5, Caddebostan",
+      "city": "Kadıköy / İstanbul",
+      "phone": "0532 111 22 33",
+      "pieces": 1,
+      "desi": 3,
+      "payment": "Gönderici öder",
+      "branch": "İST-KDK",
+      "order": "SP-58211"
+    },
+    {
+      "tracking": "2901234567906",
+      "receiver": "Can Öztürk",
+      "address": "Kordon Boyu, Atatürk Cad. No: 88",
+      "city": "Konak / İzmir",
+      "phone": "0533 444 55 66",
+      "pieces": 2,
+      "desi": 7,
+      "payment": "Alıcı öder",
+      "branch": "İZM-KNK",
+      "order": "SP-58212"
+    }
+  ]
+}

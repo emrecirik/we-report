@@ -1,3 +1,5 @@
+import { allDataSources, ReportDefinition } from 'we-report-core';
+
 /** A design in the address bar: `#r=` + gzip + base64url of `{ report, data }`. No server involved. */
 export const SHARE_PREFIX = '#r=';
 
@@ -7,9 +9,9 @@ const MAX_BYTES = 10 * 1024 * 1024;
 /** Browsers cut longer addresses (Chrome's limit is 2 MB), so a longer link would not open. */
 export const MAX_SHARE_URL = 2_000_000;
 
-/** True when the report pulls data from a web service or database: opening a shared one calls that address. */
-export function hasRemoteSources(report: { dataSources?: { kind: string }[] }): boolean {
-  return !!report.dataSources?.some((d) => d.kind === 'webService' || d.kind === 'database');
+/** True when the report (or a sub-report in it) pulls data from a web service or database: opening a shared one calls that address. */
+export function hasRemoteSources(report: ReportDefinition): boolean {
+  return allDataSources(report).some((d) => d.kind === 'webService' || d.kind === 'database');
 }
 
 export async function encodeShare(payload: unknown): Promise<string> {

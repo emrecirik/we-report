@@ -1,0 +1,31 @@
+{
+  "company": {
+    "name": "Demir Ofis Malzemeleri A.Ş.",
+    "address": "Atatürk Cad. No: 12, Çankaya / Ankara",
+    "phone": "0312 555 01 23",
+    "taxOffice": "Çankaya",
+    "taxNo": "1234567890"
+  },
+  "receipts": [
+    {
+      "no": "TM-2026-0148",
+      "date": "2026-10-19",
+      "customer": "Yıldız Kırtasiye Ltd. Şti.",
+      "customerAddress": "Kızılay Mah. Gazi Mustafa Kemal Bulv. No: 45, Ankara",
+      "amount": 12450.75,
+      "method": "Havale/EFT",
+      "description": "Ekim ayı faturası (FT-2026-1021) ödemesi",
+      "collector": "Ayşe Kaya"
+    },
+    {
+      "no": "TM-2026-0149",
+      "date": "2026-10-20",
+      "customer": "Mavi Yazılım A.Ş.",
+      "customerAddress": "Üniversiteler Mah. ODTÜ Teknokent, Ankara",
+      "amount": 3200,
+      "method": "Nakit",
+      "description": "Kartuş ve kağıt alımı peşin ödeme",
+      "collector": "Mehmet Demir"
+    }
+  ]
+}

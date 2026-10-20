@@ -1,0 +1,728 @@
+{
+  "version": 1,
+  "name": "Müşteri ekstresi",
+  "page": {
+    "paper": "A4",
+    "orientation": "portrait",
+    "margins": {
+      "top": 15,
+      "right": 15,
+      "bottom": 12,
+      "left": 15
+    },
+    "displayUnit": "mm"
+  },
+  "styles": {
+    "default": {
+      "fontFamily": "Noto Sans",
+      "fontSize": 9,
+      "color": "#1f2328",
+      "padding": 0.8
+    },
+    "brand": {
+      "fontSize": 13,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "title": {
+      "fontSize": 16,
+      "bold": true,
+      "color": "#0f766e",
+      "textAlign": "right"
+    },
+    "muted": {
+      "fontSize": 8,
+      "color": "#6b7280"
+    },
+    "label": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "bold": true
+    },
+    "big": {
+      "fontSize": 18,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "sign": {
+      "fontSize": 8,
+      "color": "#6b7280",
+      "textAlign": "center",
+      "border": {
+        "width": 0.3,
+        "color": "#1f2328",
+        "sides": {
+          "top": true,
+          "right": false,
+          "bottom": false,
+          "left": false
+        }
+      }
+    },
+    "th": {
+      "fontSize": 8,
+      "bold": true,
+      "color": "#0f766e",
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.4,
+        "color": "#0f766e",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "cell": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "num": {
+      "verticalAlign": "middle",
+      "padding": 1.2,
+      "textAlign": "right",
+      "border": {
+        "width": 0.1,
+        "color": "#d1d5db",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    }
+  },
+  "dataSources": [
+    {
+      "id": "customers",
+      "name": "Müşteriler",
+      "kind": "json",
+      "data": [
+        {
+          "id": 1,
+          "name": "Yıldız Kırtasiye Ltd. Şti.",
+          "city": "Ankara",
+          "limit": 50000
+        },
+        {
+          "id": 2,
+          "name": "Mavi Yazılım A.Ş.",
+          "city": "İstanbul",
+          "limit": 20000
+        },
+        {
+          "id": 3,
+          "name": "Ege Mobilya San. Tic.",
+          "city": "İzmir",
+          "limit": 35000
+        }
+      ]
+    },
+    {
+      "id": "movements",
+      "name": "Hesap hareketleri",
+      "kind": "json",
+      "data": [
+        {
+          "customerId": 1,
+          "date": "2026-09-02",
+          "doc": "FT-2026-0912",
+          "kind": "Fatura",
+          "debit": 18250.0,
+          "credit": 0
+        },
+        {
+          "customerId": 1,
+          "date": "2026-09-20",
+          "doc": "TM-2026-0101",
+          "kind": "Tahsilat",
+          "debit": 0,
+          "credit": 10000.0
+        },
+        {
+          "customerId": 2,
+          "date": "2026-09-11",
+          "doc": "FT-2026-0950",
+          "kind": "Fatura",
+          "debit": 3200.0,
+          "credit": 0
+        },
+        {
+          "customerId": 1,
+          "date": "2026-10-01",
+          "doc": "FT-2026-1021",
+          "kind": "Fatura",
+          "debit": 12450.75,
+          "credit": 0
+        },
+        {
+          "customerId": 3,
+          "date": "2026-10-03",
+          "doc": "FT-2026-1033",
+          "kind": "Fatura",
+          "debit": 27800.4,
+          "credit": 0
+        },
+        {
+          "customerId": 1,
+          "date": "2026-10-19",
+          "doc": "TM-2026-0148",
+          "kind": "Tahsilat",
+          "debit": 0,
+          "credit": 12450.75
+        },
+        {
+          "customerId": 2,
+          "date": "2026-10-20",
+          "doc": "TM-2026-0149",
+          "kind": "Tahsilat",
+          "debit": 0,
+          "credit": 3200.0
+        },
+        {
+          "customerId": 3,
+          "date": "2026-10-15",
+          "doc": "İA-2026-0007",
+          "kind": "İade",
+          "debit": 0,
+          "credit": 1250.0
+        }
+      ]
+    }
+  ],
+  "dataMember": {
+    "dataSourceId": "customers"
+  },
+  "locale": "tr-TR",
+  "currency": "TRY",
+  "bands": [
+    {
+      "id": "pageHeader",
+      "kind": "pageHeader",
+      "height": 19,
+      "controls": [
+        {
+          "id": "company",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 110,
+          "height": 7,
+          "text": "Demir Ofis Malzemeleri A.Ş.",
+          "style": "brand"
+        },
+        {
+          "id": "addr",
+          "type": "text",
+          "x": 0,
+          "y": 7,
+          "width": 120,
+          "height": 5,
+          "text": "Atatürk Cad. No: 12, Çankaya / Ankara",
+          "style": "muted"
+        },
+        {
+          "id": "title",
+          "type": "text",
+          "x": 110,
+          "y": 0,
+          "width": 70,
+          "height": 9,
+          "text": "MÜŞTERİ EKSTRESİ",
+          "style": "title"
+        },
+        {
+          "id": "period",
+          "type": "text",
+          "x": 110,
+          "y": 9,
+          "width": 70,
+          "height": 5,
+          "text": {
+            "expression": "'Dönem: ' + [?from] + ' – ' + [?to]"
+          },
+          "style": "muted",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        },
+        {
+          "id": "rule",
+          "type": "line",
+          "x": 0,
+          "y": 15,
+          "width": 180,
+          "height": 1,
+          "direction": "horizontal",
+          "lineWidth": 0.4,
+          "color": "#0f766e"
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 48,
+      "controls": [
+        {
+          "id": "box",
+          "type": "shape",
+          "x": 0,
+          "y": 2,
+          "width": 180,
+          "height": 10,
+          "shape": "roundedRectangle",
+          "cornerRadius": 2,
+          "styleOverrides": {
+            "backgroundColor": "#f0fdfa",
+            "border": {
+              "width": 0.2,
+              "color": "#99f6e4",
+              "sides": {
+                "top": true,
+                "right": true,
+                "bottom": true,
+                "left": true
+              }
+            }
+          }
+        },
+        {
+          "id": "name",
+          "type": "text",
+          "x": 3,
+          "y": 3.5,
+          "width": 120,
+          "height": 7,
+          "text": {
+            "expression": "[name]"
+          },
+          "styleOverrides": {
+            "bold": true,
+            "fontSize": 11,
+            "verticalAlign": "middle"
+          }
+        },
+        {
+          "id": "city",
+          "type": "text",
+          "x": 125,
+          "y": 3.5,
+          "width": 52,
+          "height": 7,
+          "text": {
+            "expression": "[city]"
+          },
+          "style": "muted",
+          "styleOverrides": {
+            "textAlign": "right",
+            "verticalAlign": "middle"
+          }
+        },
+        {
+          "id": "movements",
+          "type": "subreport",
+          "x": 20,
+          "y": 14,
+          "width": 140,
+          "height": 28,
+          "report": {
+            "version": 1,
+            "name": "Hesap hareketleri",
+            "page": {
+              "paper": "custom",
+              "width": 140,
+              "height": null,
+              "orientation": "portrait",
+              "margins": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "displayUnit": "mm"
+            },
+            "styles": {
+              "default": {
+                "fontFamily": "Noto Sans",
+                "fontSize": 9,
+                "color": "#1f2328",
+                "padding": 0.8
+              },
+              "brand": {
+                "fontSize": 13,
+                "bold": true,
+                "color": "#0f766e"
+              },
+              "title": {
+                "fontSize": 16,
+                "bold": true,
+                "color": "#0f766e",
+                "textAlign": "right"
+              },
+              "muted": {
+                "fontSize": 8,
+                "color": "#6b7280"
+              },
+              "label": {
+                "fontSize": 8,
+                "color": "#6b7280",
+                "bold": true
+              },
+              "big": {
+                "fontSize": 18,
+                "bold": true,
+                "color": "#0f766e"
+              },
+              "sign": {
+                "fontSize": 8,
+                "color": "#6b7280",
+                "textAlign": "center",
+                "border": {
+                  "width": 0.3,
+                  "color": "#1f2328",
+                  "sides": {
+                    "top": true,
+                    "right": false,
+                    "bottom": false,
+                    "left": false
+                  }
+                }
+              },
+              "th": {
+                "fontSize": 8,
+                "bold": true,
+                "color": "#0f766e",
+                "verticalAlign": "middle",
+                "padding": 1.2,
+                "border": {
+                  "width": 0.4,
+                  "color": "#0f766e",
+                  "sides": {
+                    "top": false,
+                    "right": false,
+                    "bottom": true,
+                    "left": false
+                  }
+                }
+              },
+              "cell": {
+                "verticalAlign": "middle",
+                "padding": 1.2,
+                "border": {
+                  "width": 0.1,
+                  "color": "#d1d5db",
+                  "sides": {
+                    "top": false,
+                    "right": false,
+                    "bottom": true,
+                    "left": false
+                  }
+                }
+              },
+              "num": {
+                "verticalAlign": "middle",
+                "padding": 1.2,
+                "textAlign": "right",
+                "border": {
+                  "width": 0.1,
+                  "color": "#d1d5db",
+                  "sides": {
+                    "top": false,
+                    "right": false,
+                    "bottom": true,
+                    "left": false
+                  }
+                }
+              }
+            },
+            "dataSources": [],
+            "dataMember": {
+              "dataSourceId": "movements"
+            },
+            "bands": [
+              {
+                "id": "h",
+                "kind": "reportHeader",
+                "height": 7,
+                "controls": [
+                  {
+                    "id": "h0",
+                    "type": "text",
+                    "x": 0,
+                    "y": 0,
+                    "width": 22,
+                    "height": 7,
+                    "text": "Tarih",
+                    "style": "th"
+                  },
+                  {
+                    "id": "h1",
+                    "type": "text",
+                    "x": 22,
+                    "y": 0,
+                    "width": 32,
+                    "height": 7,
+                    "text": "Belge",
+                    "style": "th"
+                  },
+                  {
+                    "id": "h2",
+                    "type": "text",
+                    "x": 54,
+                    "y": 0,
+                    "width": 26,
+                    "height": 7,
+                    "text": "İşlem",
+                    "style": "th"
+                  },
+                  {
+                    "id": "h3",
+                    "type": "text",
+                    "x": 80,
+                    "y": 0,
+                    "width": 30,
+                    "height": 7,
+                    "text": "Borç",
+                    "style": "th",
+                    "styleOverrides": {
+                      "textAlign": "right"
+                    }
+                  },
+                  {
+                    "id": "h4",
+                    "type": "text",
+                    "x": 110,
+                    "y": 0,
+                    "width": 30,
+                    "height": 7,
+                    "text": "Alacak",
+                    "style": "th",
+                    "styleOverrides": {
+                      "textAlign": "right"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "d",
+                "kind": "detail",
+                "height": 6.5,
+                "sortBy": [
+                  {
+                    "expression": "[date]"
+                  }
+                ],
+                "controls": [
+                  {
+                    "id": "d0",
+                    "type": "text",
+                    "x": 0,
+                    "y": 0,
+                    "width": 22,
+                    "height": 6.5,
+                    "text": {
+                      "expression": "[date]"
+                    },
+                    "style": "cell",
+                    "format": "dd.MM.yyyy"
+                  },
+                  {
+                    "id": "d1",
+                    "type": "text",
+                    "x": 22,
+                    "y": 0,
+                    "width": 32,
+                    "height": 6.5,
+                    "text": {
+                      "expression": "[doc]"
+                    },
+                    "style": "cell"
+                  },
+                  {
+                    "id": "d2",
+                    "type": "text",
+                    "x": 54,
+                    "y": 0,
+                    "width": 26,
+                    "height": 6.5,
+                    "text": {
+                      "expression": "[kind]"
+                    },
+                    "style": "cell"
+                  },
+                  {
+                    "id": "d3",
+                    "type": "text",
+                    "x": 80,
+                    "y": 0,
+                    "width": 30,
+                    "height": 6.5,
+                    "text": {
+                      "expression": "[debit]"
+                    },
+                    "style": "num",
+                    "format": "n2"
+                  },
+                  {
+                    "id": "d4",
+                    "type": "text",
+                    "x": 110,
+                    "y": 0,
+                    "width": 30,
+                    "height": 6.5,
+                    "text": {
+                      "expression": "[credit]"
+                    },
+                    "style": "num",
+                    "format": "n2"
+                  }
+                ]
+              },
+              {
+                "id": "f",
+                "kind": "reportFooter",
+                "height": 14,
+                "controls": [
+                  {
+                    "id": "limit",
+                    "type": "text",
+                    "x": 0,
+                    "y": 1,
+                    "width": 54,
+                    "height": 12,
+                    "text": {
+                      "expression": "'Kredi limiti: ' + Format([^.limit], 'n0') + ' ₺'"
+                    },
+                    "style": "muted"
+                  },
+                  {
+                    "id": "tl",
+                    "type": "text",
+                    "x": 54,
+                    "y": 1,
+                    "width": 26,
+                    "height": 6,
+                    "text": "Toplam",
+                    "style": "label"
+                  },
+                  {
+                    "id": "td",
+                    "type": "text",
+                    "x": 80,
+                    "y": 1,
+                    "width": 30,
+                    "height": 6,
+                    "text": {
+                      "expression": "Sum([debit])"
+                    },
+                    "style": "num",
+                    "format": "n2",
+                    "styleOverrides": {
+                      "bold": true
+                    }
+                  },
+                  {
+                    "id": "tc",
+                    "type": "text",
+                    "x": 110,
+                    "y": 1,
+                    "width": 30,
+                    "height": 6,
+                    "text": {
+                      "expression": "Sum([credit])"
+                    },
+                    "style": "num",
+                    "format": "n2",
+                    "styleOverrides": {
+                      "bold": true
+                    }
+                  },
+                  {
+                    "id": "bl",
+                    "type": "text",
+                    "x": 54,
+                    "y": 7.5,
+                    "width": 56,
+                    "height": 6,
+                    "text": "Bakiye",
+                    "style": "label"
+                  },
+                  {
+                    "id": "bal",
+                    "type": "text",
+                    "x": 110,
+                    "y": 7.5,
+                    "width": 30,
+                    "height": 6,
+                    "text": {
+                      "expression": "Sum([debit]) - Sum([credit])"
+                    },
+                    "style": "num",
+                    "format": "c2",
+                    "styleOverrides": {
+                      "bold": true,
+                      "color": "#0f766e"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "filter": {
+            "expression": "[customerId] = [^.id]"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pageFooter",
+      "kind": "pageFooter",
+      "height": 8,
+      "controls": [
+        {
+          "id": "pg",
+          "type": "pageInfo",
+          "x": 130,
+          "y": 1,
+          "width": 50,
+          "height": 6,
+          "style": "muted",
+          "info": "pageNofM",
+          "format": "Sayfa {0} / {1}",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        }
+      ]
+    }
+  ],
+  "parameters": [
+    {
+      "name": "from",
+      "type": "string",
+      "label": "Başlangıç",
+      "defaultValue": "01.09.2026"
+    },
+    {
+      "name": "to",
+      "type": "string",
+      "label": "Bitiş",
+      "defaultValue": "20.10.2026"
+    }
+  ]
+}

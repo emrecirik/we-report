@@ -5,6 +5,11 @@ import invoiceData from '../templates/invoice.data.json';
 import invoice from '../templates/invoice.wrpt.json';
 import labels from '../templates/labels.wrpt.json';
 import ordersData from '../templates/orders.data.json';
+import paymentReceiptData from '../templates/payment-receipt.data.json';
+import paymentReceipt from '../templates/payment-receipt.wrpt.json';
+import shippingLabelData from '../templates/shipping-label.data.json';
+import shippingLabel from '../templates/shipping-label.wrpt.json';
+import statement from '../templates/statement.wrpt.json';
 import orders from '../templates/orders.wrpt.json';
 import receiptData from '../templates/receipt.data.json';
 import receipt from '../templates/receipt.wrpt.json';
@@ -48,6 +53,26 @@ export const TEMPLATES: StudioTemplate[] = [
     description: { tr: 'Her müşterinin altında siparişleri ve ara toplamı', en: 'Each customer with their orders and subtotal' },
     report: () => migrateDefinition(structuredClone(orders)),
     data: ordersData,
+  },
+  {
+    id: 'statement',
+    name: { tr: 'Müşteri ekstresi (alt rapor)', en: 'Customer statement (sub-report)' },
+    description: { tr: 'Her müşterinin altında başka tablodaki hareketleri, toplam ve bakiye', en: 'Each customer with their entries from another table, totals and balance' },
+    report: () => migrateDefinition(structuredClone(statement)),
+  },
+  {
+    id: 'payment-receipt',
+    name: { tr: 'Tahsilat makbuzu (A5)', en: 'Payment receipt (A5)' },
+    description: { tr: 'Yazıyla tutar, ödeme şekli ve imza alanları', en: 'Amount in words, payment method and signature lines' },
+    report: () => migrateDefinition(structuredClone(paymentReceipt)),
+    data: paymentReceiptData,
+  },
+  {
+    id: 'shipping-label',
+    name: { tr: 'Kargo etiketi (100×150)', en: 'Shipping label (100×150)' },
+    description: { tr: 'Termal etiket: alıcı, şube, barkod ve QR', en: 'Thermal label: receiver, branch, barcode and QR' },
+    report: () => migrateDefinition(structuredClone(shippingLabel)),
+    data: shippingLabelData,
   },
   {
     id: 'labels',
