@@ -130,6 +130,23 @@ describe('WeReportViewerComponent', () => {
     expect(doc.problems.some((p) => p.message.includes('missing.png'))).toBeTrue();
   });
 
+  it('gives up on a picture whose server does not answer (the request carries a time limit)', async () => {
+    let signal: AbortSignal | undefined;
+    fixture.componentRef.setInput('fetchFn', ((_url: string, init?: RequestInit) => {
+      signal = init?.signal ?? undefined;
+      // A server that never answers: the request ends only when its time limit aborts it.
+      return new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(new Error('aborted'))));
+    }) as unknown as typeof fetch);
+    const report = listReport();
+    report.bands[1].controls = [{ id: 'img', type: 'image', x: 0, y: 0, width: 10, height: 6, source: 'https://example.com/slow.png', fit: 'contain' }];
+    fixture.componentRef.setInput('report', report);
+    fixture.componentRef.setInput('data', [{ name: 'x' }]);
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal!.aborted).toBeFalse();
+  });
+
   it('makes label and receipt printer files of every page', async () => {
     const rows = Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` }));
     const doc = await render(listReport(), rows);

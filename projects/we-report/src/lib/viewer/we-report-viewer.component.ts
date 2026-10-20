@@ -11,6 +11,8 @@ import { drawPage, pictureDataUri } from './page-canvas';
 /** Pictures from addresses: at most this many per report, each at most this big. */
 const MAX_PICTURES = 200;
 const MAX_PICTURE_BYTES = 10 * 1024 * 1024;
+/** A picture that has not arrived by then counts as failed, so one slow server cannot hold the preview. */
+const PICTURE_TIMEOUT_MS = 15_000;
 import { WeReportPageComponent } from './we-report-page.component';
 
 /** Paged preview of a report with zoom, PDF download and print. No server involved. */
@@ -640,7 +642,7 @@ export class WeReportViewerComponent {
     await Promise.all(
       wanted.slice(0, MAX_PICTURES).map(async (url) => {
         try {
-          const response = await fetchFn(url);
+          const response = await fetchFn(url, { signal: AbortSignal.timeout(PICTURE_TIMEOUT_MS) });
           if (!response.ok) throw new Error(String(response.status));
           const blob = await response.blob();
           if (blob.size > MAX_PICTURE_BYTES) throw new Error('Too large.');

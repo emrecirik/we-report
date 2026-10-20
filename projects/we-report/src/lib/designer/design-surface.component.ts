@@ -882,7 +882,8 @@ export class DesignSurfaceComponent implements OnDestroy {
   }
 
   protected staticImage(c: ReportControl): string | null {
-    return c.type === 'image' && typeof c.source === 'string' && /^(data:image\/|https?:\/\/)/i.test(c.source) ? c.source : null;
+    // Only embedded pictures: an address is fetched by the viewer (through the host's fetch), never by the design page.
+    return c.type === 'image' && typeof c.source === 'string' && c.source.startsWith('data:image/') ? c.source : null;
   }
 
   protected objectFit(c: ReportControl): string {
