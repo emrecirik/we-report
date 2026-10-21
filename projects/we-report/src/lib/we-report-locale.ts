@@ -74,6 +74,9 @@ export interface WeReportLocale {
   removeBand: string;
   groupBy: string;
   newText: string;
+  /** Toolbox: a signature line. */
+  signature: string;
+  signatureCaption: string;
   showData: string;
 
   // Property groups
@@ -525,6 +528,8 @@ export const weReportLocaleEn: WeReportLocale = {
   removeBand: 'Remove section',
   groupBy: 'Group by',
   newText: 'Text',
+  signature: 'Signature',
+  signatureCaption: 'Name · Signature',
   showData: 'Show data',
 
   groupLayout: 'Position and size',
@@ -1017,6 +1022,8 @@ export const weReportLocaleTr: WeReportLocale = {
   removeBand: 'Bölümü kaldır',
   groupBy: 'Grupla',
   newText: 'Metin',
+  signature: 'İmza',
+  signatureCaption: 'Ad Soyad · İmza',
   showData: 'Veriyi göster',
 
   groupLayout: 'Konum ve boyut',

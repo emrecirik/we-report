@@ -1,4 +1,4 @@
-import { createBlankReport, DEFAULT_TABLE_BORDER_COLOR, FieldSchema, ReportControl, ReportControlType } from 'we-report-core';
+import { createBlankReport, DEFAULT_STYLE, DEFAULT_TABLE_BORDER_COLOR, FieldSchema, ReportControl, ReportControlType } from 'we-report-core';
 
 export { captionFor } from 'we-report-core';
 
@@ -12,6 +12,7 @@ export const TOOLBOX_ITEMS: { type: ReportControlType; icon: string; variant?: s
   { type: 'barcode', icon: 'qrcode', variant: 'qrcode' },
   { type: 'pageInfo', icon: 'pageInfo' },
   { type: 'checkbox', icon: 'checkbox' },
+  { type: 'text', icon: 'signature', variant: 'signature' },
   { type: 'table', icon: 'table' },
   { type: 'chart', icon: 'chart' },
   { type: 'crosstab', icon: 'crosstab' },
@@ -23,6 +24,11 @@ export function createControl(type: ReportControlType, id: string, x: number, y:
   const base = { id, x, y };
   switch (type) {
     case 'text':
+      // A signature line: the caption under a line; the space above it is for the signature.
+      if (variant === 'signature') {
+        const line = { width: 0.3, color: DEFAULT_STYLE.color, sides: { top: true, right: false, bottom: false, left: false } };
+        return { ...base, type, width: 50, height: 6, text, styleOverrides: { textAlign: 'center', border: line } };
+      }
       return { ...base, type, width: 40, height: 6, text };
     case 'line':
       return { ...base, type, width: 60, height: 2, direction: 'horizontal', lineWidth: 0.3 };

@@ -92,6 +92,8 @@ export const weReportLocaleFr: WeReportLocale = {
   removeBand: 'Supprimer la section',
   groupBy: 'Grouper par',
   newText: 'Texte',
+  signature: 'Signature',
+  signatureCaption: 'Nom · Signature',
   showData: 'Afficher les données',
 
   groupLayout: 'Position et taille',

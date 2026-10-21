@@ -1520,7 +1520,7 @@ export class DesignSurfaceComponent implements OnDestroy {
     const width = this.geometry().contentWidth;
     if (data.kind === 'control') {
       const s = this.strings();
-      const control = createControl(data.type, this.state.newId(data.type), x, y, data.type === 'table' ? s.columnN : data.type === 'subreport' ? s.controlNames.subreport : s.newText, data.variant);
+      const control = createControl(data.type, this.state.newId(data.type), x, y, data.type === 'table' ? s.columnN : data.type === 'subreport' ? s.controlNames.subreport : data.variant === 'signature' ? s.signatureCaption : s.newText, data.variant);
       // Start bound to the data: grouped by the text fields with the fewest different values,
       // summing the number field with the largest total (an amount rather than a month or a count).
       const { groups, amount } = guessBindings(this.sample()?.rows ?? []);

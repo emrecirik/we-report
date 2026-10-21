@@ -19,6 +19,7 @@ export interface WeReportIcons {
   qrcode: string;
   pageInfo: string;
   checkbox: string;
+  signature: string;
   preview: string;
   design: string;
   database: string;
@@ -86,6 +87,7 @@ export const WE_REPORT_DEFAULT_ICONS: WeReportIcons = {
   qrcode: svg('<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>'),
   pageInfo: svg('<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 16h6"/>'),
   checkbox: svg('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/>'),
+  signature: svg('<path d="M4 15c2-4 4-8 5-7s-2 7 0 7 3-5 5-5 1 4 3 4 2-2 3-2"/><path d="M4 20h16"/>'),
   preview: svg('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
   design: svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'),
   textLeft: svg('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),

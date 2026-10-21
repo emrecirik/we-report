@@ -126,6 +126,8 @@
 
 ### Designer
 
+- *Signature* in the toolbox: a centred caption under a line (*Name · Signature*), an ordinary text
+  item, for "delivered by / received by" blocks.
 - *Tidy up* (right-click a section or several items): snaps to the grid, lines up items that are
   nearly in a row or column, one height per row of texts; one undo step.
 - Problems: a fixed EAN-13 / EAN-8 / UPC-A / ITF-14 with a wrong check digit is reported with the

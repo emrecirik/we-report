@@ -92,9 +92,9 @@
         <p class="wd__hint">{{ s.toolboxHint }} {{ s.addByClick }}</p>
         <div class="wd__tools">
           @for (item of toolbox; track $index) {
-            <div class="wd__tool" draggable="true" role="button" tabindex="0" (dragstart)="onToolDragStart($event, item)" (click)="onToolClick(item)" (keydown.enter)="onToolClick(item)" [title]="s.controlNames[item.type]">
+            <div class="wd__tool" draggable="true" role="button" tabindex="0" (dragstart)="onToolDragStart($event, item)" (click)="onToolClick(item)" (keydown.enter)="onToolClick(item)" [title]="item.variant === 'signature' ? s.signature : s.controlNames[item.type]">
               <span [innerHTML]="iconName(item.icon) | weReportIcon"></span>
-              <span>{{ item.variant === 'qrcode' ? 'QR' : s.controlNames[item.type] }}</span>
+              <span>{{ item.variant === 'qrcode' ? 'QR' : item.variant === 'signature' ? s.signature : s.controlNames[item.type] }}</span>
             </div>
           }
         </div>
