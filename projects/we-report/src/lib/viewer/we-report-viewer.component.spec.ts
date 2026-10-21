@@ -35,6 +35,17 @@ describe('WeReportViewerComponent', () => {
     return doc;
   }
 
+  it('zooms with Ctrl + wheel and scrolls without it', async () => {
+    await render(listReport(), [{ name: 'a' }]);
+    const zoom = () => (fixture.componentInstance as unknown as { zoomLevel(): number }).zoomLevel();
+    const scroller = fixture.nativeElement.querySelector('.we-report-viewer__scroll') as HTMLElement;
+    const before = zoom();
+    scroller.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, ctrlKey: true, cancelable: true }));
+    expect(zoom()).toBeCloseTo(before + 0.1, 5);
+    scroller.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, cancelable: true }));
+    expect(zoom()).toBeCloseTo(before + 0.1, 5);
+  });
+
   it('fits the page to the width the first time on a narrow screen', async () => {
     const host = fixture.nativeElement as HTMLElement;
     host.style.width = '360px';

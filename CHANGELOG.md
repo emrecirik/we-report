@@ -87,6 +87,7 @@
 
 ### Viewer and output
 
+- Ctrl + mouse wheel (or a trackpad pinch) zooms the preview, as in the designer.
 - Excel and CSV leave out the detail rows that *Print only when* hides, as the print does.
 - **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)`).
 - *More formats*: every page as PNG in one ZIP (`toPngZip()`), **CSV** (`toCsv()`; `;` and decimal commas in comma-decimal regions, a UTF-8

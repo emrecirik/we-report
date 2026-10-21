@@ -169,7 +169,7 @@ import { WeReportPageComponent } from './we-report-page.component';
         }
       </nav>
     }
-    <div #scroller class="we-report-viewer__scroll" tabindex="0" (scroll)="onScroll()">
+    <div #scroller class="we-report-viewer__scroll" tabindex="0" (scroll)="onScroll()" (wheel)="onWheel($event)">
       @if (document(); as doc) {
         @for (page of doc.pages; track $index; let p = $index) {
           <we-report-page
@@ -610,6 +610,13 @@ export class WeReportViewerComponent {
     this.currentPage.set(page);
     // Keep the current page's thumbnail in sight.
     this.thumbs()?.nativeElement.children[page - 1]?.scrollIntoView({ block: 'nearest' });
+  }
+
+  /** Ctrl + wheel (and a trackpad pinch) zooms, as in the designer and desktop viewers. */
+  protected onWheel(e: WheelEvent): void {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    this.setZoom(this.zoomLevel() + (e.deltaY < 0 ? 0.1 : -0.1));
   }
 
   private fittedOnce = false;
