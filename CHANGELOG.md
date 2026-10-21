@@ -16,20 +16,21 @@
   sub-reports are loaded with the report (`allDataSources`). Nested sub-reports migrate with the
   file around them; more than five levels are refused.
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
-  average / min / max, a total row and column, numbers sorted numerically, at most 500 rows and
-  50 columns (a problem says when more were cut). A number wider than its cell is printed smaller,
-  or as `###` when it would be unreadable — never cut off into a different number. It grows downwards and pushes the items below.
-  A dropped cross table or chart starts grouped by the text fields that repeat, summing the number
-  field with the largest total (never an identifier such as `orderNo` or a calendar field —
-  `isSummableField` in core); a cross table puts the field with the fewest values across and
-  shows whole numbers (`n0`).
+  average / min / max, a total row and column, numbers sorted numerically, at most 500 rows and 50
+  columns (a problem says when more were cut). A number wider than its cell is printed smaller, or
+  as `###` when it would be unreadable — never cut off into a different number. It grows downwards
+  and pushes the items below. A dropped cross table or chart starts grouped by the text fields that
+  repeat, summing the number field with the largest total (never an identifier such as `orderNo` or
+  a calendar field — `isSummableField` in core); a cross table puts the field with the fewest values
+  across and shows whole numbers (`n0`).
 - **Rich text** (`markup: true` on a text): `**bold**`, `*italic*`, `__underline__` and `{formula}`
   fields inside one text, wrapped and measured with the right font per word; the designer shows it
   formatted, Excel exports the words. `parseRichText`, `wrapRichText` and `plainRichText` are
   exported from core.
 - Charts: **sparkline** type (a bare line with a dot on the last value) and `rows` — a chart in
   every detail row from a list inside that row (`[months]`). Choosing *Sparkline* shrinks the box.
-- Charts: **data bar** type — the row's value as a bar, full at `max` or the section's largest value.
+- Charts: **data bar** type — the row's value as a bar, full at `max` or the section's largest
+  value.
 - Charts: **gauge** type — a half ring filled up to the section's total (the row's value in a row)
   out of `max` (default 100), the value written inside.
 
@@ -79,7 +80,8 @@
   in a page footer — and `CarriedSum(value)`, the total brought forward in a page header.
 - `AddMonths`, `AddYears`, `DateDiff('day' | 'month' | 'year', start, end)` (days overdue, ages),
   `Left`, `Right`, `PadLeft`, `Switch(value, match, result, …, otherwise)` and `In(value, a, b, …)`.
-- Date formats: `dddd` and `ddd` write the day's name (`Pazartesi`, `Pzt`); *Show as* offers a long date and a date with the day's name.
+- Date formats: `dddd` and `ddd` write the day's name (`Pazartesi`, `Pzt`); *Show as* offers a long
+  date and a date with the day's name.
 - Parameters can offer a list (`choices`): fixed values, or each value of a data field with an
   optional label field (a customer's name for its id). The viewer shows a drop-down; core exports
   `parameterChoices()`.
@@ -95,11 +97,11 @@
 - Ctrl + mouse wheel (or a trackpad pinch) zooms the preview, as in the designer.
 - Excel and CSV leave out the detail rows that *Print only when* hides, as the print does.
 - **PNG** — the current page as an image (200 dpi; `toPng(pageIndex, dpi)`).
-- *More formats*: every page as PNG in one ZIP (`toPngZip()`), **CSV** (`toCsv()`; `;` and decimal commas in comma-decimal regions, a UTF-8
-  byte-order mark, formula-like text defused; `writeCsv()` in core), Zebra **ZPL** (203 dpi) for
-  label printers and **ESC/POS** (58 / 80 mm) for receipt printers — the pages sent as an image,
-  so they print exactly as previewed (`toZpl()`, `toEscPos()`; `toMonoBitmap`, `zplFromBitmaps`,
-  `escPosFromBitmaps` in core).
+- *More formats*: every page as PNG in one ZIP (`toPngZip()`), **CSV** (`toCsv()`; `;` and decimal
+  commas in comma-decimal regions, a UTF-8 byte-order mark, formula-like text defused; `writeCsv()`
+  in core), Zebra **ZPL** (203 dpi) for label printers and **ESC/POS** (58 / 80 mm) for receipt
+  printers — the pages sent as an image, so they print exactly as previewed (`toZpl()`,
+  `toEscPos()`; `toMonoBitmap`, `zplFromBitmaps`, `escPosFromBitmaps` in core).
 - Excel and CSV list the rows in the printed order (groups and the detail's sort keys).
 - Every text line is drawn exactly as wide as the engine measured it (SVG `textLength`, and in
   PNG), so the screen matches the PDF; styled words no longer leave gaps.
@@ -145,9 +147,9 @@
 - Data sources: when the app passes the rows (`data`), the main source says its own data is only a
   fallback (`hostDataNote`), instead of showing an empty source with 0 rows as if data were missing.
 - Accessibility (axe, WCAG AA): secondary text and warnings have enough contrast
-  (`--we-report-muted-fg` 0.75 alpha, `--we-report-band-label-fg` 0.85, `--we-report-warning-fg` `#9a4400`), formula fields and the
-  font size field are labelled for screen readers (`label` input on the bindable field), and the
-  data field lists are no longer reported as broken lists.
+  (`--we-report-muted-fg` 0.75 alpha, `--we-report-band-label-fg` 0.85, `--we-report-warning-fg`
+  `#9a4400`), formula fields and the font size field are labelled for screen readers (`label` input
+  on the bindable field), and the data field lists are no longer reported as broken lists.
 - Dark theme: scrollbars and form controls are dark too (`color-scheme: dark` in the theme's dark
   blocks).
 
