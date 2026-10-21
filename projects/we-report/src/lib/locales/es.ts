@@ -476,6 +476,7 @@ export const weReportLocaleEs: WeReportLocale = {
     RowNumber: 'Posición de la fila: 1, 2, 3 … (se reinicia en cada grupo).',
     RunningSum: 'Total acumulado: en una fila, hasta esa fila; en el pie de página, hasta el final de la página (suma y sigue).',
     CarriedSum: 'Total de las filas de las páginas anteriores — «suma anterior» en el encabezado de página.',
+    SumAll: 'Total del valor en todas las filas del informe, se use donde se use: [Importe] / SumAll([Importe]) es la parte del total general.',
     Count: 'Número de filas del ámbito.',
     Avg: 'Promedio de las filas del ámbito.',
     Min: 'Valor más pequeño del ámbito (o de dos valores).',

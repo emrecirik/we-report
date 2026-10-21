@@ -476,6 +476,7 @@ export const weReportLocaleDe: WeReportLocale = {
     RowNumber: 'Position der Zeile: 1, 2, 3 … (beginnt in jeder Gruppe neu).',
     RunningSum: 'Bisherige Summe: in einer Zeile bis zu dieser Zeile, im Seitenfuß bis zum Seitenende (Übertrag).',
     CarriedSum: 'Summe der Zeilen auf den vorigen Seiten — „Übertrag“ im Seitenkopf.',
+    SumAll: 'Summe des Werts über alle Zeilen des Berichts, wo auch immer verwendet: [Betrag] / SumAll([Betrag]) ist der Anteil an der Gesamtsumme.',
     Count: 'Anzahl der Zeilen im Bereich.',
     Avg: 'Durchschnitt über die Zeilen im Bereich.',
     Min: 'Kleinster Wert im Bereich (oder von zwei Werten).',

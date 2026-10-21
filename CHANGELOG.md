@@ -71,6 +71,8 @@
 
 ### Formulas and data
 
+- `SumAll(value)`: the grand total of every row, in a row or a group too — `[amount] / SumAll([amount])`
+  with format `p0` is the share of the total.
 - Pasted dates whose day starts with a zero (`05.01.2026`) are read as dates; they stayed text.
 - **Calculated fields** (`calculatedFields`): a formula per row used like a data field (`[total]`)
   in texts, totals, sorting, groups and exports; edited under Data sources, listed with the fields.

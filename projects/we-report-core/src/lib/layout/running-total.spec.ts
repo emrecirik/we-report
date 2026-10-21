@@ -24,6 +24,22 @@ describe('running totals', () => {
     expect(() => evaluate('RunningSum()', { rows })).toThrow();
   });
 
+  it('gives the grand total anywhere, for shares of it', () => {
+    const r = createBlankReport('Shares');
+    r.locale = 'en-US';
+    r.dataSources = [{ id: 'd', name: 'd', kind: 'json', data: [{ g: 'x', a: 1 }, { g: 'x', a: 3 }, { g: 'y', a: 4 }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    const t = (id: string, expression: string) => ({ id, type: 'text' as const, x: 0, y: 0, width: 60, height: 6, text: { expression }, format: 'p0' });
+    r.bands = [
+      { id: 'gh', kind: 'groupHeader', height: 6, groupBy: { expression: '[g]' }, controls: [] },
+      { id: 'dt', kind: 'detail', height: 6, controls: [t('row', '[a] / SumAll([a])')] },
+      { id: 'gf', kind: 'groupFooter', groupHeaderId: 'gh', height: 6, controls: [t('grp', 'Sum([a]) / SumAll([a])')] },
+    ];
+    const texts = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((i) => i.lines[0].text);
+    expect(texts).toEqual(['13%', '38%', '50%', '50%', '50%']);
+    expect(evaluate('SumAll([a])', { rows: [{ a: 2 }], allRows: [{ a: 2 }, { a: 5 }] })).toBe(7);
+  });
+
   it('brings totals forward in page headers and carries them in page footers', () => {
     const rows = Array.from({ length: 100 }, (_, i) => ({ n: i + 1, amount: 1 }));
     const r = createBlankReport('Ledger');

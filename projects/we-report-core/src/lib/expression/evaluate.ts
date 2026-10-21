@@ -11,6 +11,8 @@ export interface EvaluationContext {
   rowIndex?: number;
   /** Detail rows printed on the pages before this one (page header and footer), for `CarriedSum()` and `RunningSum()`. */
   before?: readonly unknown[];
+  /** Every row of the report, for `SumAll()` (a share of the grand total in a row or group). */
+  allRows?: readonly unknown[];
   /** Calculated fields by name (their formulas), read like data fields when the row has no such field. */
   calculated?: Readonly<Record<string, string>>;
   /** How many calculated fields are being worked out inside each other (loop guard). */
@@ -275,6 +277,7 @@ export const EXPRESSION_FUNCTIONS: readonly FunctionInfo[] = [
   { name: 'Max', signature: 'Max(value)', category: 'aggregate' },
   { name: 'RunningSum', signature: 'RunningSum(value)', category: 'aggregate' },
   { name: 'CarriedSum', signature: 'CarriedSum(value)', category: 'aggregate' },
+  { name: 'SumAll', signature: 'SumAll(value)', category: 'aggregate' },
 ];
 
 /** Function names only, in catalogue order. */
@@ -282,7 +285,7 @@ export const EXPRESSION_FUNCTION_NAMES: readonly string[] = EXPRESSION_FUNCTIONS
 
 /** Lower-case names the interpreter implements; the catalogue test keeps both lists in step. */
 export function implementedFunctionNames(): string[] {
-  return [...Object.keys(FUNCTIONS), ...AGGREGATES, ...RUNNING, 'iif', 'switch'];
+  return [...Object.keys(FUNCTIONS), ...AGGREGATES, ...RUNNING, 'iif', 'switch', 'sumall'];
 }
 
 /** Resolves a field path on own properties only, so `[__proto__]` or `[constructor]` read nothing. */
@@ -423,6 +426,18 @@ function evalCall(node: Extract<ExpressionNode, { kind: 'call' }>, ctx: Evaluati
       .map((row) => evalNode(args[0], { ...ctx, row }))
       .filter((v) => v !== null && v !== undefined)
       .reduce<number>((s, v) => s + num(v, node.name), 0);
+  }
+
+  // The grand total, wherever it is asked for: `[Amount] / SumAll([Amount])` is the row's share.
+  if (name === 'sumall') {
+    if (args.length !== 1) throw new Error('SumAll needs 1 argument, e.g. SumAll([Total]).');
+    const rows = ctx.allRows ?? ctx.rows ?? [];
+    const value = (row: unknown) => {
+      const v = evalNode(args[0], { ...ctx, row });
+      return v === null || v === undefined ? 0 : num(v, node.name);
+    };
+    if (ctx.runningTotals) return ctx.runningTotals.sum(rows, rows.length, args[0], value);
+    return rows.reduce<number>((s, row) => s + value(row), 0);
   }
 
   // Min/Max with two arguments are scalar; with one argument they aggregate like Sum.

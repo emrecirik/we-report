@@ -476,6 +476,7 @@ export const weReportLocaleFr: WeReportLocale = {
     RowNumber: 'Position de la ligne : 1, 2, 3 … (recommence dans chaque groupe).',
     RunningSum: 'Total cumulé : dans une ligne, jusqu’à cette ligne ; en pied de page, jusqu’à la fin de la page (à reporter).',
     CarriedSum: 'Total des lignes des pages précédentes — « report » en en-tête de page.',
+    SumAll: 'Total de la valeur sur toutes les lignes du rapport, où qu\'il soit utilisé : [Montant] / SumAll([Montant]) est la part du total général.',
     Count: 'Nombre de lignes concernées.',
     Avg: 'Moyenne des lignes concernées.',
     Min: 'Plus petite valeur des lignes concernées (ou de deux valeurs).',

@@ -114,6 +114,8 @@ class LayoutRun {
   private readonly currency: string;
   private readonly now: Date;
   private parent: unknown;
+  /** Every row of the report (this run), for `SumAll()`. */
+  private allRows: readonly unknown[] = [];
   private readonly params: Record<string, unknown>;
   private readonly calculated: Record<string, string> | undefined;
 
@@ -136,6 +138,7 @@ class LayoutRun {
     const { rows, parent } = resolveReportData(this.def, this.options.data, this.options.sources);
     this.parent = this.nesting ? this.nesting.parent : (this.options.parent ?? parent);
     const allRows = rows ?? [];
+    this.allRows = allRows;
     const first = allRows[0];
     const bands = this.def.bands;
     const byKind = (kind: Band['kind']) => bands.find((b) => b.kind === kind);
@@ -1118,6 +1121,7 @@ class LayoutRun {
       rowIndex: scope.rowIndex,
       before: scope.before,
       runningTotals: this.runningTotals,
+      allRows: this.allRows,
       calculated: this.calculated,
       parent: scope.parent ?? this.parent,
       params,
