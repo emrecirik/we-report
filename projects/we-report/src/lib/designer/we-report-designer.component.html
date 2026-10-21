@@ -105,7 +105,8 @@
           @if (allFields().length > 8) {
             <input class="wd__field-filter" type="search" [placeholder]="s.filterFields" [attr.aria-label]="s.filterFields" [value]="fieldFilter()" (input)="fieldFilter.set($any($event.target).value)" />
           }
-          <ul class="wd__fields">
+          <!-- The fields are buttons (drag or double-click), not a reading list. -->
+          <ul class="wd__fields" role="none">
             @for (f of shownFields().rows; track f.path) {
               <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                 <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
@@ -114,7 +115,7 @@
           </ul>
           @if (shownFields().inner.length) {
             <h3>{{ s.innerFields }}</h3>
-            <ul class="wd__fields">
+            <ul class="wd__fields" role="none">
               @for (f of shownFields().inner; track f.path) {
                 <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
@@ -124,7 +125,7 @@
           }
           @if (shownFields().parent.length) {
             <h3>{{ s.parentFields }}</h3>
-            <ul class="wd__fields">
+            <ul class="wd__fields" role="none">
               @for (f of shownFields().parent; track f.path) {
                 <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
                   <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}

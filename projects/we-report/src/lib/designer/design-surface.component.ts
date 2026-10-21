@@ -353,10 +353,10 @@ interface DragOp {
       overflow: visible;
     }
     .ds__ruler text {
-      fill: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      fill: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .ds__ruler-ticks {
-      stroke: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      stroke: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
       stroke-width: 1;
       shape-rendering: crispEdges;
     }

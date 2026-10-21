@@ -7,7 +7,7 @@
 :root {
   --we-report-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
   --we-report-fg: #1d1d1f;
-  --we-report-muted-fg: rgba(60, 60, 67, 0.62);
+  --we-report-muted-fg: rgba(60, 60, 67, 0.75);
   --we-report-accent: #007aff;
   --we-report-accent-fg: #ffffff;
   --we-report-workspace-bg: #f2f2f7;
@@ -31,7 +31,7 @@
   --we-report-guide: #ff375f;
   --we-report-search-highlight: rgba(255, 204, 0, 0.45);
   --we-report-warning-bg: rgba(255, 149, 0, 0.12);
-  --we-report-warning-fg: #b25000;
+  --we-report-warning-fg: #9a4400;
   --we-report-backdrop: rgba(0, 0, 0, 0.22);
   --we-report-focus-ring: 0 0 0 3px rgba(0, 122, 255, 0.35);
   --we-report-radius: 12px;

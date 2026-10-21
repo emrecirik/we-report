@@ -20,7 +20,7 @@ import { ExpressionEditorComponent } from './expression-editor.component';
     </div>
     @if (bound()) {
       @if (fields().length) {
-        <select class="bi__input" (change)="pickField($any($event.target).value)">
+        <select class="bi__input" [attr.aria-label]="label()" (change)="pickField($any($event.target).value)">
           <option value="" [selected]="!fieldMatch()">—</option>
           @for (f of fields(); track f.expression) {
             <option [value]="f.expression" [selected]="f.expression === expression()">{{ f.label }}</option>
@@ -39,9 +39,9 @@ import { ExpressionEditorComponent } from './expression-editor.component';
       }
       <small class="bi__hint">{{ strings().expressionHint }}</small>
     } @else if (multiline()) {
-      <textarea class="bi__input" rows="3" [value]="fixedText()" (input)="setFixed($any($event.target).value)"></textarea>
+      <textarea class="bi__input" rows="3" [attr.aria-label]="label()" [value]="fixedText()" (input)="setFixed($any($event.target).value)"></textarea>
     } @else {
-      <input class="bi__input" [value]="fixedText()" (input)="setFixed($any($event.target).value)" />
+      <input class="bi__input" [attr.aria-label]="label()" [value]="fixedText()" (input)="setFixed($any($event.target).value)" />
     }
   `,
   styles: `
@@ -118,10 +118,10 @@ import { ExpressionEditorComponent } from './expression-editor.component';
       flex-direction: column;
       gap: 2px;
       font-size: 11px;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .bi__hint {
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
       font-size: 11px;
     }
   `,
@@ -131,6 +131,8 @@ export class BindableInputComponent {
   readonly fields = input<DesignerField[]>([]);
   readonly strings = input.required<WeReportLocale>();
   readonly multiline = input(false);
+  /** What the value is, for screen readers (the visible caption sits outside the component). */
+  readonly label = input<string | undefined>(undefined);
   readonly valueChange = output<Bindable<string>>();
 
   protected readonly editorOpen = signal(false);

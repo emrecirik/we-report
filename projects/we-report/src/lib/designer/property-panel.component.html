@@ -101,7 +101,7 @@
     <section class="pp__section">
       <h3>{{ s.watermark }}</h3>
       @let wm = report().watermark;
-      <we-report-bindable-input [value]="wm?.text ?? ''" [fields]="fields()" [strings]="s" (valueChange)="setWatermark({ text: $event })" />
+      <we-report-bindable-input [value]="wm?.text ?? ''" [fields]="fields()" [strings]="s" [label]="s.watermark" (valueChange)="setWatermark({ text: $event })" />
       <small class="pp__hint">{{ s.watermarkHint }}</small>
       @if (wm) {
         <div class="pp__row">
@@ -153,7 +153,7 @@
     }
     @if (b.kind === 'groupHeader' || b.kind === 'detail') {
       <span class="pp__label">{{ s.bookmark }}</span>
-      <we-report-bindable-input [value]="bookmarkValue(b)" [fields]="fields()" [strings]="s" (valueChange)="setBookmark($event)" />
+      <we-report-bindable-input [value]="bookmarkValue(b)" [fields]="fields()" [strings]="s" [label]="s.bookmark" (valueChange)="setBookmark($event)" />
       <small class="pp__hint">{{ s.bookmarkHint }}</small>
     }
     @if (advanced() && b.kind !== 'pageHeader' && b.kind !== 'pageFooter') {
@@ -342,7 +342,7 @@
       @case ('text') {
         <section class="pp__section">
           <h3>{{ s.groupContent }}</h3>
-          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" [multiline]="true" (valueChange)="setBindable('text', $event)" />
+          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" [multiline]="true" [label]="s.groupContent" (valueChange)="setBindable('text', $event)" />
           <label class="pp__row">
             <span>{{ s.format }}</span>
             <select (change)="set('format', $any($event.target).value)">
@@ -382,7 +382,7 @@
             </select>
           </label>
           <span class="pp__label">{{ s.barcodeValue }}</span>
-          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" (valueChange)="setBindable('value', $event)" />
+          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" [label]="s.barcodeValue" (valueChange)="setBindable('value', $event)" />
           <label class="pp__check">
             <input type="checkbox" [checked]="c.showText" (change)="set('showText', $any($event.target).checked)" />
             <span>{{ s.showText }}</span>
@@ -397,7 +397,7 @@
             <span>{{ s.chooseImage }}</span>
           </label>
           <span class="pp__label">{{ s.fromData }}</span>
-          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" (valueChange)="setBindable('source', $event)" />
+          <we-report-bindable-input [value]="textValue(c)" [fields]="fields()" [strings]="s" [label]="s.fromData" (valueChange)="setBindable('source', $event)" />
           <label class="pp__row">
             <span>{{ s.fit }}</span>
             <select (change)="set('fit', $any($event.target).value)">
@@ -491,7 +491,7 @@
         @if (cellInfo) {
           <section class="pp__section">
             <h3>{{ s.selectedCell }}</h3>
-            <we-report-bindable-input [value]="cellInfo.cell.text" [fields]="fields()" [strings]="s" (valueChange)="setCell({ text: $event })" />
+            <we-report-bindable-input [value]="cellInfo.cell.text" [fields]="fields()" [strings]="s" [label]="s.selectedCell" (valueChange)="setCell({ text: $event })" />
             <label class="pp__row">
               <span>{{ s.format }}</span>
               <select (change)="setCell({ format: $any($event.target).value || undefined })">
@@ -687,7 +687,7 @@
             <span class="pp__label">{{ s.subreportParams }}</span>
             @for (p of c.report.parameters; track p.name) {
               <span class="pp__label">{{ p.label || p.name }}</span>
-              <we-report-bindable-input [value]="subreportParamValue(c, p.name)" [fields]="fields()" [strings]="s" (valueChange)="setSubreportParam(p.name, $event)" />
+              <we-report-bindable-input [value]="subreportParamValue(c, p.name)" [fields]="fields()" [strings]="s" [label]="p.label || p.name" (valueChange)="setSubreportParam(p.name, $event)" />
             }
           }
         </section>
@@ -696,7 +696,7 @@
         <section class="pp__section">
           <h3>{{ s.groupContent }}</h3>
           <span class="pp__label">{{ s.checked }}</span>
-          <we-report-bindable-input [value]="checkedValue(c)" [fields]="fields()" [strings]="s" (valueChange)="setBindable('checked', $event)" />
+          <we-report-bindable-input [value]="checkedValue(c)" [fields]="fields()" [strings]="s" [label]="s.checked" (valueChange)="setBindable('checked', $event)" />
         </section>
       }
     }
@@ -769,10 +769,10 @@
             }
           </select>
         </label>
-        <div class="pp__row">
+        <label class="pp__row">
           <span>{{ s.fontSize }} (pt)</span>
           <input type="number" min="4" max="200" step="0.5" [value]="num(st.fontSize)" (input)="setStyle('fontSize', asNumber($any($event.target).value, 4))" />
-        </div>
+        </label>
         <div class="pp__segmented">
           <button type="button" [class.pp__on]="st.bold" (click)="setStyle('bold', !st.bold)" [attr.aria-pressed]="st.bold"><b>{{ s.bold }}</b></button>
           <button type="button" [class.pp__on]="st.italic" (click)="setStyle('italic', !st.italic)" [attr.aria-pressed]="st.italic"><i>{{ s.italic }}</i></button>

@@ -139,12 +139,12 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
       margin: 0 0 6px;
       font-size: 11px;
       font-weight: 600;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .xe__hint {
       margin: -6px 0 0;
       font-size: 12px;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .xe__field {
       position: relative;
@@ -179,7 +179,7 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .xe__formula {
       box-sizing: border-box;
@@ -207,7 +207,7 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
       font-size: 12px;
     }
     .xe__result span {
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .xe__result output {
       font-weight: 600;
@@ -217,7 +217,7 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
     }
     .xe__result--error {
       background: var(--we-report-warning-bg, rgba(255, 149, 0, 0.12));
-      color: var(--we-report-warning-fg, #b25000);
+      color: var(--we-report-warning-fg, #9a4400);
     }
     .xe__lists {
       flex: 1;
@@ -261,7 +261,7 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
       color: var(--we-report-accent, #007aff);
     }
     .xe__fn small {
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .xe__cats {
       display: flex;

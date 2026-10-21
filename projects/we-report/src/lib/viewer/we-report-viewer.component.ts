@@ -253,12 +253,12 @@ import { WeReportPageComponent } from './we-report-page.component';
       min-width: 44px;
       text-align: center;
       font-variant-numeric: tabular-nums;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .we-report-viewer__pages {
       margin-left: 8px;
       font-variant-numeric: tabular-nums;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .we-report-viewer__sep {
       width: 0.5px;
@@ -392,7 +392,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       display: flex;
       flex-direction: column;
       gap: 3px;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .we-report-viewer__more,
     .we-report-viewer__params input:not([type='checkbox']),
@@ -424,7 +424,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       border-radius: 10px;
       font-size: 13px;
       background: var(--we-report-warning-bg, rgba(255, 149, 0, 0.12));
-      color: var(--we-report-warning-fg, #b25000);
+      color: var(--we-report-warning-fg, #9a4400);
     }
     .we-report-viewer__problems summary {
       cursor: pointer;
@@ -435,7 +435,7 @@ import { WeReportPageComponent } from './we-report-page.component';
       padding-left: 18px;
     }
     .we-report-viewer__loading {
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     @media (prefers-reduced-motion: reduce) {
       .we-report-viewer__btn {

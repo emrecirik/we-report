@@ -237,7 +237,7 @@ const OPERATORS: QueryCondition['op'][] = ['=', '!=', '<', '<=', '>', '>=', 'lik
     }
     .dbe__hint {
       font-size: 11px;
-      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.62));
+      color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
     }
     .dbe__ok,
     .dbe__error {
@@ -252,7 +252,7 @@ const OPERATORS: QueryCondition['op'][] = ['=', '!=', '<', '<=', '>', '>=', 'lik
     }
     .dbe__error {
       background: var(--we-report-warning-bg, rgba(255, 149, 0, 0.12));
-      color: var(--we-report-warning-fg, #b25000);
+      color: var(--we-report-warning-fg, #9a4400);
     }
   `,
 })
