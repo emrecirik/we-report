@@ -27,6 +27,12 @@ customer.
   "height": 10, "controls": [] }
 ```
 
+## Invoice totals at the bottom of the page
+
+Put the totals, the amount in words and the signature lines in the report footer and tick *At the
+bottom of the last page* (Advanced, `printAtBottom`). However few the lines, the block sits just
+above the page footer; with many lines it follows them onto the last page.
+
 ## The ten biggest customers
 
 Group by customer, put `Sum([amount])` in the group footer, and on the group header (Advanced) set
