@@ -12,15 +12,14 @@ are never cut off, and damaged report files open instead of failing.
 
 - **Sub-reports** (`type: 'subreport'`): a whole report inside a box, designed in its own designer
   window (double-click), or loaded from a saved report / RDLC / REPX file. Rows come from a formula
-  over the outer row (`rows`) or the sub-report's own data, matched with `filter`
-  (`[CustomerId] = [^.Id]`); `parameters` pass values from the outer row; *Its rows come from*
-  suggests the lists in the data; its designer knows the row around it, so `[^.field]` shows a
-  sample value and is no unknown field (`outerRow` input), its rows are those the filter matches
-  to the sample row and its preview reads the row around (`outerRow` on the viewer,
-  `LayoutOptions.parent`), and it offers no paper or watermark
-  settings there (`embedded`). The box grows and pushes the items below it. Remote sources of
-  sub-reports are loaded with the report (`allDataSources`). Nested sub-reports migrate with the
-  file around them; more than five levels are refused.
+  over the outer row (`rows`) or the sub-report's own data, matched with `filter` (`[CustomerId] =
+  [^.Id]`); `parameters` pass values from the outer row; *Its rows come from* suggests the lists in
+  the data; its designer knows the row around it, so `[^.field]` shows a sample value and is no
+  unknown field (`outerRow` input), its rows are those the filter matches to the sample row and its
+  preview reads the row around (`outerRow` on the viewer, `LayoutOptions.parent`), and it offers no
+  paper or watermark settings there (`embedded`). The box grows and pushes the items below it.
+  Remote sources of sub-reports are loaded with the report (`allDataSources`). Nested sub-reports
+  migrate with the file around them; more than five levels are refused.
 - **Cross table** (`type: 'crosstab'`): rows × columns of the section's rows with sum / count /
   average / min / max, a total row and column, numbers sorted numerically, at most 500 rows and 50
   columns (a problem says when more were cut). A number wider than its cell is printed smaller, or
@@ -126,8 +125,8 @@ are never cut off, and damaged report files open instead of failing.
 - Damaged report files open: `migrateDefinition` drops optional fields of the wrong type, empties
   lists that are not lists, falls back to A4 for missing paper or margins, repairs negative or
   missing sizes and leaves out items without a type and sections of no known kind; an unknown item
-  type prints nothing. They used to break the designer or stop the layout
-  with a technical error (found by feeding thousands of damaged files to the layout).
+  type prints nothing. They used to break the designer or stop the layout with a technical error
+  (found by feeding thousands of damaged files to the layout).
 - A report stops at 20 000 pages with a problem saying so: a file with an item a million pages tall
   (report files are untrusted) no longer freezes the browser.
 - Long reports lay out about twice as fast: number and date formatters are reused, and running
@@ -148,7 +147,6 @@ are never cut off, and damaged report files open instead of failing.
 - The report wizard and *Design from data* no longer total calendar fields (month, year, day …).
 - Sub-reports, charts, cross tables, barcodes, check boxes and pictures from data are drawn on the
   design page as they print, from the sample data (clipped to their box), instead of an icon.
-
 - Data sources: the dialog takes the focus and closes with Escape (not while editing the JSON text,
   which saves when it is left).
 - Data sources: when the app passes the rows (`data`), the main source says its own data is only a
