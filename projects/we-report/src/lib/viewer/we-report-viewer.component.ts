@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, Injector, input, output, signal, untracked, viewChild } from '@angular/core';
 import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, storedZip, toMonoBitmap, writeCsv, writeXlsx, zplFromBitmaps } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
@@ -612,13 +612,28 @@ export class WeReportViewerComponent {
     this.thumbs()?.nativeElement.children[page - 1]?.scrollIntoView({ block: 'nearest' });
   }
 
-  /** Ctrl + wheel (and a trackpad pinch) zooms, as in the designer and desktop viewers. */
+  /** Ctrl + wheel (and a trackpad pinch) zooms around the pointer, as desktop viewers do. */
   protected onWheel(e: WheelEvent): void {
     if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
-    this.setZoom(this.zoomLevel() + (e.deltaY < 0 ? 0.1 : -0.1));
+    const before = this.zoomLevel();
+    this.setZoom(before + (e.deltaY < 0 ? 0.1 : -0.1));
+    const box = this.scroller()?.nativeElement;
+    const ratio = this.zoomLevel() / before;
+    if (!box || ratio === 1) return;
+    // The point under the pointer stays there (the gaps between pages do not scale: close enough).
+    const rect = box.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const left = (box.scrollLeft + x) * ratio - x;
+    const top = (box.scrollTop + y) * ratio - y;
+    afterNextRender(() => {
+      box.scrollLeft = left;
+      box.scrollTop = top;
+    }, { injector: this.injector });
   }
 
+  private readonly injector = inject(Injector);
   private fittedOnce = false;
   /** On a screen narrower than the page (a phone), the first preview at the default zoom fits the page's width. */
   private fitNarrowScreen(doc: LayoutDocument): void {

@@ -46,6 +46,22 @@ describe('WeReportViewerComponent', () => {
     expect(zoom()).toBeCloseTo(before + 0.1, 5);
   });
 
+  it('keeps the point under the pointer when zooming with the wheel', async () => {
+    const host = fixture.nativeElement as HTMLElement;
+    host.style.height = '400px';
+    await render(listReport(), Array.from({ length: 70 }, (_, i) => ({ name: `Satır ${i + 1}` })));
+    const scroller = host.querySelector('.we-report-viewer__scroll') as HTMLElement;
+    scroller.scrollTop = 300;
+    const rect = scroller.getBoundingClientRect();
+    const zoom = () => (fixture.componentInstance as unknown as { zoomLevel(): number }).zoomLevel();
+    const before = zoom();
+    scroller.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, ctrlKey: true, cancelable: true, clientX: rect.left, clientY: rect.top }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(scroller.scrollTop).toBeCloseTo(300 * (zoom() / before), -1);
+  });
+
   it('fits the page to the width the first time on a narrow screen', async () => {
     const host = fixture.nativeElement as HTMLElement;
     host.style.width = '360px';
