@@ -296,6 +296,19 @@
       }
     </section>
   }
+  @if (advanced() && (b.kind === 'pageHeader' || b.kind === 'pageFooter')) {
+    <section class="pp__section">
+      <h3>{{ s.groupBehaviour }}</h3>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="b.printOnFirstPage !== false" (change)="setPrintOn('printOnFirstPage', $any($event.target).checked)" />
+        <span>{{ s.printOnFirstPage }}</span>
+      </label>
+      <label class="pp__check">
+        <input type="checkbox" [checked]="b.printOnLastPage !== false" (change)="setPrintOn('printOnLastPage', $any($event.target).checked)" />
+        <span>{{ s.printOnLastPage }}</span>
+      </label>
+    </section>
+  }
   @if (b.kind !== 'detail') {
     <button type="button" class="pp__danger" (click)="removeBand()">{{ s.removeBand }}</button>
   }

@@ -89,6 +89,9 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
   alone; *Keep group on one page* (`keepTogether`) moves the whole group instead.
 - **At the bottom of the last page** (`printAtBottom`, report footer, Advanced) — totals and
   signature lines sit just above the page footer however short the list, as on a printed invoice.
+- **Page header and footer on the first and last page** (Advanced) — untick *Print on the first
+  page* (`printOnFirstPage: false`) when page 1 has its own heading, or *Print on the last page*
+  for a footer that should not repeat under the totals. The room stays reserved.
 - **Bookmarks** — a group header or the detail section can carry a `bookmark` (fixed text or a
   formula such as `[Customer]`): the entries become PDF bookmarks and the preview's *Document map*,
   nested by group (`LayoutDocument.bookmarks` in code).

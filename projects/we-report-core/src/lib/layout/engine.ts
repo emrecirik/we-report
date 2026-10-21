@@ -512,10 +512,13 @@ class LayoutRun {
       };
       if (this.def.page.color) items.push({ kind: 'rect', x: 0, y: 0, width, height: pageHeight, fill: this.def.page.color });
       items.push(...this.watermark(scope, width, pageHeight));
-      place(pageHeader, margins.top);
+      // A page header or footer can stay off the first or last page of the document.
+      const shown = (band: Band | undefined) =>
+        band && !(index === 0 && band.printOnFirstPage === false) && !(index === count - 1 && band.printOnLastPage === false) ? band : undefined;
+      place(shown(pageHeader), margins.top);
       items.push(...(shift ? state.items.map((item) => translate(item, shift, 0)) : state.items));
       for (const d of state.deferred) for (const item of d.render(info)) items.push(translate(item, left, d.y));
-      place(pageFooter, contentHeight === null ? margins.top + state.endY : margins.top + contentHeight - footerHeight);
+      place(shown(pageFooter), contentHeight === null ? margins.top + state.endY : margins.top + contentHeight - footerHeight);
       return { width, height: pageHeight, items };
     });
   }

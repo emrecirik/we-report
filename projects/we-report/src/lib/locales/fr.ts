@@ -202,6 +202,8 @@ export const weReportLocaleFr: WeReportLocale = {
   keepWithFirstRow: 'Garder l’en-tête avec la première ligne',
   printAtBottom: 'En bas de la dernière page',
   printAtBottomHint: 'Les totaux et signatures se placent juste au-dessus du pied de page, même si la liste est courte.',
+  printOnFirstPage: 'Imprimer sur la première page',
+  printOnLastPage: 'Imprimer sur la dernière page',
   bookmark: 'Signet',
   bookmarkHint: 'Une entrée des signets PDF et du plan du document de l’aperçu, ex. le nom du client.',
   alternateBackground: 'Une ligne sur deux',

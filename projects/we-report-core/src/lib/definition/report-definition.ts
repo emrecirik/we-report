@@ -322,6 +322,10 @@ export interface Band {
   pageBreakAfter?: boolean;
   /** reportFooter only: placed at the bottom of the last page, e.g. invoice totals and signatures. */
   printAtBottom?: boolean;
+  /** pageHeader / pageFooter: `false` leaves it off the first page (its room stays). Default true. */
+  printOnFirstPage?: boolean;
+  /** pageHeader / pageFooter: `false` leaves it off the last page (its room stays). Default true. */
+  printOnLastPage?: boolean;
   backgroundColor?: string;
   /** groupHeader / detail: an entry of the document map (PDF bookmarks, the viewer's list), e.g. `[Customer]`. */
   bookmark?: Bindable<string>;

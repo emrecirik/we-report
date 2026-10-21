@@ -36,6 +36,9 @@
 - *At the bottom of the last page* (`printAtBottom` on the report footer): totals and signatures
   sit just above the page footer however short the list. DevExpress `PrintAtBottom` imports as it,
   and `GroupUnion="WithFirstDetail"` now imports as *keep the header with the first row*.
+- Page header and footer can stay off the first or last page (`printOnFirstPage`,
+  `printOnLastPage`); RDLC `PrintOnFirstPage` / `PrintOnLastPage` and DevExpress
+  `PrintOn="NotWithReportHeader/Footer"` import as these.
 - Damaged report files open: `migrateDefinition` drops optional fields of the wrong type, empties
   lists that are not lists, falls back to A4 for missing paper and leaves out items without a
   type; an unknown item type prints nothing. They used to break the designer or stop the layout

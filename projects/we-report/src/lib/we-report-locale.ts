@@ -186,6 +186,8 @@ export interface WeReportLocale {
   keepWithFirstRow: string;
   printAtBottom: string;
   printAtBottomHint: string;
+  printOnFirstPage: string;
+  printOnLastPage: string;
   bookmark: string;
   bookmarkHint: string;
   alternateBackground: string;
@@ -633,6 +635,8 @@ export const weReportLocaleEn: WeReportLocale = {
   keepWithFirstRow: 'Keep the header with the first row',
   printAtBottom: 'At the bottom of the last page',
   printAtBottomHint: 'Totals and signatures sit just above the page footer, however short the list.',
+  printOnFirstPage: 'Print on the first page',
+  printOnLastPage: 'Print on the last page',
   bookmark: 'Bookmark',
   bookmarkHint: 'An entry in the PDF bookmarks and the preview’s document map, e.g. the customer’s name.',
   alternateBackground: 'Every second row',
@@ -1122,6 +1126,8 @@ export const weReportLocaleTr: WeReportLocale = {
   keepWithFirstRow: 'Başlığı ilk satırla birlikte tut',
   printAtBottom: 'Son sayfanın en altında',
   printAtBottomHint: 'Toplamlar ve imzalar, liste ne kadar kısa olursa olsun sayfa altlığının hemen üstünde durur.',
+  printOnFirstPage: 'İlk sayfada bas',
+  printOnLastPage: 'Son sayfada bas',
   bookmark: 'Yer imi',
   bookmarkHint: 'PDF yer imlerinde ve önizlemenin belge haritasında bir satır; örn. müşterinin adı.',
   alternateBackground: 'Her ikinci satır',

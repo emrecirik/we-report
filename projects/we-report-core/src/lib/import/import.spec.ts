@@ -70,7 +70,7 @@ const RDLC = `<?xml version="1.0" encoding="utf-8"?>
     </Body>
     <Width>6in</Width>
     <Page>
-      <PageHeader><Height>0.3in</Height><ReportItems>
+      <PageHeader><Height>0.3in</Height><PrintOnFirstPage>false</PrintOnFirstPage><ReportItems>
         <Textbox Name="PageNo"><Paragraphs><Paragraph><TextRuns><TextRun><Value>="Page " &amp; Globals!PageNumber &amp; " of " &amp; Globals!TotalPages</Value></TextRun></TextRuns></Paragraph></Paragraphs><Top>0in</Top><Left>4in</Left><Height>0.25in</Height><Width>2in</Width></Textbox>
       </ReportItems></PageHeader>
       <PageHeight>29.7cm</PageHeight><PageWidth>21cm</PageWidth>
@@ -178,6 +178,8 @@ describe('report import', () => {
     expect(report.page).toEqual(jasmine.objectContaining({ paper: 'A4', orientation: 'portrait', margins: { top: 15, right: 20, bottom: 15, left: 20 } }));
     expect(report.bands.map((b) => b.kind)).toEqual(['pageHeader', 'reportHeader', 'detail', 'reportFooter']);
     expect(report.bands[0].controls[0]).toEqual(jasmine.objectContaining({ type: 'pageInfo', info: 'pageNofM', format: 'Page {0} of {1}' }));
+    expect(report.bands[0].printOnFirstPage).toBeFalse();
+    expect(report.bands[0].printOnLastPage).toBeUndefined();
     const title = report.bands[1].controls[0] as TextControl;
     expect(title.text).toEqual({ expression: '"Invoice for " + [?Customer]' });
     expect(title.styleOverrides).toEqual(jasmine.objectContaining({ fontFamily: 'Arial', fontSize: 16, bold: true, color: '#4682b4', textAlign: 'center' }));
@@ -200,7 +202,8 @@ describe('report import', () => {
     report.dataSources[0] = { ...report.dataSources[0], kind: 'json', data: [{ product_name: 'Çay', qty: 2, price: 10 }, { product_name: 'Kahve', qty: 1, price: 30 }] } as never;
     const texts = layoutReport(report, { fonts, now: new Date(2026, 9, 19), locale: 'en-US', currency: 'USD' }).pages[0].items
       .filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines.map((l) => l.text).join(' '));
-    expect(texts).toEqual(jasmine.arrayContaining(['Invoice for Ayşe & Co', 'Çay', 'Kahve', '20.00', '30.00', '$50.00', 'Page 1 of 1']));
+    expect(texts).toEqual(jasmine.arrayContaining(['Invoice for Ayşe & Co', 'Çay', 'Kahve', '20.00', '30.00', '$50.00']));
+    expect(texts).not.toContain('Page 1 of 1'); // its page header stays off the first page
   });
 
   it('imports a DevExpress layout: styles, groups, tables, summaries, detail reports', () => {

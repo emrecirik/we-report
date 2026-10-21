@@ -202,6 +202,8 @@ export const weReportLocaleEs: WeReportLocale = {
   keepWithFirstRow: 'Mantener el encabezado con la primera fila',
   printAtBottom: 'Al pie de la última página',
   printAtBottomHint: 'Los totales y las firmas quedan justo encima del pie de página, por corta que sea la lista.',
+  printOnFirstPage: 'Imprimir en la primera página',
+  printOnLastPage: 'Imprimir en la última página',
   bookmark: 'Marcador',
   bookmarkHint: 'Una entrada en los marcadores del PDF y el mapa del documento de la vista previa, p. ej. el nombre del cliente.',
   alternateBackground: 'Una fila de cada dos',

@@ -246,6 +246,12 @@ export class PropertyPanelComponent {
     if (band) this.state.updateBand(band.id, (b) => (b[key] = value || undefined));
   }
 
+  /** Printed is the default, so only `false` is stored. */
+  protected setPrintOn(key: 'printOnFirstPage' | 'printOnLastPage', value: boolean): void {
+    const band = this.band();
+    if (band) this.state.updateBand(band.id, (b) => (b[key] = value ? undefined : false));
+  }
+
   protected labelSheetName(l: LabelSheet): string {
     const count = this.strings().labelsCount.replace('{0}', String(l.columns * l.rows));
     return `${l.paper} · ${count} · ${l.labelWidth} × ${l.labelHeight} mm (${l.id})`;

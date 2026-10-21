@@ -202,6 +202,8 @@ export const weReportLocaleDe: WeReportLocale = {
   keepWithFirstRow: 'Kopf mit der ersten Zeile zusammenhalten',
   printAtBottom: 'Unten auf der letzten Seite',
   printAtBottomHint: 'Summen und Unterschriften stehen direkt über dem Seitenfuß, wie kurz die Liste auch ist.',
+  printOnFirstPage: 'Auf der ersten Seite drucken',
+  printOnLastPage: 'Auf der letzten Seite drucken',
   bookmark: 'Lesezeichen',
   bookmarkHint: 'Ein Eintrag in den PDF-Lesezeichen und der Dokumentstruktur der Vorschau, z. B. der Kundenname.',
   alternateBackground: 'Jede zweite Zeile',

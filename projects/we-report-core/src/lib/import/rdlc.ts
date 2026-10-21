@@ -125,9 +125,15 @@ class RdlcImport {
 
     const header = child(page, 'PageHeader');
     const footer = child(page, 'PageFooter');
-    if (header) report.bands.push(this.band('pageHeader', rdlSize(textAt(header, 'Height')), child(header, 'ReportItems')));
+    const pageBand = (kind: 'pageHeader' | 'pageFooter', el: XmlElement): Band => {
+      const band = this.band(kind, rdlSize(textAt(el, 'Height')), child(el, 'ReportItems'));
+      if (textAt(el, 'PrintOnFirstPage')?.toLowerCase() === 'false') band.printOnFirstPage = false;
+      if (textAt(el, 'PrintOnLastPage')?.toLowerCase() === 'false') band.printOnLastPage = false;
+      return band;
+    };
+    if (header) report.bands.push(pageBand('pageHeader', header));
     report.bands.push(...this.body(child(section, 'Body')));
-    if (footer) report.bands.push(this.band('pageFooter', rdlSize(textAt(footer, 'Height')), child(footer, 'ReportItems')));
+    if (footer) report.bands.push(pageBand('pageFooter', footer));
     return { report, warnings: this.warnings };
   }
 

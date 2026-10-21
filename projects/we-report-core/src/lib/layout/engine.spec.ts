@@ -495,6 +495,17 @@ describe('layout engine', () => {
     expect(texts(layoutReport(report, { fonts, now: NOW, parent: { city: 'İzmir' } }).pages[0])).toContain('Ayşe / İzmir');
   });
 
+  it('leaves the page header off the first page and the footer off the last when asked', () => {
+    const report = listReport(Array.from({ length: 70 }, (_, i) => ({ Name: `Row ${i}` })));
+    report.bands[0].controls.push({ id: 'head', type: 'text', x: 0, y: 0, width: 40, height: 6, text: 'HEAD' });
+    report.bands[0].printOnFirstPage = false;
+    report.bands[2].printOnLastPage = false;
+    const pages = layoutReport(report, { fonts, now: NOW }).pages.map((p) => texts(p));
+    expect(pages.length).toBeGreaterThan(2);
+    expect(pages.map((t) => t.includes('HEAD'))).toEqual(pages.map((_, i) => i > 0));
+    expect(pages.map((t) => t.some((x) => /^\d+ \/ \d+$/.test(x)))).toEqual(pages.map((_, i) => i < pages.length - 1));
+  });
+
   it('prints a report footer at the bottom of the last page when asked', () => {
     const report = listReport([{ Name: 'a' }, { Name: 'b' }]);
     const footer = report.bands[2];

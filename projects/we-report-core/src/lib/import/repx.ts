@@ -206,6 +206,9 @@ class RepxImport {
         footers.push({ level, band });
       }
       if (kind === 'reportFooter' && b.attrs['PrintAtBottom'] === 'true') band.printAtBottom = true;
+      // DevExpress keeps page bands off the pages of the report header / footer (the first / last page).
+      if ((kind === 'pageHeader' || kind === 'pageFooter') && /NotWithReportHeader/.test(b.attrs['PrintOn'] ?? '')) band.printOnFirstPage = false;
+      if ((kind === 'pageHeader' || kind === 'pageFooter') && /NotWithReportFooter|AndFooter/.test(b.attrs['PrintOn'] ?? '')) band.printOnLastPage = false;
       if (b.attrs['PageBreak'] === 'BeforeBand') band.pageBreakBefore = true;
       if (b.attrs['PageBreak'] === 'AfterBand') band.pageBreakAfter = true;
       band.height = roundMm(Math.max(band.height, ...band.controls.map((c) => c.y + c.height)));
