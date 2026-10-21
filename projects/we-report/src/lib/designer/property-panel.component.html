@@ -535,15 +535,19 @@
               <button type="button" role="radio" [attr.aria-checked]="c.chartType === t.type" [class.pp__on]="c.chartType === t.type" (click)="setChartType(t.type)">{{ s[t.label] }}</button>
             }
           </div>
-          <label class="pp__row pp__row--stack">
-            <span>{{ s.chartCategory }}</span>
-            <select (change)="setExpression('category', $any($event.target).value)">
-              <option value="" [selected]="!c.category.expression">—</option>
-              @for (f of fields(); track f.expression) {
-                <option [value]="f.expression" [selected]="f.expression === c.category.expression">{{ f.label }}</option>
-              }
-            </select>
-          </label>
+          <!-- A data bar and a gauge show one value: they have no groups. -->
+          @let grouped = c.chartType !== 'databar' && c.chartType !== 'gauge';
+          @if (grouped) {
+            <label class="pp__row pp__row--stack">
+              <span>{{ s.chartCategory }}</span>
+              <select (change)="setExpression('category', $any($event.target).value)">
+                <option value="" [selected]="!c.category.expression">—</option>
+                @for (f of fields(); track f.expression) {
+                  <option [value]="f.expression" [selected]="f.expression === c.category.expression">{{ f.label }}</option>
+                }
+              </select>
+            </label>
+          }
           <label class="pp__row pp__row--stack">
             <span>{{ s.chartValue }}</span>
             <select (change)="setExpression('value', $any($event.target).value)">
@@ -556,7 +560,9 @@
           @if (advanced()) {
             <label class="pp__row pp__row--stack">
               <span>{{ s.expression }}</span>
-              <input class="pp__mono" [value]="c.category.expression" (input)="setExpression('category', $any($event.target).value)" spellcheck="false" />
+              @if (grouped) {
+                <input class="pp__mono" [value]="c.category.expression" (input)="setExpression('category', $any($event.target).value)" spellcheck="false" />
+              }
               <input class="pp__mono" [value]="c.value.expression" (input)="setExpression('value', $any($event.target).value)" spellcheck="false" />
             </label>
           }
