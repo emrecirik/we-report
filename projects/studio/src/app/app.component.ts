@@ -256,6 +256,13 @@ export class AppComponent {
     this.data.set(t.data);
   }
 
+  /** A status line was written in the old language: it goes rather than stay untranslated. */
+  protected setLanguage(language: StudioLanguage): void {
+    this.language.set(language);
+    this.message.set(null);
+    this.importWarnings.set([]);
+  }
+
   protected toggleTheme(): void {
     this.dark.update((d) => !d);
     document.documentElement.dataset['theme'] = this.dark() ? 'dark' : 'light';

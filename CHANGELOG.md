@@ -158,7 +158,7 @@
   shows a warning; a design too large for a link says so instead of producing a link that will not
   open. Studio has unit tests (`npm test` runs them). Esc closes the gallery, history and data
   dialogs; landscape templates fit their gallery card; a blank report is named in the page's
-  language.
+  language, and changing the language clears a status line written in the old one.
 
 ## 0.6.0 — 2026-10-20
 

@@ -27,7 +27,7 @@
     <img src="https://img.shields.io/github/stars/emrecirik/we-report.svg?style=social" alt="GitHub stars" height="20" />
   </a>
   <button type="button" (click)="toggleTheme()" [attr.aria-pressed]="dark()">{{ t.theme }}: {{ dark() ? '☾' : '☀' }}</button>
-  <select (change)="language.set($any($event.target).value)" aria-label="Language">
+  <select (change)="setLanguage($any($event.target).value)" aria-label="Language">
     @for (l of languages; track l.id) {
       <option [value]="l.id" [selected]="language() === l.id">{{ l.name }}</option>
     }
