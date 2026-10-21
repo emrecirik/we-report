@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+Sub-reports, cross tables, rich text, sparklines, data bars and gauges; groups ordered by their
+total with top N, page numbers per group and headers kept with their first row; report footers at
+the bottom of the last page; running and carried totals, shares of the grand total and calculated
+fields; PNG, CSV and label/receipt printer output. Long reports lay out about twice as fast, numbers
+are never cut off, and damaged report files open instead of failing.
+
 ### New items
 
 - **Sub-reports** (`type: 'subreport'`): a whole report inside a box, designed in its own designer
