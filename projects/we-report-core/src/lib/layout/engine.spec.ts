@@ -495,6 +495,14 @@ describe('layout engine', () => {
     expect(texts(layoutReport(report, { fonts, now: NOW, parent: { city: 'İzmir' } }).pages[0])).toContain('Ayşe / İzmir');
   });
 
+  it('reads [PageNumber] and [Pages] in formulas once the pages are known', () => {
+    const report = listReport(Array.from({ length: 70 }, (_, i) => ({ Name: `Row ${i}` })));
+    report.bands[2].controls = [{ id: 'p', type: 'text', x: 0, y: 0, width: 80, height: 6, text: { expression: "'Sayfa ' + [PageNumber] + ' / ' + [Pages]" } }];
+    const pages = layoutReport(report, { fonts, now: NOW }).pages.map((p) => texts(p).filter((t) => t.startsWith('Sayfa')));
+    expect(pages).toEqual(pages.map((_, i) => [`Sayfa ${i + 1} / ${pages.length}`]));
+    expect(checkReport(report, ['Name']).filter((i) => i.code === 'unknownField')).toEqual([]);
+  });
+
   it('leaves the page header off the first page and the footer off the last when asked', () => {
     const report = listReport(Array.from({ length: 70 }, (_, i) => ({ Name: `Row ${i}` })));
     report.bands[0].controls.push({ id: 'head', type: 'text', x: 0, y: 0, width: 40, height: 6, text: 'HEAD' });

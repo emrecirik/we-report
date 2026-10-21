@@ -87,6 +87,8 @@ const ERROR_TEXT = '#ERR';
 const MM_PER_PX = toMm(1, 'px');
 /** Sub-reports inside sub-reports deeper than this are not printed (report files are untrusted). */
 const MAX_SUBREPORT_DEPTH = 5;
+/** `[PageNumber]` and `[Pages]` in a formula: the text is drawn once the page numbers are known. */
+const PAGE_FIELDS = /\[\s*(PageNumber|Pages)\s*\]/;
 // A report file is untrusted: an item a million pages tall must not freeze the browser.
 const MAX_PAGES = 20_000;
 /** A cross table shows at most this many rows and columns (each value of a unique id would be one). */
@@ -613,6 +615,19 @@ class LayoutRun {
     const box = { x: c.x, y: c.y, width: c.width, height: c.height };
     switch (c.type) {
       case 'text': {
+        if (isExpression(c.text) && PAGE_FIELDS.test(c.text.expression) && !c.markup) {
+          const expression = c.text.expression;
+          const row = scope.row !== null && typeof scope.row === 'object' ? scope.row : {};
+          return {
+            items: [],
+            height: c.height,
+            deferred: (page) => {
+              const pageRow = { ...row, PageNumber: page.number, Pages: page.count };
+              const { text } = this.valueText({ expression }, c.format, { ...scope, row: pageRow }, c.id);
+              return this.textBox(text, style, box);
+            },
+          };
+        }
         if (c.markup) {
           const runs = this.richRuns(c, scope);
           const height = c.canGrow ? Math.max(c.height, this.richHeight(runs, style, c.width)) : c.height;

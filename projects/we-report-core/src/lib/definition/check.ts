@@ -139,6 +139,7 @@ export function checkReport(def: ReportDefinition, rowFields?: string[], parentF
           const known =
             head === '^' ? !outer || outer.has(rest.join('.'))
             : head.startsWith('?') ? params.has(head.slice(1))
+            : (head === 'PageNumber' || head === 'Pages') && rest.length === 0 ? true
             : !own || own.has(path.join('.'));
           if (!known) issues.push({ code: 'unknownField', severity: 'warning', bandId: band.id, controlId: c.id, detail: path.join('.') });
         }
