@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, model, signal, untracked, viewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, Injector, input, model, signal, untracked, viewChild } from '@angular/core';
 import { Band, BandKind, calculatedFieldMap, checkReport, evaluate, formatValue, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -102,6 +102,7 @@ export class WeReportDesignerComponent {
   /** Right-click menu: screen position and the band it was opened on. */
   protected readonly contextMenu = signal<{ x: number; y: number; bandId: string | null; onControl: boolean; at?: { x: number; y: number } } | null>(null);
   private readonly canvas = viewChild<ElementRef<HTMLElement>>('canvas');
+  private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly surface = viewChild(DesignSurfaceComponent);
   protected readonly shortcutsOpen = signal(false);
@@ -352,10 +353,24 @@ export class WeReportDesignerComponent {
     this.setZoom(Math.floor(((el.clientWidth - 24 - 136 - 16) / pagePx) * 20) / 20);
   }
 
+  /** Ctrl + wheel (and a trackpad pinch) zooms around the pointer. */
   protected onCanvasWheel(e: WheelEvent): void {
     if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
-    this.setZoom(this.zoomLevel() + (e.deltaY < 0 ? 0.1 : -0.1));
+    const before = this.zoomLevel();
+    this.setZoom(before + (e.deltaY < 0 ? 0.1 : -0.1));
+    const box = this.canvas()?.nativeElement;
+    const ratio = this.zoomLevel() / before;
+    if (!box || ratio === 1) return;
+    const rect = box.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const left = (box.scrollLeft + x) * ratio - x;
+    const top = (box.scrollTop + y) * ratio - y;
+    afterNextRender(() => {
+      box.scrollLeft = left;
+      box.scrollTop = top;
+    }, { injector: this.injector });
   }
 
   protected openContextMenu(e: MouseEvent): void {
