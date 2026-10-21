@@ -120,6 +120,7 @@ export function sanitizeDefinition(input: Obj): Obj {
   keepIf(d, 'locale', (v) => typeof v === 'string' && validLocale(v));
   keepIf(d, 'currency', (v) => typeof v === 'string' && /^[A-Za-z]{3}$/.test(v));
   keepIf(d, 'watermark', isObj);
+  if (isObj(d['watermark']) && !isBindable(d['watermark']['text'])) d['watermark'] = { ...d['watermark'], text: '' };
   // Paper and margins are needed to lay anything out: damaged ones fall back to A4.
   const blank = createBlankReport().page;
   if (!isObj(d['page'])) d['page'] = blank;
