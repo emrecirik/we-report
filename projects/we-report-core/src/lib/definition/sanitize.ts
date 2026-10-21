@@ -52,6 +52,9 @@ function length(o: Obj, key: string, fallback: number, min = -Infinity): void {
   if (typeof v !== 'number' || !Number.isFinite(v) || v < min) o[key] = fallback;
 }
 
+/** Formulas an item cannot do without: missing or not a formula, they become an empty one. */
+const REQUIRED_FORMULAS: Record<string, string[]> = { chart: ['category', 'value'], crosstab: ['rows', 'columns', 'value'] };
+
 const BAND_KINDS = new Set(['reportHeader', 'pageHeader', 'groupHeader', 'detail', 'subHeader', 'subDetail', 'subFooter', 'groupFooter', 'pageFooter', 'reportFooter']);
 
 function sanitizeControl(input: Obj): Obj {
@@ -84,6 +87,7 @@ function sanitizeControl(input: Obj): Obj {
     const list = ['formatting', 'colors', 'parameters'].includes(key) || (c['type'] === 'table' && (key === 'rows' || key === 'columns'));
     if (Array.isArray(value) && !list) c[key] = { expression: '' };
   }
+  for (const key of REQUIRED_FORMULAS[c['type'] as string] ?? []) if (!isExpression(c[key])) c[key] = { expression: '' };
   if (c['type'] === 'table') {
     c['rows'] = objects(c['rows']).map((row) => ({
       ...row,
