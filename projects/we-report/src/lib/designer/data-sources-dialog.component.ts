@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import {
   csvToObjects,
   DatabaseDataSource,
@@ -37,6 +37,20 @@ export class DataSourcesDialogComponent {
   /** The host app passes the rows (the designer's `data`), so the main source's own data is a fallback. */
   readonly hostData = input(false);
   readonly closed = output<void>();
+
+  private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
+
+  constructor() {
+    // Focus the dialog so Escape closes it at once.
+    afterNextRender(() => this.dialog()?.nativeElement.focus());
+  }
+
+  /** Escape closes the dialog, but not from a dialog inside it or a text area that saves on leaving. */
+  protected onEscape(e: Event): void {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'TEXTAREA' || target.closest('[role=dialog]') !== e.currentTarget) return;
+    this.closed.emit();
+  }
 
   protected readonly state = inject(DesignerState);
   private readonly backend = inject(WeReportBackendService);

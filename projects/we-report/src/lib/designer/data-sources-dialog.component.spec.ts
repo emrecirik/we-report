@@ -37,6 +37,17 @@ describe('DataSourcesDialogComponent', () => {
     expect(el().textContent).toContain(weReportLocaleTr.hostDataNote);
   });
 
+  it('closes on Escape, but not from the JSON text that saves when it is left', () => {
+    let closed = 0;
+    fixture.componentInstance.closed.subscribe(() => closed++);
+    dialog['add']('json');
+    fixture.detectChanges();
+    el().querySelector('textarea')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(closed).toBe(0);
+    el().querySelector('.dsd')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(closed).toBe(1);
+  });
+
   it('keeps the previous data when pasted JSON is invalid', () => {
     dialog['add']('json');
     dialog['setJson']('[{"a":1}]');

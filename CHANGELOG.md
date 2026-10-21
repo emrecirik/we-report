@@ -136,6 +136,8 @@
 - Sub-reports, charts, cross tables, barcodes, check boxes and pictures from data are drawn on the
   design page as they print, from the sample data (clipped to their box), instead of an icon.
 
+- Data sources: the dialog takes the focus and closes with Escape (not while editing the JSON text,
+  which saves when it is left).
 - Data sources: when the app passes the rows (`data`), the main source says its own data is only a
   fallback (`hostDataNote`), instead of showing an empty source with 0 rows as if data were missing.
 - Accessibility (axe, WCAG AA): secondary text and warnings have enough contrast

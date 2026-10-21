@@ -1,6 +1,6 @@
 @let s = strings();
 <div class="dsd__backdrop" (click)="closed.emit()"></div>
-<div class="dsd" role="dialog" aria-modal="true" [attr.aria-label]="s.dataSources">
+<div #dialog class="dsd" role="dialog" aria-modal="true" tabindex="-1" [attr.aria-label]="s.dataSources" (keydown.escape)="onEscape($event)">
   <header class="dsd__head">
     <h2>{{ s.dataSources }}</h2>
     <button type="button" class="dsd__close" (click)="closed.emit()" [attr.aria-label]="s.close">×</button>

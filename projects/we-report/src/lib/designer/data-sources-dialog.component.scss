@@ -364,3 +364,8 @@ button:focus-visible {
 .dsd__mono {
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
+
+/* Focused on open so Escape works; the dialog itself needs no ring. */
+.dsd:focus {
+  outline: none;
+}
