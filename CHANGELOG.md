@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — 2026-10-21
 
 Sub-reports, cross tables, rich text, sparklines, data bars and gauges; groups ordered by their
 total with top N, page numbers per group and headers kept with their first row; report footers at
