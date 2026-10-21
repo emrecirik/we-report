@@ -18,7 +18,9 @@ any of them in your global styles:
 ```
 
 Dark mode follows `prefers-color-scheme`, or force it with `<html data-theme="dark">`
-(`data-theme="light"` forces light).
+(`data-theme="light"` forces light). The dark theme also sets `color-scheme: dark`, so scrollbars
+and form controls turn dark with it. The default colours meet WCAG AA contrast, except the accent
+`#007aff` on small text — set `--we-report-accent` (e.g. `#0066d6`) if you need AA everywhere.
 
 | Property | Used for |
 |---|---|
