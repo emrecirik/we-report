@@ -35,6 +35,15 @@ describe('WeReportViewerComponent', () => {
     return doc;
   }
 
+  it('reads the row around from outerRow (a sub-report previewed on its own)', async () => {
+    const report = listReport();
+    report.bands[1].controls[0] = { id: 'n', type: 'text', x: 0, y: 1, width: 80, height: 6, text: { expression: "[name] + ' @ ' + [^.city]" } };
+    fixture.componentRef.setInput('outerRow', { city: 'İzmir' });
+    await render(report, [{ name: 'a' }]);
+    const texts = Array.from(fixture.nativeElement.querySelectorAll('svg.we-report-page text')).map((t) => (t as SVGTextElement).textContent);
+    expect(texts).toContain('a @ İzmir');
+  });
+
   it('zooms with Ctrl + wheel and scrolls without it', async () => {
     await render(listReport(), [{ name: 'a' }]);
     const zoom = () => (fixture.componentInstance as unknown as { zoomLevel(): number }).zoomLevel();
