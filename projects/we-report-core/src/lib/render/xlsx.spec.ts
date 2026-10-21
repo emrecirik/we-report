@@ -48,6 +48,14 @@ describe('xlsx export', () => {
     expect(files['xl/workbook.xml']).toContain('name="Satışlar"');
   });
 
+  it('leaves out the rows the detail section does not print', () => {
+    const report = createBlankReport();
+    report.bands[1].visible = { expression: '[qty] > 0' };
+    report.bands[1].controls.push({ id: 'c1', type: 'text', x: 0, y: 0, width: 40, height: 6, text: { expression: '[name]' } });
+    const table = reportTable(report, { data: [{ name: 'a', qty: 1 }, { name: 'b', qty: 0 }, { name: 'c', qty: 2 }], now: new Date(2026, 0, 1) });
+    expect(table.rows).toEqual([['a'], ['c']]);
+  });
+
   it('writes a valid empty archive structure', () => {
     const zip = storedZip([['a.txt', new TextEncoder().encode('hi')]]);
     expect(unzip(zip)).toEqual({ 'a.txt': 'hi' });

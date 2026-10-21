@@ -149,7 +149,19 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
       return rank.every((r, level) => r <= tops[level]);
     });
   }
-  const table = ordered.map((row) =>
+  // Rows the detail section leaves out (*Print only when*) are left out here too, as in print.
+  const when = detail?.visible?.expression.trim();
+  const printed = when
+    ? ordered.filter((row) => {
+        try {
+          const v = evaluate(when, { ...ctxBase, row });
+          return v !== null && v !== undefined && v !== false && v !== 0 && v !== '';
+        } catch {
+          return true; // an error prints (as #ERR), so the row stays
+        }
+      })
+    : ordered;
+  const table = printed.map((row) =>
     cells.map((c) => {
       const ctx = { ...ctxBase, row };
       const run = (expression: string) => {
