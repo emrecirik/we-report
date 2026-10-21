@@ -28,7 +28,7 @@ describe('report definition', () => {
     report.bands.push(null as unknown as Record<string, unknown>);
     report.bands[1]['visible'] = 5;
     report.bands[1]['controls'] = [
-      { id: 'a', type: 'text', x: 0, y: 0, width: 10, height: 5, text: 12, format: 0, styleOverrides: { fontFamily: true, fontSize: 12 } },
+      { id: 'a', type: 'text', x: '3', y: 0, width: {}, height: 5, text: 12, format: 0, styleOverrides: { fontFamily: true, fontSize: 12 } },
       { id: 'b', type: 'chart', x: 0, y: 0, width: 10, height: 5, value: {}, category: [1, 2], colors: ['#000'] },
       { id: 'c', x: 0, y: 0 },
     ];
@@ -44,7 +44,7 @@ describe('report definition', () => {
     expect('visible' in fixed.bands[1]).toBeFalse();
     const [text, chart] = fixed.bands[1].controls;
     expect(fixed.bands[1].controls.length).toBe(2); // the item without a type is gone
-    expect(text).toEqual(jasmine.objectContaining({ text: '12', styleOverrides: { fontSize: 12 } }));
+    expect(text).toEqual(jasmine.objectContaining({ text: '12', styleOverrides: { fontSize: 12 }, x: 0, width: 10 }));
     expect('format' in text).toBeFalse();
     expect(chart).toEqual(jasmine.objectContaining({ value: { expression: '' }, category: { expression: '' }, colors: ['#000'] }));
     expect(JSON.stringify(report)).toBe(input);

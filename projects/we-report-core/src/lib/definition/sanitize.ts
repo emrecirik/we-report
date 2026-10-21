@@ -41,8 +41,17 @@ function keepIf(o: Obj, key: string, ok: (v: unknown) => boolean): void {
   if (key in o && !ok(o[key])) delete o[key];
 }
 
+/** A length that is not a finite number becomes `fallback`, so moving or resizing it stays arithmetic. */
+function length(o: Obj, key: string, fallback: number): void {
+  if (typeof o[key] !== 'number' || !Number.isFinite(o[key])) o[key] = fallback;
+}
+
 function sanitizeControl(input: Obj): Obj {
   const c: Obj = { ...input };
+  length(c, 'x', 0);
+  length(c, 'y', 0);
+  length(c, 'width', 10);
+  length(c, 'height', 5);
   keepIf(c, 'visible', (v) => typeof v === 'boolean' || isExpression(v));
   keepIf(c, 'format', (v) => typeof v === 'string');
   keepIf(c, 'style', (v) => typeof v === 'string');
@@ -83,6 +92,7 @@ function sanitizeControl(input: Obj): Obj {
 function sanitizeBand(input: Obj): Obj {
   // An item without a type cannot be drawn or edited.
   const b: Obj = { ...input, controls: objects(input['controls']).filter((c) => typeof c['type'] === 'string').map(sanitizeControl) };
+  length(b, 'height', 0);
   keepIf(b, 'visible', isExpression);
   keepIf(b, 'bookmark', isBindable);
   keepIf(b, 'groupBy', isExpression);
