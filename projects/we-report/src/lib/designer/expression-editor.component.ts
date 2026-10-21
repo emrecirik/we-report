@@ -72,7 +72,7 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
           <h3>{{ s.fields }}</h3>
           <ul>
             @for (f of fields(); track f.expression) {
-              <li><button type="button" (click)="insert(f.expression)" [style.padding-left.px]="8 + f.depth * 12">{{ f.label }}</button></li>
+              <li><button type="button" (click)="insert(f.expression)" [style.padding-left.px]="8 + f.depth * 12" [attr.title]="f.caption ? f.expression : null">{{ f.label }}</button></li>
             }
             @for (p of parameters(); track p.name) {
               <li><button type="button" (click)="insert('[?' + p.name + ']')">? {{ p.label || p.name }}</button></li>

@@ -1,5 +1,6 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, Injector, input, model, signal, untracked, viewChild } from '@angular/core';
-import { Band, BandKind, calculatedFieldMap, checkReport, evaluate, formatValue, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
+import { Band, BandKind, calculatedFieldMap, checkReport, evaluate, findListPaths, formatValue, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -63,7 +64,7 @@ export function orderBands(bands: Band[]): Band[] {
 @Component({
   selector: 'we-report-designer',
   standalone: true,
-  imports: [DesignSurfaceComponent, PropertyPanelComponent, WeReportViewerComponent, WeReportIconPipe, DataSourcesDialogComponent],
+  imports: [NgTemplateOutlet, DesignSurfaceComponent, PropertyPanelComponent, WeReportViewerComponent, WeReportIconPipe, DataSourcesDialogComponent],
   providers: [DesignerState],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './we-report-designer.component.html',
@@ -83,6 +84,12 @@ export class WeReportDesignerComponent {
   readonly outerRow = input<unknown>(undefined);
   /** Designing a sub-report inside another designer: its page comes from the box (no paper settings). */
   readonly embedded = input(false);
+  /**
+   * Display names for data fields by path from the data root: `OrderNumber`, `Supplier.SupplierName`,
+   * `Items.ProductName` (lists without `[]`), and objects or lists themselves (`Supplier`, `Items`).
+   * Only what the designer shows; formulas and the saved report keep the real names.
+   */
+  readonly fieldLabels = input<Record<string, string> | undefined>(undefined);
 
   protected readonly state = inject(DesignerState);
   private readonly fontsService = inject(WeReportFontsService);
@@ -177,7 +184,7 @@ export class WeReportDesignerComponent {
   }
 
   protected onFieldDblClick(field: DesignerField): void {
-    this.addByClick({ kind: 'field', path: field.path, parent: field.parent, format: formatFor({ name: field.path, type: field.type }) });
+    this.addByClick({ kind: 'field', path: field.path, parent: field.parent, format: formatFor({ name: field.path, type: field.type }), caption: field.caption });
   }
 
   /** Dragging a panel edge; a double-click hides the panel or brings it back. */
@@ -257,16 +264,54 @@ export class WeReportDesignerComponent {
   protected readonly showData = signal(readSaved('showData', true, (v) => typeof v === 'boolean'));
   protected readonly sample = computed<DesignSample | null>(() => (this.showData() ? this.state.sample() : null));
 
-  protected readonly fields = computed(() => designerFields(this.state.report(), this.data(), this.outerRow()));
+  protected readonly fields = computed(() => designerFields(this.state.report(), this.data(), this.outerRow(), this.fieldLabels()));
   protected readonly fieldFilter = signal('');
-  /** The field list narrowed to names containing the filter text. */
+  /** Objects opened in the field list (`rows:Supplier`); all start closed. */
+  protected readonly openNodes = signal<ReadonlySet<string>>(new Set());
+  /**
+   * The field list with closed objects' fields hidden; a filter shows the fields whose label or
+   * name contains it, with the objects around them open.
+   */
   protected readonly shownFields = computed(() => {
     const f = this.fields();
     const q = this.fieldFilter().trim().toLocaleLowerCase();
-    if (!q) return f;
-    const keep = (list: DesignerField[]) => list.filter((x) => x.label.toLocaleLowerCase().includes(q) || x.path.toLocaleLowerCase().includes(q));
-    return { ...f, rows: keep(f.rows), inner: keep(f.inner), parent: keep(f.parent) };
+    const open = this.openNodes();
+    const ancestors = (path: string) => path.split('.').slice(0, -1).map((_, i, parts) => parts.slice(0, i + 1).join('.'));
+    const keep = (list: DesignerField[], section: string) => {
+      if (!q) return list.filter((x) => ancestors(x.path).every((a) => open.has(`${section}:${a}`)));
+      const shown = new Set(list.filter((x) => x.label.toLocaleLowerCase().includes(q) || x.path.toLocaleLowerCase().includes(q)).flatMap((x) => [x.path, ...ancestors(x.path)]));
+      return list.filter((x) => shown.has(x.path));
+    };
+    return { ...f, rows: keep(f.rows, 'rows'), inner: keep(f.inner, 'inner'), parent: keep(f.parent, 'parent') };
   });
+
+  protected nodeOpen(section: string, path: string): boolean {
+    return !!this.fieldFilter().trim() || this.openNodes().has(`${section}:${path}`);
+  }
+
+  protected toggleNode(section: string, path: string): void {
+    const next = new Set(this.openNodes());
+    const key = `${section}:${path}`;
+    if (!next.delete(key)) next.add(key);
+    this.openNodes.set(next);
+  }
+
+  /** Lists in the data the detail rows can come from ("Rows: Items"); empty when there is no choice. */
+  protected readonly rowLists = computed(() => {
+    const r = this.state.report();
+    const source = r.dataSources.find((x) => x.id === r.dataMember?.dataSourceId) ?? (r.dataMember ? undefined : r.dataSources[0]);
+    try {
+      const raw = this.data() !== undefined ? this.data() : source ? sourceValue(source) : undefined;
+      const paths = findListPaths(raw).filter(Boolean);
+      return paths.map((path) => ({ path, label: this.fieldLabels()?.[path] ?? path }));
+    } catch {
+      return [];
+    }
+  });
+
+  protected setRowsPath(path: string): void {
+    this.state.update((d) => (d.dataMember = { dataSourceId: d.dataMember?.dataSourceId ?? d.dataSources[0]?.id ?? '', path: path || undefined }));
+  }
   protected readonly allFields = computed<DesignerField[]>(() => [...this.fields().rows, ...this.fields().parent, ...this.fields().inner]);
   protected readonly addableBands = computed(() => {
     const kinds = new Set(this.state.report().bands.map((b) => b.kind));
@@ -657,7 +702,7 @@ export class WeReportDesignerComponent {
   }
 
   protected onFieldDragStart(e: DragEvent, field: DesignerField): void {
-    this.setDrag(e, { kind: 'field', path: field.path, parent: field.parent, format: formatFor({ name: field.path, type: field.type }) });
+    this.setDrag(e, { kind: 'field', path: field.path, parent: field.parent, format: formatFor({ name: field.path, type: field.type }), caption: field.caption });
   }
 
   private setDrag(e: DragEvent, data: DesignerDragData): void {
@@ -695,7 +740,7 @@ export class WeReportDesignerComponent {
   /** The report wizard's choices while it is open. */
   protected readonly wizard = signal<{
     title: string;
-    fields: { name: string; on: boolean }[];
+    fields: { name: string; label: string; on: boolean }[];
     groupBy: string;
     sortBy: string;
     sortDescending: boolean;
@@ -712,7 +757,7 @@ export class WeReportDesignerComponent {
     // A blank report is still called "Report": show the localized word instead.
     this.wizard.set({
       title: name && name !== 'Report' ? name : this.strings().newReportTitle,
-      fields: fields.map((f, i) => ({ name: f.name, on: i < 12 })),
+      fields: fields.map((f, i) => ({ name: f.name, label: this.fields().rows.find((x) => x.path === f.name)?.label ?? f.name, on: i < 12 })),
       groupBy: '',
       sortBy: '',
       sortDescending: false,
@@ -753,6 +798,7 @@ export class WeReportDesignerComponent {
         sortDescending: w.sortDescending,
         totals: w.totals,
         orientation: w.orientation || undefined,
+        labels: Object.fromEntries(this.fields().rows.filter((f) => f.caption).map((f) => [f.path, f.caption!])),
       });
       Object.assign(d, generated);
     });

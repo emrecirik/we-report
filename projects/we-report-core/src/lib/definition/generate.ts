@@ -20,6 +20,8 @@ export interface GenerateOptions {
   sortDescending?: boolean;
   /** Default: landscape when there are more than seven columns. */
   orientation?: 'portrait' | 'landscape';
+  /** Column headings by field name (`{ OrderNumber: 'Sipariş No' }`); others get `captionFor(name)`. */
+  labels?: Record<string, string>;
 }
 
 /** "unitPrice" / "unit_price" → "Unit price": a readable caption for a field name. */
@@ -101,7 +103,7 @@ export function generateListReport(
     height: 7,
     style: 'columnHeader',
     styleOverrides: numeric(f) ? { textAlign: 'right' } : undefined,
-    text: captionFor(f.name),
+    text: options.labels?.[f.name] ?? captionFor(f.name),
   }));
   const detailCells: ReportControl[] = layout.map(({ field: f, x, width: w }, i): ReportControl =>
     // Yes/no values print as a tick box.

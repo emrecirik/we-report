@@ -209,6 +209,51 @@ describe('WeReportDesignerComponent', () => {
     expect(state.report().bands.map((b) => b.kind)).toEqual(['pageHeader', 'detail', 'pageFooter']);
   });
 
+  it('shows the host field labels in the field list, the wizard and dropped captions', () => {
+    fixture = TestBed.createComponent(WeReportDesignerComponent);
+    fixture.componentRef.setInput('report', createBlankReport());
+    fixture.componentRef.setInput('data', { OrderNumber: 'A1', Supplier: { SupplierName: 'X' }, Items: [{ ProductName: 'P', Qty: 2 }] });
+    fixture.componentRef.setInput('fieldLabels', { OrderNumber: 'Sipariş No', Supplier: 'Tedarikçi', 'Supplier.SupplierName': 'Tedarikçi adı', Items: 'Kalemler', 'Items.ProductName': 'Stok adı' });
+    fixture.detectChanges();
+    fixture.detectChanges();
+    state = fixture.debugElement.injector.get(DesignerState);
+    const items = () => Array.from(el().querySelectorAll('.wd__fields li')).map((li) => li.lastChild!.textContent!.trim());
+    // Objects start closed; opening one shows its fields.
+    expect(items()).toEqual(['Sipariş No', 'Tedarikçi']);
+    expect(el().querySelector('.wd__fields li')!.getAttribute('title')).toBe('OrderNumber');
+    el().querySelector<HTMLButtonElement>('.wd__node')!.click();
+    fixture.detectChanges();
+    expect(items()).toEqual(['Sipariş No', 'Tedarikçi', 'Tedarikçi adı']);
+    // The rows can come from a list of the data, shown by its label.
+    const rows = el().querySelector<HTMLSelectElement>('.wd__rows select')!;
+    expect(Array.from(rows.options).map((o) => o.textContent!.trim())).toEqual([weReportLocaleTr.wholeData, 'Kalemler']);
+    rows.value = 'Items';
+    rows.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(state.report().dataMember?.path).toBe('Items');
+    expect(items()).toEqual(['Stok adı', 'Qty', 'Sipariş No', 'Tedarikçi']);
+    // A filter searches labels and names and opens the objects around matches.
+    const filterable = fixture.componentInstance as unknown as { fieldFilter: { set(v: string): void } };
+    filterable.fieldFilter.set('tedarikçi ad');
+    fixture.detectChanges();
+    expect(items()).toEqual(['Tedarikçi', 'Tedarikçi adı']);
+    // A dropped field's caption is its label; the formula keeps the real name.
+    const surface = fixture.debugElement.query((d) => d.componentInstance instanceof DesignSurfaceComponent).componentInstance as DesignSurfaceComponent;
+    const pageHeader = state.report().bands[0];
+    surface.dropAt({ kind: 'field', path: 'ProductName', parent: false, caption: 'Stok adı' }, pageHeader, 0, 0);
+    expect(state.report().bands[0].controls.map((c) => (c.type === 'text' ? c.text : null))).toEqual(['Stok adı', { expression: '[ProductName]' }]);
+    // The wizard lists labels and uses them as column headings.
+    filterable.fieldFilter.set('');
+    fixture.detectChanges();
+    el().querySelector<HTMLButtonElement>('.wd__magic')!.click();
+    fixture.detectChanges();
+    expect(el().querySelector('.wd__wizard-fields')!.textContent).toContain('Stok adı');
+    el().querySelector<HTMLButtonElement>('.wd__wizard .wd__primary')!.click();
+    const texts = state.report().bands.flatMap((b) => b.controls).map((c) => (c.type === 'text' ? c.text : null));
+    expect(texts).toContain('Stok adı');
+    expect(texts).toContain('Qty');
+  });
+
   it('emits every edit through the two-way report binding', () => {
     const report = createBlankReport();
     create(report);

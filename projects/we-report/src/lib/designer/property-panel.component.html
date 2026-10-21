@@ -171,7 +171,7 @@
         <span>{{ s.innerListOf }}</span>
         <select (change)="setBand('rowsPath', $any($event.target).value)">
           @for (l of lists(); track l) {
-            <option [value]="l" [selected]="b.rowsPath === l">{{ l }}</option>
+            <option [value]="l" [selected]="b.rowsPath === l">{{ listLabels()[l] ?? l }}</option>
           }
           @if (b.rowsPath && !lists().includes(b.rowsPath)) {
             <option [value]="b.rowsPath" selected>{{ b.rowsPath }}</option>
@@ -586,7 +586,7 @@
               <input class="pp__mono" [attr.list]="listId + '-chart'" [value]="c.rows?.expression ?? ''" placeholder="[months]" (input)="setOptionalChartRows($any($event.target).value)" spellcheck="false" />
               <datalist [id]="listId + '-chart'">
                 @for (l of lists(); track l) {
-                  <option [value]="'[' + l + ']'"></option>
+                  <option [value]="'[' + l + ']'">{{ listLabels()[l] }}</option>
                 }
               </datalist>
             </label>
@@ -679,7 +679,7 @@
             <input class="pp__mono" [attr.list]="listId + '-sub'" [value]="c.rows?.expression ?? ''" placeholder="[orders]" (input)="setOptionalExpression('rows', $any($event.target).value)" spellcheck="false" />
             <datalist [id]="listId + '-sub'">
               @for (l of lists(); track l) {
-                <option [value]="'[' + l + ']'"></option>
+                <option [value]="'[' + l + ']'">{{ listLabels()[l] }}</option>
               }
             </datalist>
           </label>

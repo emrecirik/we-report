@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.0 — 2026-10-21
+
+### Designer
+
+- **Field labels** (`fieldLabels` input): display names for data fields, objects and lists by
+  their path from the data root (`OrderNumber`, `Supplier.SupplierName`, `Items.ProductName`,
+  `Items`). Shown in the field list (the real name as a tooltip; search finds either), the formula
+  editor, the wizard and the inner-list / sub-report / chart list pickers; a dropped field's caption
+  and the wizard's column headings use them. Formulas and saved reports keep the real names; without
+  `fieldLabels` nothing changes. Core: `generateListReport(..., { labels })`.
+- Objects in the field list start closed and open with their arrow; a search opens the objects
+  around the matches.
+- **Rows come from** picker above the field list when the data holds lists, so the detail rows can
+  be switched to a list (`Items`) without opening the data sources dialog.
+
 ## 0.7.0 — 2026-10-21
 
 Sub-reports, cross tables, rich text, sparklines, data bars and gauges; groups ordered by their

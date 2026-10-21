@@ -719,6 +719,51 @@ button {
   font: inherit;
 }
 
+.wd__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 4px 10px;
+  font-size: 11.5px;
+  color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
+
+  select {
+    height: 28px;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: var(--we-report-control-radius, 7px);
+    padding: 0 8px;
+    background: var(--we-report-input-bg, rgba(118, 118, 128, 0.1));
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+  }
+}
+
+.wd__node {
+  display: inline-flex;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-right: -4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transition: transform 0.15s;
+
+  &.wd__node--open {
+    transform: none;
+  }
+
+  :is(svg) {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 .wd__wizard {
   display: flex;
   flex-direction: column;

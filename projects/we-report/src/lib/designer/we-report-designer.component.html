@@ -100,26 +100,42 @@
         </div>
 
         <h2>{{ s.fields }}</h2>
+        @if (rowLists().length) {
+          <label class="wd__rows">
+            <span>{{ s.dataRows }}</span>
+            <select (change)="setRowsPath($any($event.target).value)">
+              <option value="" [selected]="!state.report().dataMember?.path">{{ s.wholeData }}</option>
+              @for (l of rowLists(); track l.path) {
+                <option [value]="l.path" [selected]="l.path === state.report().dataMember?.path">{{ l.label }}</option>
+              }
+            </select>
+          </label>
+        }
         @if (fields().rows.length || fields().parent.length) {
           <p class="wd__hint">{{ s.fieldsHint }}</p>
           @if (allFields().length > 8) {
             <input class="wd__field-filter" type="search" [placeholder]="s.filterFields" [attr.aria-label]="s.filterFields" [value]="fieldFilter()" (input)="fieldFilter.set($any($event.target).value)" />
           }
           <!-- The fields are buttons (drag or double-click), not a reading list. -->
+          <ng-template #fieldItem let-f let-section="section">
+            <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type" [attr.title]="f.caption ? f.path : null">
+              @if (f.type === 'object') {
+                @let open = nodeOpen(section, f.path);
+                <button type="button" class="wd__node" [class.wd__node--open]="open" [attr.aria-expanded]="open" [attr.aria-label]="f.label" (click)="$event.stopPropagation(); toggleNode(section, f.path)" (dblclick)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" [innerHTML]="'chevronDown' | weReportIcon"></button>
+              }
+              <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
+            </li>
+          </ng-template>
           <ul class="wd__fields" role="none">
             @for (f of shownFields().rows; track f.path) {
-              <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
-                <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
-              </li>
+              <ng-container *ngTemplateOutlet="fieldItem; context: { $implicit: f, section: 'rows' }" />
             }
           </ul>
           @if (shownFields().inner.length) {
             <h3>{{ s.innerFields }}</h3>
             <ul class="wd__fields" role="none">
               @for (f of shownFields().inner; track f.path) {
-                <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
-                  <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
-                </li>
+                <ng-container *ngTemplateOutlet="fieldItem; context: { $implicit: f, section: 'inner' }" />
               }
             </ul>
           }
@@ -127,9 +143,7 @@
             <h3>{{ s.parentFields }}</h3>
             <ul class="wd__fields" role="none">
               @for (f of shownFields().parent; track f.path) {
-                <li draggable="true" tabindex="0" role="button" (dragstart)="onFieldDragStart($event, f)" (dblclick)="onFieldDblClick(f)" (keydown.enter)="onFieldDblClick(f)" [style.padding-left.px]="8 + f.depth * 12" [attr.data-type]="f.type">
-                  <span class="wd__field-type">{{ f.type[0] }}</span>{{ f.label }}
-                </li>
+                <ng-container *ngTemplateOutlet="fieldItem; context: { $implicit: f, section: 'parent' }" />
               }
             </ul>
           }
@@ -209,7 +223,7 @@
 
     <div class="wd__splitter" role="separator" aria-orientation="vertical" [title]="s.resizePanel" (pointerdown)="startResize($event, 'right')" (dblclick)="togglePanel('right')"></div>
     <aside class="wd__right" [class.wd__collapsed]="!rightWidth()">
-      <we-report-property-panel [strings]="s" [fields]="allFields()" [lists]="fields().lists" [embedded]="embedded()" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
+      <we-report-property-panel [strings]="s" [fields]="allFields()" [lists]="fields().lists" [listLabels]="fields().listLabels" [embedded]="embedded()" [fontFamilies]="fontFamilies()" [advanced]="advanced()" />
     </aside>
   </div>
   <footer class="wd__status" aria-live="polite">
@@ -287,7 +301,7 @@
     <fieldset class="wd__wizard-fields">
       <legend>{{ s.wizardColumns }}</legend>
       @for (f of w.fields; track f.name) {
-        <label><input type="checkbox" [checked]="f.on" [disabled]="f.name === w.groupBy" (change)="toggleWizardField(f.name)" /> {{ f.name }}</label>
+        <label><input type="checkbox" [checked]="f.on" [disabled]="f.name === w.groupBy" (change)="toggleWizardField(f.name)" /> {{ f.label }}</label>
       }
     </fieldset>
     <label class="wd__wizard-row">
@@ -295,7 +309,7 @@
       <select (change)="updateWizard({ groupBy: $any($event.target).value })">
         <option value="" [selected]="!w.groupBy">{{ s.noGrouping }}</option>
         @for (f of w.fields; track f.name) {
-          <option [value]="f.name" [selected]="f.name === w.groupBy">{{ f.name }}</option>
+          <option [value]="f.name" [selected]="f.name === w.groupBy">{{ f.label }}</option>
         }
       </select>
     </label>
@@ -305,7 +319,7 @@
         <select (change)="updateWizard({ sortBy: $any($event.target).value })" [attr.aria-label]="s.sortRows">
           <option value="" [selected]="!w.sortBy">{{ s.dataOrder }}</option>
           @for (f of w.fields; track f.name) {
-            <option [value]="f.name" [selected]="f.name === w.sortBy">{{ f.name }}</option>
+            <option [value]="f.name" [selected]="f.name === w.sortBy">{{ f.label }}</option>
           }
         </select>
         <select [disabled]="!w.sortBy" (change)="updateWizard({ sortDescending: $any($event.target).value === 'desc' })" [attr.aria-label]="s.sortRows">

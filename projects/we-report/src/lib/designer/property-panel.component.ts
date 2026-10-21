@@ -105,6 +105,8 @@ export class PropertyPanelComponent {
   readonly advanced = input(false);
   /** Lists inside a row that an inner list can repeat over. */
   readonly lists = input<string[]>([]);
+  /** Display names of the lists (`fieldLabels` of the designer), by list path. */
+  readonly listLabels = input<Record<string, string>>({});
   /** A sub-report's design: its page comes from the box, so paper and margins are not offered. */
   readonly embedded = input(false);
 

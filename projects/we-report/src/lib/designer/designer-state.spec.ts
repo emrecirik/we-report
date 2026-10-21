@@ -217,6 +217,24 @@ describe('designer helpers', () => {
     expect(parent.map((f) => f.expression)).toEqual(['[^.number]', '[^.customer]', '[^.customer.name]']);
   });
 
+  it('labels fields, objects and lists by their path from the data root', () => {
+    const report = createBlankReport();
+    report.dataMember = { dataSourceId: 'x', path: 'Items' };
+    report.bands.push({ id: 'sub', kind: 'subDetail', height: 6, rowsPath: 'Lots', controls: [] });
+    const labels = { OrderNumber: 'Sipariş No', Supplier: 'Tedarikçi', 'Supplier.SupplierName': 'Tedarikçi adı', 'Items.ProductName': 'Stok adı', 'Items.Lots': 'Partiler', 'Items.Lots.Code': 'Parti' };
+    const data = { OrderNumber: 'A1', Supplier: { SupplierName: 'X' }, Items: [{ ProductName: 'P', Qty: 1, Lots: [{ Code: 'L1' }] }] };
+    const f = designerFields(report, data, undefined, labels);
+    expect(f.rows.map((x) => [x.label, x.caption, x.expression])).toEqual([
+      ['Stok adı', 'Stok adı', '[ProductName]'],
+      ['Qty', undefined, '[Qty]'],
+    ]);
+    expect(f.parent.map((x) => x.label)).toEqual(['Sipariş No', 'Tedarikçi', 'Tedarikçi adı']);
+    expect(f.inner.map((x) => x.label)).toEqual(['Parti']);
+    expect(f.listLabels).toEqual({ Lots: 'Partiler' });
+    // Without labels every field shows its name.
+    expect(designerFields(report, data).parent.map((x) => x.label)).toEqual(['OrderNumber', 'Supplier', 'SupplierName']);
+  });
+
 });
 
 describe('formatting rule conditions', () => {

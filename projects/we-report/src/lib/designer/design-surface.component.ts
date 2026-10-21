@@ -23,7 +23,7 @@ export interface DesignSample {
 /** Payload of an HTML5 drag from the toolbox or the field list. */
 export type DesignerDragData =
   | { kind: 'control'; type: ReportControlType; variant?: string }
-  | { kind: 'field'; path: string; parent: boolean; format?: string };
+  | { kind: 'field'; path: string; parent: boolean; format?: string; caption?: string };
 
 export const DRAG_MIME = 'application/x-we-report';
 
@@ -1585,7 +1585,7 @@ export class DesignSurfaceComponent implements OnDestroy {
       this.growBand(band, [value]);
     } else {
       // Elsewhere a caption + value pair reads better: "Invoice no  WR-42".
-      const label: ReportControl = { id: this.state.newId('label'), type: 'text', x: 0, y: value.y, width: 30, height: 6, text: captionFor(name), styleOverrides: { bold: true } };
+      const label: ReportControl = { id: this.state.newId('label'), type: 'text', x: 0, y: value.y, width: 30, height: 6, text: (typeof data.caption === 'string' && data.caption) || captionFor(name), styleOverrides: { bold: true } };
       label.x = round(Math.max(0, Math.min(x, width - label.width - value.width)));
       value.x = round(label.x + label.width);
       this.growBand(band, [label, value]);

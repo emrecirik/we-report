@@ -88,6 +88,20 @@ save() {
 `data` is optional sample data: its fields appear in the field list, it is shown inside the design
 and used by the preview. Without it, the report's own data sources are used.
 
+`fieldLabels` gives fields readable names when the data's own names are technical (`OrderNumber`,
+`Supplier.SupplierName`): keys are paths from the data root, lists without `[]`, and objects or
+lists themselves can be named too.
+
+```html
+<we-report-designer [(report)]="report" [data]="order"
+  [fieldLabels]="{ OrderNumber: 'Order no', Supplier: 'Supplier', 'Supplier.SupplierName': 'Supplier name', Items: 'Lines', 'Items.ProductName': 'Product' }" />
+```
+
+The field list, the formula editor, the wizard and the list pickers show the labels (the name
+stays as a tooltip, and search finds both); a dropped field's caption and the wizard's column
+headings use them. Formulas and the saved report keep the real names. In core,
+`generateListReport(..., { labels })` takes column headings by field name.
+
 ## Show and print reports
 
 ```ts

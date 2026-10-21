@@ -88,6 +88,13 @@ describe('generateListReport', () => {
     expect(plain.bands.some((b) => b.kind === 'reportFooter')).toBeFalse();
   });
 
+  it('takes column headings from the labels option', () => {
+    const rows = [{ OrderNumber: 'A1', unitPrice: 2 }];
+    const report = generateListReport(createBlankReport(), inferSchema(rows), labels, '', rows, { labels: { OrderNumber: 'Sipariş No' } });
+    const heads = report.bands.flatMap((b) => b.controls).filter((c) => c.id.startsWith('head')).map((c) => (c.type === 'text' ? c.text : ''));
+    expect(heads).toEqual(['Sipariş No', 'Unit price']);
+  });
+
   it('makes readable captions', () => {
     expect(captionFor('orderDate')).toBe('Order date');
     expect(captionFor('customer_name')).toBe('Customer name');
