@@ -24,12 +24,12 @@ describe('report definition', () => {
     report['styles'] = [1, 2];
     report['currency'] = 'true';
     report['locale'] = 'not a locale!';
-    report['page'] = { paper: 'A4', margins: null };
-    report.bands.push(null as unknown as Record<string, unknown>);
+    report['page'] = { paper: 'A4', margins: { top: 'x', right: -3, bottom: 10, left: 10 } };
+    report.bands.push(null as unknown as Record<string, unknown>, { id: 'odd', kind: 5, height: 5, controls: [] });
     report.bands[1]['visible'] = 5;
     report.bands[1]['controls'] = [
       { id: 'a', type: 'text', x: '3', y: 0, width: {}, height: 5, text: 12, format: 0, styleOverrides: { fontFamily: true, fontSize: 12 } },
-      { id: 'b', type: 'chart', x: 0, y: 0, width: 10, height: 5, value: {}, category: [1, 2], colors: ['#000'] },
+      { id: 'b', type: 'chart', x: 0, y: 0, width: 10, height: -5, value: {}, category: [1, 2], colors: ['#000'] },
       { id: 'c', x: 0, y: 0 },
     ];
     const input = JSON.stringify(report);
@@ -39,14 +39,14 @@ describe('report definition', () => {
     expect(fixed['styles']).toEqual({});
     expect(fixed['currency']).toBeUndefined();
     expect(fixed['locale']).toBeUndefined();
-    expect((fixed['page'] as { margins: unknown }).margins).toEqual(createBlankReport().page.margins);
-    expect(fixed.bands.length).toBe(3);
+    expect((fixed['page'] as { margins: unknown }).margins).toEqual({ top: 15, right: 15, bottom: 10, left: 10 });
+    expect(fixed.bands.length).toBe(3); // the empty entry and the section of no known kind are gone
     expect('visible' in fixed.bands[1]).toBeFalse();
     const [text, chart] = fixed.bands[1].controls;
     expect(fixed.bands[1].controls.length).toBe(2); // the item without a type is gone
     expect(text).toEqual(jasmine.objectContaining({ text: '12', styleOverrides: { fontSize: 12 }, x: 0, width: 10 }));
     expect('format' in text).toBeFalse();
-    expect(chart).toEqual(jasmine.objectContaining({ value: { expression: '' }, category: { expression: '' }, colors: ['#000'] }));
+    expect(chart).toEqual(jasmine.objectContaining({ value: { expression: '' }, category: { expression: '' }, colors: ['#000'], height: 5 }));
     expect(JSON.stringify(report)).toBe(input);
   });
 

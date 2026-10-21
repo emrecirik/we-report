@@ -111,8 +111,9 @@
 ### Speed and robustness
 
 - Damaged report files open: `migrateDefinition` drops optional fields of the wrong type, empties
-  lists that are not lists, falls back to A4 for missing paper and leaves out items without a
-  type; an unknown item type prints nothing. They used to break the designer or stop the layout
+  lists that are not lists, falls back to A4 for missing paper or margins, repairs negative or
+  missing sizes and leaves out items without a type and sections of no known kind; an unknown item
+  type prints nothing. They used to break the designer or stop the layout
   with a technical error (found by feeding thousands of damaged files to the layout).
 - A report stops at 20 000 pages with a problem saying so: a file with an item a million pages tall
   (report files are untrusted) no longer freezes the browser.

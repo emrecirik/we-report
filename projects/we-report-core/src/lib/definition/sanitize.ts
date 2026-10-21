@@ -33,6 +33,8 @@ function sanitizeStyle(style: Obj): Obj {
   for (const [key, type] of Object.entries(STYLE_TYPES)) {
     if (key in copy && (type === 'object' ? !isObj(copy[key]) : typeof copy[key] !== type || (type === 'number' && !Number.isFinite(copy[key])))) delete copy[key];
   }
+  const border = copy['border'];
+  if (isObj(border) && (typeof border['width'] !== 'number' || !Number.isFinite(border['width']) || typeof border['color'] !== 'string' || !isObj(border['sides']))) delete copy['border'];
   return copy;
 }
 
@@ -41,23 +43,32 @@ function keepIf(o: Obj, key: string, ok: (v: unknown) => boolean): void {
   if (key in o && !ok(o[key])) delete o[key];
 }
 
-/** A length that is not a finite number becomes `fallback`, so moving or resizing it stays arithmetic. */
-function length(o: Obj, key: string, fallback: number): void {
-  if (typeof o[key] !== 'number' || !Number.isFinite(o[key])) o[key] = fallback;
+/**
+ * A length that is not a finite number becomes `fallback`, so moving or resizing it stays
+ * arithmetic; sizes (`min` 0) cannot be negative.
+ */
+function length(o: Obj, key: string, fallback: number, min = -Infinity): void {
+  const v = o[key];
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < min) o[key] = fallback;
 }
+
+const BAND_KINDS = new Set(['reportHeader', 'pageHeader', 'groupHeader', 'detail', 'subHeader', 'subDetail', 'subFooter', 'groupFooter', 'pageFooter', 'reportFooter']);
 
 function sanitizeControl(input: Obj): Obj {
   const c: Obj = { ...input };
   length(c, 'x', 0);
   length(c, 'y', 0);
-  length(c, 'width', 10);
-  length(c, 'height', 5);
+  length(c, 'width', 10, 0);
+  length(c, 'height', 5, 0);
   keepIf(c, 'visible', (v) => typeof v === 'boolean' || isExpression(v));
   keepIf(c, 'format', (v) => typeof v === 'string');
   keepIf(c, 'style', (v) => typeof v === 'string');
   keepIf(c, 'styleOverrides', isObj);
   if (isObj(c['styleOverrides'])) c['styleOverrides'] = sanitizeStyle(c['styleOverrides']);
   keepIf(c, 'title', (v) => typeof v === 'string');
+  // Colours are text (`#1f2328`); anything else falls back to the style sheet.
+  for (const key of Object.keys(c)) if (/color$/i.test(key)) keepIf(c, key, (v) => typeof v === 'string');
+  if ('colors' in c) c['colors'] = Array.isArray(c['colors']) ? c['colors'].filter((v) => typeof v === 'string') : [];
   keepIf(c, 'totalLabel', (v) => typeof v === 'string');
   if ('formatting' in c) {
     c['formatting'] = objects(c['formatting'])
@@ -92,7 +103,7 @@ function sanitizeControl(input: Obj): Obj {
 function sanitizeBand(input: Obj): Obj {
   // An item without a type cannot be drawn or edited.
   const b: Obj = { ...input, controls: objects(input['controls']).filter((c) => typeof c['type'] === 'string').map(sanitizeControl) };
-  length(b, 'height', 0);
+  length(b, 'height', 0, 0);
   keepIf(b, 'visible', isExpression);
   keepIf(b, 'bookmark', isBindable);
   keepIf(b, 'groupBy', isExpression);
@@ -100,12 +111,16 @@ function sanitizeBand(input: Obj): Obj {
   keepIf(b, 'top', (v) => typeof v === 'number');
   keepIf(b, 'rowsPath', (v) => typeof v === 'string');
   keepIf(b, 'columns', isObj);
+  keepIf(b, 'backgroundColor', (v) => typeof v === 'string');
+  keepIf(b, 'alternateBackgroundColor', (v) => typeof v === 'string');
   if ('sortBy' in b) b['sortBy'] = objects(b['sortBy']).filter(isExpression);
   return b;
 }
 
 export function sanitizeDefinition(input: Obj): Obj {
-  const d: Obj = { ...input, bands: objects(input['bands']).map(sanitizeBand), dataSources: objects(input['dataSources']) };
+  // A section of an unknown kind has no place in the report.
+  const bands = objects(input['bands']).filter((b) => typeof b['kind'] === 'string' && BAND_KINDS.has(b['kind']));
+  const d: Obj = { ...input, bands: bands.map(sanitizeBand), dataSources: objects(input['dataSources']) };
   if ('parameters' in d) d['parameters'] = objects(d['parameters']).filter((p) => typeof p['name'] === 'string');
   if ('calculatedFields' in d) d['calculatedFields'] = objects(d['calculatedFields']).filter((f) => typeof f['name'] === 'string' && typeof f['expression'] === 'string');
   // The style sheet is always there; a damaged one is replaced by the defaults.
@@ -120,10 +135,25 @@ export function sanitizeDefinition(input: Obj): Obj {
   keepIf(d, 'locale', (v) => typeof v === 'string' && validLocale(v));
   keepIf(d, 'currency', (v) => typeof v === 'string' && /^[A-Za-z]{3}$/.test(v));
   keepIf(d, 'watermark', isObj);
-  if (isObj(d['watermark']) && !isBindable(d['watermark']['text'])) d['watermark'] = { ...d['watermark'], text: '' };
+  if (isObj(d['watermark'])) {
+    const watermark: Obj = { ...d['watermark'] };
+    if (!isBindable(watermark['text'])) watermark['text'] = '';
+    keepIf(watermark, 'color', (v) => typeof v === 'string');
+    d['watermark'] = watermark;
+  }
   // Paper and margins are needed to lay anything out: damaged ones fall back to A4.
   const blank = createBlankReport().page;
   if (!isObj(d['page'])) d['page'] = blank;
-  else if (!isObj(d['page']['margins'])) d['page'] = { ...d['page'], margins: blank.margins };
+  else {
+    const page: Obj = { ...d['page'] };
+    const margins: Obj = isObj(page['margins']) ? { ...page['margins'] } : { ...blank.margins };
+    for (const side of ['top', 'right', 'bottom', 'left'] as const) length(margins, side, blank.margins[side], 0);
+    page['margins'] = margins;
+    keepIf(page, 'width', (v) => typeof v === 'number' && Number.isFinite(v) && v > 0);
+    keepIf(page, 'height', (v) => v === null || (typeof v === 'number' && Number.isFinite(v) && v > 0));
+    if (typeof page['paper'] !== 'string') page['paper'] = blank.paper;
+    keepIf(page, 'color', (v) => typeof v === 'string');
+    d['page'] = page;
+  }
   return d;
 }
