@@ -199,11 +199,13 @@ class RepxImport {
         band.groupBy = { expression: groupFormula ?? '' };
         band.sort = field?.attrs['SortOrder'] === 'Descending' ? 'desc' : field?.attrs['SortOrder'] === 'None' ? 'none' : 'asc';
         if (b.attrs['RepeatEveryPage'] === 'true') band.repeatOnEveryPage = true;
-        if (/WithFirstDetail|WholeGroup/.test(b.attrs['GroupUnion'] ?? '')) band.keepTogether = true;
+        if (b.attrs['GroupUnion'] === 'WholePage' || b.attrs['GroupUnion'] === 'WholeGroup') band.keepTogether = true;
+        if (b.attrs['GroupUnion'] === 'WithFirstDetail') band.keepWithFirstRow = true;
         headers.push({ level, band });
       } else if (kind === 'groupFooter') {
         footers.push({ level, band });
       }
+      if (kind === 'reportFooter' && b.attrs['PrintAtBottom'] === 'true') band.printAtBottom = true;
       if (b.attrs['PageBreak'] === 'BeforeBand') band.pageBreakBefore = true;
       if (b.attrs['PageBreak'] === 'AfterBand') band.pageBreakAfter = true;
       band.height = roundMm(Math.max(band.height, ...band.controls.map((c) => c.y + c.height)));

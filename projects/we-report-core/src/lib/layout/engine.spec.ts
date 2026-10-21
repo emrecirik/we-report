@@ -495,6 +495,17 @@ describe('layout engine', () => {
     expect(texts(layoutReport(report, { fonts, now: NOW, parent: { city: 'İzmir' } }).pages[0])).toContain('Ayşe / İzmir');
   });
 
+  it('prints a report footer at the bottom of the last page when asked', () => {
+    const report = listReport([{ Name: 'a' }, { Name: 'b' }]);
+    const footer = report.bands[2];
+    report.bands.splice(2, 0, { id: 'rf', kind: 'reportFooter', height: 10, printAtBottom: true, controls: [{ id: 'sum', type: 'text', x: 0, y: 0, width: 50, height: 6, text: 'Total' }] });
+    const at = () => layoutReport(report, { fonts, now: NOW }).pages[0].items.find((i): i is TextItem => i.kind === 'text' && i.lines[0]?.text === 'Total')!.y;
+    const { top, bottom } = report.page.margins;
+    expect(at()).toBeCloseTo(297 - bottom - footer.height - 10, 5);
+    report.bands[2].printAtBottom = false;
+    expect(at()).toBeLessThan(top + 40); // right under the rows
+  });
+
   it('stops at its page limit instead of freezing on an item a million pages tall', () => {
     const report = listReport([{ Name: 'a' }]);
     report.bands[1].controls.push({ id: 'huge', type: 'shape', shape: 'rectangle', x: 0, y: 0, width: 10, height: 1e9 });

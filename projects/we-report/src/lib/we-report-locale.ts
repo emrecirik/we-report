@@ -184,6 +184,8 @@ export interface WeReportLocale {
   groupOrderByHint: string;
   largestFirst: string;
   keepWithFirstRow: string;
+  printAtBottom: string;
+  printAtBottomHint: string;
   bookmark: string;
   bookmarkHint: string;
   alternateBackground: string;
@@ -629,6 +631,8 @@ export const weReportLocaleEn: WeReportLocale = {
   groupOrderByHint: 'A formula over each group, e.g. Sum([amount]): the biggest customers first.',
   largestFirst: 'Largest first',
   keepWithFirstRow: 'Keep the header with the first row',
+  printAtBottom: 'At the bottom of the last page',
+  printAtBottomHint: 'Totals and signatures sit just above the page footer, however short the list.',
   bookmark: 'Bookmark',
   bookmarkHint: 'An entry in the PDF bookmarks and the preview’s document map, e.g. the customer’s name.',
   alternateBackground: 'Every second row',
@@ -1116,6 +1120,8 @@ export const weReportLocaleTr: WeReportLocale = {
   groupOrderByHint: 'Her grubun üzerinde bir formül; örn. Sum([tutar]): en büyük müşteriler önce.',
   largestFirst: 'Büyükten küçüğe',
   keepWithFirstRow: 'Başlığı ilk satırla birlikte tut',
+  printAtBottom: 'Son sayfanın en altında',
+  printAtBottomHint: 'Toplamlar ve imzalar, liste ne kadar kısa olursa olsun sayfa altlığının hemen üstünde durur.',
   bookmark: 'Yer imi',
   bookmarkHint: 'PDF yer imlerinde ve önizlemenin belge haritasında bir satır; örn. müşterinin adı.',
   alternateBackground: 'Her ikinci satır',

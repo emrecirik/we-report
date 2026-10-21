@@ -320,6 +320,8 @@ export interface Band {
   resetPageNumber?: boolean;
   pageBreakBefore?: boolean;
   pageBreakAfter?: boolean;
+  /** reportFooter only: placed at the bottom of the last page, e.g. invoice totals and signatures. */
+  printAtBottom?: boolean;
   backgroundColor?: string;
   /** groupHeader / detail: an entry of the document map (PDF bookmarks, the viewer's list), e.g. `[Customer]`. */
   bookmark?: Bindable<string>;

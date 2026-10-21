@@ -200,6 +200,8 @@ export const weReportLocaleFr: WeReportLocale = {
   groupOrderByHint: 'Une formule par groupe, ex. Sum([amount]) : les plus gros clients d’abord.',
   largestFirst: 'Le plus grand d’abord',
   keepWithFirstRow: 'Garder l’en-tête avec la première ligne',
+  printAtBottom: 'En bas de la dernière page',
+  printAtBottomHint: 'Les totaux et signatures se placent juste au-dessus du pied de page, même si la liste est courte.',
   bookmark: 'Signet',
   bookmarkHint: 'Une entrée des signets PDF et du plan du document de l’aperçu, ex. le nom du client.',
   alternateBackground: 'Une ligne sur deux',

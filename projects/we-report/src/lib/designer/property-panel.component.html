@@ -288,6 +288,12 @@
         <input type="checkbox" [checked]="!!b.pageBreakAfter" (change)="toggleBand('pageBreakAfter', $any($event.target).checked)" />
         <span>{{ s.pageBreakAfter }}</span>
       </label>
+      @if (b.kind === 'reportFooter') {
+        <label class="pp__check">
+          <input type="checkbox" [checked]="!!b.printAtBottom" (change)="toggleBand('printAtBottom', $any($event.target).checked)" />
+          <span>{{ s.printAtBottom }}<small class="pp__hint">{{ s.printAtBottomHint }}</small></span>
+        </label>
+      }
     </section>
   }
   @if (b.kind !== 'detail') {

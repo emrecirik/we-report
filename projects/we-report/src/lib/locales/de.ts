@@ -200,6 +200,8 @@ export const weReportLocaleDe: WeReportLocale = {
   groupOrderByHint: 'Eine Formel je Gruppe, z. B. Sum([amount]): die größten Kunden zuerst.',
   largestFirst: 'Größte zuerst',
   keepWithFirstRow: 'Kopf mit der ersten Zeile zusammenhalten',
+  printAtBottom: 'Unten auf der letzten Seite',
+  printAtBottomHint: 'Summen und Unterschriften stehen direkt über dem Seitenfuß, wie kurz die Liste auch ist.',
   bookmark: 'Lesezeichen',
   bookmarkHint: 'Ein Eintrag in den PDF-Lesezeichen und der Dokumentstruktur der Vorschau, z. B. der Kundenname.',
   alternateBackground: 'Jede zweite Zeile',

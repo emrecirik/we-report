@@ -87,6 +87,8 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
   `[Discount] > 0`).
 - **Keep the header with the first row** (`keepWithFirstRow`) — a group header never ends a page
   alone; *Keep group on one page* (`keepTogether`) moves the whole group instead.
+- **At the bottom of the last page** (`printAtBottom`, report footer, Advanced) — totals and
+  signature lines sit just above the page footer however short the list, as on a printed invoice.
 - **Bookmarks** — a group header or the detail section can carry a `bookmark` (fixed text or a
   formula such as `[Customer]`): the entries become PDF bookmarks and the preview's *Document map*,
   nested by group (`LayoutDocument.bookmarks` in code).

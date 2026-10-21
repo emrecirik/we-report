@@ -469,6 +469,10 @@ class LayoutRun {
           rest = { ...rest, scope: { ...rest.scope, row: undefined }, items: bottom, deferred: lower, height: rest.height - cut };
         }
         if (stopped) break;
+        // A report footer that prints at the bottom sits on the page footer (a whole band only).
+        if (r.band.kind === 'reportFooter' && r.band.printAtBottom && contentHeight !== null && rest === r) {
+          y = Math.max(y, contentHeight - footerHeight - r.height);
+        }
         put(rest);
       }
       fresh = false;

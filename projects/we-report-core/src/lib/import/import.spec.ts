@@ -92,7 +92,7 @@ const REPX = `<?xml version="1.0" encoding="utf-8"?>
         <Item2 Ref="9" ControlType="XRPageInfo" Name="pageInfo" PageInfo="NumberOfTotal" TextFormatString="Page {0} of {1}" LocationFloat="527, 0" SizeF="200, 23" TextAlignment="TopRight" />
       </Controls>
     </Item2>
-    <Item3 Ref="10" ControlType="GroupHeaderBand" Name="CityHeader" HeightF="30" Level="0">
+    <Item3 Ref="10" ControlType="GroupHeaderBand" Name="CityHeader" HeightF="30" Level="0" GroupUnion="WithFirstDetail">
       <GroupFields><Item1 Ref="11" FieldName="City" SortOrder="Descending" /></GroupFields>
       <Controls>
         <Item1 Ref="12" ControlType="XRLabel" Name="city" LocationFloat="0, 5" SizeF="300, 23" Font="Arial, 11pt, style=Bold">
@@ -127,6 +127,7 @@ const REPX = `<?xml version="1.0" encoding="utf-8"?>
         <Item1 Ref="30" ControlType="XRLabel" Name="reason" LocationFloat="20, 0" SizeF="300, 20"><ExpressionBindings><Item1 Ref="31" EventName="BeforePrint" PropertyName="Text" Expression="[Reason]" /></ExpressionBindings></Item1>
       </Controls></Item1></Bands>
     </Item6>
+    <Item9 Ref="34" ControlType="ReportFooterBand" Name="Totals" HeightF="40" PrintAtBottom="true" />
     <Item7 Ref="32" ControlType="BottomMarginBand" Name="BottomMargin" HeightF="60" />
     <Item8 Ref="33" ControlType="XRChart" Name="chart" />
   </Bands>
@@ -208,11 +209,13 @@ describe('report import', () => {
     expect(report.page).toEqual(jasmine.objectContaining({ paper: 'A4', margins: { left: 12.7, right: 12.64, top: 15.24, bottom: 15.31 } }));
     expect(report.styles['Header']).toEqual(jasmine.objectContaining({ fontFamily: 'Arial', fontSize: 12, bold: true, color: '#00468c', backgroundColor: '#f5f5f5' }));
     expect(report.dataMember).toEqual({ dataSourceId: 'data', path: 'Orders' });
-    expect(report.bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'subDetail', 'groupFooter']);
-    const [page, group, detail, inner, footer] = report.bands;
+    expect(report.bands.map((b) => b.kind)).toEqual(['pageHeader', 'groupHeader', 'detail', 'subDetail', 'groupFooter', 'reportFooter']);
+    const [page, group, detail, inner, footer, totals] = report.bands;
+    expect(totals.printAtBottom).toBeTrue();
     expect(page.controls[0]).toEqual(jasmine.objectContaining({ type: 'text', text: 'Sales & returns', style: 'Header' }));
     expect(page.controls[1]).toEqual(jasmine.objectContaining({ type: 'pageInfo', info: 'pageNofM', format: 'Page {0} of {1}' }));
-    expect(group).toEqual(jasmine.objectContaining({ groupBy: { expression: '[City]' }, sort: 'desc' }));
+    expect(group).toEqual(jasmine.objectContaining({ groupBy: { expression: '[City]' }, sort: 'desc', keepWithFirstRow: true }));
+    expect(group.keepTogether).toBeUndefined();
     expect(footer.groupHeaderId).toBe(group.id);
     const table = detail.controls[0] as TableControl;
     expect(table.columns).toEqual([101.6, 50.8]);
