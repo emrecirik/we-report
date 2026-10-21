@@ -51,6 +51,7 @@ const CHART_TYPES: { type: ChartType; label: keyof WeReportLocale }[] = [
   { type: 'doughnut', label: 'chartDoughnut' },
   { type: 'sparkline', label: 'chartSparkline' },
   { type: 'databar', label: 'chartDataBar' },
+  { type: 'gauge', label: 'chartGauge' },
 ];
 
 const AGGREGATES: { value: ChartAggregate; label: keyof WeReportLocale }[] = [

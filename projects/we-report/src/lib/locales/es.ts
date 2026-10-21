@@ -306,6 +306,7 @@ export const weReportLocaleEs: WeReportLocale = {
   chartDoughnut: 'Anillo',
   chartMax: 'Barra llena en',
   chartDataBar: 'Barra de datos',
+  chartGauge: 'Indicador',
   chartSparkline: 'Minigráfico',
   chartRows: 'Filas de una lista de la fila',
   chartRowsHint: 'P. ej. [months]: un pequeño gráfico en cada fila de detalle, con su propia lista. Sus campos como Agrupar por / Valor (vacío en un minigráfico).',

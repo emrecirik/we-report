@@ -568,7 +568,7 @@
               }
             </select>
           </label>
-          @if (c.chartType === 'databar') {
+          @if (c.chartType === 'databar' || c.chartType === 'gauge') {
             <label class="pp__row">
               <span>{{ s.chartMax }}</span>
               <input type="number" [value]="c.max ?? ''" (input)="set('max', $any($event.target).value === '' ? undefined : +$any($event.target).value)" />

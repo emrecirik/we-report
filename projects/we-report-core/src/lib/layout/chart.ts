@@ -64,6 +64,7 @@ export function chartItems(c: ChartControl, points: ChartPoint[], style: Resolve
   const small: ResolvedStyle = { ...style, fontSize: Math.max(5, style.fontSize * 0.8), bold: false, italic: false, underline: false, padding: 0 };
   if (c.chartType === 'databar') items.push(...dataBar(c, points, area, small, palette[0], env));
   else if (c.chartType === 'sparkline') items.push(...sparkline(points, area, palette[0]));
+  else if (c.chartType === 'gauge') items.push(...gauge(c, points, area, style, palette[0], env));
   else if (c.chartType === 'pie' || c.chartType === 'doughnut') items.push(...pie(c, points, area, small, palette, env));
   else items.push(...axes(c, points, area, small, palette, env));
   return items;
@@ -78,6 +79,35 @@ function dataBar(c: ChartControl, points: ChartPoint[], area: Box, small: Resolv
   if (c.showValues) {
     const st: ResolvedStyle = { ...small, textAlign: 'right', verticalAlign: 'middle' };
     items.push(...env.text(env.format(value), st, { ...area, width: area.width - 0.5 }));
+  }
+  return items;
+}
+
+/** A half ring from 0 to `points[1]` (the maximum), filled up to `points[0]`; the value written inside. */
+function gauge(c: ChartControl, points: ChartPoint[], area: Box, style: ResolvedStyle, color: string, env: ChartEnv): LayoutItem[] {
+  const [value, max] = [points[0]?.value ?? 0, points[1]?.value ?? 0];
+  const share = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
+  const r = Math.max(0, Math.min(area.width / 2, area.height));
+  if (!r) return [];
+  const inner = r * 0.62;
+  const box = { x: area.x + (area.width - 2 * r) / 2, y: area.y + (area.height - r) / 2, width: 2 * r, height: r };
+  const at = (radius: number, angle: number) => `${round(r + radius * Math.sin(angle))} ${round(r - radius * Math.cos(angle))}`;
+  // Arcs as short segments, like the pie: every renderer draws straight lines identically.
+  const ring = (from: number, to: number, fill: string) => {
+    const steps = Math.max(2, Math.ceil(((to - from) * 180) / Math.PI / 2));
+    let d = `M${at(r, from)}`;
+    for (let s = 1; s <= steps; s++) d += `L${at(r, from + ((to - from) * s) / steps)}`;
+    for (let s = steps; s >= 0; s--) d += `L${at(inner, from + ((to - from) * s) / steps)}`;
+    return { d: `${d}Z`, fill };
+  };
+  const start = -Math.PI / 2;
+  const paths = [ring(start, Math.PI / 2, c.gridColor ?? DEFAULT_CHART_GRID_COLOR)];
+  if (share > 0) paths.push(ring(start, start + share * Math.PI, color));
+  const items: LayoutItem[] = [{ kind: 'path', ...box, viewBox: { width: 2 * r, height: r }, paths }];
+  if (c.showValues !== false) {
+    const st: ResolvedStyle = { ...style, bold: true, textAlign: 'center', verticalAlign: 'bottom', padding: 0 };
+    const h = Math.min(env.lineHeight(st), inner);
+    items.push(...env.text(env.format(value), st, { x: box.x, y: box.y + r - h, width: 2 * r, height: h }));
   }
   return items;
 }

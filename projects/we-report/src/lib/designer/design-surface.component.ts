@@ -1476,7 +1476,7 @@ export class DesignSurfaceComponent implements OnDestroy {
   protected chartLabel(c: ReportControl): string {
     if (c.type !== 'chart') return '';
     const s = this.strings();
-    const type = { column: s.chartColumn, bar: s.chartBar, line: s.chartLine, pie: s.chartPie, doughnut: s.chartDoughnut, sparkline: s.chartSparkline, databar: s.chartDataBar }[c.chartType];
+    const type = { column: s.chartColumn, bar: s.chartBar, line: s.chartLine, pie: s.chartPie, doughnut: s.chartDoughnut, sparkline: s.chartSparkline, databar: s.chartDataBar, gauge: s.chartGauge }[c.chartType];
     return c.category.expression ? `${type}: ${c.value.expression} / ${c.category.expression}` : type;
   }
 

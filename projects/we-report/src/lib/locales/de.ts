@@ -306,6 +306,7 @@ export const weReportLocaleDe: WeReportLocale = {
   chartDoughnut: 'Ring',
   chartMax: 'Voller Balken bei',
   chartDataBar: 'Datenbalken',
+  chartGauge: 'Tacho',
   chartSparkline: 'Sparkline',
   chartRows: 'Zeilen aus einer Liste der Zeile',
   chartRowsHint: 'Z. B. [months]: ein kleines Diagramm in jeder Detailzeile aus deren eigener Liste. Felder als Gruppierung / Wert (bei Sparkline darf Gruppierung leer sein).',

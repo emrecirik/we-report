@@ -917,6 +917,19 @@ class LayoutRun {
       const max = c.max ?? Math.max(largest, value);
       return [{ label: '', value }, { label: '', value: max }];
     }
+    // A gauge: the row's value in a row, else the total of the section's rows; then a full ring.
+    if (c.chartType === 'gauge') {
+      if (!c.value.expression.trim()) return [];
+      const valueOf = (row: unknown) => numberOrNull(this.eval(c.value.expression, { ...scope, row }, c.id));
+      let value: number;
+      if (scope.rowIndex !== undefined) value = valueOf(scope.row) ?? 0;
+      else {
+        const values = scope.rows.map(valueOf);
+        // Count counts rows, whatever the value formula returns; the others skip empty values.
+        value = aggregate(c.aggregate ?? 'sum', c.aggregate === 'count' ? values.map((v) => v ?? 0) : values.filter((v): v is number => v !== null));
+      }
+      return [{ label: '', value }, { label: '', value: c.max ?? 100 }];
+    }
     // A sparkline may leave the category empty: then every row is one point, in order.
     const byRow = c.chartType === 'sparkline' && !c.category.expression.trim();
     if ((!byRow && !c.category.expression.trim()) || !c.value.expression.trim()) return [];

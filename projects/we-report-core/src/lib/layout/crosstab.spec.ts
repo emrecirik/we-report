@@ -79,6 +79,25 @@ describe('data bar', () => {
     const half = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is RectItem => i.kind === 'rect' && i.fill === '#123456');
     expect(half[1].width).toBeLessThan(bars[1].width);
   });
+
+  it('draws a gauge: the section total in a footer, the row value in a row, against max', () => {
+    const r = createBlankReport('Gauge');
+    r.locale = 'en-US';
+    r.dataSources = [{ id: 'd', name: 'Rows', kind: 'json', data: [{ v: 20 }, { v: 30 }] }];
+    r.dataMember = { dataSourceId: 'd' };
+    const gauge = (id: string): ChartControl => ({ id, type: 'chart', chartType: 'gauge', x: 0, y: 0, width: 40, height: 20, category: { expression: '' }, value: { expression: '[v]' }, colors: ['#123456'] });
+    r.bands.push({ id: 'rf', kind: 'reportFooter', height: 22, controls: [gauge('total')] });
+    const items = layoutReport(r, { fonts, now: NOW }).pages[0].items;
+    const rings = items.filter((i) => i.kind === 'path') as { paths: { fill?: string }[] }[];
+    expect(rings.length).toBe(1);
+    expect(rings[0].paths.map((p) => p.fill)).toContain('#123456'); // 50 of 100: half filled
+    expect(items.some((i) => i.kind === 'text' && i.lines[0]?.text === '50')).toBeTrue();
+    // Full at max, nothing drawn past it; in a row its own value.
+    r.bands[1].height = 22;
+    r.bands[1].controls.push({ ...gauge('row'), max: 25 });
+    const texts = layoutReport(r, { fonts, now: NOW }).pages[0].items.filter((i): i is TextItem => i.kind === 'text').map((t) => t.lines[0].text);
+    expect(texts).toEqual(jasmine.arrayContaining(['20', '30', '50']));
+  });
 });
 
 describe('cross table', () => {

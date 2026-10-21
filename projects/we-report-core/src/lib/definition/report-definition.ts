@@ -141,7 +141,7 @@ export interface CheckboxControl extends ControlBase {
   checked: Bindable<boolean>;
 }
 
-export type ChartType = 'column' | 'bar' | 'line' | 'pie' | 'doughnut' | 'sparkline' | 'databar';
+export type ChartType = 'column' | 'bar' | 'line' | 'pie' | 'doughnut' | 'sparkline' | 'databar' | 'gauge';
 export type ChartAggregate = 'sum' | 'count' | 'avg' | 'min' | 'max';
 
 /**
@@ -170,7 +170,10 @@ export interface ChartControl extends ControlBase {
   rows?: Expression;
   /** Colour of the grid lines (and of a data bar's track); `DEFAULT_CHART_GRID_COLOR` when omitted. */
   gridColor?: string;
-  /** Data bar: the value of a full bar; the largest value among the section's rows when omitted. */
+  /**
+   * Data bar: the value of a full bar; the largest value among the section's rows when omitted.
+   * Gauge: the value of a full ring; 100 when omitted.
+   */
   max?: number;
 }
 
