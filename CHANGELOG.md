@@ -133,7 +133,7 @@
 - Data sources: when the app passes the rows (`data`), the main source says its own data is only a
   fallback (`hostDataNote`), instead of showing an empty source with 0 rows as if data were missing.
 - Accessibility (axe, WCAG AA): secondary text and warnings have enough contrast
-  (`--we-report-muted-fg` 0.75 alpha, `--we-report-warning-fg` `#9a4400`), formula fields and the
+  (`--we-report-muted-fg` 0.75 alpha, `--we-report-band-label-fg` 0.85, `--we-report-warning-fg` `#9a4400`), formula fields and the
   font size field are labelled for screen readers (`label` input on the bindable field), and the
   data field lists are no longer reported as broken lists.
 - Dark theme: scrollbars and form controls are dark too (`color-scheme: dark` in the theme's dark

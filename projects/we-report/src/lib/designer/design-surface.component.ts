@@ -409,7 +409,7 @@ interface DragOp {
       padding: 2px 9px;
       font: 500 11px var(--we-report-font-family, system-ui, sans-serif);
       background: var(--we-report-band-label-bg, rgba(118, 118, 128, 0.1));
-      color: var(--we-report-band-label-fg, rgba(60, 60, 67, 0.7));
+      color: var(--we-report-band-label-fg, rgba(60, 60, 67, 0.85));
       cursor: pointer;
       user-select: none;
       transition: background-color 0.15s ease, color 0.15s ease;
@@ -582,7 +582,7 @@ interface DragOp {
       border-radius: 4px;
       font-size: 10px;
       background: var(--we-report-band-label-bg, rgba(118, 118, 128, 0.1));
-      color: var(--we-report-band-label-fg, rgba(60, 60, 67, 0.7));
+      color: var(--we-report-band-label-fg, rgba(60, 60, 67, 0.85));
     }
     .ds__text--bound {
       text-decoration: underline dotted var(--we-report-accent, #007aff);
