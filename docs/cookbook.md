@@ -44,6 +44,18 @@ and CSV export the same ten; the report footer's totals still add up every custo
   "orderBy": { "expression": "Sum([amount])", "descending": true }, "top": 10, "height": 8, "controls": [] }
 ```
 
+## Each customer's share of the total
+
+In the group footer (or the detail row) add a text with `Sum([amount]) / SumAll([amount])` and
+format `p0` (`[amount] / SumAll([amount])` in a row). `SumAll` is the grand total of every row,
+wherever it stands, so the shares add up to 100 %.
+
+## "Page 2 of 5" inside a sentence
+
+A text with the formula `'Sayfa ' + [PageNumber] + ' / ' + [Pages] + ' — ' + [?customer]` — the
+page fields work in any formula and in rich text (`{[PageNumber]}`); with *page numbers per group*
+they count the group's pages.
+
 ## Customers with their payments from another table
 
 Two data sources: `customers` (main) and `payments`. Put a **Sub-report** in the detail section and
