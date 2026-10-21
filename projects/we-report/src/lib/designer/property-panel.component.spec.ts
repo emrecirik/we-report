@@ -44,6 +44,17 @@ describe('PropertyPanelComponent', () => {
     expect(checkbox(weReportLocaleTr.printAtBottom)).toBeUndefined();
   });
 
+  it('asks no group field for a gauge or a data bar', () => {
+    const chart = { id: 'g', type: 'chart' as const, chartType: 'column' as const, x: 0, y: 0, width: 50, height: 30, category: { expression: '' }, value: { expression: '' } };
+    state.update((d) => d.bands.find((b) => b.id === 'rf')!.controls.push(chart));
+    state.selection.set({ kind: 'controls', ids: ['g'] });
+    fixture.detectChanges();
+    expect(el().textContent).toContain(weReportLocaleTr.chartCategory);
+    state.updateControls(['g'], (c) => c.type === 'chart' && (c.chartType = 'gauge'));
+    fixture.detectChanges();
+    expect(el().textContent).not.toContain(weReportLocaleTr.chartCategory);
+  });
+
   function report() {
     return state.report();
   }
