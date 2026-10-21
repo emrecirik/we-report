@@ -37,12 +37,12 @@ backend required**.
 |---|---|
 | Paper | ISO A0–A6, B4/B5, Letter, Legal, Tabloid, Executive, envelopes, 58/80 mm receipt rolls (page grows with content), label sheets, business cards, any custom size, portrait/landscape, margins, mirrored margins, page colour |
 | Sections | Report header/footer, page header/footer, nested groups (sort by key or by their total, top N, keep together, keep with first row, repeat on every page, page numbers per group), detail with zebra stripes, inner lists, side-by-side labels, page breaks, print-when formulas, report footer at the bottom of the last page, page header/footer off the first or last page; a section taller than a page continues on the next; bookmarks / document map |
-| Items | Text and data fields (rich text with **bold**/*italic* and fields inside), tables, charts, cross tables (pivot), sub-reports, lines, rectangles/ellipses, images (embedded or from an address), 1D/2D barcodes and QR codes (Code128, EAN, UPC, ITF, GS1-128, DataMatrix, PDF417, Aztec …, as vectors), checkboxes, page number / page X of Y / print date |
+| Items | Text and data fields (rich text with **bold**/*italic* and fields inside), tables, charts (incl. sparklines, data bars and gauges), cross tables (pivot), sub-reports, signature lines, lines, rectangles/ellipses, images (embedded or from an address), 1D/2D barcodes and QR codes (Code128, EAN, UPC, ITF, GS1-128, DataMatrix, PDF417, Aztec …, as vectors), checkboxes, page number / page X of Y / print date |
 | Formulas | `[Price] * [Qty]`, `Iif`, `Switch`, `Sum/Count/Avg/Min/Max` per group/page/report, running and carried-forward totals, shares of the grand total (`SumAll`), calculated fields, amounts in words, text, math and date functions (`DateDiff`, `AddMonths` …), Turkish casing, `[^.invoiceNo]` parent fields, `[?param]` parameters — no `eval` |
 | Formats | Numbers, money, percent, dates — with the locale (`1.234,50 ₺`, `5 Ocak 2026`) |
 | Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend, paged APIs), SQL Server, PostgreSQL, SQLite (via a backend), report parameters with drop-down lists, pictures from web addresses |
 | Designer | Drag from toolbox and field list, move/resize with grid and alignment-guide snapping, multi-select, undo/redo, in-place editing, format painter, *Tidy up*, report wizard, problems list with one-click fixes, properties panel, preview tab, light/dark |
-| Output | Paged preview, print, PDF (embedded subset fonts), Excel (typed cells), PNG, label printers (ZPL) and receipt printers (ESC/POS) |
+| Output | Paged preview, print, PDF (embedded subset fonts, bookmarks), Excel (typed cells), CSV, PNG, label printers (ZPL) and receipt printers (ESC/POS) |
 
 ## Packages
 
