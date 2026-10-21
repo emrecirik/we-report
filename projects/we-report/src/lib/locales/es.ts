@@ -304,7 +304,7 @@ export const weReportLocaleEs: WeReportLocale = {
   chartLine: 'Línea',
   chartPie: 'Circular',
   chartDoughnut: 'Anillo',
-  chartMax: 'Barra llena en',
+  chartMax: 'Lleno en',
   chartDataBar: 'Barra de datos',
   chartGauge: 'Indicador',
   chartSparkline: 'Minigráfico',

@@ -304,7 +304,7 @@ export const weReportLocaleDe: WeReportLocale = {
   chartLine: 'Linie',
   chartPie: 'Kreis',
   chartDoughnut: 'Ring',
-  chartMax: 'Voller Balken bei',
+  chartMax: 'Voll bei',
   chartDataBar: 'Datenbalken',
   chartGauge: 'Tacho',
   chartSparkline: 'Sparkline',
