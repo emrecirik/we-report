@@ -22,6 +22,7 @@ import receiptData from '../templates/receipt.data.json';
 import receipt from '../templates/receipt.wrpt.json';
 import salesData from '../templates/sales.data.json';
 import sales from '../templates/sales.wrpt.json';
+import salesSummary from '../templates/sales-summary.wrpt.json';
 
 export interface StudioTemplate {
   id: string;
@@ -59,6 +60,13 @@ export const TEMPLATES: StudioTemplate[] = [
     name: { tr: 'Gruplu satış raporu', en: 'Sales by city (grouped)' },
     description: { tr: 'Gruplar, ara toplamlar, grafikler ve koşullu biçim', en: 'Groups, subtotals, charts and conditional formatting' },
     report: () => migrateDefinition(structuredClone(sales)),
+    data: salesData,
+  },
+  {
+    id: 'sales-summary',
+    name: { tr: 'Satış özeti (gösterge)', en: 'Sales summary (gauges)' },
+    description: { tr: 'Göstergeler, şehir grafikleri ve şehir × ay çapraz tablosu', en: 'Gauges, city charts and a city × month cross table' },
+    report: () => migrateDefinition(structuredClone(salesSummary)),
     data: salesData,
   },
   {

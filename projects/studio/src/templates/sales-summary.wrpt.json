@@ -1,0 +1,339 @@
+{
+  "version": 1,
+  "name": "Satış özeti",
+  "page": {
+    "paper": "A4",
+    "orientation": "portrait",
+    "margins": {
+      "top": 14,
+      "right": 14,
+      "bottom": 12,
+      "left": 14
+    },
+    "displayUnit": "mm"
+  },
+  "locale": "tr-TR",
+  "currency": "TRY",
+  "styles": {
+    "default": {
+      "fontFamily": "Noto Sans",
+      "fontSize": 9,
+      "color": "#1f2328",
+      "padding": 1
+    },
+    "title": {
+      "fontSize": 18,
+      "bold": true,
+      "color": "#0f766e"
+    },
+    "subtitle": {
+      "fontSize": 9,
+      "color": "#6b7280"
+    },
+    "section": {
+      "fontSize": 10,
+      "bold": true,
+      "color": "#0f766e",
+      "border": {
+        "width": 0.4,
+        "color": "#0f766e",
+        "sides": {
+          "top": false,
+          "right": false,
+          "bottom": true,
+          "left": false
+        }
+      }
+    },
+    "note": {
+      "fontSize": 7.5,
+      "color": "#6b7280"
+    }
+  },
+  "dataSources": [
+    {
+      "id": "sales",
+      "name": "Satışlar",
+      "kind": "json",
+      "data": null
+    }
+  ],
+  "dataMember": {
+    "dataSourceId": "sales"
+  },
+  "bands": [
+    {
+      "id": "reportHeader",
+      "kind": "reportHeader",
+      "height": 22,
+      "controls": [
+        {
+          "id": "title",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 182,
+          "height": 9,
+          "text": "Satış özeti",
+          "style": "title"
+        },
+        {
+          "id": "subtitle",
+          "type": "text",
+          "x": 0,
+          "y": 10,
+          "width": 182,
+          "height": 6,
+          "text": {
+            "expression": "Count() + ' sipariş · ' + Format(Min([date]), 'dd.MM.yyyy') + ' – ' + Format(Max([date]), 'dd.MM.yyyy')"
+          },
+          "style": "subtitle"
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "kind": "detail",
+      "height": 0,
+      "controls": []
+    },
+    {
+      "id": "reportFooter",
+      "kind": "reportFooter",
+      "height": 180,
+      "controls": [
+        {
+          "id": "kpiTitle",
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 182,
+          "height": 7,
+          "text": "Göstergeler",
+          "style": "section"
+        },
+        {
+          "id": "paidShare",
+          "type": "chart",
+          "chartType": "gauge",
+          "x": 0,
+          "y": 10,
+          "width": 56,
+          "height": 34,
+          "title": "Tahsil edilen (%)",
+          "category": {
+            "expression": ""
+          },
+          "value": {
+            "expression": "Iif([paid], [amount], 0) / SumAll([amount]) * 100"
+          },
+          "aggregate": "sum",
+          "max": 100,
+          "format": "n0",
+          "showValues": true,
+          "colors": [
+            "#0f766e"
+          ]
+        },
+        {
+          "id": "target",
+          "type": "chart",
+          "chartType": "gauge",
+          "x": 63,
+          "y": 10,
+          "width": 56,
+          "height": 34,
+          "title": "Hedef: 250.000 ₺",
+          "category": {
+            "expression": ""
+          },
+          "value": {
+            "expression": "[amount]"
+          },
+          "aggregate": "sum",
+          "max": 250000,
+          "format": "n0",
+          "showValues": true,
+          "colors": [
+            "#0f766e"
+          ]
+        },
+        {
+          "id": "average",
+          "type": "chart",
+          "chartType": "gauge",
+          "x": 126,
+          "y": 10,
+          "width": 56,
+          "height": 34,
+          "title": "Ortalama sipariş",
+          "category": {
+            "expression": ""
+          },
+          "value": {
+            "expression": "[amount]"
+          },
+          "aggregate": "avg",
+          "max": 8000,
+          "format": "n0",
+          "showValues": true,
+          "colors": [
+            "#0f766e"
+          ]
+        },
+        {
+          "id": "kpiNote",
+          "type": "text",
+          "x": 0,
+          "y": 45,
+          "width": 182,
+          "height": 5,
+          "text": "Tahsil edilen pay her siparişin genel toplamdaki payından toplanır: Iif([paid], [amount], 0) / SumAll([amount]).",
+          "style": "note"
+        },
+        {
+          "id": "cityTitle",
+          "type": "text",
+          "x": 0,
+          "y": 56,
+          "width": 182,
+          "height": 7,
+          "text": "Şehirler",
+          "style": "section"
+        },
+        {
+          "id": "cityChart",
+          "type": "chart",
+          "chartType": "bar",
+          "x": 0,
+          "y": 66,
+          "width": 108,
+          "height": 52,
+          "category": {
+            "expression": "[city]"
+          },
+          "value": {
+            "expression": "[amount]"
+          },
+          "aggregate": "sum",
+          "format": "n0",
+          "showValues": true,
+          "colors": [
+            "#0f766e"
+          ]
+        },
+        {
+          "id": "cityShare",
+          "type": "chart",
+          "chartType": "doughnut",
+          "x": 114,
+          "y": 66,
+          "width": 68,
+          "height": 52,
+          "category": {
+            "expression": "[city]"
+          },
+          "value": {
+            "expression": "[amount]"
+          },
+          "aggregate": "sum",
+          "format": "n0",
+          "showValues": false,
+          "showLegend": true
+        },
+        {
+          "id": "monthTitle",
+          "type": "text",
+          "x": 0,
+          "y": 126,
+          "width": 182,
+          "height": 7,
+          "text": "Şehir × ay (₺)",
+          "style": "section"
+        },
+        {
+          "id": "pivot",
+          "type": "crosstab",
+          "x": 0,
+          "y": 136,
+          "width": 182,
+          "height": 30,
+          "rows": {
+            "expression": "[city]"
+          },
+          "columns": {
+            "expression": "Month([date])"
+          },
+          "value": {
+            "expression": "[amount]"
+          },
+          "aggregate": "sum",
+          "format": "n0",
+          "title": "Şehir",
+          "totalLabel": "Toplam",
+          "styleOverrides": {
+            "fontSize": 8,
+            "border": {
+              "width": 0.25,
+              "color": "#c8ced6",
+              "sides": {
+                "top": true,
+                "right": true,
+                "bottom": true,
+                "left": true
+              }
+            }
+          }
+        },
+        {
+          "id": "total",
+          "type": "text",
+          "x": 100,
+          "y": 170,
+          "width": 82,
+          "height": 8,
+          "text": {
+            "expression": "'Genel toplam: ' + Format(Sum([amount]), 'c2')"
+          },
+          "styleOverrides": {
+            "bold": true,
+            "fontSize": 11,
+            "textAlign": "right"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pageFooter",
+      "kind": "pageFooter",
+      "height": 8,
+      "controls": [
+        {
+          "id": "made",
+          "type": "text",
+          "x": 0,
+          "y": 2,
+          "width": 120,
+          "height": 5,
+          "text": "we-report ile hazırlandı — tüm veriler kurgusaldır",
+          "style": "note"
+        },
+        {
+          "id": "page",
+          "type": "text",
+          "x": 120,
+          "y": 2,
+          "width": 62,
+          "height": 5,
+          "text": {
+            "expression": "'Sayfa ' + [PageNumber] + ' / ' + [Pages]"
+          },
+          "style": "note",
+          "styleOverrides": {
+            "textAlign": "right"
+          }
+        }
+      ]
+    }
+  ]
+}
