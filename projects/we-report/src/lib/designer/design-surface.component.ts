@@ -869,7 +869,7 @@ export class DesignSurfaceComponent implements OnDestroy {
         const options = { locale: report.locale || this.config.locale || 'en-US', currency: report.currency || this.config.currency || 'USD' };
         // Page fields show a sample page, as the page number item does (page 1 of 9).
         const pageFields = /\[\s*(PageNumber|Pages)\s*\]/.test(c.text.expression);
-        const row = pageFields ? { ...(sample.row !== null && typeof sample.row === 'object' ? sample.row : {}), PageNumber: 1, Pages: 9 } : sample.row;
+        const row = pageFields ? { PageNumber: 1, Pages: 9, ...(sample.row !== null && typeof sample.row === 'object' ? sample.row : {}) } : sample.row;
         const value = evaluate(c.text.expression, { ...sample, row, ...options, now: new Date() });
         return typeof value === 'string' && !c.format ? value : formatValue(value, c.format, options);
       } catch {

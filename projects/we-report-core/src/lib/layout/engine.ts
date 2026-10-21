@@ -623,7 +623,8 @@ class LayoutRun {
             items: [],
             height: c.height,
             deferred: (page) => {
-              const pageScope = { ...scope, row: { ...row, PageNumber: page.number, Pages: page.count } };
+              // A data field of the same name wins: the page numbers fill in only what the row lacks.
+              const pageScope = { ...scope, row: { PageNumber: page.number, Pages: page.count, ...row } };
               if (c.markup) return this.richTextBox(this.richRuns(c, pageScope), style, box);
               return this.textBox(this.valueText(c.text, c.format, pageScope, c.id).text, style, box);
             },

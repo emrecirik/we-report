@@ -501,6 +501,10 @@ describe('layout engine', () => {
     const pages = layoutReport(report, { fonts, now: NOW }).pages.map((p) => texts(p).filter((t) => t.startsWith('Sayfa')));
     expect(pages).toEqual(pages.map((_, i) => [`Sayfa ${i + 1} / ${pages.length}`]));
     expect(checkReport(report, ['Name']).filter((i) => i.code === 'unknownField')).toEqual([]);
+    // A data field of that name wins.
+    const own = listReport([{ Name: 'a', Pages: 'kendi' }]);
+    own.bands[2].controls = [{ id: 'p', type: 'text', x: 0, y: 0, width: 80, height: 6, text: { expression: "'Sayfa ' + [PageNumber] + ' / ' + [Pages]" } }];
+    expect(texts(layoutReport(own, { fonts, now: NOW }).pages[0])).toContain('Sayfa 1 / kendi');
     // Rich text too.
     report.bands[2].controls = [{ id: 'p', type: 'text', x: 0, y: 0, width: 80, height: 6, markup: true, text: '**{[PageNumber]}** of {[Pages]}' }];
     const rich = layoutReport(report, { fonts, now: NOW }).pages.map((p) => texts(p).filter((t) => /of/.test(t)).join('|'));

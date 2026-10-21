@@ -11,7 +11,7 @@ in we-report's own interpreter — never `eval` — so report files are safe to 
 | `[Customer.City]` | A nested field |
 | `[^.number]` | A field of the object around the rows — e.g. the invoice header when the rows are its `lines` |
 | `[?from]` | The value of the report parameter `from` |
-| `[PageNumber]`, `[Pages]` | The page number and the page count, e.g. `'Sayfa ' + [PageNumber] + ' / ' + [Pages]` (per group with *page numbers per group*) |
+| `[PageNumber]`, `[Pages]` | The page number and the page count, e.g. `'Sayfa ' + [PageNumber] + ' / ' + [Pages]` (per group with *page numbers per group*). A data field of the same name wins; the text keeps its height (it does not grow). |
 | `'text'` or `"text"` | Text (double the quote inside: `'it''s'`) |
 | `12`, `3.5`, `true`, `null` | Numbers, booleans, nothing |
 
