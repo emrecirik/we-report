@@ -77,6 +77,8 @@ const CATEGORIES: { id: FunctionCategory; label: keyof WeReportLocale }[] = [
             @for (p of parameters(); track p.name) {
               <li><button type="button" (click)="insert('[?' + p.name + ']')">? {{ p.label || p.name }}</button></li>
             }
+            <li><button type="button" (click)="insert('[PageNumber]')"># {{ s.pageNumber }}</button></li>
+            <li><button type="button" (click)="insert('[Pages]')"># {{ s.pageTotal }}</button></li>
           </ul>
         </section>
         <section>
@@ -369,6 +371,8 @@ export class ExpressionEditorComponent implements AfterViewInit {
     const fields: Suggestion[] = [
       ...this.fields().map((f) => ({ label: f.expression, insert: f.expression, back: 0, help: f.label })),
       ...this.parameters().map((p) => ({ label: `[?${p.name}]`, insert: `[?${p.name}]`, back: 0, help: p.label ?? '' })),
+      { label: '[PageNumber]', insert: '[PageNumber]', back: 0, help: this.strings().pageNumber },
+      { label: '[Pages]', insert: '[Pages]', back: 0, help: this.strings().pageTotal },
     ];
     const matches = (s: Suggestion) => s.label.toLocaleLowerCase().replace(/^\[\??/, '').includes(q.replace(/^\[\??/, ''));
     if (t.field) return fields.filter(matches).slice(0, 8);

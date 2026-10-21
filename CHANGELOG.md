@@ -67,7 +67,7 @@
 
 - `[PageNumber]` and `[Pages]` in any text formula (`'Page ' + [PageNumber] + ' of ' + [Pages]`) and
   in rich text fields (`{[PageNumber]}`): the text is drawn once the pages are counted; they
-  printed nothing before.
+  printed nothing before. The formula editor offers them with the fields.
 - `SumAll(value)`: the grand total of every row, in a row or a group too —
   `[amount] / SumAll([amount])` with format `p0` is the share of the total.
 - Pasted dates whose day starts with a zero (`05.01.2026`) are read as dates; they stayed text.

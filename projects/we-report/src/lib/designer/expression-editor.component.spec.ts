@@ -35,5 +35,11 @@ describe('ExpressionEditorComponent', () => {
     type(" + ' Su");
     fixture.detectChanges();
     expect(options()).toEqual([]);
+
+    // Page numbers are offered like fields.
+    area.value = '';
+    area.selectionStart = area.selectionEnd = 0;
+    type('[Pag');
+    expect(options()).toEqual(['[PageNumber]', '[Pages]']);
   });
 });
