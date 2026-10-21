@@ -56,6 +56,8 @@ export function vbToFormula(value: string, fields: FieldMap = new Map()): Bindab
     .replace(/\bNow\b(?!\s*\()/gi, 'Now()')
     .replace(/\bToday\b(?!\s*\()/gi, 'Today()')
     .replace(/\bNothing\b/gi, 'null')
+    .replace(/Globals!(Overall)?PageNumber\b/gi, '[PageNumber]')
+    .replace(/Globals!(Overall)?TotalPages\b/gi, '[Pages]')
     .replace(/&/g, '+');
   // Format(x, "N2") → Format(x, 'n2'): .NET format strings to ours.
   e = e.replace(/\bFormat\s*\(([^,]+),\s*\u0000(\d+)\u0000\s*\)/gi, (whole, x: string, i: string) => {

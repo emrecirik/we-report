@@ -27,6 +27,7 @@ RDL 2008, 2010 and 2016 files (`.rdlc`, `.rdl`).
 | The main table (tablix) | Header rows print at the start, the details row once per data row, total rows at the end; spanned cells kept. |
 | Lines, rectangles, embedded images, images from a field or a web address (`https://…`) | |
 | `="Page " & Globals!PageNumber & " of " & Globals!TotalPages` | Becomes a page-number item. |
+| `Globals!PageNumber`, `Globals!TotalPages` elsewhere in a formula | `[PageNumber]`, `[Pages]` |
 | Data set fields, report parameters | Field names are mapped to their data fields. |
 | Expressions | `Fields!X.Value`, `Parameters!X.Value`, `&`, `IIF`, `Sum/Count/Avg/Min/Max` (scope argument dropped), `First`, `CountRows()`, `Format(x, "N2")`, `UCase`, `LCase`, `CStr`, `CInt`/`CDbl`/`CDec`, `Today`, `Now`, `Nothing`. |
 

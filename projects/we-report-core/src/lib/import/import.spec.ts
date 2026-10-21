@@ -165,6 +165,7 @@ describe('report import', () => {
     expect(vbToFormula('=IIF(Fields!A.Value > 0, "yes", "no")')).toEqual({ expression: 'Iif([A] > 0, "yes", "no")' });
     expect(vbToFormula('=Format(Fields!D.Value, "dd.MM.yyyy")')).toEqual({ expression: "Format([D], 'dd.MM.yyyy')" });
     expect(vbToFormula('=Code.Total()')).toBeNull();
+    expect(vbToFormula('="Sayfa " & Globals!PageNumber & " (" & Globals!TotalPages & ")"')).toEqual({ expression: '"Sayfa " + [PageNumber] + " (" + [Pages] + ")"' });
     expect(vbToFormula('Plain text')).toBe('Plain text');
     expect(devExpressToFormula('sumSum([LineTotal])', new Map([['LineTotal', '[Qty] * [Price]']]))).toBe('Sum(([Qty] * [Price]))');
     expect(devExpressToFormula('Iif(?minAmount > [Parameters.x], GetYear([D]), ToStr([N]))')).toBe('Iif([?minAmount] > [?x], Year([D]), ToString([N]))');

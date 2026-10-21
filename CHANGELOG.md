@@ -146,6 +146,8 @@
 
 ### Import
 
+- RDLC `Globals!PageNumber` / `Globals!TotalPages` inside a larger formula become `[PageNumber]` /
+  `[Pages]` (they were not converted).
 - DevExpress calculated fields become calculated fields of the report.
 - RDLC external images and REPX `ImageUrl` pictures from a web address are kept.
 
