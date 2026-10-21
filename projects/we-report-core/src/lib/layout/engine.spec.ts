@@ -501,6 +501,10 @@ describe('layout engine', () => {
     const pages = layoutReport(report, { fonts, now: NOW }).pages.map((p) => texts(p).filter((t) => t.startsWith('Sayfa')));
     expect(pages).toEqual(pages.map((_, i) => [`Sayfa ${i + 1} / ${pages.length}`]));
     expect(checkReport(report, ['Name']).filter((i) => i.code === 'unknownField')).toEqual([]);
+    // Rich text too.
+    report.bands[2].controls = [{ id: 'p', type: 'text', x: 0, y: 0, width: 80, height: 6, markup: true, text: '**{[PageNumber]}** of {[Pages]}' }];
+    const rich = layoutReport(report, { fonts, now: NOW }).pages.map((p) => texts(p).filter((t) => /of/.test(t)).join('|'));
+    expect(rich[0]).toContain(`of ${rich.length}`);
   });
 
   it('leaves the page header off the first page and the footer off the last when asked', () => {

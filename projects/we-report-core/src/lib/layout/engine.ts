@@ -615,16 +615,17 @@ class LayoutRun {
     const box = { x: c.x, y: c.y, width: c.width, height: c.height };
     switch (c.type) {
       case 'text': {
-        if (isExpression(c.text) && PAGE_FIELDS.test(c.text.expression) && !c.markup) {
-          const expression = c.text.expression;
+        // A rich text's own text holds its {formula} fields, so it is searched too.
+        const source = isExpression(c.text) ? c.text.expression : c.markup ? String(c.text) : '';
+        if (PAGE_FIELDS.test(source)) {
           const row = scope.row !== null && typeof scope.row === 'object' ? scope.row : {};
           return {
             items: [],
             height: c.height,
             deferred: (page) => {
-              const pageRow = { ...row, PageNumber: page.number, Pages: page.count };
-              const { text } = this.valueText({ expression }, c.format, { ...scope, row: pageRow }, c.id);
-              return this.textBox(text, style, box);
+              const pageScope = { ...scope, row: { ...row, PageNumber: page.number, Pages: page.count } };
+              if (c.markup) return this.richTextBox(this.richRuns(c, pageScope), style, box);
+              return this.textBox(this.valueText(c.text, c.format, pageScope, c.id).text, style, box);
             },
           };
         }
