@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.1 — 2026-11-19
+
+### Data backends
+
+- PHP sample on PostgreSQL: a protocol 1.2 search, and any condition after a `contains` /
+  `startsWith`, failed with "The query failed" — PDO's PostgreSQL parser read the `ESCAPE '\'`
+  literal as unfinished and lost the placeholders after it. The escape character is now a
+  parameter. The conformance suite checks a condition after `contains`. The packages are unchanged
+  apart from the version.
+
 ## 0.9.0 — 2026-11-19
 
 Reports and grids over tables of any size: a database source can be summarized by the database,
