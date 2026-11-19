@@ -4,6 +4,7 @@ import { Band, isExpression, ReportDefinition, TextControl } from '../definition
 import { evaluate } from '../expression/evaluate';
 import { toDate } from '../format';
 import { parseRichText, plainRichText } from '../layout/rich-text';
+import { sortOrder } from '../layout/sort-order';
 
 export interface TableExport {
   headers: string[];
@@ -117,21 +118,8 @@ export function reportTable(definition: ReportDefinition, options: TableExportOp
     if (g.sort !== 'none' || g.orderBy?.expression?.trim()) sortKeys.push({ descending: g.sort === 'desc' });
   });
   for (const d of detailKeys) sortKeys.push({ descending: !!d.descending });
-  const collator = new Intl.Collator(options.locale || 'en-US', { numeric: true });
-  const sorted = !sortKeys.length
-    ? all
-    : [...all].sort((ra, rb) => {
-        const a = rowKeys.get(ra)!;
-        const b = rowKeys.get(rb)!;
-        for (let i = 0; i < sortKeys.length; i++) {
-          const x = a[i];
-          const y = b[i];
-          if (x === y) continue;
-          const c = x === null || x === undefined ? -1 : y === null || y === undefined ? 1 : typeof x === 'number' && typeof y === 'number' ? x - y : collator.compare(String(x), String(y));
-          if (c) return sortKeys[i].descending ? -c : c;
-        }
-        return 0;
-      });
+  const order = sortOrder(all.map((row) => rowKeys.get(row)!), sortKeys.map((k) => (k.descending ? 'desc' : 'asc')), options.locale || 'en-US');
+  const sorted = order ? order.map((i) => all[i]) : all;
   // Groups past a group's `top` are left out, as in print (counted inside their parent group).
   const tops = groups.map((g) => (typeof g.top === 'number' && g.top > 0 ? Math.floor(g.top) : Infinity));
   let ordered = sorted;

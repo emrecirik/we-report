@@ -19,6 +19,7 @@ import { FontRegistry } from '../fonts/font-registry';
 import { formatValue } from '../format';
 import { barcodeItem } from './barcode';
 import { aggregate, ChartPoint, chartItems } from './chart';
+import { sortOrder } from './sort-order';
 import { readImage } from './images';
 import { LayoutBookmark, LayoutDocument, LayoutItem, LayoutPage, LayoutProblem, TextItem } from './layout-types';
 import { resolveStyle, ResolvedStyle } from './style';
@@ -154,16 +155,13 @@ class LayoutRun {
     if (rows === null) {
       if (detail) entries.push({ type: 'band', rendered: this.renderBand(detail, { row: undefined, rows: [] }) });
     } else {
-      const keys = new Map<unknown, unknown[]>();
-      // Group keys first (one per level), then the detail's own sort keys.
+      // Group keys first (one per level), then the detail's own sort keys; keys[i] belongs to rows[i].
       // Report files are untrusted: ignore a malformed sortBy rather than fail the whole report.
       const sortBy = Array.isArray(detail?.sortBy) ? detail.sortBy.filter((k) => typeof k?.expression === 'string' && k.expression.trim()) : [];
-      for (const row of rows) {
-        keys.set(row, [
-          ...groupHeaders.map((h) => this.groupKey(h, row)),
-          ...sortBy.map((k) => this.sortKey(k.expression, row, detail!.id)),
-        ]);
-      }
+      const keys = rows.map((row) => [
+        ...groupHeaders.map((h) => this.groupKey(h, row)),
+        ...sortBy.map((k) => this.sortKey(k.expression, row, detail!.id)),
+      ]);
       const orders = [
         ...groupHeaders.map((h) => (h.groupBy ? (h.sort ?? 'asc') : 'none')),
         ...sortBy.map((k) => (k.descending ? 'desc' : 'asc') as 'asc' | 'desc'),
@@ -179,33 +177,29 @@ class LayoutRun {
           const value = new Map<string, unknown>();
           if (!orderBy) return value;
           const members = new Map<string, unknown[]>();
-          for (const row of rows) {
-            const path = JSON.stringify(keys.get(row)!.slice(0, level + 1));
+          rows.forEach((row, i) => {
+            const path = JSON.stringify(keys[i].slice(0, level + 1));
             const list = members.get(path);
             if (list) list.push(row);
             else members.set(path, [row]);
-          }
+          });
           for (const [path, groupRows] of members) {
             const v = this.eval(orderBy.expression, { row: groupRows[0], rows: groupRows }, h.id);
             value.set(path, v instanceof Date ? v.getTime() : v);
           }
           return value;
         });
-        sortKeys = new Map();
-        for (const row of rows) {
-          const k = keys.get(row)!;
-          sortKeys.set(row, [
-            ...groupHeaders.flatMap((_, level) => (byValue[level] ? [values[level].get(JSON.stringify(k.slice(0, level + 1))), k[level]] : [k[level]])),
-            ...k.slice(groupHeaders.length),
-          ]);
-        }
+        sortKeys = keys.map((k) => [
+          ...groupHeaders.flatMap((_, level) => (byValue[level] ? [values[level].get(JSON.stringify(k.slice(0, level + 1))), k[level]] : [k[level]])),
+          ...k.slice(groupHeaders.length),
+        ]);
         sortOrders = [
           ...groupHeaders.flatMap((h, level) => (byValue[level] ? [byValue[level]!.descending ? 'desc' : 'asc', h.sort === 'desc' ? 'desc' : 'asc'] as ('asc' | 'desc')[] : [orders[level]])),
           ...orders.slice(groupHeaders.length),
         ];
       }
-      const sorted = this.sortRows(rows, sortOrders, sortKeys);
-      this.emitGroups(entries, 0, sorted, groupHeaders, keys, detail);
+      const order = sortOrder(sortKeys, sortOrders, this.locale);
+      this.emitGroups(entries, 0, order ? order.map((i) => rows[i]) : rows, groupHeaders, order ? order.map((i) => keys[i]) : keys, detail);
     }
 
     const reportFooter = byKind('reportFooter');
@@ -235,34 +229,12 @@ class LayoutRun {
     return v instanceof Date ? v.getTime() : v;
   }
 
-  private sortRows(rows: unknown[], orders: ('asc' | 'desc' | 'none')[], keys: Map<unknown, unknown[]>): unknown[] {
-    const collator = new Intl.Collator(this.locale, { numeric: true });
-    const cmp = (a: unknown, b: unknown): number => {
-      if (a === b) return 0;
-      if (a === null || a === undefined) return -1;
-      if (b === null || b === undefined) return 1;
-      if (typeof a === 'number' && typeof b === 'number') return a - b;
-      return collator.compare(String(a), String(b));
-    };
-    if (!orders.some((o) => o !== 'none')) return rows;
-    // Array.prototype.sort is stable, so rows keep their order inside a group.
-    return [...rows].sort((ra, rb) => {
-      for (let i = 0; i < orders.length; i++) {
-        const order = orders[i];
-        if (order === 'none') continue;
-        const c = cmp(keys.get(ra)![i], keys.get(rb)![i]);
-        if (c) return order === 'desc' ? -c : c;
-      }
-      return 0;
-    });
-  }
-
   private emitGroups(
     entries: Entry[],
     level: number,
     rows: unknown[],
     headers: Band[],
-    keys: Map<unknown, unknown[]>,
+    keys: unknown[][],
     detail: Band | undefined,
   ): void {
     if (level === headers.length) {
@@ -281,15 +253,15 @@ class LayoutRun {
     // "Top N": the rest of the groups is left out (report totals still count every row).
     const top = typeof header.top === 'number' && header.top > 0 ? Math.floor(header.top) : Infinity;
     for (let printed = 0; start < rows.length && printed < top; printed++) {
-      const key = keys.get(rows[start])![level];
+      const key = keys[start][level];
       let end = start + 1;
-      while (end < rows.length && keys.get(rows[end])![level] === key) end++;
+      while (end < rows.length && keys[end][level] === key) end++;
       const groupRows = rows.slice(start, end);
 
       const startIndex = entries.length;
       entries.push({ type: 'groupStart', level, keepTogether: !!header.keepTogether, end: -1 });
       entries.push({ type: 'band', rendered: this.renderBand(header, { row: groupRows[0], rows: groupRows }), groupLevel: level });
-      this.emitGroups(entries, level + 1, groupRows, headers, keys, detail);
+      this.emitGroups(entries, level + 1, groupRows, headers, keys.slice(start, end), detail);
       if (footer) {
         entries.push({ type: 'band', rendered: this.renderBand(footer, { row: groupRows[groupRows.length - 1], rows: groupRows }) });
       }
@@ -815,15 +787,26 @@ class LayoutRun {
     type Key = { label: string; sort: unknown };
     const rowKeys = new Map<string, Key>();
     const colKeys = new Map<string, Key>();
-    const cells = new Map<string, number[]>();
-    const rowTotals = new Map<string, number[]>();
-    const colTotals = new Map<string, number[]>();
-    const grand: number[] = [];
-    const add = (map: Map<string, number[]>, key: string, value: number) => {
-      const list = map.get(key);
-      if (list) list.push(value);
-      else map.set(key, [value]);
+    // Running count, sum, min and max rather than every value: a million rows keep a few numbers a cell
+    type Acc = { n: number; sum: number; min: number; max: number };
+    const blank = (): Acc => ({ n: 0, sum: 0, min: Infinity, max: -Infinity });
+    const cells = new Map<string, Acc>();
+    const rowTotals = new Map<string, Acc>();
+    const colTotals = new Map<string, Acc>();
+    const grand = blank();
+    const put = (acc: Acc, value: number) => {
+      acc.n++;
+      acc.sum += value;
+      if (value < acc.min) acc.min = value;
+      if (value > acc.max) acc.max = value;
     };
+    const add = (map: Map<string, Acc>, key: string, value: number) => {
+      let acc = map.get(key);
+      if (!acc) map.set(key, (acc = blank()));
+      put(acc, value);
+    };
+    const result = (acc: Acc): number =>
+      kind === 'count' ? acc.n : !acc.n ? 0 : kind === 'min' ? acc.min : kind === 'max' ? acc.max : kind === 'avg' ? acc.sum / acc.n : acc.sum;
     const keyOf = (v: unknown): Key => {
       if (v instanceof Date) return { label: formatValue(v, undefined, options), sort: v.getTime() };
       return { label: v === null || v === undefined || v === ERROR_TEXT ? '' : typeof v === 'string' ? v : formatValue(v, undefined, options), sort: v ?? '' };
@@ -837,14 +820,14 @@ class LayoutRun {
       if (!rowKeys.has(r.label)) rowKeys.set(r.label, r);
       if (!colKeys.has(k.label)) colKeys.set(k.label, k);
       const cell = `${r.label}\u0000${k.label}`;
-      if (!cells.has(cell)) cells.set(cell, []);
+      if (!cells.has(cell)) cells.set(cell, blank());
       // Count counts rows, whatever the value formula returns; the others skip empty values.
       if (value === null && kind !== 'count') continue;
       const v = value ?? 0;
-      cells.get(cell)!.push(v);
+      put(cells.get(cell)!, v);
       add(rowTotals, r.label, v);
       add(colTotals, k.label, v);
-      grand.push(v);
+      put(grand, v);
     }
     const collator = new Intl.Collator(this.locale, { numeric: true });
     const order = (a: Key, b: Key) =>
@@ -855,8 +838,8 @@ class LayoutRun {
     const rows = [...rowKeys.values()].sort(order).slice(0, MAX_CROSSTAB_ROWS).map((k) => k.label);
     const cols = [...colKeys.values()].sort(order).slice(0, MAX_CROSSTAB_COLUMNS).map((k) => k.label);
     const values = (r?: string, k?: string) =>
-      (r !== undefined && k !== undefined ? cells.get(`${r}\u0000${k}`) : r !== undefined ? rowTotals.get(r) : k !== undefined ? colTotals.get(k) : grand) ?? [];
-    const show = (list: number[], always: boolean) => (list.length || always ? formatValue(aggregate(kind, list), c.format || undefined, options) : '');
+      (r !== undefined && k !== undefined ? cells.get(`${r}\u0000${k}`) : r !== undefined ? rowTotals.get(r) : k !== undefined ? colTotals.get(k) : grand) ?? blank();
+    const show = (acc: Acc, always: boolean) => (acc.n || always ? formatValue(result(acc), c.format || undefined, options) : '');
 
     const headerWidth = c.rowHeaderWidth ?? Math.min(40, c.width / 3);
     const columnCount = cols.length + (totals ? 1 : 0);

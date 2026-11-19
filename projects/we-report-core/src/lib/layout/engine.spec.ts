@@ -226,6 +226,27 @@ describe('layout engine', () => {
     expect(layoutReport(report, { fonts, now: NOW }).pages.length).toBe(1);
   });
 
+  it('sorts by the locale, empty values first, equal keys in their data order — also past what one number holds', () => {
+    const rows = [
+      { Name: 'r1', City: 'İzmir', N: 2 },
+      { Name: 'r2', City: 'Ankara', N: null },
+      { Name: 'r3', City: 'ızgara', N: 1 },
+      { Name: 'r4', City: null, N: 1 },
+      { Name: 'r5', City: 'Ankara', N: 1 },
+      { Name: 'r6', City: 'Çorum', N: 1 },
+      { Name: 'r7', City: 'İzmir', N: 2 },
+    ];
+    const report = listReport(rows);
+    report.locale = 'tr-TR';
+    const detail = report.bands.find((b) => b.kind === 'detail')!;
+    detail.sortBy = [{ expression: '[City]' }, { expression: '[N]', descending: true }];
+    const names = () => texts(layoutReport(report, { fonts, now: NOW }).pages[0]).filter((t) => /^r\d$/.test(t));
+    expect(names()).toEqual(['r4', 'r5', 'r2', 'r6', 'r3', 'r1', 'r7']);
+    // Twenty sort keys of seven values each don't fit one exact number: the rows are compared key by key
+    detail.sortBy = [...detail.sortBy, ...Array.from({ length: 18 }, () => ({ expression: '[Name]' }))];
+    expect(names()).toEqual(['r4', 'r5', 'r2', 'r6', 'r3', 'r1', 'r7']);
+  });
+
   it('keeps a group together and repeats its header on following pages', () => {
     const rows = [
       ...Array.from({ length: 25 }, (_, i) => ({ Name: `A${i}`, G: 'A' })),

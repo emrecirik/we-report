@@ -159,6 +159,10 @@ describe('cross table', () => {
     const avg = grid(report({ aggregate: 'avg', format: 'n1', totalLabel: 'Toplam' }), fonts);
     expect(avg[1]).toEqual(['Ankara', '4,0', '7,0', '5,0']);
     expect(avg[3][0]).toBe('Toplam');
+    // Ankara: month 1 has 5 and 3, month 2 has 7; İzmir: month 2 has 10, month 10 has 1
+    // (an empty cell prints nothing)
+    expect(grid(report({ aggregate: 'min' }), fonts).slice(1, 4)).toEqual([['Ankara', '3', '7', '3'], ['İzmir', '10', '1', '1'], ['Σ', '3', '7', '1', '1']]);
+    expect(grid(report({ aggregate: 'max' }), fonts).slice(1, 4)).toEqual([['Ankara', '5', '7', '7'], ['İzmir', '10', '1', '10'], ['Σ', '5', '10', '1', '10']]);
   });
 });
 
