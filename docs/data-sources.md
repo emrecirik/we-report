@@ -62,6 +62,26 @@ Connections that allow it also accept free SQL (`SELECT … WHERE date >= :from`
 
 The browser never sees connection strings — only connection names.
 
+### Tables of any size: summarize in the database
+
+A source loads at most the backend's row limit (`maxRows`, 5,000 by default) and says so when a
+table has more. For a summary report over a big table, tick the columns to group by under
+**Summarize in the database** and add totals (sum, average, smallest, largest, count). The database
+reads the whole table and the report gets one row per group: the group columns, `__count` (the rows
+in the group) and each total under its field name (`sum_total`, `avg_qty` …). Needs a protocol 1.2
+backend (every sample backend).
+
+```json
+{ "table": "sales", "groupBy": ["city", "category"],
+  "aggregates": [{ "column": "total", "fn": "sum", "as": "sum_total" }] }
+```
+
+Measured with the Node.js sample backend on a fictional billion-row DuckDB table: city × category,
+80 groups covering all 1,000,000,000 rows, in about 3–4 s; the report itself lays out in a fraction
+of a second. In the report, add the groups up — `Sum([sum_total])`, `Sum([__count])` in a group
+footer, a cross table of `[__count]` with the sum. An average of averages is not the average of the
+rows: divide sums (`Sum([sum_total]) / Sum([__count])`).
+
 ## Calculated fields
 
 A formula worked out for every row and then used like a data field: under **Data sources →

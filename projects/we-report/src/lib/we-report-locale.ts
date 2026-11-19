@@ -261,6 +261,9 @@ export interface WeReportLocale {
   addFilter: string;
   sortBy: string;
   maxRows: string;
+  summarize: string;
+  summarizeHint: string;
+  addDbTotal: string;
   opLike: string;
   opIsEmpty: string;
   opIsNotEmpty: string;
@@ -712,6 +715,9 @@ export const weReportLocaleEn: WeReportLocale = {
   addFilter: 'Add condition',
   sortBy: 'Sort by',
   maxRows: 'Max rows',
+  summarize: 'Summarize in the database',
+  summarizeHint: 'One row per group: the ticked columns, __count (rows in the group) and each total. The database reads the whole table; the report gets only the groups.',
+  addDbTotal: 'Add total',
   opLike: 'contains (like)',
   opIsEmpty: 'is empty',
   opIsNotEmpty: 'is not empty',
@@ -1207,6 +1213,9 @@ export const weReportLocaleTr: WeReportLocale = {
   addFilter: 'Koşul ekle',
   sortBy: 'Sırala',
   maxRows: 'En fazla satır',
+  summarize: 'Veritabanında özetle',
+  summarizeHint: 'Her grup için bir satır: işaretli sütunlar, __count (gruptaki satır sayısı) ve her toplam. Tabloyu veritabanı okur; rapora yalnız gruplar gelir.',
+  addDbTotal: 'Toplam ekle',
   opLike: 'içerir (like)',
   opIsEmpty: 'boş',
   opIsNotEmpty: 'boş değil',

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Big data in reports
+
+- **Summarize in the database**: a database source can group by columns and add totals
+  (`query.groupBy`, `query.aggregates`; designer: *Summarize in the database*). The database reads
+  the whole table, the report gets one row per group with `__count` and each total — a fictional
+  billion-row DuckDB table becomes an 80-group city × category report in about 3–4 s. Needs a
+  protocol 1.2 backend; the option is offered only when the backend says it can.
+- Sorting and grouping a million rows is several times faster: each sort key's distinct values are
+  ranked once and the rows sort on numbers (grouped report 5.3 → 2.1 s, sorted by a text column
+  23.6 → 3.3 s). The same order in the Excel/CSV table export. Cross tables keep a running count,
+  sum, minimum and maximum per cell instead of every value.
+
 ### Data protocol 1.2 and backends
 
 - **Protocol 1.2** — backward compatible, lets a grid scroll, search and group a whole table

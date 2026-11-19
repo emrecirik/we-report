@@ -3,6 +3,7 @@ import {
   BackendConnection,
   backendClient,
   BackendSchema,
+  ChartAggregate,
   DatabaseDataSource,
   fetchDatabase,
   QueryCondition,
@@ -14,6 +15,26 @@ import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportLocale } from '../we-report-locale';
 
 const OPERATORS: QueryCondition['op'][] = ['=', '!=', '<', '<=', '>', '>=', 'like', 'isNull', 'notNull'];
+const AGGREGATES: ChartAggregate[] = ['sum', 'avg', 'min', 'max', 'count'];
+
+/** The protocol's limits (protocol/schemas/query.json) */
+const MAX_GROUP_COLUMNS = 8;
+const MAX_AGGREGATES = 32;
+
+/**
+ * Field names for the totals (`sum_total`, `avg_price` …), numbered when the same total is asked
+ * twice or the name is a group column's.
+ */
+function withNames(list: NonNullable<StructuredQuery['aggregates']>, groupBy: string[] = []): NonNullable<StructuredQuery['aggregates']> {
+  const used = new Set<string>(groupBy);
+  return list.map((a) => {
+    const base = `${a.fn}_${a.column}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 60);
+    let as = base;
+    for (let n = 2; used.has(as); n++) as = `${base}_${n}`;
+    used.add(as);
+    return { ...a, as };
+  });
+}
 
 /**
  * Visual query builder for a database source: backend → connection → table → columns → filters
@@ -74,17 +95,60 @@ const OPERATORS: QueryCondition['op'][] = ['=', '!=', '<', '<=', '>', '>=', 'lik
         </select>
       </label>
       @if (tableColumns().length) {
-        <div>
-          <span class="dbe__label">{{ s.columns }}</span>
-          <div class="dbe__columns">
-            @for (col of tableColumns(); track col.name) {
-              <label class="dbe__check">
-                <input type="checkbox" [checked]="isColumnOn(col.name)" (change)="toggleColumn(col.name, $any($event.target).checked)" />
-                {{ col.name }}
-              </label>
+        @let grouped = !!query().groupBy?.length;
+        @if (!grouped) {
+          <div>
+            <span class="dbe__label">{{ s.columns }}</span>
+            <div class="dbe__columns">
+              @for (col of tableColumns(); track col.name) {
+                <label class="dbe__check">
+                  <input type="checkbox" [checked]="isColumnOn(col.name)" (change)="toggleColumn(col.name, $any($event.target).checked)" />
+                  {{ col.name }}
+                </label>
+              }
+            </div>
+          </div>
+        }
+        @if (canGroup()) {
+          <div>
+            <span class="dbe__label">{{ s.summarize }}</span>
+            <div class="dbe__columns">
+              @for (col of tableColumns(); track col.name) {
+                <label class="dbe__check">
+                  <input
+                    type="checkbox"
+                    [checked]="query().groupBy?.includes(col.name)"
+                    [disabled]="!query().groupBy?.includes(col.name) && (query().groupBy?.length ?? 0) >= maxGroupColumns"
+                    (change)="toggleGroup(col.name, $any($event.target).checked)"
+                  />
+                  {{ col.name }}
+                </label>
+              }
+            </div>
+            @if (grouped) {
+              @for (a of query().aggregates ?? []; track $index; let i = $index) {
+                <div class="dbe__row">
+                  <select (change)="setAggregate(i, $any($event.target).value, a.column)" [attr.aria-label]="s.chartAggregate">
+                    @for (fn of aggregateFns; track fn) {
+                      <option [value]="fn" [selected]="fn === a.fn">{{ aggregateLabel(fn) }}</option>
+                    }
+                  </select>
+                  <select class="dbe__grow" (change)="setAggregate(i, a.fn, $any($event.target).value)" [attr.aria-label]="s.columns">
+                    @for (col of tableColumns(); track col.name) {
+                      <option [value]="col.name" [selected]="col.name === a.column">{{ col.name }}</option>
+                    }
+                  </select>
+                  <span class="dbe__hint">{{ a.as }}</span>
+                  <button type="button" (click)="removeAggregate(i)" [attr.aria-label]="s.delete">×</button>
+                </div>
+              }
+              @if ((query().aggregates?.length ?? 0) < maxAggregates) {
+                <button type="button" class="dbe__link" (click)="addAggregate()">+ {{ s.addDbTotal }}</button>
+              }
+              <small class="dbe__hint">{{ s.summarizeHint }}</small>
             }
           </div>
-        </div>
+        }
         <div>
           <span class="dbe__label">{{ s.filters }}</span>
           @for (w of query().where ?? []; track $index; let i = $index) {
@@ -120,7 +184,7 @@ const OPERATORS: QueryCondition['op'][] = ['=', '!=', '<', '<=', '>', '>=', 'lik
             <span>{{ s.sortBy }}</span>
             <select (change)="setOrder($any($event.target).value, query().orderBy?.[0]?.dir ?? 'asc')">
               <option value="" [selected]="!query().orderBy?.length">—</option>
-              @for (col of tableColumns(); track col.name) {
+              @for (col of orderColumns(); track col.name) {
                 <option [value]="col.name" [selected]="col.name === query().orderBy?.[0]?.column">{{ col.name }}</option>
               }
             </select>
@@ -266,6 +330,11 @@ export class DatabaseSourceEditorComponent {
 
   protected readonly backend = inject(WeReportBackendService);
   protected readonly operators = OPERATORS;
+  protected readonly aggregateFns = AGGREGATES;
+  protected readonly maxGroupColumns = MAX_GROUP_COLUMNS;
+  protected readonly maxAggregates = MAX_AGGREGATES;
+  /** What the backend can do (`info.capabilities`); empty for a backend older than protocol 1.2. */
+  protected readonly capabilities = signal<Record<string, boolean>>({});
   protected readonly connections = signal<BackendConnection[]>([]);
   protected readonly schema = signal<BackendSchema | null>(null);
   protected readonly status = signal<{ ok: boolean; message: string } | null>(null);
@@ -275,6 +344,13 @@ export class DatabaseSourceEditorComponent {
   protected readonly query = computed<StructuredQuery>(() => this.source().query ?? { table: '' });
   protected readonly connection = computed(() => this.connections().find((c) => c.id === this.source().connectionId) ?? null);
   protected readonly tableColumns = computed(() => this.schema()?.tables.find((t) => t.name === this.query().table)?.columns ?? []);
+  /** A summarized source keeps its groups; one that already groups stays editable on any backend. */
+  protected readonly canGroup = computed(() => !!this.capabilities()['groups'] || !!this.query().groupBy?.length);
+  /** Grouped, the database can only order by a group column. */
+  protected readonly orderColumns = computed(() => {
+    const groupBy = this.query().groupBy;
+    return groupBy?.length ? this.tableColumns().filter((c) => groupBy.includes(c.name)) : this.tableColumns();
+  });
 
   constructor() {
     // Reconnect automatically when the dialog opens on an existing source with a known backend.
@@ -293,8 +369,9 @@ export class DatabaseSourceEditorComponent {
   async connect(connectionId = this.source().connectionId): Promise<void> {
     if (!this.backend.url()) return;
     try {
-      const list = await backendClient.connections(this.options);
+      const [list, info] = await Promise.all([backendClient.connections(this.options), backendClient.info(this.options).catch(() => null)]);
       this.connections.set(list);
+      this.capabilities.set(info?.capabilities ?? {});
       this.status.set({ ok: true, message: this.strings().connected.replace('{0}', String(list.length)) });
       if (connectionId && list.some((c) => c.id === connectionId)) await this.loadSchema(connectionId);
     } catch (e) {
@@ -346,6 +423,48 @@ export class DatabaseSourceEditorComponent {
       // Every column ticked is stored as "all", so new columns in the table appear automatically.
       q.columns = next.length === all.length ? undefined : next;
     }, 'columns');
+  }
+
+  protected toggleGroup(name: string, on: boolean): void {
+    const all = this.tableColumns().map((c) => c.name);
+    this.setQuery((q) => {
+      const next = all.filter((c) => (c === name ? on : !!q.groupBy?.includes(c))).slice(0, MAX_GROUP_COLUMNS);
+      // The database returns the group columns, __count and the totals: a column list does not apply.
+      if (next.length) {
+        q.groupBy = next;
+        delete q.columns;
+        if (q.aggregates) q.aggregates = withNames(q.aggregates, next);
+      } else {
+        delete q.groupBy;
+        delete q.aggregates;
+      }
+      if (next.length && q.orderBy?.some((o) => !next.includes(o.column))) delete q.orderBy;
+    }, 'group');
+  }
+
+  protected addAggregate(): void {
+    const column = (this.tableColumns().find((c) => c.type === 'number') ?? this.tableColumns()[0])?.name;
+    if (column) this.setQuery((q) => (q.aggregates = withNames([...(q.aggregates ?? []), { column, fn: 'sum' as const, as: '' }].slice(0, MAX_AGGREGATES), q.groupBy)), 'aggregate-add');
+  }
+
+  protected setAggregate(i: number, fn: string, column: string): void {
+    this.setQuery((q) => {
+      if (!q.aggregates?.[i] || !AGGREGATES.includes(fn as ChartAggregate)) return;
+      q.aggregates[i] = { column, fn: fn as ChartAggregate, as: '' };
+      q.aggregates = withNames(q.aggregates, q.groupBy);
+    }, `aggregate-${i}`);
+  }
+
+  protected removeAggregate(i: number): void {
+    this.setQuery((q) => {
+      const rest = withNames((q.aggregates ?? []).filter((_, j) => j !== i), q.groupBy);
+      q.aggregates = rest.length ? rest : undefined;
+    }, 'aggregate-remove');
+  }
+
+  protected aggregateLabel(fn: ChartAggregate): string {
+    const s = this.strings();
+    return { sum: s.aggSum, avg: s.aggAvg, min: s.aggMin, max: s.aggMax, count: s.aggCount }[fn];
   }
 
   protected addWhere(): void {

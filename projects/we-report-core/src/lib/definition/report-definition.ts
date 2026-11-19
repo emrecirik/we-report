@@ -397,6 +397,12 @@ export interface StructuredQuery {
   where?: QueryCondition[];
   orderBy?: { column: string; dir?: 'asc' | 'desc' }[];
   limit?: number;
+  /**
+   * Summarized by the database (protocol 1.2): one row per combination of these columns, with
+   * `__count` (its rows) and each aggregate under its `as` name. Not together with `columns`.
+   */
+  groupBy?: string[];
+  aggregates?: { column: string; fn: ChartAggregate; as: string }[];
 }
 
 /** Live database data through a we-report data backend (any language implementing the protocol). */
