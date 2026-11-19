@@ -126,6 +126,7 @@ function withNames(list: NonNullable<StructuredQuery['aggregates']>, groupBy: st
               }
             </div>
             @if (grouped) {
+              <small class="dbe__hint">{{ s.summarizeHint }}</small>
               @for (a of query().aggregates ?? []; track $index; let i = $index) {
                 <div class="dbe__row">
                   <select (change)="setAggregate(i, $any($event.target).value, a.column)" [attr.aria-label]="s.chartAggregate">
@@ -145,7 +146,6 @@ function withNames(list: NonNullable<StructuredQuery['aggregates']>, groupBy: st
               @if ((query().aggregates?.length ?? 0) < maxAggregates) {
                 <button type="button" class="dbe__link" (click)="addAggregate()">+ {{ s.addDbTotal }}</button>
               }
-              <small class="dbe__hint">{{ s.summarizeHint }}</small>
             }
           </div>
         }
