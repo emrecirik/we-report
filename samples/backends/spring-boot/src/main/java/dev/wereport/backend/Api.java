@@ -60,7 +60,7 @@ public class Api {
   @GetMapping("/info")
   public Map<String, Object> info() {
     return Map.of("protocol", 1, "server", "we-report-spring-boot",
-        "capabilities", Map.of("webServiceFetch", config.webServiceFetch(), "demo", config.demo(), "grid", true, "layouts", !config.demo()));
+        "capabilities", Map.of("webServiceFetch", config.webServiceFetch(), "demo", config.demo(), "grid", true, "layouts", !config.demo(), "search", true, "groups", true));
   }
 
   /** Never the JDBC URL: ids, names, dialects and what is allowed. */

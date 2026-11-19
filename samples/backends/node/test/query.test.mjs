@@ -87,3 +87,50 @@ test('free SQL cannot hide a second statement in escape strings, dollar quotes o
   for (const sql of attempts) assert.throws(() => buildFreeSql(sql, pg), HttpError, sql);
   assert.doesNotThrow(() => buildFreeSql('SELECT [order date] FROM t', pg));
 });
+
+test('1.2 search: every word in some column, as parameters, columns checked', () => {
+  const { sql, values } = buildSelect({ table: 'orders', search: { text: ' new  50%_ ', columns: ['status', 'id'] } }, schema, pg, {}, 1000);
+  assert.equal(
+    sql,
+    `SELECT "id", "status", "order date" FROM "orders" WHERE (LOWER(CAST("status" AS TEXT)) LIKE LOWER($1) ESCAPE '\\' OR LOWER(CAST("id" AS TEXT)) LIKE LOWER($2) ESCAPE '\\') AND (LOWER(CAST("status" AS TEXT)) LIKE LOWER($3) ESCAPE '\\' OR LOWER(CAST("id" AS TEXT)) LIKE LOWER($4) ESCAPE '\\') LIMIT 1001`,
+  );
+  // % and _ in a word match themselves: escaped for LIKE
+  assert.deepEqual(values, ['%new%', '%new%', '%50\\%\\_%', '%50\\%\\_%']);
+  assert.throws(() => buildSelect({ table: 'orders', search: { text: 'x', columns: ['nope'] } }, schema, pg), HttpError);
+  assert.throws(() => buildSelect({ table: 'orders', search: { text: 'x'.repeat(201), columns: ['id'] } }, schema, pg), HttpError);
+});
+
+test('1.2 groups: count and subtotals per combination, NULL first, total counts groups', () => {
+  const built = buildSelect(
+    { table: 'orders', groupBy: ['status'], aggregates: [{ column: 'id', fn: 'max', as: 'top' }], where: [{ column: 'id', op: '>', value: 3 }] },
+    schema,
+    pg,
+    {},
+    1000,
+  );
+  assert.equal(
+    built.sql,
+    'SELECT "status", COUNT(*) AS "__count", MAX("id") AS "top" FROM "orders" WHERE "id" > $1 GROUP BY "status" ORDER BY CASE WHEN "status" IS NULL THEN 0 ELSE 1 END, "status" ASC LIMIT 1001',
+  );
+  assert.equal(built.count.sql, 'SELECT COUNT(*) AS total FROM (SELECT "status", COUNT(*) AS "__count", MAX("id") AS "top" FROM "orders" WHERE "id" > $1 GROUP BY "status") AS we_report_c');
+  for (const bad of [
+    { groupBy: [] },
+    { groupBy: ['status', 'status'] },
+    { groupBy: ['nope'] },
+    { groupBy: ['status'], columns: ['id'] },
+    { groupBy: ['status'], offset: 10 },
+    { aggregates: [{ column: 'id', fn: 'sum', as: 's' }] },
+    { groupBy: ['status'], aggregates: [{ column: 'id', fn: 'median', as: 's' }] },
+    { groupBy: ['status'], aggregates: [{ column: 'id', fn: 'sum', as: '__count' }] },
+    { groupBy: ['status'], aggregates: [{ column: 'id', fn: 'sum', as: 'x; DROP' }] },
+    { groupBy: ['status'], aggregates: [{ column: 'id', fn: 'sum', as: 'a' }, { column: 'id', fn: 'max', as: 'a' }] },
+  ]) {
+    assert.throws(() => buildSelect({ table: 'orders', ...bad }, schema, pg), HttpError, JSON.stringify(bad));
+  }
+});
+
+test('1.2 orderBy nulls: the same place for NULL in every dialect', () => {
+  const { sql } = buildSelect({ table: 'orders', columns: ['id'], orderBy: [{ column: 'status', nulls: 'first' }, { column: 'id', dir: 'desc', nulls: 'last' }] }, schema, pg);
+  assert.match(sql, /ORDER BY CASE WHEN "status" IS NULL THEN 0 ELSE 1 END, "status" ASC, CASE WHEN "id" IS NULL THEN 1 ELSE 0 END, "id" DESC/);
+  assert.throws(() => buildSelect({ table: 'orders', orderBy: [{ column: 'id', nulls: 'middle' }] }, schema, pg), HttpError);
+});

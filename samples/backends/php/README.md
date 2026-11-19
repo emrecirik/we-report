@@ -1,8 +1,9 @@
 # we-report backend — PHP
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml) 1.1 (grid paging with `offset` and
-`count` → `total`, `distinct`, `contains` / `startsWith`, saved layouts). Plain PHP 8.2+, no framework, no Composer
+[we-report data protocol](../../../protocol/openapi.yaml) 1.2 (grid paging with `offset` and
+`count` → `total`, `distinct`, `contains` / `startsWith`, `search`, `groupBy` with subtotals,
+`nulls` ordering, saved layouts). Plain PHP 8.2+, no framework, no Composer
 packages: PDO (SQLite, PostgreSQL) and the curl extension. Four files: `public/index.php`
 (settings, access, endpoints), `src/query.php`, `src/databases.php`, `src/fetch_guard.php`.
 

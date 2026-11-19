@@ -23,6 +23,8 @@ final class Built
 
 const OPS = ['=', '!=', '<', '<=', '>', '>=', 'like', 'contains', 'startsWith', 'in', 'isNull', 'notNull'];
 const MAX_IN_VALUES = 1000;
+const AGGREGATES = ['sum', 'avg', 'min', 'max', 'count'];
+const MAX_SEARCH_WORDS = 10;
 // Standard strings, quoted and [bracketed] identifiers, comments — matched left to right.
 const LITERALS = "'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|\\[[^\\]]*\\]|--[^\\n]*|/\\*[\\s\\S]*?\\*/";
 
@@ -81,9 +83,51 @@ function build_select(mixed $query, array $schema, callable $quote, array $param
     if (!is_int($offset) || $offset < 0) {
         throw new ApiError(400, 'offset must be a whole number of 0 or more.');
     }
-    $columns = is_array($requested) && $requested
-        ? array_map($column, $requested)
-        : array_map(fn ($c) => $quote($c['name']), $table['columns']);
+
+    // 1.2 groups: one row per combination of the groupBy columns, with its count and subtotals
+    $grouped = array_key_exists('groupBy', $query);
+    $groupCols = [];
+    if ($grouped) {
+        $groupBy = $query['groupBy'];
+        if (!is_array($groupBy) || !array_is_list($groupBy) || count($groupBy) < 1 || count($groupBy) > 8
+            || count(array_unique(array_map(fn ($g) => is_string($g) ? $g : '', $groupBy))) !== count($groupBy)) {
+            throw new ApiError(400, 'groupBy must list 1-8 different columns.');
+        }
+        if ((is_array($requested) && $requested) || $distinct || $offset) {
+            throw new ApiError(400, 'groupBy does not go with columns, distinct or offset.');
+        }
+        $groupCols = array_map($column, $groupBy);
+    }
+    $aggregateCols = [];
+    if (array_key_exists('aggregates', $query)) {
+        if (!$grouped) {
+            throw new ApiError(400, 'aggregates need groupBy.');
+        }
+        if (!is_array($query['aggregates']) || !array_is_list($query['aggregates']) || count($query['aggregates']) > 32) {
+            throw new ApiError(400, 'aggregates must be a list of at most 32.');
+        }
+        $aliases = [];
+        foreach ($query['aggregates'] as $a) {
+            $fn = is_array($a) ? ($a['fn'] ?? null) : null;
+            if (!in_array($fn, AGGREGATES, true)) {
+                throw new ApiError(400, sprintf('Unsupported aggregate "%s".', is_scalar($fn) ? $fn : ''));
+            }
+            $alias = $a['as'] ?? null;
+            if (!is_string($alias) || !preg_match('/^(?!__)[A-Za-z_][A-Za-z0-9_]{0,63}$/', $alias)) {
+                throw new ApiError(400, sprintf('Aggregate name "%s" must be a plain identifier not starting with __.', is_scalar($alias) ? $alias : ''));
+            }
+            if (in_array($alias, $aliases, true)) {
+                throw new ApiError(400, 'Aggregate names must be different.');
+            }
+            $aliases[] = $alias;
+            $aggregateCols[] = strtoupper($fn) . '(' . $column($a['column'] ?? null) . ') AS ' . $quote($alias);
+        }
+    }
+    $columns = $grouped
+        ? [...$groupCols, 'COUNT(*) AS ' . $quote('__count'), ...$aggregateCols]
+        : (is_array($requested) && $requested
+            ? array_map($column, $requested)
+            : array_map(fn ($c) => $quote($c['name']), $table['columns']));
 
     $conditions = [];
     foreach ((array) ($query['where'] ?? []) as $w) {
@@ -109,22 +153,51 @@ function build_select(mixed $query, array $schema, callable $quote, array $param
         };
     }
 
+    // 1.2 search: every word in some column, read as text — AND across words, OR across columns
+    if (array_key_exists('search', $query)) {
+        $search = $query['search'];
+        $text = is_array($search) ? ($search['text'] ?? null) : null;
+        $searchCols = is_array($search) ? ($search['columns'] ?? null) : null;
+        if (!is_string($text) || mb_strlen($text) > 200 || !is_array($searchCols) || !array_is_list($searchCols) || count($searchCols) < 1 || count($searchCols) > 50) {
+            throw new ApiError(400, 'search needs text (at most 200 characters) and 1-50 columns.');
+        }
+        $searched = array_map($column, $searchCols);
+        $words = array_slice(preg_split('/\s+/u', trim($text), -1, PREG_SPLIT_NO_EMPTY) ?: [], 0, MAX_SEARCH_WORDS);
+        foreach ($words as $word) {
+            $pattern = '%' . addcslashes($word, '\\%_') . '%';
+            $conditions[] = '(' . implode(' OR ', array_map(
+                fn ($col) => "LOWER(CAST($col AS TEXT)) LIKE LOWER(" . $bind($pattern) . ") ESCAPE '\\'",
+                $searched,
+            )) . ')';
+        }
+    }
+
+    // Groups come in groupBy order, NULL first, unless the caller orders them
+    $orderBy = $query['orderBy'] ?? ($grouped ? array_map(fn ($g) => ['column' => $g, 'nulls' => 'first'], $query['groupBy']) : []);
     $order = [];
-    foreach ((array) ($query['orderBy'] ?? []) as $o) {
+    foreach ((array) $orderBy as $o) {
         $dir = is_array($o) ? ($o['dir'] ?? null) : null;
         if (!in_array($dir, [null, 'asc', 'desc'], true)) {
             throw new ApiError(400, 'orderBy.dir must be asc or desc.');
         }
-        $order[] = $column($o['column'] ?? null) . ($dir === 'desc' ? ' DESC' : ' ASC');
+        $nulls = is_array($o) ? ($o['nulls'] ?? null) : null;
+        if (!in_array($nulls, [null, 'first', 'last'], true)) {
+            throw new ApiError(400, 'orderBy.nulls must be first or last.');
+        }
+        $col = $column($o['column'] ?? null);
+        $by = $col . ($dir === 'desc' ? ' DESC' : ' ASC');
+        // CASE rather than NULLS FIRST/LAST: every dialect has it (MySQL and SQL Server have no NULLS clause)
+        $order[] = $nulls === null ? $by : sprintf('CASE WHEN %s IS NULL THEN %d ELSE %d END, %s', $col, $nulls === 'first' ? 0 : 1, $nulls === 'first' ? 1 : 0, $by);
     }
 
     $limit = is_int($query['limit'] ?? null) && $query['limit'] > 0 ? min($query['limit'], $maxRows) : $maxRows;
     $select = sprintf(
-        'SELECT %s%s FROM %s%s',
+        'SELECT %s%s FROM %s%s%s',
         $distinct ? 'DISTINCT ' : '',
         implode(', ', $columns),
         $quote($table['name']),
         $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '',
+        $grouped ? ' GROUP BY ' . implode(', ', $groupCols) : '',
     );
     // One extra row tells us whether the result was truncated.
     $sql = sprintf('%s%s LIMIT %d%s', $select, $order ? ' ORDER BY ' . implode(', ', $order) : '', $limit + 1, $offset ? " OFFSET $offset" : '');

@@ -13,7 +13,9 @@ const list = (v) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])
 /**
  * Connections: `WE_REPORT_CONNECTIONS` (JSON) or `connections.json` next to package.json.
  * Without either, a single SQLite connection with the fictional sample dataset is used.
- * Each entry: { id, name, dialect: "sqlite" | "postgres", url, allowFreeSql?, maxRows?, timeoutMs?, schema? }
+ * Each entry: { id, name, dialect: "sqlite" | "postgres" | "duckdb", url, allowFreeSql?, maxRows?, timeoutMs?, schema? }
+ * A duckdb entry with `seed: "bigdata"` builds the fictional `sales` table of `seedRows` rows (default
+ * ten million, a billion works) the first time its file doesn't exist.
  */
 function loadConnections(env) {
   let raw;

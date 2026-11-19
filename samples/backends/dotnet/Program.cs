@@ -83,7 +83,7 @@ app.MapGet("/v1/info", () => new
 {
     protocol = 1,
     server = "we-report-dotnet",
-    capabilities = new { webServiceFetch = config.WebServiceFetch, demo = config.Demo, grid = true, layouts = !config.Demo },
+    capabilities = new { webServiceFetch = config.WebServiceFetch, demo = config.Demo, grid = true, layouts = !config.Demo, search = true, groups = true },
 });
 
 // Never the connection string: ids, names, dialects and what is allowed.

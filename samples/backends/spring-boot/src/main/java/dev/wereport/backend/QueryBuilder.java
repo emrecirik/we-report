@@ -21,6 +21,9 @@ public final class QueryBuilder {
 
   private static final Set<String> OPS = Set.of("=", "!=", "<", "<=", ">", ">=", "like", "contains", "startsWith", "in", "isNull", "notNull");
   private static final int MAX_IN_VALUES = 1000;
+  private static final Set<String> AGGREGATES = Set.of("sum", "avg", "min", "max", "count");
+  private static final Pattern ALIAS = Pattern.compile("^(?!__)[A-Za-z_][A-Za-z0-9_]{0,63}$");
+  private static final int MAX_SEARCH_WORDS = 10;
   // Standard strings, quoted and [bracketed] identifiers, comments — matched left to right.
   private static final Pattern LITERALS = Pattern.compile("'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|\\[[^\\]]*\\]|--[^\\n]*|/\\*[\\s\\S]*?\\*/");
   private static final Pattern UNTRACKABLE = Pattern.compile("\\\\|\\$[A-Za-z_]*\\$");
@@ -67,9 +70,43 @@ public final class QueryBuilder {
     }
     long offset = ((Number) offsetValue).longValue();
 
-    List<String> columns = query.get("columns") instanceof List<?> cols && !cols.isEmpty()
-        ? cols.stream().map(column).toList()
-        : table.columns().stream().map(c -> d.quote(c.name())).toList();
+    // 1.2 groups: one row per combination of the groupBy columns, with its count and subtotals
+    boolean grouped = query.containsKey("groupBy");
+    List<?> groupBy = List.of();
+    if (grouped) {
+      if (!(query.get("groupBy") instanceof List<?> g) || g.isEmpty() || g.size() > 8 || new java.util.HashSet<>(g).size() != g.size()) {
+        throw new ApiError(400, "groupBy must list 1-8 different columns.");
+      }
+      if (query.get("columns") instanceof List<?> c && !c.isEmpty() || distinct || offset > 0) {
+        throw new ApiError(400, "groupBy does not go with columns, distinct or offset.");
+      }
+      groupBy = g;
+    }
+    if (query.containsKey("aggregates") && !grouped) throw new ApiError(400, "aggregates need groupBy.");
+    Object aggregatesValue = query.containsKey("aggregates") ? query.get("aggregates") : List.of();
+    if (!(aggregatesValue instanceof List<?> aggregateList) || aggregateList.size() > 32) throw new ApiError(400, "aggregates must be a list of at most 32.");
+    List<String> aggregates = new ArrayList<>();
+    Set<Object> names = new java.util.HashSet<>();
+    for (Object item : aggregateList) {
+      Map<?, ?> a = item instanceof Map<?, ?> m ? m : Map.of();
+      if (!(a.get("fn") instanceof String fn) || !AGGREGATES.contains(fn)) throw new ApiError(400, "Unsupported aggregate \"" + a.get("fn") + "\".");
+      if (!(a.get("as") instanceof String as) || !ALIAS.matcher(as).matches()) {
+        throw new ApiError(400, "Aggregate name \"" + a.get("as") + "\" must be a plain identifier not starting with __.");
+      }
+      if (!names.add(as)) throw new ApiError(400, "Aggregate names must be different.");
+      aggregates.add(fn.toUpperCase() + "(" + column.apply(a.get("column")) + ") AS " + d.quote(as));
+    }
+
+    List<String> columns;
+    if (grouped) {
+      columns = new ArrayList<>(groupBy.stream().map(column).toList());
+      columns.add("COUNT(*) AS " + d.quote("__count"));
+      columns.addAll(aggregates);
+    } else {
+      columns = query.get("columns") instanceof List<?> cols && !cols.isEmpty()
+          ? cols.stream().map(column).toList()
+          : table.columns().stream().map(c -> d.quote(c.name())).toList();
+    }
 
     List<String> conditions = new ArrayList<>();
     if (query.get("where") instanceof List<?> where) {
@@ -96,20 +133,44 @@ public final class QueryBuilder {
       }
     }
 
+    // 1.2 search: every word in some column, read as text — AND across words, OR across columns
+    if (query.containsKey("search")) {
+      if (!(query.get("search") instanceof Map<?, ?> s) || !(s.get("text") instanceof String text) || text.length() > 200
+          || !(s.get("columns") instanceof List<?> searchColumns) || searchColumns.isEmpty() || searchColumns.size() > 50) {
+        throw new ApiError(400, "search needs text (at most 200 characters) and 1-50 columns.");
+      }
+      List<String> searched = searchColumns.stream().map(column).toList();
+      java.util.Arrays.stream(text.strip().split("\\s+")).filter(w -> !w.isEmpty()).limit(MAX_SEARCH_WORDS).forEach(word -> {
+        String pattern = "%" + likeLiteral(word) + "%";
+        conditions.add("(" + String.join(" OR ", searched.stream()
+            .map(col -> "LOWER(" + d.asText(col) + ") LIKE LOWER(" + bind.apply(pattern) + ") ESCAPE '\\'").toList()) + ")");
+      });
+    }
+
+    // Groups come in groupBy order, NULL first, unless the caller orders them
+    Object orderValue = query.get("orderBy");
+    if (orderValue == null && grouped) orderValue = groupBy.stream().map(c -> Map.of("column", c, "nulls", "first")).toList();
     List<String> order = new ArrayList<>();
-    if (query.get("orderBy") instanceof List<?> orderBy) {
+    if (orderValue instanceof List<?> orderBy) {
       for (Object item : orderBy) {
         Map<String, Object> o = item instanceof Map<?, ?> m ? (Map<String, Object>) m : Map.of();
         Object dir = o.get("dir");
+        Object nulls = o.get("nulls");
         if (dir != null && !"asc".equals(dir) && !"desc".equals(dir)) throw new ApiError(400, "orderBy.dir must be asc or desc.");
-        order.add(column.apply(o.get("column")) + ("desc".equals(dir) ? " DESC" : " ASC"));
+        if (nulls != null && !"first".equals(nulls) && !"last".equals(nulls)) throw new ApiError(400, "orderBy.nulls must be first or last.");
+        String col = column.apply(o.get("column"));
+        String by = col + ("desc".equals(dir) ? " DESC" : " ASC");
+        // CASE rather than NULLS FIRST/LAST: every dialect has it (SQL Server has no NULLS clause)
+        boolean first = "first".equals(nulls);
+        order.add(nulls == null ? by : "CASE WHEN " + col + " IS NULL THEN " + (first ? 0 : 1) + " ELSE " + (first ? 1 : 0) + " END, " + by);
       }
     }
 
     int requested = query.get("limit") instanceof Number n && n.intValue() > 0 ? n.intValue() : maxRows;
     int limit = Math.min(requested, maxRows);
     String select = "SELECT " + (distinct ? "DISTINCT " : "") + String.join(", ", columns) + " FROM " + d.table(d.quote(table.name()))
-        + (conditions.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditions));
+        + (conditions.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditions))
+        + (grouped ? " GROUP BY " + String.join(", ", groupBy.stream().map(column).toList()) : "");
     // One extra row tells us whether the result was truncated.
     String sql = d.page(select, order.isEmpty() ? "" : " ORDER BY " + String.join(", ", order), limit + 1, offset);
     return new Built(sql, values, limit, "SELECT COUNT(*) AS total FROM (" + select + ") AS we_report_c");

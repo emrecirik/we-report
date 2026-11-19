@@ -1,8 +1,9 @@
 # we-report backend — Java (Spring Boot)
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml) 1.1 — including the grid queries (`offset`,
-`distinct`, `count` → `total`, `contains` / `startsWith`) and saved layouts (`/v1/layouts/{key}`). SQL Server, PostgreSQL and SQLite with
+[we-report data protocol](../../../protocol/openapi.yaml) 1.2 — including the grid queries (`offset`,
+`distinct`, `count` → `total`, `contains` / `startsWith`, `search`, `groupBy` with subtotals,
+`nulls` ordering) and saved layouts (`/v1/layouts/{key}`). SQL Server, PostgreSQL and SQLite with
 plain JDBC; one controller (`Api.java`) you can drop into an existing Spring Boot application.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)

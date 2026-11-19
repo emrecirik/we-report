@@ -1,8 +1,9 @@
 # we-report backend — Go
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml) **1.1** (paging with `offset` and `total`,
-`distinct`, `contains` / `startsWith`, saved grid layouts under `/v1/layouts/{key}`). SQLite ([modernc.org/sqlite](https://gitlab.com/cznic/sqlite),
+[we-report data protocol](../../../protocol/openapi.yaml) **1.2** (paging with `offset` and `total`,
+`distinct`, `contains` / `startsWith`, `search`, `groupBy` with subtotals, `nulls` ordering, saved
+grid layouts under `/v1/layouts/{key}`). SQLite ([modernc.org/sqlite](https://gitlab.com/cznic/sqlite),
 pure Go — no C compiler needed) and PostgreSQL ([pgx](https://github.com/jackc/pgx)). Four files:
 `main.go` (settings, access, endpoints, layouts), `query.go`, `databases.go`, `fetch_guard.go`.
 

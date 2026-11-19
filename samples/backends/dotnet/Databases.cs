@@ -11,6 +11,8 @@ public interface IDialect
 {
     string Quote(string name);
     string Placeholder(int index);
+    /// <summary>A column read as text, for the 1.2 search.</summary>
+    string AsText(string expr);
     /// <summary>The table name as it appears after FROM.</summary>
     string Table(string name);
     /// <summary>Adds order, row limit and offset to <paramref name="select"/> (which may be SELECT DISTINCT).</summary>
@@ -25,6 +27,7 @@ public abstract class Database(ConnectionConfig config) : IDialect
     protected ConnectionConfig Config { get; } = config;
 
     public virtual string Quote(string name) => "\"" + name.Replace("\"", "\"\"") + "\"";
+    public virtual string AsText(string expr) => $"CAST({expr} AS TEXT)";
     public string Placeholder(int index) => "@p" + index;
     public virtual string Table(string name) => Quote(name);
     public virtual string Page(string select, string orderBy, int top, int offset, bool distinct) =>
@@ -183,6 +186,8 @@ public sealed class SqlServerDatabase(ConnectionConfig c) : Database(c)
     string SchemaName => Config.Schema ?? "dbo";
 
     public override string Quote(string name) => "[" + name.Replace("]", "]]") + "]";
+    // TEXT is deprecated on SQL Server and LOWER() refuses it
+    public override string AsText(string expr) => $"CAST({expr} AS NVARCHAR(4000))";
     public override string Table(string name) => $"{Quote(SchemaName)}.{Quote(name)}";
     // OFFSET … FETCH needs an ORDER BY; a DISTINCT query may only order by what it selects, hence 1.
     public override string Page(string select, string orderBy, int top, int offset, bool distinct) =>

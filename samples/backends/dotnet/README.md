@@ -1,9 +1,9 @@
 # we-report backend — .NET (ASP.NET Core)
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml) 1.1 — including the grid additions
-(`offset`, `distinct`, `contains` / `startsWith`, `count` → `total`) and saved grid layouts
-(`/v1/layouts/{key}`) used by we-grid-angular. SQL Server, PostgreSQL and SQLite; one
+[we-report data protocol](../../../protocol/openapi.yaml) 1.2 — including the grid additions
+(`offset`, `distinct`, `contains` / `startsWith`, `count` → `total`, `search`, `groupBy` with
+subtotals, `nulls` ordering) and saved grid layouts (`/v1/layouts/{key}`) used by we-grid-angular. SQL Server, PostgreSQL and SQLite; one
 `Program.cs` with minimal APIs — copy it into your own ASP.NET Core app or run it as is.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)

@@ -45,6 +45,11 @@ public abstract class Dialect {
     return "SELECT * FROM (" + sql + ") AS we_report_q LIMIT " + top;
   }
 
+  /** {@code expr} read as text, for the 1.2 search. */
+  public String asText(String expr) {
+    return "CAST(" + expr + " AS TEXT)";
+  }
+
   protected abstract Connection open() throws SQLException;
 
   protected abstract String schemaSql();
@@ -204,6 +209,12 @@ public abstract class Dialect {
     public String page(String select, String orderBy, int top, long offset) {
       String order = !orderBy.isEmpty() ? orderBy : select.startsWith("SELECT DISTINCT ") ? " ORDER BY 1" : " ORDER BY (SELECT NULL)";
       return select + order + " OFFSET " + offset + " ROWS FETCH NEXT " + top + " ROWS ONLY";
+    }
+
+    // TEXT is a deprecated LOB type on SQL Server that LOWER does not take
+    @Override
+    public String asText(String expr) {
+      return "CAST(" + expr + " AS NVARCHAR(4000))";
     }
 
     // shortcut: free SQL with its own ORDER BY needs TOP on SQL Server; parse it if that becomes common.

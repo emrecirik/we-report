@@ -255,7 +255,7 @@ func readBody(r *http.Request, v any) *apiError {
 
 func (s *server) info(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, 200, map[string]any{"protocol": 1, "server": "we-report-go",
-		"capabilities": map[string]bool{"webServiceFetch": s.cfg.webServiceFetch, "demo": s.cfg.demo, "grid": true, "layouts": !s.cfg.demo}})
+		"capabilities": map[string]bool{"webServiceFetch": s.cfg.webServiceFetch, "demo": s.cfg.demo, "grid": true, "layouts": !s.cfg.demo, "search": true, "groups": true}})
 }
 
 func (s *server) listConnections(w http.ResponseWriter, _ *http.Request) {

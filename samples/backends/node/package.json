@@ -2,7 +2,7 @@
   "name": "we-report-backend-node",
   "version": "0.1.0",
   "private": true,
-  "description": "Reference we-report data backend: SQLite (built in) and PostgreSQL, web service proxy with SSRF protection.",
+  "description": "Reference we-report data backend: SQLite (built in), PostgreSQL and DuckDB, web service proxy with SSRF protection.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -13,6 +13,7 @@
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.mjs"
   },
   "optionalDependencies": {
+    "@duckdb/node-api": "2.0.0-r.1",
     "pg": "^8.13.0"
   }
 }

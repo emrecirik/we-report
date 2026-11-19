@@ -1,8 +1,9 @@
 # we-report backend — Python (FastAPI)
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml) 1.1 (grid paging, distinct, `contains` /
-`startsWith`, `total` counts and saved layouts). SQLite (standard library) and PostgreSQL
+[we-report data protocol](../../../protocol/openapi.yaml) 1.2 (grid paging, distinct, `contains` /
+`startsWith`, `total` counts, `search`, `groupBy` with subtotals, `nulls` ordering and saved
+layouts). SQLite (standard library) and PostgreSQL
 (psycopg). Four small files: `main.py` (endpoints), `query.py`, `databases.py`, `fetch_guard.py`.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)

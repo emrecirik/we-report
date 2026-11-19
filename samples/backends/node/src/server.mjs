@@ -95,7 +95,7 @@ export function createServer(config = loadConfig()) {
     ['GET', /^\/v1\/info$/, async () => ({
       protocol: 1,
       server: 'we-report-node',
-      capabilities: { webServiceFetch: config.webServiceFetch, demo: config.demo, grid: true, layouts: !config.demo },
+      capabilities: { webServiceFetch: config.webServiceFetch, demo: config.demo, grid: true, layouts: !config.demo, search: true, groups: true },
     })],
     ['GET', /^\/v1\/connections$/, async () =>
       // Never the url: ids, names, dialects and what is allowed.

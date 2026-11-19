@@ -21,7 +21,12 @@ public sealed record BuiltQuery(string Sql, List<object?> Values, int Limit, str
 public static partial class QueryBuilder
 {
     static readonly HashSet<string> Ops = ["=", "!=", "<", "<=", ">", ">=", "like", "contains", "startsWith", "in", "isNull", "notNull"];
+    static readonly HashSet<string> Aggregates = ["sum", "avg", "min", "max", "count"];
     const int MaxInValues = 1000;
+    const int MaxSearchWords = 10;
+
+    [GeneratedRegex(@"^(?!__)[A-Za-z_][A-Za-z0-9_]{0,63}$")]
+    private static partial Regex Alias();
 
     public static object? DriverValue(JsonElement v) => v.ValueKind switch
     {
@@ -38,6 +43,9 @@ public static partial class QueryBuilder
         Regex.Replace(Convert.ToString(DriverValue(v), System.Globalization.CultureInfo.InvariantCulture) ?? "", @"[\\%_]", @"\$0");
 
     static JsonElement? Prop(JsonElement e, string name) => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) ? v : null;
+
+    // A value that is not text reads as "", which no option accepts: a 400, not a 500
+    static string? Text(JsonElement? v) => v is { ValueKind: JsonValueKind.String } s ? s.GetString() : v is null or { ValueKind: JsonValueKind.Null } ? null : "";
 
     public static BuiltQuery BuildSelect(JsonElement query, IReadOnlyList<TableInfo> schema, IDialect d, JsonElement parameters, int maxRows)
     {
@@ -74,9 +82,40 @@ public static partial class QueryBuilder
             { ValueKind: JsonValueKind.Number } o when o.TryGetInt32(out var oi) && oi >= 0 => oi,
             _ => throw new ApiError(400, "offset must be a whole number of 0 or more."),
         };
-        var columns = hasColumns
-            ? Prop(query, "columns")!.Value.EnumerateArray().Select(c => Column(c)).ToList()
-            : table.Columns.Select(c => d.Quote(c.Name)).ToList();
+        // 1.2 groups: one row per combination of the groupBy columns, with its count and subtotals
+        var groupByProp = Prop(query, "groupBy");
+        var grouped = groupByProp is not null;
+        var groupCols = new List<string>();
+        if (grouped)
+        {
+            if (groupByProp!.Value.ValueKind != JsonValueKind.Array || groupByProp.Value.GetArrayLength() is 0 or > 8)
+                throw new ApiError(400, "groupBy must list 1-8 different columns.");
+            var names = groupByProp.Value.EnumerateArray().Select(g => g.ValueKind == JsonValueKind.String ? g.GetString() : null).ToList();
+            if (names.Distinct().Count() != names.Count) throw new ApiError(400, "groupBy must list 1-8 different columns.");
+            if (hasColumns || distinct || offset > 0) throw new ApiError(400, "groupBy does not go with columns, distinct or offset.");
+            groupCols = groupByProp.Value.EnumerateArray().Select(g => Column(g)).ToList();
+        }
+        var aggregateCols = new List<string>();
+        if (Prop(query, "aggregates") is { } aggregatesProp)
+        {
+            if (!grouped) throw new ApiError(400, "aggregates need groupBy.");
+            if (aggregatesProp.ValueKind != JsonValueKind.Array || aggregatesProp.GetArrayLength() > 32) throw new ApiError(400, "aggregates must be a list of at most 32.");
+            var aliases = new HashSet<string>();
+            foreach (var a in aggregatesProp.EnumerateArray())
+            {
+                var fn = Prop(a, "fn") is { ValueKind: JsonValueKind.String } f ? f.GetString() : null;
+                if (fn is null || !Aggregates.Contains(fn)) throw new ApiError(400, $"Unsupported aggregate \"{fn}\".");
+                var name = Prop(a, "as") is { ValueKind: JsonValueKind.String } n ? n.GetString() : null;
+                if (name is null || !Alias().IsMatch(name)) throw new ApiError(400, $"Aggregate name \"{name}\" must be a plain identifier not starting with __.");
+                if (!aliases.Add(name)) throw new ApiError(400, "Aggregate names must be different.");
+                aggregateCols.Add($"{fn.ToUpperInvariant()}({Column(Prop(a, "column"))}) AS {d.Quote(name)}");
+            }
+        }
+        var columns = grouped
+            ? [.. groupCols, $"COUNT(*) AS {d.Quote("__count")}", .. aggregateCols]
+            : hasColumns
+                ? Prop(query, "columns")!.Value.EnumerateArray().Select(c => Column(c)).ToList()
+                : table.Columns.Select(c => d.Quote(c.Name)).ToList();
 
         var conditions = new List<string>();
         if (Prop(query, "where") is { ValueKind: JsonValueKind.Array } where)
@@ -107,21 +146,50 @@ public static partial class QueryBuilder
             }
         }
 
+        // 1.2 search: every word in some column, read as text — AND across words, OR across columns
+        if (Prop(query, "search") is { } search)
+        {
+            var text = Prop(search, "text") is { ValueKind: JsonValueKind.String } t ? t.GetString()! : null;
+            var searchCols = Prop(search, "columns");
+            if (text is null || text.Length > 200 || searchCols is not { ValueKind: JsonValueKind.Array } sc || sc.GetArrayLength() is 0 or > 50)
+                throw new ApiError(400, "search needs text (at most 200 characters) and 1-50 columns.");
+            var searched = searchCols.Value.EnumerateArray().Select(c => Column(c)).ToList();
+            foreach (var word in text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Take(MaxSearchWords))
+            {
+                var pattern = "%" + Regex.Replace(word, @"[\\%_]", @"\$0") + "%";
+                conditions.Add("(" + string.Join(" OR ", searched.Select(col => $"LOWER({d.AsText(col)}) LIKE LOWER({Bind(pattern)}) ESCAPE '\\'")) + ")");
+            }
+        }
+
+        // Groups come in groupBy order, NULL first, unless the caller orders them
         var order = new List<string>();
+        void AddOrder(string col, string? dir, string? nulls)
+        {
+            var by = $"{col} {(dir == "desc" ? "DESC" : "ASC")}";
+            // CASE rather than NULLS FIRST/LAST: every dialect has it (MySQL and SQL Server have no NULLS clause)
+            order.Add(nulls is null ? by : $"CASE WHEN {col} IS NULL THEN {(nulls == "first" ? 0 : 1)} ELSE {(nulls == "first" ? 1 : 0)} END, {by}");
+        }
         if (Prop(query, "orderBy") is { ValueKind: JsonValueKind.Array } orderBy)
         {
             foreach (var o in orderBy.EnumerateArray())
             {
-                var dir = Prop(o, "dir")?.GetString();
+                var dir = Text(Prop(o, "dir"));
                 if (dir is not (null or "asc" or "desc")) throw new ApiError(400, "orderBy.dir must be asc or desc.");
-                order.Add($"{Column(Prop(o, "column"))} {(dir == "desc" ? "DESC" : "ASC")}");
+                var nulls = Text(Prop(o, "nulls"));
+                if (nulls is not (null or "first" or "last")) throw new ApiError(400, "orderBy.nulls must be first or last.");
+                AddOrder(Column(Prop(o, "column")), dir, nulls);
             }
+        }
+        else if (grouped)
+        {
+            foreach (var col in groupCols) AddOrder(col, null, "first");
         }
 
         var requested = Prop(query, "limit") is { ValueKind: JsonValueKind.Number } l && l.TryGetInt32(out var li) && li > 0 ? li : maxRows;
         var limit = Math.Min(requested, maxRows);
         var select = $"SELECT {(distinct ? "DISTINCT " : "")}{string.Join(", ", columns)} FROM {d.Table(table.Name)}" +
-            (conditions.Count > 0 ? " WHERE " + string.Join(" AND ", conditions) : "");
+            (conditions.Count > 0 ? " WHERE " + string.Join(" AND ", conditions) : "") +
+            (grouped ? " GROUP BY " + string.Join(", ", groupCols) : "");
         // One extra row tells us whether the result was truncated.
         var sql = d.Page(select, order.Count > 0 ? " ORDER BY " + string.Join(", ", order) : "", limit + 1, offset, distinct);
         // The same rows without order, offset and limit; only parameters from the WHERE clause are bound.

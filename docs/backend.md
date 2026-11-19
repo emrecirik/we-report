@@ -17,7 +17,7 @@ any language — the contract is [`protocol/openapi.yaml`](../protocol/openapi.y
 
 | Language | Folder | Databases |
 |---|---|---|
-| Node.js (no dependencies) | [`samples/backends/node`](../samples/backends/node) | SQLite, PostgreSQL |
+| Node.js (no dependencies) | [`samples/backends/node`](../samples/backends/node) | SQLite, PostgreSQL, DuckDB |
 | .NET (ASP.NET Core) | [`samples/backends/dotnet`](../samples/backends/dotnet) | SQL Server, PostgreSQL, SQLite |
 | Java (Spring Boot) | [`samples/backends/spring-boot`](../samples/backends/spring-boot) | SQL Server, PostgreSQL, SQLite |
 | Python (FastAPI) | [`samples/backends/python`](../samples/backends/python) | PostgreSQL, SQLite |
@@ -32,6 +32,14 @@ Protocol 1.1 adds what a data grid needs — query `offset`, `distinct`, case-in
 `contains` / `startsWith`, `count: true` → `total` — and the layouts endpoint, so the same backend
 serves [we-grid-angular](https://github.com/emrecirik/we-grid)'s server-side grids and saved
 layouts. Implementer notes: [`protocol/GRID-1.1-IMPLEMENTERS.md`](../protocol/GRID-1.1-IMPLEMENTERS.md).
+
+Protocol 1.2 lets a grid scroll, search and group a whole table without loading it — a billion rows:
+`search` (every word in some column, case-insensitive), `groupBy` + `aggregates` (one row per group
+with `__count` and subtotals), `orderBy[].nulls` (`first` / `last`) and
+`capabilities.search` / `capabilities.groups`. Every sample implements it; the .NET and Spring Boot
+samples are also checked against SQL Server. The Node.js sample can serve a fictional
+billion-row DuckDB table (`"seed": "bigdata"`, see its README). Implementer notes:
+[`protocol/GRID-1.2-IMPLEMENTERS.md`](../protocol/GRID-1.2-IMPLEMENTERS.md).
 
 ## Security (all samples)
 

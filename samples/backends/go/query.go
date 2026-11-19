@@ -40,19 +40,42 @@ type condition struct {
 type order struct {
 	Column any `json:"column"`
 	Dir    any `json:"dir"`
+	Nulls  any `json:"nulls"`
+}
+
+// search (1.2): every word of Text in some of Columns.
+type search struct {
+	Text    any   `json:"text"`
+	Columns []any `json:"columns"`
+}
+
+// aggregate (1.2): a subtotal per group, returned under As.
+type aggregate struct {
+	Column any `json:"column"`
+	Fn     any `json:"fn"`
+	As     any `json:"as"`
 }
 
 type structuredQuery struct {
-	Table    any         `json:"table"`
-	Columns  []any       `json:"columns"`
-	Where    []condition `json:"where"`
-	OrderBy  []order     `json:"orderBy"`
-	Limit    any         `json:"limit"`
-	Offset   any         `json:"offset"`
-	Distinct any         `json:"distinct"`
+	Table      any         `json:"table"`
+	Columns    []any       `json:"columns"`
+	Where      []condition `json:"where"`
+	OrderBy    []order     `json:"orderBy"`
+	Limit      any         `json:"limit"`
+	Offset     any         `json:"offset"`
+	Distinct   any         `json:"distinct"`
+	Search     *search     `json:"search"`
+	GroupBy    []any       `json:"groupBy"`
+	Aggregates []aggregate `json:"aggregates"`
 }
 
 const maxInValues = 1000
+const maxSearchWords = 10
+
+var aggregates = map[string]bool{"sum": true, "avg": true, "min": true, "max": true, "count": true}
+
+// alias: a plain identifier not starting with __ (RE2 has no look-ahead, so __ is checked apart).
+var alias = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,63}$`)
 
 var ops = map[string]bool{"=": true, "!=": true, "<": true, "<=": true, ">": true, ">=": true, "like": true, "contains": true, "startsWith": true, "in": true, "isNull": true, "notNull": true}
 
@@ -128,8 +151,65 @@ func buildSelect(q *structuredQuery, schema []table, d dialect, params map[strin
 		offset = int(o)
 	}
 
+	// 1.2 groups: one row per combination of the groupBy columns, with its count and subtotals
+	// JSON leaves a missing list nil and an empty one non-nil: [] is an error, no groupBy is not
+	grouped := q.GroupBy != nil
+	var groupCols []string
+	if grouped {
+		seen := map[string]bool{}
+		for _, g := range q.GroupBy {
+			s, _ := g.(string)
+			if seen[s] {
+				return nil, fail(400, "groupBy must list 1-8 different columns.")
+			}
+			seen[s] = true
+		}
+		if len(q.GroupBy) == 0 || len(q.GroupBy) > 8 {
+			return nil, fail(400, "groupBy must list 1-8 different columns.")
+		}
+		if len(q.Columns) > 0 || distinct || offset > 0 {
+			return nil, fail(400, "groupBy does not go with columns, distinct or offset.")
+		}
+		for _, g := range q.GroupBy {
+			col, err := column(g)
+			if err != nil {
+				return nil, err
+			}
+			groupCols = append(groupCols, col)
+		}
+	}
+	if q.Aggregates != nil && !grouped {
+		return nil, fail(400, "aggregates need groupBy.")
+	}
+	if len(q.Aggregates) > 32 {
+		return nil, fail(400, "aggregates must be a list of at most 32.")
+	}
+	var aggregateCols []string
+	names := map[string]bool{}
+	for _, a := range q.Aggregates {
+		fn, _ := a.Fn.(string)
+		if !aggregates[fn] {
+			return nil, fail(400, "Unsupported aggregate \"%v\".", a.Fn)
+		}
+		name, _ := a.As.(string)
+		if !alias.MatchString(name) || strings.HasPrefix(name, "__") {
+			return nil, fail(400, "Aggregate name \"%v\" must be a plain identifier not starting with __.", a.As)
+		}
+		if names[name] {
+			return nil, fail(400, "Aggregate names must be different.")
+		}
+		names[name] = true
+		col, err := column(a.Column)
+		if err != nil {
+			return nil, err
+		}
+		aggregateCols = append(aggregateCols, strings.ToUpper(fn)+"("+col+") AS "+d.quote(name))
+	}
+
 	var columns []string
-	if len(q.Columns) > 0 {
+	if grouped {
+		columns = append(append(append(columns, groupCols...), "COUNT(*) AS "+d.quote("__count")), aggregateCols...)
+	} else if len(q.Columns) > 0 {
 		for _, c := range q.Columns {
 			col, err := column(c)
 			if err != nil {
@@ -201,10 +281,51 @@ func buildSelect(q *structuredQuery, schema []table, d dialect, params map[strin
 		}
 	}
 
+	// 1.2 search: every word in some column, read as text — AND across words, OR across columns
+	if q.Search != nil {
+		text, ok := q.Search.Text.(string)
+		if !ok || len([]rune(text)) > 200 || len(q.Search.Columns) == 0 || len(q.Search.Columns) > 50 {
+			return nil, fail(400, "search needs text (at most 200 characters) and 1-50 columns.")
+		}
+		var searched []string
+		for _, c := range q.Search.Columns {
+			col, err := column(c)
+			if err != nil {
+				return nil, err
+			}
+			searched = append(searched, col)
+		}
+		words := strings.Fields(text)
+		if len(words) > maxSearchWords {
+			words = words[:maxSearchWords]
+		}
+		for _, word := range words {
+			var either []string
+			for _, col := range searched {
+				mark, err := bind("%" + likeLiteral.Replace(word) + "%")
+				if err != nil {
+					return nil, err
+				}
+				either = append(either, "LOWER(CAST("+col+" AS TEXT)) LIKE LOWER("+mark+") ESCAPE '\\'")
+			}
+			conditions = append(conditions, "("+strings.Join(either, " OR ")+")")
+		}
+	}
+
+	// Groups come in groupBy order, NULL first, unless the caller orders them
+	orders := q.OrderBy
+	if orders == nil && grouped {
+		for _, g := range q.GroupBy {
+			orders = append(orders, order{Column: g, Nulls: "first"})
+		}
+	}
 	var orderBy []string
-	for _, o := range q.OrderBy {
+	for _, o := range orders {
 		if o.Dir != nil && o.Dir != "asc" && o.Dir != "desc" {
 			return nil, fail(400, "orderBy.dir must be asc or desc.")
+		}
+		if o.Nulls != nil && o.Nulls != "first" && o.Nulls != "last" {
+			return nil, fail(400, "orderBy.nulls must be first or last.")
 		}
 		col, err := column(o.Column)
 		if err != nil {
@@ -214,7 +335,15 @@ func buildSelect(q *structuredQuery, schema []table, d dialect, params map[strin
 		if o.Dir == "desc" {
 			dir = "DESC"
 		}
-		orderBy = append(orderBy, col+" "+dir)
+		switch o.Nulls {
+		// CASE rather than NULLS FIRST/LAST: every dialect has it (MySQL and SQL Server have no NULLS clause)
+		case "first":
+			orderBy = append(orderBy, "CASE WHEN "+col+" IS NULL THEN 0 ELSE 1 END, "+col+" "+dir)
+		case "last":
+			orderBy = append(orderBy, "CASE WHEN "+col+" IS NULL THEN 1 ELSE 0 END, "+col+" "+dir)
+		default:
+			orderBy = append(orderBy, col+" "+dir)
+		}
 	}
 
 	limit := maxRows
@@ -233,6 +362,9 @@ func buildSelect(q *structuredQuery, schema []table, d dialect, params map[strin
 		keyword = "SELECT DISTINCT "
 	}
 	rows := keyword + strings.Join(columns, ", ") + " FROM " + d.quote(t.Name) + where
+	if grouped {
+		rows += " GROUP BY " + strings.Join(groupCols, ", ")
+	}
 	// One extra row tells us whether the result was truncated.
 	sql := fmt.Sprintf("%s%s LIMIT %d", rows, sort, limit+1)
 	if offset > 0 {

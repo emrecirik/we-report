@@ -112,4 +112,83 @@ export async function openPostgres(connection) {
   };
 }
 
-export const DRIVERS = { sqlite: openSqlite, postgres: openPostgres };
+/** The fictional `sales` table of the big-data demo — seeded, so every machine builds the same rows */
+const BIGDATA_SQL = (rows) => `
+CREATE TABLE sales AS
+SELECT
+  i AS id,
+  ['Ada','Deniz','Ekin','Kaan','Lale','Mert','Nehir','Ozan','Pelin','Rüzgar','Selin','Toprak','Umut','Yağmur'][1 + (hash(i * 3) % 14)::INTEGER]
+    || ' ' || chr(65 + (hash(i * 5) % 26)::INTEGER) || '.' AS customer,
+  ['İstanbul','Ankara','İzmir','Bursa','Antalya','Konya','Adana','Trabzon','Eskişehir','Kayseri'][1 + (hash(i * 7) % 10)::INTEGER] AS city,
+  ['Electronics','Books','Garden','Toys','Food','Clothing','Sports','Beauty'][1 + (hash(i * 11) % 8)::INTEGER] AS category,
+  (1 + hash(i * 13) % 50)::INTEGER AS qty,
+  ((hash(i * 17) % 100000) / 100)::DECIMAL(10, 2) AS price,
+  ((1 + hash(i * 13) % 50) * ((hash(i * 17) % 100000) / 100))::DECIMAL(14, 2) AS total,
+  DATE '2024-01-01' + (hash(i * 19) % 730)::INTEGER AS order_date
+FROM range(1, ${rows + 1}) t(i)`;
+
+/** DuckDB dates arrive as JS Dates at UTC midnight; the protocol sends them as YYYY-MM-DD like the other dialects */
+function plainDuck(row) {
+  const out = plain(row);
+  for (const [k, v] of Object.entries(out)) if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/.test(v)) out[k] = v.slice(0, 10);
+  return out;
+}
+
+export async function openDuckdb(connection) {
+  let duck;
+  try {
+    duck = await import('@duckdb/node-api');
+  } catch {
+    throw new Error('Connection "' + connection.id + '" is duckdb: install the driver with `npm install @duckdb/node-api`.');
+  }
+  const { DuckDBInstance } = duck;
+  if (connection.seed === 'bigdata' && !existsSync(connection.url)) {
+    // Built once, then only ever opened read-only. A billion rows take a few minutes and ~10 GB.
+    const rows = Math.max(1, Math.min(Number(connection.seedRows) || 10_000_000, 2_000_000_000));
+    console.log(`Building the big-data demo table (${rows.toLocaleString('en-US')} rows) in ${connection.url} …`);
+    const writer = await DuckDBInstance.create(connection.url);
+    const w = await writer.connect();
+    await w.run(BIGDATA_SQL(Math.floor(rows)));
+    w.closeSync();
+    writer.closeSync();
+  }
+  // Read-only at the driver level, as with SQLite
+  const instance = await DuckDBInstance.create(connection.url, { access_mode: 'READ_ONLY' });
+  const db = await instance.connect();
+  return {
+    dialect: { quote: quoteDouble, placeholder: (i) => `$${i}`, asText: (expr) => `CAST(${expr} AS VARCHAR)` },
+    async schema() {
+      const reader = await db.runAndReadAll(
+        "SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'main' ORDER BY table_name, ordinal_position",
+      );
+      const tables = new Map();
+      for (const r of reader.getRowObjectsJS()) {
+        if (!tables.has(r.table_name)) tables.set(r.table_name, []);
+        tables.get(r.table_name).push({ name: r.column_name, type: typeOf(r.data_type) });
+      }
+      return { tables: [...tables].map(([name, columns]) => ({ name, columns })) };
+    },
+    async query(sql, values, timeoutMs) {
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        db.interrupt();
+      }, Math.max(1, timeoutMs));
+      try {
+        const reader = await db.runAndReadAll(sql, values);
+        return reader.getRowObjectsJS().map(plainDuck);
+      } catch (e) {
+        if (timedOut) throw new HttpError(504, 'The query took too long and was stopped.');
+        throw e;
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+    async close() {
+      db.closeSync();
+      instance.closeSync();
+    },
+  };
+}
+
+export const DRIVERS = { sqlite: openSqlite, postgres: openPostgres, duckdb: openDuckdb };

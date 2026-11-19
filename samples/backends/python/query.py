@@ -27,6 +27,9 @@ class Built:
 
 OPS = {"=", "!=", "<", "<=", ">", ">=", "like", "contains", "startsWith", "in", "isNull", "notNull"}
 MAX_IN_VALUES = 1000
+AGGREGATES = {"sum", "avg", "min", "max", "count"}
+ALIAS = re.compile(r"^(?!__)[A-Za-z_][A-Za-z0-9_]{0,63}$")
+MAX_SEARCH_WORDS = 10
 # Standard strings, quoted and [bracketed] identifiers, comments — matched left to right.
 _LITERALS = r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|\[[^\]]*\]|--[^\n]*|/\*[\s\S]*?\*/"
 _LITERALS_RE = re.compile(_LITERALS)
@@ -48,7 +51,8 @@ def like_literal(v: Any) -> str:
 
 
 def build_select(query: Any, schema: list[dict], quote: Callable[[str], str], placeholder: str, params: dict, max_rows: int,
-                 select: Callable[[str, str, str, str, int, int], str]) -> Built:
+                 select: Callable[[str, str, str, str, int, int], str],
+                 as_text: Callable[[str], str] = lambda expr: f"CAST({expr} AS TEXT)") -> Built:
     if not isinstance(query, dict):
         raise ApiError(400, "query must be an object.")
     table = next((t for t in schema if t["name"] == query.get("table")), None)
@@ -76,7 +80,36 @@ def build_select(query: Any, schema: list[dict], quote: Callable[[str], str], pl
     offset = query.get("offset", 0)
     if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
         raise ApiError(400, "offset must be a whole number of 0 or more.")
-    columns = [column(c) for c in cols] if isinstance(cols, list) and cols else [quote(c["name"]) for c in table["columns"]]
+
+    # 1.2 groups: one row per combination of the groupBy columns, with its count and subtotals
+    group_by = query.get("groupBy")
+    grouped = group_by is not None
+    if grouped:
+        if not isinstance(group_by, list) or not 0 < len(group_by) <= 8 or len(set(map(str, group_by))) != len(group_by):
+            raise ApiError(400, "groupBy must list 1-8 different columns.")
+        if (isinstance(cols, list) and cols) or distinct or offset:
+            raise ApiError(400, "groupBy does not go with columns, distinct or offset.")
+    raw_aggregates = query.get("aggregates")
+    if raw_aggregates is not None and not grouped:
+        raise ApiError(400, "aggregates need groupBy.")
+    if not isinstance(raw_aggregates or [], list) or len(raw_aggregates or []) > 32:
+        raise ApiError(400, "aggregates must be a list of at most 32.")
+    aggregates = []
+    for a in raw_aggregates or []:
+        fn = a.get("fn") if isinstance(a, dict) else None
+        if not isinstance(fn, str) or fn not in AGGREGATES:
+            raise ApiError(400, f'Unsupported aggregate "{fn}".')
+        alias = a.get("as")
+        if not isinstance(alias, str) or not ALIAS.match(alias):
+            raise ApiError(400, f'Aggregate name "{alias}" must be a plain identifier not starting with __.')
+        aggregates.append(f"{fn.upper()}({column(a.get('column'))}) AS {quote(alias)}")
+    if len({a.get("as") for a in raw_aggregates or []}) != len(raw_aggregates or []):
+        raise ApiError(400, "Aggregate names must be different.")
+
+    if grouped:
+        columns = [column(c) for c in group_by] + [f"COUNT(*) AS {quote('__count')}"] + aggregates
+    else:
+        columns = [column(c) for c in cols] if isinstance(cols, list) and cols else [quote(c["name"]) for c in table["columns"]]
 
     conditions = []
     for w in query.get("where") or []:
@@ -101,17 +134,40 @@ def build_select(query: Any, schema: list[dict], quote: Callable[[str], str], pl
         else:
             conditions.append(f"{col} {'<>' if op == '!=' else op} {bind(value)}")
 
+    # 1.2 search: every word in some column, read as text — AND across words, OR across columns
+    search = query.get("search")
+    if search is not None:
+        if (not isinstance(search, dict) or not isinstance(search.get("text"), str) or len(search["text"]) > 200
+                or not isinstance(search.get("columns"), list) or not 0 < len(search["columns"]) <= 50):
+            raise ApiError(400, "search needs text (at most 200 characters) and 1-50 columns.")
+        searched = [column(c) for c in search["columns"]]
+        for word in search["text"].split()[:MAX_SEARCH_WORDS]:
+            pattern = f"%{like_literal(word)}%"
+            conditions.append("(" + " OR ".join(f"LOWER({as_text(col)}) LIKE LOWER({bind(pattern)}) ESCAPE '\\'" for col in searched) + ")")
+
+    # Groups come in groupBy order, NULL first, unless the caller orders them
+    order_by = query.get("orderBy")
+    if order_by is None and grouped:
+        order_by = [{"column": c, "nulls": "first"} for c in group_by]
     order = []
-    for o in query.get("orderBy") or []:
+    for o in order_by or []:
         d = o.get("dir") if isinstance(o, dict) else None
         if d not in (None, "asc", "desc"):
             raise ApiError(400, "orderBy.dir must be asc or desc.")
-        order.append(f"{column(o.get('column'))} {'DESC' if d == 'desc' else 'ASC'}")
+        nulls = o.get("nulls")
+        if nulls not in (None, "first", "last"):
+            raise ApiError(400, "orderBy.nulls must be first or last.")
+        col = column(o.get("column"))
+        by = f"{col} {'DESC' if d == 'desc' else 'ASC'}"
+        # CASE rather than NULLS FIRST/LAST: every dialect has it (MySQL and SQL Server have no NULLS clause)
+        order.append(f"CASE WHEN {col} IS NULL THEN {0 if nulls == 'first' else 1} ELSE {1 if nulls == 'first' else 0} END, {by}" if nulls else by)
 
     requested = query.get("limit") if isinstance(query.get("limit"), int) and query["limit"] > 0 else max_rows
     limit = min(requested, max_rows)
     selected = ("DISTINCT " if distinct else "") + ", ".join(columns)
     where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
+    if grouped:
+        where += f" GROUP BY {', '.join(column(c) for c in group_by)}"
     # One extra row tells us whether the result was truncated.
     sql = select(selected, quote(table["name"]), where, f" ORDER BY {', '.join(order)}" if order else "", limit + 1, offset)
     count = f"SELECT COUNT(*) AS total FROM (SELECT {selected} FROM {quote(table['name'])}{where}) AS we_report_c"

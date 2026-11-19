@@ -1,8 +1,9 @@
 # we-report backend — Node.js (reference)
 
 Serves live database data and proxies web services for the we-report designer and viewer, over the
-[we-report data protocol](../../../protocol/openapi.yaml). No framework, no dependencies for SQLite
-(Node's built-in `node:sqlite`); `pg` is installed only if you use PostgreSQL.
+[we-report data protocol](../../../protocol/openapi.yaml) 1.2. No framework, no dependencies for SQLite
+(Node's built-in `node:sqlite`); `pg` is installed only if you use PostgreSQL, `@duckdb/node-api`
+only if you use DuckDB.
 
 You need a backend **only** for live databases or for web services that block browser calls (CORS)
 or need secret keys. JSON, CSV and open web services work without one.
@@ -41,6 +42,21 @@ the guard that cannot be bypassed.
 
 Free SQL is off. Enable it per connection with `"allowFreeSql": true` only for trusted designers;
 it still allows one `SELECT`, with `:name` parameters and the row limit.
+
+### A billion rows with DuckDB
+
+A `duckdb` connection (`url` is the database file, opened read-only) with `"seed": "bigdata"` builds
+a fictional `sales` table the first time the file doesn't exist — the same rows on every machine:
+
+```json
+[{ "id": "big", "name": "Sales (DuckDB)", "dialect": "duckdb", "url": "./data/sales.duckdb",
+   "seed": "bigdata", "seedRows": 1000000000, "timeoutMs": 120000 }]
+```
+
+`npm install @duckdb/node-api` first. `seedRows` defaults to ten million; a billion takes a few
+minutes and about 10 GB of disk. A we-grid `WeGridProtocolDataSource` then scrolls, searches and
+groups the whole table — measured in the we-grid
+[data source docs](https://github.com/emrecirik/we-grid/blob/main/docs/data-sources.md).
 
 ## Settings
 

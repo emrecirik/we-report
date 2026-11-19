@@ -183,7 +183,7 @@ async def _json(request: Request, max_bytes: int = MAX_BODY) -> dict:
 @app.get("/v1/info")
 def info():
     return {"protocol": 1, "server": "we-report-python",
-            "capabilities": {"webServiceFetch": config["web_service_fetch"], "demo": config["demo"],
+            "capabilities": {"webServiceFetch": config["web_service_fetch"], "demo": config["demo"], "search": True, "groups": True,
                              "grid": True, "layouts": not config["demo"]}}
 
 

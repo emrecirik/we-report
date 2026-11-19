@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Data protocol 1.2 and backends
+
+- **Protocol 1.2** — backward compatible, lets a grid scroll, search and group a whole table
+  without loading it: `query.search` (every word in some column, case-insensitive, literal),
+  `query.groupBy` + `aggregates` (one row per group with `__count` and `sum` / `avg` / `min` /
+  `max` / `count` subtotals), `orderBy[].nulls` (`first` / `last`), `capabilities.search` /
+  `capabilities.groups`, dialect `duckdb`. Notes: `protocol/GRID-1.2-IMPLEMENTERS.md`; the
+  conformance suite has 5 new checks (20 in all).
+- All six sample backends (Node.js, .NET, Spring Boot, Python, PHP, Go) implement 1.2 and pass the
+  suite; .NET and Spring Boot also against SQL Server.
+- Node.js sample: **DuckDB** connections (optional `@duckdb/node-api`, opened read-only) and a
+  fictional big-data `sales` table built on first start (`"seed": "bigdata"`, up to a billion
+  rows) — we-grid scrolls, searches and groups it through `WeGridProtocolDataSource`.
+
 ## 0.8.0 — 2026-10-21
 
 ### Designer

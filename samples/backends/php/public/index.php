@@ -195,7 +195,7 @@ function handle(array $config): never
     $path = rawurldecode($rawPath);
     if ($method === 'GET' && $path === '/v1/info') {
         respond(200, ['protocol' => 1, 'server' => 'we-report-php',
-            'capabilities' => ['webServiceFetch' => $config['webServiceFetch'], 'demo' => $config['demo'], 'grid' => true, 'layouts' => !$config['demo']]]);
+            'capabilities' => ['webServiceFetch' => $config['webServiceFetch'], 'demo' => $config['demo'], 'grid' => true, 'layouts' => !$config['demo'], 'search' => true, 'groups' => true]]);
     }
     // Saved grid layouts and sheets (protocol 1.1): one JSON file per key, named by the key in hex
     // so no key can reach outside the directory. Matched before decoding, so %2F stays in the key.
