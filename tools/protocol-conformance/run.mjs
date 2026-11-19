@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// we-report protocol conformance suite (protocol 1.1 — the 1.1 checks run when the backend's
-// capabilities say it offers them). A sample backend is "supported" only while it passes.
+// we-report protocol conformance suite (protocol 1.2 — the 1.1 and 1.2 checks run when the
+// backend's capabilities say it offers them). A sample backend is "supported" only while it passes.
 // Usage: node tools/protocol-conformance/run.mjs http://127.0.0.1:5480 [--token=...]
 // The backend must expose a connection with the sample dataset (samples/data/seed.sql).
 
@@ -56,7 +56,7 @@ await check('GET /v1/connections lists connections without secrets', async () =>
   assert(r.status === 200 && Array.isArray(r.json), `HTTP ${r.status}`);
   for (const c of r.json) {
     assert(typeof c.id === 'string' && typeof c.name === 'string' && typeof c.freeSql === 'boolean', `bad connection shape: ${JSON.stringify(c)}`);
-    assert(['sqlite', 'postgres', 'mysql', 'sqlserver', 'oracle'].includes(c.dialect), `dialect "${c.dialect}" is not one of the protocol's`);
+    assert(['sqlite', 'postgres', 'mysql', 'sqlserver', 'oracle', 'duckdb'].includes(c.dialect), `dialect "${c.dialect}" is not one of the protocol's`);
     const extra = Object.keys(c).filter((k) => !['id', 'name', 'dialect', 'freeSql'].includes(k));
     assert(!extra.length, `connection exposes extra fields: ${extra.join(', ')}`);
     assert(!/password|user id=|:\/\/[^@/]+@/i.test(JSON.stringify(c)), 'connection looks like it contains credentials');
@@ -182,6 +182,107 @@ if (connection) {
       assert(count.json.rows.length === 40, 'customers changed');
     });
   }
+}
+
+if (connection && info?.capabilities?.search) {
+  const path = `/v1/connections/${encodeURIComponent(connection.id)}`;
+  const all = (await call('POST', `${path}/query`, { query: { table: 'customers', limit: 5000 } })).json?.rows ?? [];
+
+  await check('1.2 search: every word in some column, case-insensitive, literal', async () => {
+    const sample = all.find((c) => c.name.includes(' '));
+    assert(sample, 'the sample dataset has no customer with a two-word name');
+    const [first] = sample.name.split(' ');
+    const text = `${first.toUpperCase()} ${sample.city.slice(1, 4)}`;
+    const words = text.toLowerCase().split(/\s+/);
+    const expected = all.filter((c) => words.every((w) => [c.name, c.city].some((v) => String(v).toLowerCase().includes(w))));
+    const r = await call('POST', `${path}/query`, { query: { table: 'customers', search: { text, columns: ['name', 'city'] }, orderBy: [{ column: 'id' }] }, count: true });
+    assert(r.status === 200, `HTTP ${r.status}: ${r.text.slice(0, 200)}`);
+    assert(r.json.total === expected.length, `total ${r.json.total}, expected ${expected.length}`);
+    assert(JSON.stringify(r.json.rows.map((c) => c.id)) === JSON.stringify(expected.map((c) => c.id)), 'the rows differ from every word in some column');
+    const none = await call('POST', `${path}/query`, { query: { table: 'customers', search: { text: '%', columns: ['name'] } }, count: true });
+    assert(none.status === 200 && none.json.total === 0, '% must match a percent sign, not everything');
+    const numbers = await call('POST', `${path}/query`, { query: { table: 'customers', search: { text: String(all[0].id), columns: ['id'] } }, count: true });
+    assert(numbers.status === 200 && numbers.json.total >= 1, 'a number column is searched as text');
+    expectError(await call('POST', `${path}/query`, { query: { table: 'customers', search: { text: 'x', columns: ['secret'] } } }), 400);
+    expectError(await call('POST', `${path}/query`, { query: { table: 'customers', search: { text: 'x', columns: [] } } }), 400);
+  });
+
+  await check('1.2 orderBy nulls is accepted and keeps the order', async () => {
+    const r = await call('POST', `${path}/query`, { query: { table: 'customers', columns: ['id'], orderBy: [{ column: 'id', dir: 'desc', nulls: 'last' }], limit: 3 } });
+    assert(r.status === 200, `HTTP ${r.status}: ${r.text.slice(0, 200)}`);
+    const ids = all.map((c) => c.id).sort((a, b) => b - a).slice(0, 3);
+    assert(JSON.stringify(r.json.rows.map((c) => c.id)) === JSON.stringify(ids), `got ${JSON.stringify(r.json.rows)}`);
+    expectError(await call('POST', `${path}/query`, { query: { table: 'customers', orderBy: [{ column: 'id', nulls: 'middle' }] } }), 400);
+  });
+}
+
+if (connection && info?.capabilities?.groups) {
+  const path = `/v1/connections/${encodeURIComponent(connection.id)}`;
+  const all = (await call('POST', `${path}/query`, { query: { table: 'customers', limit: 5000 } })).json?.rows ?? [];
+
+  await check('1.2 groups: one row per combination with __count and the aggregates', async () => {
+    const r = await call('POST', `${path}/query`, {
+      query: {
+        table: 'customers',
+        groupBy: ['city'],
+        aggregates: [
+          { column: 'credit_limit', fn: 'sum', as: 'limit_sum' },
+          { column: 'credit_limit', fn: 'max', as: 'limit_max' },
+          { column: 'id', fn: 'count', as: 'ids' }
+        ]
+      },
+      count: true
+    });
+    assert(r.status === 200, `HTTP ${r.status}: ${r.text.slice(0, 200)}`);
+    const cities = [...new Set(all.map((c) => c.city))];
+    assert(r.json.rows.length === cities.length && r.json.total === cities.length, `${r.json.rows.length} groups, total ${r.json.total}, expected ${cities.length}`);
+    for (const row of r.json.rows) {
+      const members = all.filter((c) => c.city === row.city);
+      assert(Number(row.__count) === members.length, `${row.city}: __count ${row.__count}, expected ${members.length}`);
+      assert(Number(row.ids) === members.length, `${row.city}: count ${row.ids}`);
+      const sum = members.reduce((s, c) => s + Number(c.credit_limit), 0);
+      assert(Math.abs(Number(row.limit_sum) - sum) < 0.01, `${row.city}: sum ${row.limit_sum}, expected ${sum}`);
+      assert(Number(row.limit_max) === Math.max(...members.map((c) => Number(c.credit_limit))), `${row.city}: max ${row.limit_max}`);
+    }
+    assert(r.json.rows.reduce((n, g) => n + Number(g.__count), 0) === all.length, 'the groups do not add up to the table');
+  });
+
+  await check('1.2 groups come in the order a grouped page query uses, so offsets line up', async () => {
+    const groups = (await call('POST', `${path}/query`, { query: { table: 'customers', groupBy: ['city'] } })).json.rows;
+    const rows = (await call('POST', `${path}/query`, { query: { table: 'customers', columns: ['city'], orderBy: [{ column: 'city', nulls: 'first' }], limit: 5000 } })).json.rows;
+    let at = 0;
+    for (const g of groups) {
+      const run = rows.slice(at, at + Number(g.__count));
+      assert(run.length && run.every((x) => x.city === g.city), `rows ${at}… are not the ${g.city} group`);
+      at += Number(g.__count);
+    }
+  });
+
+  await check('1.2 groups, search and order are validated: columns, names, types', async () => {
+    for (const bad of [
+      { groupBy: ['secret'] },
+      { groupBy: [] },
+      { groupBy: ['city'], columns: ['id'] },
+      { groupBy: ['city'], offset: 5 },
+      { aggregates: [{ column: 'id', fn: 'sum', as: 's' }] },
+      { groupBy: ['city'], aggregates: [{ column: 'id', fn: 'median', as: 's' }] },
+      { groupBy: ['city'], aggregates: [{ column: 'id', fn: 'sum', as: 'x; DROP TABLE customers' }] },
+      { groupBy: ['city'], aggregates: [{ column: 'id', fn: 'sum', as: '__count' }] },
+      // Wrong types are refused as bad requests, not server errors
+      { groupBy: [null] },
+      { groupBy: 'city' },
+      { groupBy: ['city'], aggregates: 'x' },
+      { groupBy: ['city'], aggregates: [{ column: 'id', fn: ['sum'], as: 's' }] },
+      { groupBy: ['city'], aggregates: Array.from({ length: 33 }, (_, i) => ({ column: 'id', fn: 'sum', as: `s${i}` })) },
+      { orderBy: [{ column: 'id', nulls: 5 }] },
+      { orderBy: [{ column: 'id', dir: 5 }] },
+      { search: { text: 'x'.repeat(201), columns: ['name'] } },
+      { search: { text: 5, columns: ['name'] } },
+      { search: 'x' }
+    ]) {
+      expectError(await call('POST', `${path}/query`, { query: { table: 'customers', ...bad } }), 400);
+    }
+  });
 }
 
 await check('POST bodies must be application/json (a cross-site form cannot send that)', async () => {

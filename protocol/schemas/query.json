@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/emrecirik/we-report/protocol/schemas/query.json",
-  "title": "we-report structured query (v1.1)",
+  "title": "we-report structured query (v1.2)",
   "description": "What the visual query builder produces. The backend validates every identifier against the introspected schema, quotes it for its dialect and sends every value as a driver parameter.",
   "type": "object",
   "required": [
@@ -80,6 +80,13 @@
               "desc"
             ],
             "default": "asc"
+          },
+          "nulls": {
+            "enum": [
+              "first",
+              "last"
+            ],
+            "description": "1.2 — where NULLs go. Without it the database decides (PostgreSQL puts them last when ascending, SQL Server first). A grid that shows groups asks for `first` so its row offsets match `groupBy`."
           }
         }
       }
@@ -97,6 +104,75 @@
       "type": "integer",
       "minimum": 0,
       "description": "1.1 — rows to skip before `limit`, for paging. Use with `orderBy` for a stable order."
+    },
+    "search": {
+      "type": "object",
+      "required": [
+        "text",
+        "columns"
+      ],
+      "additionalProperties": false,
+      "description": "1.2 (capability `search`) — a grid's search box: every word of `text` must appear, case-insensitively and literally, in at least one of `columns` read as text. Words AND, columns OR; combined with `where` by AND.",
+      "properties": {
+        "text": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Split on whitespace; at most 10 words count."
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "groupBy": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "1.2 (capability `groups`) — one result row per combination of these columns among the matched rows: the columns' values, `__count` (the rows in the group) and every `aggregates` entry under its `as`. Ordered by the groupBy columns ascending with NULL first, unless `orderBy` says otherwise. Not combined with `columns`, `distinct` or `offset`."
+    },
+    "aggregates": {
+      "type": "array",
+      "maxItems": 32,
+      "description": "1.2 — subtotals per group (needs `groupBy`). `count` counts the non-NULL values of the column.",
+      "items": {
+        "type": "object",
+        "required": [
+          "column",
+          "fn",
+          "as"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "fn": {
+            "enum": [
+              "sum",
+              "avg",
+              "min",
+              "max",
+              "count"
+            ]
+          },
+          "as": {
+            "type": "string",
+            "pattern": "^(?!__)[A-Za-z_][A-Za-z0-9_]{0,63}$",
+            "description": "The key in the result row; unique, and not starting with `__`."
+          }
+        }
+      }
     }
   }
 }

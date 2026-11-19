@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: we-report data protocol
-  version: 1.1.0
+  version: 1.2.0
   license: { name: MIT }
   description: |
     The only contract between we-report (designer, viewer) and a data backend. Any language can
@@ -12,6 +12,12 @@ info:
     `distinct`, the `contains` / `startsWith` operators and `count` → `total` for server-side
     paging (capability `grid`), and `/v1/layouts/{key}` to keep a user's saved grid layouts, views
     and sheets on the server (capability `layouts`). Both are used by we-grid-angular.
+
+    1.2 (backward compatible, still `/v1`, `protocol: 1`) lets a grid scroll, search and group a
+    table of any size without loading it: `search` (every word in some column — capability
+    `search`), `groupBy` with `aggregates` (one row per group with its count and subtotals —
+    capability `groups`) and `orderBy[].nulls`. A backend without them leaves both capabilities
+    false and keeps answering 1.1 queries as before.
 
     Security rules every implementation follows (see the samples):
     - Connection strings and secrets never leave the backend; only ids and names are returned.
@@ -156,13 +162,15 @@ components:
             demo: { type: boolean, description: Public demo mode — fixed read-only connections }
             grid: { type: boolean, description: '1.1 — query offset, distinct, contains/startsWith and count are supported' }
             layouts: { type: boolean, description: '1.1 — /v1/layouts is available (off in demo mode)' }
+            search: { type: boolean, description: '1.2 — query.search and orderBy[].nulls are supported' }
+            groups: { type: boolean, description: '1.2 — query.groupBy and query.aggregates are supported' }
     Connection:
       type: object
       required: [id, name, dialect, freeSql]
       properties:
         id: { type: string }
         name: { type: string }
-        dialect: { type: string, enum: [sqlite, postgres, mysql, sqlserver, oracle] }
+        dialect: { type: string, enum: [sqlite, postgres, mysql, sqlserver, oracle, duckdb] }
         freeSql: { type: boolean, description: Whether free SQL queries are accepted }
     DatabaseSchema:
       type: object
@@ -214,7 +222,7 @@ components:
           type: array
           items: { type: object, additionalProperties: true }
         truncated: { type: boolean, description: The row limit was reached; more rows exist }
-        total: { type: integer, description: '1.1 — present when the request asked for `count`' }
+        total: { type: integer, description: '1.1 — present when the request asked for `count`; with `groupBy`, the number of groups' }
     FetchRequest:
       type: object
       required: [url]
