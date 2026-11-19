@@ -145,9 +145,11 @@ function build_select(mixed $query, array $schema, callable $quote, array $param
                 : throw new ApiError(400, sprintf('"in" needs a list of 1-%d values.', MAX_IN_VALUES)),
             'like' => "$col LIKE " . $bind($value),
             // Literal and case-insensitive: LIKE's wildcards and the escape character are escaped.
+            // The escape character is a parameter: PDO's PostgreSQL parser would read a '\' literal as
+            // unfinished and lose every placeholder after it.
             'contains', 'startsWith' => "LOWER($col) LIKE LOWER("
                 . $bind(($op === 'contains' ? '%' : '') . addcslashes((string) driver_value($value), '\\%_') . '%')
-                . ") ESCAPE '\\'",
+                . ') ESCAPE ' . $bind('\\'),
             '!=' => "$col <> " . $bind($value),
             default => "$col $op " . $bind($value),
         };
@@ -166,7 +168,7 @@ function build_select(mixed $query, array $schema, callable $quote, array $param
         foreach ($words as $word) {
             $pattern = '%' . addcslashes($word, '\\%_') . '%';
             $conditions[] = '(' . implode(' OR ', array_map(
-                fn ($col) => "LOWER(CAST($col AS TEXT)) LIKE LOWER(" . $bind($pattern) . ") ESCAPE '\\'",
+                fn ($col) => "LOWER(CAST($col AS TEXT)) LIKE LOWER(" . $bind($pattern) . ') ESCAPE ' . $bind('\\'),
                 $searched,
             )) . ')';
         }

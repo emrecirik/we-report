@@ -158,6 +158,9 @@ if (connection) {
       assert(s.json.total === 11, `startsWith matched ${s.json.total} (customer1, customer10-19)`);
       const literal = await call('POST', `${path}/query`, { query: { table: 'customers', where: [{ column: 'email', op: 'contains', value: '%' }] }, count: true });
       assert(literal.json.total === 0, `% must match literally, matched ${literal.json.total}`);
+      // A condition after a contains still gets its value (a '\' escape literal must not swallow it)
+      const both = await call('POST', `${path}/query`, { query: { table: 'customers', where: [{ column: 'email', op: 'contains', value: 'example' }, { column: 'id', op: '=', value: 1 }] }, count: true });
+      assert(both.json?.total === 1, `contains followed by id = 1 gave HTTP ${both.status}, total ${both.json?.total}`);
     });
   } else {
     console.log('  – grid queries (1.1) not offered by this backend (skipped)');
