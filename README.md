@@ -40,9 +40,23 @@ backend required**.
 | Items | Text and data fields (rich text with **bold**/*italic* and fields inside), tables, charts (incl. sparklines, data bars and gauges), cross tables (pivot), sub-reports, signature lines, lines, rectangles/ellipses, images (embedded or from an address), 1D/2D barcodes and QR codes (Code128, EAN, UPC, ITF, GS1-128, DataMatrix, PDF417, Aztec …, as vectors), checkboxes, page number / page X of Y / print date |
 | Formulas | `[Price] * [Qty]`, `Iif`, `Switch`, `Sum/Count/Avg/Min/Max` per group/page/report, running and carried-forward totals, shares of the grand total (`SumAll`), calculated fields, amounts in words, text, math and date functions (`DateDiff`, `AddMonths` …), Turkish casing, `[^.invoiceNo]` parent fields, `[?param]` parameters — no `eval` |
 | Formats | Numbers, money, percent, dates — with the locale (`1.234,50 ₺`, `5 Ocak 2026`) |
-| Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend, paged APIs), SQL Server, PostgreSQL, SQLite (via a backend), report parameters with drop-down lists, pictures from web addresses |
+| Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend, paged APIs), SQL Server, PostgreSQL, SQLite, DuckDB (via a backend) — big tables summarized in the database, report parameters with drop-down lists, pictures from web addresses |
 | Designer | Drag from toolbox and field list, move/resize with grid and alignment-guide snapping, multi-select, undo/redo, in-place editing, format painter, *Tidy up*, report wizard, problems list with one-click fixes, properties panel, preview tab, light/dark |
 | Output | Paged preview, print, PDF (embedded subset fonts, bookmarks), Excel (typed cells), CSV, PNG, label printers (ZPL) and receipt printers (ESC/POS) |
+
+## A billion rows, summarized by the database
+
+A report over a big table doesn't load it: tick the columns to group by under **Summarize in the
+database** and add totals; the database reads the whole table and the report gets one row per group
+(protocol 1.2, every sample backend). On a fictional billion-row DuckDB table behind the Node.js
+sample backend, city × category comes back as 80 groups covering all 1,000,000,000 rows in about
+3–4 s, and the report lays out in a fraction of a second. Sorting and grouping in-browser data is
+also several times faster than before: a grouped report over a million rows in about 2 s.
+Details: [docs/data-sources.md](docs/data-sources.md).
+
+![The data source dialog: a DuckDB sales table grouped by city and category, with a total and an average worked out by the database; the test finds 80 rows](docs/images/summarize-in-database.png)
+
+![The report preview: 1,000,000,000 sales summarized by the database into 80 groups, per city and category with counts, totals and averages](docs/images/report-billion-rows.png)
 
 ## Packages
 
