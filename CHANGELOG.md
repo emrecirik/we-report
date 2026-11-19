@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 — 2026-11-19
+
+Reports and grids over tables of any size: a database source can be summarized by the database,
+and every sample backend speaks data protocol 1.2. A minor release — the report definition version
+is unchanged (still 1) and protocol 1.2 is backward compatible.
 
 ### Big data in reports
 
