@@ -31,6 +31,8 @@ import { buildCondition, CONDITION_OPS, parseCondition, SimpleCondition } from '
 
 let panelCount = 0;
 
+type EInvoicePart = 'invoice' | 'seller' | 'buyer' | 'line';
+
 const FORMATS: { value: string; key: keyof WeReportLocale }[] = [
   { value: '', key: 'formatNone' },
   { value: 'n0', key: 'formatNumber0' },
@@ -157,6 +159,73 @@ export class PropertyPanelComponent {
   /** Empty means "use the app's setting". */
   protected setCulture(key: 'locale' | 'currency', value: string): void {
     this.state.update((d) => (d[key] = value || undefined));
+  }
+
+  protected readonly eInvoiceGroups: { part: EInvoicePart; title?: keyof WeReportLocale; fields: { key: string; label: keyof WeReportLocale; example: string }[] }[] = [
+    {
+      part: 'invoice',
+      fields: [
+        { key: 'number', label: 'eiNumber', example: '[^.number]' },
+        { key: 'issueDate', label: 'eiIssueDate', example: '[^.date]' },
+        { key: 'dueDate', label: 'eiDueDate', example: 'AddDays([^.date], 30)' },
+        { key: 'currency', label: 'reportCurrency', example: "'EUR'" },
+        { key: 'note', label: 'eiNote', example: '[^.note]' },
+        { key: 'buyerReference', label: 'eiBuyerReference', example: '[^.reference]' },
+        { key: 'iban', label: 'eiIban', example: '[^.iban]' },
+        { key: 'bic', label: 'eiBic', example: '[^.bic]' },
+      ],
+    },
+    ...(['seller', 'buyer'] as const).map((part) => ({
+      part,
+      title: part === 'seller' ? ('eInvoiceSeller' as const) : ('eInvoiceBuyer' as const),
+      fields: [
+        { key: 'name', label: 'eiName' as const, example: `[^.${part}.name]` },
+        { key: 'address', label: 'eiAddress' as const, example: `[^.${part}.address]` },
+        { key: 'postcode', label: 'eiPostcode' as const, example: `[^.${part}.postcode]` },
+        { key: 'city', label: 'eiCity' as const, example: `[^.${part}.city]` },
+        { key: 'country', label: 'eiCountry' as const, example: "'DE'" },
+        { key: 'vatId', label: 'eiVatId' as const, example: `[^.${part}.vatId]` },
+      ],
+    })),
+    {
+      part: 'line',
+      title: 'eInvoiceLine',
+      fields: [
+        { key: 'id', label: 'eiItemCode', example: '[code]' },
+        { key: 'name', label: 'eiItemName', example: '[product]' },
+        { key: 'quantity', label: 'eiQuantity', example: '[qty]' },
+        { key: 'unitPrice', label: 'eiUnitPrice', example: '[price]' },
+        { key: 'vatRate', label: 'eiVatRate', example: '[vat]' },
+        { key: 'vatCategory', label: 'eiVatCategory', example: "'S'" },
+        { key: 'unitCode', label: 'eiUnitCode', example: "'C62'" },
+      ],
+    },
+  ];
+
+  protected eInvoiceValue(part: EInvoicePart, key: string): string {
+    const mapping = this.report().eInvoice as unknown as Record<string, Record<string, string> | string> | undefined;
+    const holder = part === 'invoice' ? mapping : mapping?.[part];
+    const value = holder && typeof holder === 'object' ? holder[key] : undefined;
+    return typeof value === 'string' ? value : '';
+  }
+
+  /** An empty formula leaves the field out. */
+  protected setEInvoice(part: EInvoicePart, key: string, value: string): void {
+    this.state.update((d) => {
+      if (!d.eInvoice) return;
+      if (part !== 'invoice') d.eInvoice[part] ??= {} as never;
+      const holder = (part === 'invoice' ? d.eInvoice : d.eInvoice[part]) as unknown as Record<string, string | undefined>;
+      holder[key] = value.trim() || undefined;
+    }, `eInvoice.${part}.${key}`);
+  }
+
+  /** A new mapping starts with the required fields empty, so the preview lists what is still missing. */
+  protected setEInvoiceOn(on: boolean): void {
+    this.state.update((d) => {
+      d.eInvoice = on
+        ? { number: '', issueDate: '', seller: { name: '', country: '' }, buyer: { name: '', country: '' }, line: { name: '', quantity: '', unitPrice: '', vatRate: '' } }
+        : undefined;
+    });
   }
 
   /** Empty text removes the watermark. */

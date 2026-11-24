@@ -400,3 +400,10 @@ input[type='color'] {
 .pp__warn {
   color: var(--we-report-warning-fg, #9a4400);
 }
+
+// An example, not a value: the e-invoice fields show what a formula looks like
+.pp__formula::placeholder {
+  color: var(--we-report-muted-fg, rgba(60, 60, 67, 0.75));
+  opacity: 0.55;
+  font-style: italic;
+}

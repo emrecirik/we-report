@@ -114,6 +114,28 @@
         </div>
       }
     </section>
+    @if (advanced()) {
+      <section class="pp__section">
+        <h3>{{ s.eInvoice }}</h3>
+        <small class="pp__hint">{{ s.eInvoiceHint }}</small>
+        @if (report().eInvoice) {
+          @for (g of eInvoiceGroups; track g.part) {
+            @if (g.title) {
+              <div class="pp__subtitle">{{ s[g.title] }}</div>
+            }
+            @for (f of g.fields; track f.key) {
+              <label class="pp__row pp__row--stack">
+                <span>{{ s[f.label] }}</span>
+                <input class="pp__formula" [value]="eInvoiceValue(g.part, f.key)" [placeholder]="f.example" (change)="setEInvoice(g.part, f.key, $any($event.target).value)" spellcheck="false" />
+              </label>
+            }
+          }
+          <button type="button" class="pp__link" (click)="setEInvoiceOn(false)">{{ s.eInvoiceRemove }}</button>
+        } @else {
+          <button type="button" class="pp__link" (click)="setEInvoiceOn(true)">{{ s.eInvoiceAdd }}</button>
+        }
+      </section>
+    }
   }
   @if (advanced() && report().dataMember) {
     <section class="pp__section">

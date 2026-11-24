@@ -61,4 +61,21 @@ describe('PropertyPanelComponent', () => {
   function footer() {
     return report().bands.find((b) => b.kind === 'pageFooter')!;
   }
+
+  it('maps an e-invoice from formulas and removes it again', () => {
+    const button = (text: string) => Array.from(el().querySelectorAll('button')).find((b) => b.textContent?.trim() === text) as HTMLButtonElement;
+    button(weReportLocaleTr.eInvoiceAdd).click();
+    fixture.detectChanges();
+    expect(report().eInvoice?.number).toBe('');
+    const input = Array.from(el().querySelectorAll('label')).find((l) => l.textContent?.includes(weReportLocaleTr.eiUnitPrice))!.querySelector('input')!;
+    input.value = '[price]';
+    input.dispatchEvent(new Event('change'));
+    expect(report().eInvoice?.line.unitPrice).toBe('[price]');
+    input.value = ' ';
+    input.dispatchEvent(new Event('change'));
+    expect(report().eInvoice?.line.unitPrice).toBeUndefined();
+    fixture.detectChanges();
+    button(weReportLocaleTr.eInvoiceRemove).click();
+    expect(report().eInvoice).toBeUndefined();
+  });
 });

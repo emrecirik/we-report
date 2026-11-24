@@ -432,6 +432,33 @@ export interface WeReportLocale {
   functionHelp: Record<string, string>;
   watermarkHint: string;
   watermarkAngle: string;
+  eInvoice: string;
+  eInvoiceHint: string;
+  eInvoiceAdd: string;
+  eInvoiceRemove: string;
+  eInvoiceSeller: string;
+  eInvoiceBuyer: string;
+  eInvoiceLine: string;
+  eiNumber: string;
+  eiIssueDate: string;
+  eiDueDate: string;
+  eiNote: string;
+  eiBuyerReference: string;
+  eiIban: string;
+  eiBic: string;
+  eiName: string;
+  eiAddress: string;
+  eiPostcode: string;
+  eiCity: string;
+  eiCountry: string;
+  eiVatId: string;
+  eiItemCode: string;
+  eiItemName: string;
+  eiQuantity: string;
+  eiUnitPrice: string;
+  eiVatRate: string;
+  eiVatCategory: string;
+  eiUnitCode: string;
   conditionalHint: string;
   addRule: string;
   ruleWhen: string;
@@ -930,6 +957,33 @@ export const weReportLocaleEn: WeReportLocale = {
   },
   watermarkHint: 'Large faint text behind every page, e.g. DRAFT or PAID. Can come from data.',
   watermarkAngle: 'Direction',
+  eInvoice: 'E-invoice (Factur-X)',
+  eInvoiceHint: 'Formulas for the invoice fields; the PDF then carries the invoice as EN 16931 XML (ZUGFeRD). Invoice fields read [^.field], line fields each row.',
+  eInvoiceAdd: 'Map an e-invoice',
+  eInvoiceRemove: 'Remove the e-invoice',
+  eInvoiceSeller: 'Seller',
+  eInvoiceBuyer: 'Buyer',
+  eInvoiceLine: 'Each line',
+  eiNumber: 'Invoice number',
+  eiIssueDate: 'Issue date',
+  eiDueDate: 'Due date',
+  eiNote: 'Note',
+  eiBuyerReference: 'Buyer reference (Leitweg-ID)',
+  eiIban: 'IBAN',
+  eiBic: 'BIC',
+  eiName: 'Name',
+  eiAddress: 'Address',
+  eiPostcode: 'Postcode',
+  eiCity: 'City',
+  eiCountry: 'Country (ISO code)',
+  eiVatId: 'VAT ID',
+  eiItemCode: 'Item code',
+  eiItemName: 'Description',
+  eiQuantity: 'Quantity',
+  eiUnitPrice: 'Unit price (net)',
+  eiVatRate: 'VAT rate %',
+  eiVatCategory: 'VAT category (S, Z, E, AE)',
+  eiUnitCode: 'Unit code (C62)',
   conditionalHint: 'Change the look when a condition is true, e.g. negative amounts in red.',
   addRule: 'Add rule',
   ruleWhen: 'When',
@@ -1428,6 +1482,33 @@ export const weReportLocaleTr: WeReportLocale = {
   },
   watermarkHint: 'Her sayfanın arkasında büyük, soluk yazı; örneğin TASLAK veya ÖDENDİ. Veriden de gelebilir.',
   watermarkAngle: 'Yön',
+  eInvoice: 'E-fatura (Factur-X)',
+  eInvoiceHint: 'Fatura alanları için formüller; PDF faturayı EN 16931 XML (ZUGFeRD) olarak içinde taşır. Fatura alanları [^.alan], kalem alanları her satırı okur.',
+  eInvoiceAdd: 'E-fatura eşle',
+  eInvoiceRemove: 'E-faturayı kaldır',
+  eInvoiceSeller: 'Satıcı',
+  eInvoiceBuyer: 'Alıcı',
+  eInvoiceLine: 'Her kalem',
+  eiNumber: 'Fatura no',
+  eiIssueDate: 'Düzenleme tarihi',
+  eiDueDate: 'Vade tarihi',
+  eiNote: 'Not',
+  eiBuyerReference: 'Alıcı referansı (Leitweg-ID)',
+  eiIban: 'IBAN',
+  eiBic: 'BIC',
+  eiName: 'Ad',
+  eiAddress: 'Adres',
+  eiPostcode: 'Posta kodu',
+  eiCity: 'Şehir',
+  eiCountry: 'Ülke (ISO kodu)',
+  eiVatId: 'Vergi no',
+  eiItemCode: 'Ürün kodu',
+  eiItemName: 'Açıklama',
+  eiQuantity: 'Miktar',
+  eiUnitPrice: 'Birim fiyat (net)',
+  eiVatRate: 'KDV oranı %',
+  eiVatCategory: 'KDV kategorisi (S, Z, E, AE)',
+  eiUnitCode: 'Birim kodu (C62)',
   conditionalHint: 'Bir koşul doğru olduğunda görünümü değiştirin; örneğin eksi tutarlar kırmızı olsun.',
   addRule: 'Kural ekle',
   ruleWhen: 'Şu durumda',
