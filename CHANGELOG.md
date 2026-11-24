@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.10.0 — 2026-11-24
+
+PDF/A-3b and Factur-X / ZUGFeRD e-invoices. A minor release: new options and functions; plain
+PDFs are written as before and the report definition version is unchanged.
 
 ### Added
 
