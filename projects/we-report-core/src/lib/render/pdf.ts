@@ -4,6 +4,7 @@ import { fromMm } from '../units';
 import { FontRegistry } from '../fonts/font-registry';
 import { readImage } from '../layout/images';
 import { LayoutBookmark, LayoutDocument, LayoutItem } from '../layout/layout-types';
+import { FacturXProfile, PdfAttachment, weReportPdfAXmp, weReportSrgbIccProfile } from './pdfa';
 
 const PT = fromMm(1, 'pt');
 
@@ -14,6 +15,18 @@ export interface PdfOptions {
   date?: Date;
   /** Language of the text (BCP 47, e.g. `tr-TR`), for screen readers and search. */
   lang?: string;
+  /**
+   * Writes an archivable PDF/A-3b: an sRGB output intent, XMP metadata matching the document
+   * information, a document ID. On by itself whenever `facturX` is given.
+   */
+  pdfa?: boolean;
+  /** Files carried inside the PDF — any type under PDF/A-3, each saying how it relates to the document. */
+  attachments?: PdfAttachment[];
+  /**
+   * A Factur-X / ZUGFeRD e-invoice: the invoice's Cross Industry Invoice XML, attached as
+   * `factur-x.xml` (or `fileName`, e.g. `zugferd-invoice.xml`) to a PDF/A-3b whose XMP names the profile.
+   */
+  facturX?: { xml: string | Uint8Array; profile: FacturXProfile; fileName?: string };
 }
 
 // pdf-lib is loaded on first export only, keeping it out of the initial bundle of apps that just preview.
@@ -29,16 +42,19 @@ function color(value: string | undefined): { color: RGB | undefined; opacity: nu
 export async function renderPdf(doc: LayoutDocument, fonts: FontRegistry, options: PdfOptions = {}): Promise<Uint8Array> {
   lib ??= await import('pdf-lib');
   const fontkit = await import('@pdf-lib/fontkit');
-  const pdf = await lib.PDFDocument.create();
+  const pdfa = options.pdfa || !!options.facturX;
+  // PDF/A wants the information dates to match the XMP ones, so pdf-lib must not touch them on save
+  const pdf = await lib.PDFDocument.create({ updateMetadata: !pdfa });
   pdf.registerFontkit(((fontkit as unknown as { default?: unknown }).default ?? fontkit) as Parameters<typeof pdf.registerFontkit>[0]);
   pdf.setProducer('we-report');
   pdf.setCreator('we-report');
   if (options.title) pdf.setTitle(options.title);
   if (options.author) pdf.setAuthor(options.author);
   if (options.lang) pdf.setLanguage(options.lang);
-  if (options.date) {
-    pdf.setCreationDate(options.date);
-    pdf.setModificationDate(options.date);
+  const date = options.date ?? (pdfa ? new Date(Math.floor(Date.now() / 1000) * 1000) : undefined);
+  if (date) {
+    pdf.setCreationDate(date);
+    pdf.setModificationDate(date);
   }
 
   const faces = new Map(fonts.allFaces().map((f) => [f.key, f]));
@@ -75,6 +91,56 @@ export async function renderPdf(doc: LayoutDocument, fonts: FontRegistry, option
     }
   }
   if (doc.bookmarks?.length) addOutline(pdf, pages, doc);
+
+  const attachments = [...(options.attachments ?? [])];
+  if (options.facturX) {
+    const fx = options.facturX;
+    // Factur-X: the XML is the invoice's alternative form for the profiles that carry the whole
+    // invoice, and data the PDF only summarises for MINIMUM and BASIC WL
+    const relationship = fx.profile === 'MINIMUM' || fx.profile === 'BASIC WL' ? 'Data' : 'Alternative';
+    attachments.push({ name: fx.fileName ?? 'factur-x.xml', data: fx.xml, mimeType: 'text/xml', description: 'Factur-X invoice', relationship });
+  }
+  for (const a of attachments) {
+    const bytes = typeof a.data === 'string' ? new TextEncoder().encode(a.data) : a.data;
+    await pdf.attach(bytes, a.name, {
+      mimeType: a.mimeType,
+      description: a.description,
+      creationDate: date ?? new Date(),
+      modificationDate: date ?? new Date(),
+      afRelationship: (a.relationship ?? 'Data') as never
+    });
+  }
+
+  if (pdfa && date) {
+    const title = options.title || 'we-report';
+    if (!options.title) pdf.setTitle(title);
+    const xmp = weReportPdfAXmp({
+      title,
+      author: options.author,
+      producer: 'we-report',
+      creator: 'we-report',
+      date,
+      lang: options.lang,
+      facturX: options.facturX ? { profile: options.facturX.profile, fileName: options.facturX.fileName ?? 'factur-x.xml' } : undefined
+    });
+    const ctx = pdf.context;
+    // The metadata stream stays unfiltered, as PDF/A asks
+    const metadata = ctx.stream(new TextEncoder().encode(xmp), { Type: 'Metadata', Subtype: 'XML' });
+    pdf.catalog.set(lib.PDFName.of('Metadata'), ctx.register(metadata));
+    const icc = ctx.flateStream(weReportSrgbIccProfile(), { N: 3 });
+    const intent = ctx.obj({
+      Type: 'OutputIntent',
+      S: 'GTS_PDFA1',
+      OutputConditionIdentifier: lib.PDFString.of('sRGB IEC61966-2.1'),
+      Info: lib.PDFString.of('sRGB IEC61966-2.1'),
+      DestOutputProfile: ctx.register(icc)
+    });
+    pdf.catalog.set(lib.PDFName.of('OutputIntents'), ctx.obj([ctx.register(intent)]));
+    // A document ID, the same in both halves for a first version
+    // What the document holds goes into the ID too: two reports of one name in the same second differ
+    const id = lib.PDFHexString.of(documentId(xmp + doc.pages.map((p) => `${p.items.length}`).join(',')));
+    ctx.trailerInfo.ID = ctx.obj([id, id]);
+  }
   return pdf.save();
 }
 
@@ -249,4 +315,15 @@ async function drawItem(
       }
       return;
   }
+}
+
+/** 32 hex digits derived from the content — the PDF/A document ID (FNV-1a, not a security hash) */
+function documentId(seed: string): string {
+  let out = '';
+  for (let round = 0; round < 4; round++) {
+    let h = 0x811c9dc5 ^ round;
+    for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 0x01000193) >>> 0;
+    out += h.toString(16).padStart(8, '0');
+  }
+  return out;
 }

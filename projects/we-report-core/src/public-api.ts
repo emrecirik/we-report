@@ -24,6 +24,8 @@ export * from './lib/layout/barcode';
 export * from './lib/layout/chart';
 export * from './lib/layout/images';
 export * from './lib/render/pdf';
+export * from './lib/render/pdfa';
+export * from './lib/render/cii';
 export * from './lib/layout/style';
 export * from './lib/layout/text-wrap';
 export * from './lib/layout/rich-text';
