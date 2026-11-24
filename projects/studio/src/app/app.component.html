@@ -47,7 +47,7 @@
   </div>
 }
 
-<we-report-designer class="designer" [(report)]="report" [data]="data()" [locale]="locale()" />
+<we-report-designer class="designer" [(report)]="report" [data]="data()" [locale]="locale()" [pdfOptions]="pdfOptions()" />
 
 @if (dataDialogOpen()) {
   <div class="backdrop" (click)="dataDialogOpen.set(false)"></div>
