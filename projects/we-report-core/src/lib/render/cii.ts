@@ -26,6 +26,23 @@ export interface WeReportInvoiceLine {
   vatRate: number;
   /** UN/ECE Rec 20 unit code; `C62` (one) when left out */
   unitCode?: string;
+  /** VAT category; `S` above 0 %, `Z` at 0 % when left out. `E` and `AE` need a 0 % rate. */
+  vatCategory?: WeReportVatCategory;
+}
+
+/**
+ * EN 16931 VAT categories: `S` standard rate, `Z` zero rated, `E` exempt, `AE` reverse charge
+ * (the buyer accounts for the VAT). Intra-community supply (`K`), export (`G`) and out of scope (`O`)
+ * are not modelled yet.
+ */
+export type WeReportVatCategory = 'S' | 'Z' | 'E' | 'AE';
+
+/** A document-level discount (allowance) or surcharge (charge), net, in one VAT category */
+export interface WeReportAllowanceCharge {
+  amount: number;
+  reason: string;
+  vatRate: number;
+  vatCategory?: WeReportVatCategory;
 }
 
 /** What `weReportCiiInvoice` needs to know about an invoice */
@@ -39,16 +56,35 @@ export interface WeReportInvoice {
   buyer: WeReportInvoiceParty;
   lines: WeReportInvoiceLine[];
   note?: string;
+  /** The buyer's reference (BT-10) — required by XRechnung, where it carries the Leitweg-ID */
+  buyerReference?: string;
+  /** Payment by credit transfer to this account (SEPA, payment means 58) */
+  payment?: { iban: string; bic?: string; accountName?: string };
+  /** Document-level discounts, net */
+  allowances?: WeReportAllowanceCharge[];
+  /** Document-level surcharges (freight, packing), net */
+  charges?: WeReportAllowanceCharge[];
+  /** Why `E` / `AE` amounts carry no VAT; defaults: "Exempt from VAT", "Reverse charge" */
+  vatExemptionReasons?: Partial<Record<WeReportVatCategory, string>>;
 }
 
 /** The totals the XML states — exposed so the printed invoice can show the very same numbers */
 export interface WeReportInvoiceTotals {
   lines: { net: number }[];
-  vat: { rate: number; basis: number; tax: number }[];
+  /** One entry per VAT category and rate, the lines, allowances and charges in it */
+  vat: { category: WeReportVatCategory; rate: number; basis: number; tax: number }[];
+  /** Sum of the line nets */
   net: number;
+  allowances: number;
+  charges: number;
+  /** Lines − allowances + charges: what the VAT is worked out on */
+  taxBasis: number;
   tax: number;
   grand: number;
 }
+
+/** A line's or allowance's category: the given one, else `S` above 0 % and `Z` at 0 % */
+const categoryOf = (x: { vatRate: number; vatCategory?: WeReportVatCategory }): WeReportVatCategory => x.vatCategory ?? (x.vatRate > 0 ? 'S' : 'Z');
 
 /** Rounds half away from zero, so a credit note's amounts are exactly the invoice's, negated */
 const roundHalfAway = (v: number): number => Math.sign(v) * Math.round(Math.abs(v));
@@ -57,18 +93,42 @@ const cents = (v: number): number => roundHalfAway(Number((v * 100).toPrecision(
 
 /** Line nets, VAT per rate and the grand total, rounded to cents as EN 16931 expects */
 export function weReportInvoiceTotals(invoice: WeReportInvoice): WeReportInvoiceTotals {
-  const lines = invoice.lines.map((l) => ({ net: cents(l.quantity * l.unitPrice), rate: l.vatRate }));
-  const byRate = new Map<number, number>();
-  for (const l of lines) byRate.set(l.rate, (byRate.get(l.rate) ?? 0) + l.net);
-  const vat = [...byRate.entries()].sort((a, b) => a[0] - b[0]).map(([rate, basis]) => ({ rate, basis, tax: roundHalfAway((basis * rate) / 100) }));
-  const net = lines.reduce((a, l) => a + l.net, 0);
+  const groups = new Map<string, { category: WeReportVatCategory; rate: number; basis: number }>();
+  const add = (category: WeReportVatCategory, rate: number, value: number): void => {
+    const key = `${category}|${rate}`;
+    const group = groups.get(key) ?? { category, rate, basis: 0 };
+    group.basis += value;
+    groups.set(key, group);
+  };
+  const lines = invoice.lines.map((l) => {
+    const net = cents(l.quantity * l.unitPrice);
+    add(categoryOf(l), l.vatRate, net);
+    return net;
+  });
+  const sumOf = (list: WeReportAllowanceCharge[] | undefined, sign: number): number =>
+    (list ?? []).reduce((total, a) => {
+      const value = cents(a.amount);
+      add(categoryOf(a), a.vatRate, sign * value);
+      return total + value;
+    }, 0);
+  const allowances = sumOf(invoice.allowances, -1);
+  const charges = sumOf(invoice.charges, 1);
+  const order: WeReportVatCategory[] = ['S', 'Z', 'E', 'AE'];
+  const vat = [...groups.values()]
+    .sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category) || a.rate - b.rate)
+    .map((g) => ({ ...g, tax: roundHalfAway((g.basis * g.rate) / 100) }));
+  const net = lines.reduce((a, v) => a + v, 0);
+  const taxBasis = net - allowances + charges;
   const tax = vat.reduce((a, v) => a + v.tax, 0);
   return {
-    lines: lines.map((l) => ({ net: l.net / 100 })),
-    vat: vat.map((v) => ({ rate: v.rate, basis: v.basis / 100, tax: v.tax / 100 })),
+    lines: lines.map((v) => ({ net: v / 100 })),
+    vat: vat.map((v) => ({ category: v.category, rate: v.rate, basis: v.basis / 100, tax: v.tax / 100 })),
     net: net / 100,
+    allowances: allowances / 100,
+    charges: charges / 100,
+    taxBasis: taxBasis / 100,
     tax: tax / 100,
-    grand: (net + tax) / 100
+    grand: (taxBasis + tax) / 100
   };
 }
 
@@ -95,17 +155,26 @@ function party(tag: 'SellerTradeParty' | 'BuyerTradeParty', p: WeReportInvoicePa
 
 /**
  * The invoice as Cross Industry Invoice XML, EN 16931 profile (`urn:cen.eu:en16931:2017`) — pass it
- * to `renderPdf(…, { facturX: { xml, profile: 'EN 16931' } })`. VAT is standard-rated (`S`) above 0 %
- * and zero-rated (`Z`) at 0 %; exempt and reverse-charge lines are not modelled yet. A credit is a
- * negative quantity; a negative price, or a quantity that is not a finite number, throws a `RangeError`.
+ * to `renderPdf(…, { facturX: { xml, profile: 'EN 16931' } })`. VAT categories `S`, `Z`, `E` and `AE`
+ * (see `WeReportVatCategory`), document-level allowances and charges, SEPA payment details and a buyer
+ * reference. A credit is a negative quantity; a negative price, a rate that does not fit its category,
+ * or a number that is not finite throws a `RangeError`.
  */
 export function weReportCiiInvoice(invoice: WeReportInvoice): string {
   for (const l of invoice.lines) {
     if (l.unitPrice < 0) throw new RangeError(`Invoice line "${l.name}" has a negative price; credit a quantity instead (BR-27).`);
-    if (l.vatRate < 0) throw new RangeError(`Invoice line "${l.name}" has a negative VAT rate.`);
+    checkVat(l.vatRate, l.vatCategory, `Invoice line "${l.name}"`);
+  }
+  for (const a of [...(invoice.allowances ?? []), ...(invoice.charges ?? [])]) {
+    if (!(a.amount >= 0) || !Number.isFinite(a.amount)) throw new RangeError(`Allowance or charge "${a.reason}" needs a positive amount.`);
+    checkVat(a.vatRate, a.vatCategory, `Allowance or charge "${a.reason}"`);
   }
   const t = weReportInvoiceTotals(invoice);
-  const category = (rate: number): string => (rate > 0 ? 'S' : 'Z');
+  const reasons: Record<WeReportVatCategory, string> = { S: '', Z: '', E: 'Exempt from VAT', AE: 'Reverse charge', ...invoice.vatExemptionReasons };
+  const tradeTax = (category: WeReportVatCategory, rate: number): string =>
+    `<ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>${category}</ram:CategoryCode><ram:RateApplicablePercent>${decimal(rate, 'VAT rate')}</ram:RateApplicablePercent>`;
+  const allowanceCharge = (a: WeReportAllowanceCharge, charge: boolean): string =>
+    `<ram:SpecifiedTradeAllowanceCharge><ram:ChargeIndicator><udt:Indicator>${charge}</udt:Indicator></ram:ChargeIndicator><ram:ActualAmount>${amount(cents(a.amount) / 100)}</ram:ActualAmount><ram:Reason>${esc(a.reason)}</ram:Reason><ram:CategoryTradeTax>${tradeTax(categoryOf(a), a.vatRate)}</ram:CategoryTradeTax></ram:SpecifiedTradeAllowanceCharge>`;
   const cur = esc(invoice.currency);
   const lines = invoice.lines
     .map(
@@ -116,7 +185,7 @@ export function weReportCiiInvoice(invoice: WeReportInvoice): string {
       <ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${decimal(l.unitPrice, 'price')}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="${esc(l.unitCode ?? 'C62')}">${decimal(l.quantity, 'quantity')}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
-        <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>${category(l.vatRate)}</ram:CategoryCode><ram:RateApplicablePercent>${decimal(l.vatRate, 'VAT rate')}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+        <ram:ApplicableTradeTax>${tradeTax(categoryOf(l), l.vatRate)}</ram:ApplicableTradeTax>
         <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${amount(t.lines[i].net)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>`
@@ -125,9 +194,19 @@ export function weReportCiiInvoice(invoice: WeReportInvoice): string {
   const taxes = t.vat
     .map(
       (v) =>
-        `<ram:ApplicableTradeTax><ram:CalculatedAmount>${amount(v.tax)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${amount(v.basis)}</ram:BasisAmount><ram:CategoryCode>${category(v.rate)}</ram:CategoryCode><ram:RateApplicablePercent>${decimal(v.rate, 'VAT rate')}</ram:RateApplicablePercent></ram:ApplicableTradeTax>`
+        `<ram:ApplicableTradeTax><ram:CalculatedAmount>${amount(v.tax)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode>${
+          reasons[v.category] ? `<ram:ExemptionReason>${esc(reasons[v.category])}</ram:ExemptionReason>` : ''
+        }<ram:BasisAmount>${amount(v.basis)}</ram:BasisAmount><ram:CategoryCode>${v.category}</ram:CategoryCode><ram:RateApplicablePercent>${decimal(v.rate, 'VAT rate')}</ram:RateApplicablePercent></ram:ApplicableTradeTax>`
     )
     .join('');
+  const payment = invoice.payment
+    ? `<ram:SpecifiedTradeSettlementPaymentMeans><ram:TypeCode>58</ram:TypeCode><ram:PayeePartyCreditorFinancialAccount><ram:IBANID>${esc(invoice.payment.iban.replace(/\s+/g, ''))}</ram:IBANID>${
+        invoice.payment.accountName ? `<ram:AccountName>${esc(invoice.payment.accountName)}</ram:AccountName>` : ''
+      }</ram:PayeePartyCreditorFinancialAccount>${
+        invoice.payment.bic ? `<ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>${esc(invoice.payment.bic)}</ram:BICID></ram:PayeeSpecifiedCreditorFinancialInstitution>` : ''
+      }</ram:SpecifiedTradeSettlementPaymentMeans>`
+    : '';
+  const allowancesAndCharges = [...(invoice.allowances ?? []).map((a) => allowanceCharge(a, false)), ...(invoice.charges ?? []).map((c) => allowanceCharge(c, true))].join('');
   const due = invoice.dueDate
     ? `<ram:SpecifiedTradePaymentTerms><ram:DueDateDateTime><udt:DateTimeString format="102">${day(invoice.dueDate)}</udt:DateTimeString></ram:DueDateDateTime></ram:SpecifiedTradePaymentTerms>`
     : '';
@@ -140,15 +219,19 @@ export function weReportCiiInvoice(invoice: WeReportInvoice): string {
     <ram:IssueDateTime><udt:DateTimeString format="102">${day(invoice.issueDate)}</udt:DateTimeString></ram:IssueDateTime>${invoice.note ? `\n    <ram:IncludedNote><ram:Content>${esc(invoice.note)}</ram:Content></ram:IncludedNote>` : ''}
   </rsm:ExchangedDocument>
   <rsm:SupplyChainTradeTransaction>${lines}
-    <ram:ApplicableHeaderTradeAgreement>${party('SellerTradeParty', invoice.seller)}${party('BuyerTradeParty', invoice.buyer)}</ram:ApplicableHeaderTradeAgreement>
+    <ram:ApplicableHeaderTradeAgreement>${invoice.buyerReference ? `<ram:BuyerReference>${esc(invoice.buyerReference)}</ram:BuyerReference>` : ''}${party('SellerTradeParty', invoice.seller)}${party('BuyerTradeParty', invoice.buyer)}</ram:ApplicableHeaderTradeAgreement>
     <ram:ApplicableHeaderTradeDelivery><ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime><udt:DateTimeString format="102">${day(invoice.issueDate)}</udt:DateTimeString></ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent></ram:ApplicableHeaderTradeDelivery>
     <ram:ApplicableHeaderTradeSettlement>
       <ram:InvoiceCurrencyCode>${cur}</ram:InvoiceCurrencyCode>
+      ${payment}
       ${taxes}
+      ${allowancesAndCharges}
       ${due}
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
-        <ram:LineTotalAmount>${amount(t.net)}</ram:LineTotalAmount>
-        <ram:TaxBasisTotalAmount>${amount(t.net)}</ram:TaxBasisTotalAmount>
+        <ram:LineTotalAmount>${amount(t.net)}</ram:LineTotalAmount>${
+          invoice.charges?.length ? `\n        <ram:ChargeTotalAmount>${amount(t.charges)}</ram:ChargeTotalAmount>` : ''
+        }${invoice.allowances?.length ? `\n        <ram:AllowanceTotalAmount>${amount(t.allowances)}</ram:AllowanceTotalAmount>` : ''}
+        <ram:TaxBasisTotalAmount>${amount(t.taxBasis)}</ram:TaxBasisTotalAmount>
         <ram:TaxTotalAmount currencyID="${cur}">${amount(t.tax)}</ram:TaxTotalAmount>
         <ram:GrandTotalAmount>${amount(t.grand)}</ram:GrandTotalAmount>
         <ram:DuePayableAmount>${amount(t.grand)}</ram:DuePayableAmount>
@@ -156,4 +239,12 @@ export function weReportCiiInvoice(invoice: WeReportInvoice): string {
     </ram:ApplicableHeaderTradeSettlement>
   </rsm:SupplyChainTradeTransaction>
 </rsm:CrossIndustryInvoice>`;
+}
+
+/** `E` and `AE` carry no VAT, `S` needs a rate, `Z` is 0 % — EN 16931's BR-S/Z/E/AE-05 and -06 */
+function checkVat(rate: number, category: WeReportVatCategory | undefined, what: string): void {
+  if (!Number.isFinite(rate) || rate < 0) throw new RangeError(`${what} has an invalid VAT rate.`);
+  const c = category ?? (rate > 0 ? 'S' : 'Z');
+  if (c === 'S' && rate === 0) throw new RangeError(`${what} is standard-rated (S) at 0 %; use Z, E or AE.`);
+  if (c !== 'S' && rate !== 0) throw new RangeError(`${what} is in category ${c}, which takes a 0 % rate.`);
 }

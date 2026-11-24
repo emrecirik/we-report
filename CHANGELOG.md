@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- E-invoices: `weReportCiiInvoice` now writes exempt (`E`) and reverse-charge (`AE`) VAT, with
+  their exemption reasons (`vatExemptionReasons`); document-level `allowances` and `charges` in the
+  VAT basis of their category; SEPA `payment` details (IBAN, BIC, account name); and the
+  `buyerReference` XRechnung needs. `weReportInvoiceTotals` reports allowances, charges and the tax
+  basis, and each VAT group's category. Every variant passes the Mustang validator.
+
 ## 0.10.0 — 2026-11-24
 
 PDF/A-3b and Factur-X / ZUGFeRD e-invoices. A minor release: new options and functions; plain

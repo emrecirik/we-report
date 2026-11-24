@@ -21,8 +21,8 @@ describe('Cross Industry Invoice (EN 16931)', () => {
     // 3 × 1.10 = 3.30 (not 3.3000000000000003); 2 × 2.675 = 5.35
     expect(t.lines.map((l) => l.net)).toEqual([3.3, 0.33, 5.35]);
     expect(t.vat).toEqual([
-      { rate: 7, basis: 0.33, tax: 0.02 },
-      { rate: 19, basis: 8.65, tax: 1.64 }
+      { category: 'S', rate: 7, basis: 0.33, tax: 0.02 },
+      { category: 'S', rate: 19, basis: 8.65, tax: 1.64 }
     ]);
     expect(t.net).toBe(8.98);
     expect(t.tax).toBe(1.66);
@@ -68,6 +68,50 @@ describe('Cross Industry Invoice (EN 16931)', () => {
     const xml = weReportCiiInvoice(invoice({ buyer: { name: 'Bad\u0001\u0008Name￿', country: 'DE' } }));
     expect(xml).toContain('<ram:Name>BadName</ram:Name>');
     expect(new DOMParser().parseFromString(xml, 'application/xml').querySelector('parsererror')).toBeNull();
+  });
+
+  it('takes allowances and charges into the VAT basis of their category and rate', () => {
+    const t = weReportInvoiceTotals(
+      invoice({
+        lines: [
+          { name: 'Consulting', quantity: 8, unitPrice: 95, vatRate: 19 },
+          { name: 'Book', quantity: 2, unitPrice: 24.9, vatRate: 7 }
+        ],
+        allowances: [{ amount: 50, reason: 'Loyalty', vatRate: 19 }],
+        charges: [{ amount: 12.5, reason: 'Shipping', vatRate: 19 }]
+      })
+    );
+    expect(t.vat).toEqual([
+      { category: 'S', rate: 7, basis: 49.8, tax: 3.49 },
+      { category: 'S', rate: 19, basis: 722.5, tax: 137.28 }
+    ]);
+    expect([t.net, t.allowances, t.charges, t.taxBasis, t.tax, t.grand]).toEqual([809.8, 50, 12.5, 772.3, 140.77, 913.07]);
+  });
+
+  it('writes reverse charge and exempt breakdowns with their reasons, payment details and the buyer reference', () => {
+    const xml = weReportCiiInvoice(
+      invoice({
+        buyerReference: '04011000-12345-67',
+        payment: { iban: 'DE02 1203 0000 0000 2020 51', bic: 'BYLADEM1001' },
+        lines: [
+          { name: 'Service', quantity: 1, unitPrice: 100, vatRate: 0, vatCategory: 'AE' },
+          { name: 'Care', quantity: 1, unitPrice: 50, vatRate: 0, vatCategory: 'E' }
+        ],
+        vatExemptionReasons: { E: 'Exempt under §4' }
+      })
+    );
+    expect(xml).toContain('<ram:ExemptionReason>Reverse charge</ram:ExemptionReason><ram:BasisAmount>100.00</ram:BasisAmount><ram:CategoryCode>AE</ram:CategoryCode>');
+    expect(xml).toContain('<ram:ExemptionReason>Exempt under §4</ram:ExemptionReason>');
+    expect(xml).toContain('<ram:IBANID>DE02120300000000202051</ram:IBANID>');
+    expect(xml).toContain('<ram:BICID>BYLADEM1001</ram:BICID>');
+    expect(xml).toContain('<ram:BuyerReference>04011000-12345-67</ram:BuyerReference>');
+    expect(new DOMParser().parseFromString(xml, 'application/xml').querySelector('parsererror')).toBeNull();
+  });
+
+  it('refuses a rate that does not fit its category', () => {
+    expect(() => weReportCiiInvoice(invoice({ lines: [{ name: 'X', quantity: 1, unitPrice: 1, vatRate: 19, vatCategory: 'AE' }] }))).toThrowError(RangeError);
+    expect(() => weReportCiiInvoice(invoice({ lines: [{ name: 'X', quantity: 1, unitPrice: 1, vatRate: 0, vatCategory: 'S' }] }))).toThrowError(RangeError);
+    expect(() => weReportCiiInvoice(invoice({ allowances: [{ amount: -5, reason: 'Bad', vatRate: 19 }] }))).toThrowError(RangeError);
   });
 
   it('leaves out what was not given — no due date, no VAT id, no note', () => {

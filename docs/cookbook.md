@@ -33,10 +33,16 @@ const pdf = await renderPdf(doc, fonts, {
   MINIMUM and BASIC WL profiles) and the Factur-X XMP extension. The Studio's Invoice template
   produces one from its sample data; that file passes the Mustang validator (PDF/A, XML schema and
   the 670 Factur-X EN 16931 rules) and veraPDF.
-- VAT is standard-rated (`S`) above 0 % and zero-rated (`Z`) at 0 %; a credit is a negative
-  quantity. Exempt and reverse-charge lines, allowances and payment means are not modelled yet —
-  bring your own CII XML through `facturX.xml` when you need them. A negative price or a quantity
-  that is not a number throws a `RangeError`.
+- VAT categories *(0.11.0)*: standard (`S`, the default above 0 %), zero-rated (`Z`, the default at
+  0 %), exempt (`E`) and reverse charge (`AE`) through a line's `vatCategory`, with
+  `vatExemptionReasons` for the text the breakdown shows. Document-level `allowances` (discounts)
+  and `charges` (shipping, packing) go into the VAT basis of their own category and rate; `payment`
+  writes a SEPA credit transfer (IBAN, BIC, account name); `buyerReference` is the BT-10 reference
+  XRechnung requires (the Leitweg-ID). Each of these was checked with the Mustang validator.
+- A credit is a negative quantity. A negative price, a rate that does not fit its category (`S` at
+  0 %, `AE` above 0 %) or a number that is not finite throws a `RangeError`. Intra-community supply
+  (`K`), export (`G`) and out-of-scope (`O`) lines are not modelled yet — bring your own CII XML
+  through `facturX.xml` for those.
 
 ## A ledger with a running balance and totals carried over
 
