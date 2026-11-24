@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.12.0 — 2026-11-24
+
+Turkish e-invoices. A minor release: one new function; every existing output is unchanged.
 
 ### Added
 
