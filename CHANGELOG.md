@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.11.0 — 2026-11-24
+
+E-invoices without code, and the rest of EN 16931's everyday VAT cases. A minor release: the
+report definition gains an optional `eInvoice`; its version is unchanged, and reports without one
+are laid out and written as before.
 
 ### Added
 
