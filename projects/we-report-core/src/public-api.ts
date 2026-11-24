@@ -27,6 +27,7 @@ export * from './lib/render/pdf';
 export * from './lib/render/pdfa';
 export * from './lib/render/cii';
 export * from './lib/render/einvoice';
+export * from './lib/render/ubl-tr';
 export * from './lib/layout/style';
 export * from './lib/layout/text-wrap';
 export * from './lib/layout/rich-text';
