@@ -1,6 +1,7 @@
 // PDF/A-3b support: the pieces pdf-lib does not write on its own — an sRGB output intent, XMP
 // metadata that matches the document information, a document ID — plus Factur-X / ZUGFeRD, the
 // European e-invoice that rides inside a PDF/A-3 as an attached XML.
+import { escapeXml } from './xml';
 
 /** Factur-X / ZUGFeRD conformance levels, as written into the XMP */
 export type FacturXProfile = 'MINIMUM' | 'BASIC WL' | 'BASIC' | 'EN 16931' | 'EXTENDED' | 'XRECHNUNG';
@@ -91,8 +92,6 @@ export function weReportSrgbIccProfile(): Uint8Array {
   return new Uint8Array([...header, ...table, ...body]);
 }
 
-// Control characters are not allowed in XML 1.0 at all: dropped, not escaped
-const escapeXml = (s: string): string => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '').replace(/[<>&"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /** An XMP date: `2026-11-24T10:15:30Z` — to the second, like the document information's date */
 export const xmpDate = (d: Date): string => d.toISOString().replace(/\.\d{3}Z$/, 'Z');

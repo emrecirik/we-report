@@ -1,6 +1,7 @@
 // A Cross Industry Invoice (UN/CEFACT CII D16B) in the EN 16931 profile — the XML a Factur-X /
 // ZUGFeRD PDF carries. The caller describes the invoice in plain fields; the amounts are worked out
 // here in whole cents, so the totals add up the way the standard checks them.
+import { escapeXml, xmlDecimal } from './xml';
 
 /** A party on the invoice — seller or buyer */
 export interface WeReportInvoiceParty {
@@ -132,25 +133,18 @@ export function weReportInvoiceTotals(invoice: WeReportInvoice): WeReportInvoice
   };
 }
 
-// Control characters are not allowed in XML 1.0 at all: dropped, not escaped
-const esc = (s: string): string => s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '').replace(/[<>&"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const amount = (v: number): string => v.toFixed(2);
-/** A quantity, price or rate as an XML decimal — no exponent, no binary noise, never NaN */
-function decimal(v: number, what: string): string {
-  if (!Number.isFinite(v)) throw new RangeError(`Invoice ${what} must be a finite number, got ${v}.`);
-  return Number(v.toPrecision(15)).toFixed(6).replace(/\.?0+$/, '');
-}
 const day = (d: Date): string => `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
 
 function party(tag: 'SellerTradeParty' | 'BuyerTradeParty', p: WeReportInvoiceParty): string {
   const address = [
-    p.postcode ? `<ram:PostcodeCode>${esc(p.postcode)}</ram:PostcodeCode>` : '',
-    p.address ? `<ram:LineOne>${esc(p.address)}</ram:LineOne>` : '',
-    p.city ? `<ram:CityName>${esc(p.city)}</ram:CityName>` : '',
-    `<ram:CountryID>${esc(p.country)}</ram:CountryID>`
+    p.postcode ? `<ram:PostcodeCode>${escapeXml(p.postcode)}</ram:PostcodeCode>` : '',
+    p.address ? `<ram:LineOne>${escapeXml(p.address)}</ram:LineOne>` : '',
+    p.city ? `<ram:CityName>${escapeXml(p.city)}</ram:CityName>` : '',
+    `<ram:CountryID>${escapeXml(p.country)}</ram:CountryID>`
   ].join('');
-  const vat = p.vatId ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${esc(p.vatId)}</ram:ID></ram:SpecifiedTaxRegistration>` : '';
-  return `<ram:${tag}><ram:Name>${esc(p.name)}</ram:Name><ram:PostalTradeAddress>${address}</ram:PostalTradeAddress>${vat}</ram:${tag}>`;
+  const vat = p.vatId ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${escapeXml(p.vatId)}</ram:ID></ram:SpecifiedTaxRegistration>` : '';
+  return `<ram:${tag}><ram:Name>${escapeXml(p.name)}</ram:Name><ram:PostalTradeAddress>${address}</ram:PostalTradeAddress>${vat}</ram:${tag}>`;
 }
 
 /**
@@ -172,18 +166,18 @@ export function weReportCiiInvoice(invoice: WeReportInvoice): string {
   const t = weReportInvoiceTotals(invoice);
   const reasons: Record<WeReportVatCategory, string> = { S: '', Z: '', E: 'Exempt from VAT', AE: 'Reverse charge', ...invoice.vatExemptionReasons };
   const tradeTax = (category: WeReportVatCategory, rate: number): string =>
-    `<ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>${category}</ram:CategoryCode><ram:RateApplicablePercent>${decimal(rate, 'VAT rate')}</ram:RateApplicablePercent>`;
+    `<ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>${category}</ram:CategoryCode><ram:RateApplicablePercent>${xmlDecimal(rate, 'VAT rate')}</ram:RateApplicablePercent>`;
   const allowanceCharge = (a: WeReportAllowanceCharge, charge: boolean): string =>
-    `<ram:SpecifiedTradeAllowanceCharge><ram:ChargeIndicator><udt:Indicator>${charge}</udt:Indicator></ram:ChargeIndicator><ram:ActualAmount>${amount(cents(a.amount) / 100)}</ram:ActualAmount><ram:Reason>${esc(a.reason)}</ram:Reason><ram:CategoryTradeTax>${tradeTax(categoryOf(a), a.vatRate)}</ram:CategoryTradeTax></ram:SpecifiedTradeAllowanceCharge>`;
-  const cur = esc(invoice.currency);
+    `<ram:SpecifiedTradeAllowanceCharge><ram:ChargeIndicator><udt:Indicator>${charge}</udt:Indicator></ram:ChargeIndicator><ram:ActualAmount>${amount(cents(a.amount) / 100)}</ram:ActualAmount><ram:Reason>${escapeXml(a.reason)}</ram:Reason><ram:CategoryTradeTax>${tradeTax(categoryOf(a), a.vatRate)}</ram:CategoryTradeTax></ram:SpecifiedTradeAllowanceCharge>`;
+  const cur = escapeXml(invoice.currency);
   const lines = invoice.lines
     .map(
       (l, i) => `
     <ram:IncludedSupplyChainTradeLineItem>
       <ram:AssociatedDocumentLineDocument><ram:LineID>${i + 1}</ram:LineID></ram:AssociatedDocumentLineDocument>
-      <ram:SpecifiedTradeProduct>${l.id ? `<ram:SellerAssignedID>${esc(l.id)}</ram:SellerAssignedID>` : ''}<ram:Name>${esc(l.name)}</ram:Name></ram:SpecifiedTradeProduct>
-      <ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${decimal(l.unitPrice, 'price')}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
-      <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="${esc(l.unitCode ?? 'C62')}">${decimal(l.quantity, 'quantity')}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedTradeProduct>${l.id ? `<ram:SellerAssignedID>${escapeXml(l.id)}</ram:SellerAssignedID>` : ''}<ram:Name>${escapeXml(l.name)}</ram:Name></ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${xmlDecimal(l.unitPrice, 'price')}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="${escapeXml(l.unitCode ?? 'C62')}">${xmlDecimal(l.quantity, 'quantity')}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>${tradeTax(categoryOf(l), l.vatRate)}</ram:ApplicableTradeTax>
         <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${amount(t.lines[i].net)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
@@ -195,15 +189,15 @@ export function weReportCiiInvoice(invoice: WeReportInvoice): string {
     .map(
       (v) =>
         `<ram:ApplicableTradeTax><ram:CalculatedAmount>${amount(v.tax)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode>${
-          reasons[v.category] ? `<ram:ExemptionReason>${esc(reasons[v.category])}</ram:ExemptionReason>` : ''
-        }<ram:BasisAmount>${amount(v.basis)}</ram:BasisAmount><ram:CategoryCode>${v.category}</ram:CategoryCode><ram:RateApplicablePercent>${decimal(v.rate, 'VAT rate')}</ram:RateApplicablePercent></ram:ApplicableTradeTax>`
+          reasons[v.category] ? `<ram:ExemptionReason>${escapeXml(reasons[v.category])}</ram:ExemptionReason>` : ''
+        }<ram:BasisAmount>${amount(v.basis)}</ram:BasisAmount><ram:CategoryCode>${v.category}</ram:CategoryCode><ram:RateApplicablePercent>${xmlDecimal(v.rate, 'VAT rate')}</ram:RateApplicablePercent></ram:ApplicableTradeTax>`
     )
     .join('');
   const payment = invoice.payment
-    ? `<ram:SpecifiedTradeSettlementPaymentMeans><ram:TypeCode>58</ram:TypeCode><ram:PayeePartyCreditorFinancialAccount><ram:IBANID>${esc(invoice.payment.iban.replace(/\s+/g, ''))}</ram:IBANID>${
-        invoice.payment.accountName ? `<ram:AccountName>${esc(invoice.payment.accountName)}</ram:AccountName>` : ''
+    ? `<ram:SpecifiedTradeSettlementPaymentMeans><ram:TypeCode>58</ram:TypeCode><ram:PayeePartyCreditorFinancialAccount><ram:IBANID>${escapeXml(invoice.payment.iban.replace(/\s+/g, ''))}</ram:IBANID>${
+        invoice.payment.accountName ? `<ram:AccountName>${escapeXml(invoice.payment.accountName)}</ram:AccountName>` : ''
       }</ram:PayeePartyCreditorFinancialAccount>${
-        invoice.payment.bic ? `<ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>${esc(invoice.payment.bic)}</ram:BICID></ram:PayeeSpecifiedCreditorFinancialInstitution>` : ''
+        invoice.payment.bic ? `<ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>${escapeXml(invoice.payment.bic)}</ram:BICID></ram:PayeeSpecifiedCreditorFinancialInstitution>` : ''
       }</ram:SpecifiedTradeSettlementPaymentMeans>`
     : '';
   const allowancesAndCharges = [...(invoice.allowances ?? []).map((a) => allowanceCharge(a, false)), ...(invoice.charges ?? []).map((c) => allowanceCharge(c, true))].join('');
@@ -214,12 +208,12 @@ export function weReportCiiInvoice(invoice: WeReportInvoice): string {
 <rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
   <rsm:ExchangedDocumentContext><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:cen.eu:en16931:2017</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
   <rsm:ExchangedDocument>
-    <ram:ID>${esc(invoice.number)}</ram:ID>
+    <ram:ID>${escapeXml(invoice.number)}</ram:ID>
     <ram:TypeCode>380</ram:TypeCode>
-    <ram:IssueDateTime><udt:DateTimeString format="102">${day(invoice.issueDate)}</udt:DateTimeString></ram:IssueDateTime>${invoice.note ? `\n    <ram:IncludedNote><ram:Content>${esc(invoice.note)}</ram:Content></ram:IncludedNote>` : ''}
+    <ram:IssueDateTime><udt:DateTimeString format="102">${day(invoice.issueDate)}</udt:DateTimeString></ram:IssueDateTime>${invoice.note ? `\n    <ram:IncludedNote><ram:Content>${escapeXml(invoice.note)}</ram:Content></ram:IncludedNote>` : ''}
   </rsm:ExchangedDocument>
   <rsm:SupplyChainTradeTransaction>${lines}
-    <ram:ApplicableHeaderTradeAgreement>${invoice.buyerReference ? `<ram:BuyerReference>${esc(invoice.buyerReference)}</ram:BuyerReference>` : ''}${party('SellerTradeParty', invoice.seller)}${party('BuyerTradeParty', invoice.buyer)}</ram:ApplicableHeaderTradeAgreement>
+    <ram:ApplicableHeaderTradeAgreement>${invoice.buyerReference ? `<ram:BuyerReference>${escapeXml(invoice.buyerReference)}</ram:BuyerReference>` : ''}${party('SellerTradeParty', invoice.seller)}${party('BuyerTradeParty', invoice.buyer)}</ram:ApplicableHeaderTradeAgreement>
     <ram:ApplicableHeaderTradeDelivery><ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime><udt:DateTimeString format="102">${day(invoice.issueDate)}</udt:DateTimeString></ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent></ram:ApplicableHeaderTradeDelivery>
     <ram:ApplicableHeaderTradeSettlement>
       <ram:InvoiceCurrencyCode>${cur}</ram:InvoiceCurrencyCode>
