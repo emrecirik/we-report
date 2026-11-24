@@ -1,6 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, Injector, input, model, signal, untracked, viewChild } from '@angular/core';
-import { Band, BandKind, calculatedFieldMap, checkReport, evaluate, findListPaths, formatValue, generateListReport, inferSchema, isExpression, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
+import { Band, BandKind, calculatedFieldMap, checkReport, evaluate, findListPaths, formatValue, generateListReport, inferSchema, isExpression, PdfOptions, ReportControl, ReportControlType, ReportDefinition, ReportIssue, ReportStyle, resolvePageGeometry, resolveReportData, resolveStyle, sourceValue, TextAlign } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportFontsService } from '../we-report-fonts.service';
 import { WeReportIconPipe } from '../we-report-icon.pipe';
@@ -80,6 +80,8 @@ export class WeReportDesignerComponent {
   readonly zoom = input(1);
   /** Fetch used for web-service data sources (testing in the designer and the preview). */
   readonly fetchFn = input<typeof fetch | undefined>(undefined);
+  /** Handed to the preview's PDF export — `pdfa`, `attachments` or a `facturX` e-invoice (see the viewer's `pdfOptions`). */
+  readonly pdfOptions = input<Partial<PdfOptions>>({});
   /** When the report is a sub-report: a sample of the row around it, which its `[^.field]` reads. */
   readonly outerRow = input<unknown>(undefined);
   /** Designing a sub-report inside another designer: its page comes from the box (no paper settings). */

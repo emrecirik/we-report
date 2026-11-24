@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, Injector, input, output, signal, untracked, viewChild } from '@angular/core';
-import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, renderPdf, ReportDefinition, ReportParameter, reportTable, storedZip, toMonoBitmap, writeCsv, writeXlsx, zplFromBitmaps } from 'we-report-core';
+import { allDataSources, escPosFromBitmaps, FontRegistry, LayoutBookmark, LayoutDocument, LayoutProblem, layoutReport, loadReportData, MonoBitmap, parameterChoices, PdfOptions, renderPdf, ReportDefinition, ReportParameter, reportTable, storedZip, toMonoBitmap, writeCsv, writeXlsx, zplFromBitmaps } from 'we-report-core';
 import { WE_REPORT_CONFIG } from '../we-report-config';
 import { WeReportBackendService } from '../we-report-backend.service';
 import { WeReportFontsService } from '../we-report-fonts.service';
@@ -467,6 +467,11 @@ export class WeReportViewerComponent {
   readonly hide = input<readonly WeReportViewerTool[]>([]);
   /** Fetch used for web-service data sources (add auth, or route through your backend). */
   readonly fetchFn = input<typeof fetch | undefined>(undefined);
+  /**
+   * Extra PDF options for the PDF button and `toPdf()`: `pdfa: true` for an archivable PDF/A-3b,
+   * `attachments`, or `facturX` with the invoice's XML for a Factur-X / ZUGFeRD e-invoice.
+   */
+  readonly pdfOptions = input<Partial<PdfOptions>>({});
 
   readonly problems = output<LayoutProblem[]>();
   readonly rendered = output<LayoutDocument>();
@@ -782,7 +787,7 @@ export class WeReportViewerComponent {
   async toPdf(): Promise<Uint8Array> {
     const doc = this.document();
     if (!doc || !this.fonts) throw new Error('The report is not rendered yet.');
-    return renderPdf(doc, this.fonts, { title: this.report().name, date: this.printDate(), lang: this.report().locale || this.config.locale });
+    return renderPdf(doc, this.fonts, { title: this.report().name, date: this.printDate(), lang: this.report().locale || this.config.locale, ...this.pdfOptions() });
   }
 
   /** The report's rows as an Excel workbook (one column per detail field, typed values). */
