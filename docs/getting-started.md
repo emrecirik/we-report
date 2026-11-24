@@ -147,7 +147,13 @@ const pdf = await renderPdf(doc, fonts, { title: report.name });
 ```
 
 `layoutReport` is synchronous and deterministic: the same report, data, fonts and `now` always
-produce the same pages. `reportTable` + `writeXlsx` (or `writeCsv`) produce a spreadsheet of the rows.
+produce the same pages.
+
+`renderPdf` options *(0.10.0)*: `pdfa: true` writes an archivable **PDF/A-3b** (sRGB output intent,
+XMP metadata, document ID — checked with veraPDF); `attachments` carries files inside the PDF; and
+`facturX` makes a **Factur-X / ZUGFeRD e-invoice** — see the
+[cookbook](cookbook.md#an-e-invoice-factur-x--zugferd). In Angular, the viewer's and the designer's
+`[pdfOptions]` input hands the same options to the PDF button and `toPdf()`. `reportTable` + `writeXlsx` (or `writeCsv`) produce a spreadsheet of the rows.
 
 ## Next
 

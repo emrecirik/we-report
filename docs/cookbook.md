@@ -3,6 +3,41 @@
 Short recipes for reports people ask for. Each works in the designer without code; the JSON shows
 what the designer writes, for people who generate reports.
 
+## An e-invoice (Factur-X / ZUGFeRD)
+
+*(0.10.0)* A Factur-X invoice is a PDF/A-3 that people read and an XML (UN/CEFACT Cross Industry
+Invoice) that accounting software reads — the e-invoice format of Germany (ZUGFeRD, XRechnung via
+CII) and France. Describe the invoice once; `weReportCiiInvoice` writes the EN 16931 XML and
+`renderPdf` puts it inside the report's PDF/A-3b:
+
+```ts
+import { renderPdf, weReportCiiInvoice, weReportInvoiceTotals } from 'we-report-core';
+
+const invoice = {
+  number: 'INV-2026-0042', issueDate: new Date('2026-11-24'), dueDate: new Date('2026-12-24'), currency: 'EUR',
+  seller: { name: 'Sample GmbH', address: 'Musterstraße 1', postcode: '10115', city: 'Berlin', country: 'DE', vatId: 'DE123456789' },
+  buyer: { name: 'Client SARL', city: 'Lyon', country: 'FR' },
+  lines: [{ id: 'A-1', name: 'Consulting', quantity: 8, unitPrice: 95, vatRate: 19 }]
+};
+const pdf = await renderPdf(doc, fonts, {
+  title: 'Invoice INV-2026-0042',
+  facturX: { xml: weReportCiiInvoice(invoice), profile: 'EN 16931' }
+});
+```
+
+- Amounts are worked out in whole cents: each line net, the VAT once per rate (halves away from
+  zero, so a credit note is the invoice negated), the grand total. `weReportInvoiceTotals(invoice)`
+  returns those numbers — print them, and the PDF and the XML agree to the cent. A report that adds up
+  its own totals with a different rounding can differ by a cent.
+- The PDF is PDF/A-3b with `factur-x.xml` attached (AFRelationship *Alternative*; *Data* for the
+  MINIMUM and BASIC WL profiles) and the Factur-X XMP extension. The Studio's Invoice template
+  produces one from its sample data; that file passes the Mustang validator (PDF/A, XML schema and
+  the 670 Factur-X EN 16931 rules) and veraPDF.
+- VAT is standard-rated (`S`) above 0 % and zero-rated (`Z`) at 0 %; a credit is a negative
+  quantity. Exempt and reverse-charge lines, allowances and payment means are not modelled yet —
+  bring your own CII XML through `facturX.xml` when you need them. A negative price or a quantity
+  that is not a number throws a `RangeError`.
+
 ## A ledger with a running balance and totals carried over
 
 Rows: `date`, `doc`, `debit`, `credit`.

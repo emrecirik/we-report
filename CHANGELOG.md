@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **PDF/A-3b**: `renderPdf(…, { pdfa: true })` writes an archivable PDF — an sRGB output intent
+  (a profile built in, nothing to license), XMP metadata matching the document information, a
+  document ID, an unfiltered metadata stream. Every Studio template passes veraPDF's PDF/A-3B check.
+- **Attachments**: `renderPdf(…, { attachments })` carries any file inside the PDF with its MIME type
+  and PDF/A-3 relationship.
+- **Factur-X / ZUGFeRD e-invoices**: `renderPdf(…, { facturX: { xml, profile } })` attaches the
+  invoice XML to a PDF/A-3b with the Factur-X XMP extension; `weReportCiiInvoice(invoice)` writes
+  that XML (UN/CEFACT CII, EN 16931 profile) from plain fields, with amounts in whole cents, and
+  `weReportInvoiceTotals` returns the same totals for the printed page. The Studio's Invoice
+  template downloads as one; it passes the Mustang validator (PDF/A, schema, 670 EN 16931 rules).
+- `[pdfOptions]` on `<we-report-viewer>` and `<we-report-designer>` hands these options to the PDF
+  button and `toPdf()`. The Studio exports PDF/A-3b, and the Invoice template as Factur-X.
+
 ## 0.9.1 — 2026-11-19
 
 ### Data backends
