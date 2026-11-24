@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, untracked, viewChild } from '@angular/core';
-import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, PdfOptions, ReportDefinition, weReportCiiInvoice } from 'we-report-core';
+import { csvToObjects, DefinitionVersionError, importReport, layoutReport, LayoutPage, migrateDefinition, PdfOptions, ReportDefinition } from 'we-report-core';
 import { WE_REPORT_CONFIG, WeReportBackendService, WeReportDesignerComponent, WeReportFontsService, weReportLocaleFor, WeReportPageComponent } from 'we-report-angular';
 import { STUDIO_TEXT, StudioLanguage } from './studio-text';
 import { decodeShare, encodeShare, hasRemoteSources, MAX_SHARE_URL, SHARE_PREFIX } from './share-link';
 import { HistoryEntry, parseHistory, pushHistory } from './history';
-import { studioInvoice, TEMPLATES } from './templates';
+import { TEMPLATES } from './templates';
 
 const BACKEND_KEY = 'we-report-studio.backendUrl';
 const AUTOSAVE_KEY = 'we-report-studio.autosave';
@@ -69,19 +69,8 @@ export class AppComponent {
   protected readonly locale = computed(() => weReportLocaleFor(this.language()));
 
   protected readonly templateId = signal(TEMPLATES[0].id);
-  /**
-   * PDF export: the invoice template downloads as a Factur-X e-invoice (its data as EN 16931 XML inside
-   * a PDF/A-3b), every other report as an archivable PDF/A-3b
-   */
-  protected readonly pdfOptions = computed<Partial<PdfOptions>>(() => {
-    if (this.templateId() !== 'invoice') return { pdfa: true };
-    try {
-      return { facturX: { xml: weReportCiiInvoice(studioInvoice(this.data())), profile: 'EN 16931' } };
-    } catch {
-      // Data edited into something an e-invoice cannot carry (a negative price): still a PDF/A
-      return { pdfa: true };
-    }
-  });
+  /** Every report downloads as an archivable PDF/A-3b; the invoice maps its fields, so it is a Factur-X e-invoice */
+  protected readonly pdfOptions: Partial<PdfOptions> = { pdfa: true };
   protected readonly report = signal<ReportDefinition>(TEMPLATES[0].report());
   protected readonly data = signal<unknown>(TEMPLATES[0].data);
 

@@ -22,6 +22,16 @@
   },
   "dataSources": [{ "id": "invoice", "name": "Invoice", "kind": "json", "data": null }],
   "dataMember": { "dataSourceId": "invoice", "path": "lines" },
+  "eInvoice": {
+    "number": "[^.number]",
+    "issueDate": "[^.date]",
+    "dueDate": "AddDays([^.date], IsNull([^.paymentDays], 0))",
+    "currency": "'TRY'",
+    "note": "[^.note]",
+    "seller": { "name": "[^.seller.name]", "address": "[^.seller.address]", "country": "'TR'", "vatId": "Iif(IsNull([^.seller.taxNo], '') = '', '', 'TR' + [^.seller.taxNo])" },
+    "buyer": { "name": "[^.customer.name]", "address": "[^.customer.address]", "city": "[^.customer.city]", "country": "'TR'" },
+    "line": { "id": "[code]", "name": "[product]", "quantity": "[qty]", "unitPrice": "[price]", "vatRate": "[vat]" }
+  },
   "bands": [
     {
       "id": "pageHeader",

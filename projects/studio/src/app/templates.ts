@@ -1,4 +1,4 @@
-import { createBlankReport, migrateDefinition, ReportDefinition, WeReportInvoice } from 'we-report-core';
+import { createBlankReport, migrateDefinition, ReportDefinition } from 'we-report-core';
 import certificate from '../templates/certificate.wrpt.json';
 import chequesData from '../templates/cheques.data.json';
 import cheques from '../templates/cheques.wrpt.json';
@@ -144,30 +144,3 @@ export const TEMPLATES: StudioTemplate[] = [
   },
 ];
 
-/**
- * The invoice template's data as a Factur-X invoice (fictional seller, Turkish lira). The data can be
- * edited in the Studio, so every field is read defensively.
- */
-export function studioInvoice(data: unknown): WeReportInvoice {
-  const d = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
-  const obj = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' ? (v as Record<string, unknown>) : {});
-  const str = (v: unknown): string => (typeof v === 'string' ? v : v == null ? '' : String(v));
-  const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
-  const seller = obj(d['seller']);
-  const customer = obj(d['customer']);
-  const issued = new Date(`${str(d['date']) || '2026-01-01'}T00:00:00Z`);
-  const issueDate = isNaN(issued.getTime()) ? new Date('2026-01-01T00:00:00Z') : issued;
-  return {
-    number: str(d['number']) || 'INVOICE',
-    issueDate,
-    dueDate: new Date(issueDate.getTime() + num(d['paymentDays']) * 86_400_000),
-    currency: 'TRY',
-    seller: { name: str(seller['name']) || '-', address: str(seller['address']) || undefined, country: 'TR', vatId: str(seller['taxNo']) ? `TR${str(seller['taxNo'])}` : undefined },
-    buyer: { name: str(customer['name']) || '-', address: str(customer['address']) || undefined, city: str(customer['city']) || undefined, country: 'TR' },
-    lines: (Array.isArray(d['lines']) ? d['lines'] : []).map((raw) => {
-      const l = obj(raw);
-      return { id: str(l['code']) || undefined, name: str(l['product']) || '-', quantity: num(l['qty']), unitPrice: num(l['price']), vatRate: num(l['vat']) };
-    }),
-    note: str(d['note']) || undefined
-  };
-}
