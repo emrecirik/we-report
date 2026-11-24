@@ -73,6 +73,40 @@ const pdf = await renderPdf(doc, fonts, {
   (`K`), export (`G`) and out-of-scope (`O`) lines are not modelled yet — bring your own CII XML
   through `facturX.xml` for those.
 
+## A Turkish e-invoice (e-Fatura / e-Arşiv, UBL-TR)
+
+*(0.12.0)* Turkey's e-invoices are UBL-TR 1.2 XML sent through GİB or an integrator (özel
+entegratör), who also signs them. `weReportUblTrInvoice` writes that XML from plain fields, with the
+same kuruş rounding as the Factur-X invoice, so the printed page and the XML agree:
+
+```ts
+import { weReportUblTrInvoice } from 'we-report-core';
+
+const xml = weReportUblTrInvoice({
+  profile: 'TEMELFATURA', // TICARIFATURA, or EARSIVFATURA for buyers outside e-Fatura
+  id: 'ABC2026000000001', // GİB number: 3 characters, the year, 9 digits
+  uuid: crypto.randomUUID(), // store it with the invoice — a resend must carry the same one
+  issueDate: new Date('2026-11-24'), issueTime: '10:15:00', dueDate: new Date('2026-12-24'),
+  seller: { name: 'Örnek Ticaret A.Ş.', taxId: '1234567890', taxOffice: 'Kadıköy', district: 'Kadıköy', city: 'İstanbul' },
+  buyer: { name: 'Ayşe Örnek', taxId: '11111111110', firstName: 'Ayşe', familyName: 'Örnek', district: 'Konak', city: 'İzmir' },
+  lines: [{ id: 'A1', name: 'Türk kahvesi 250 g', quantity: 14, unitPrice: 269.51, vatRate: 1 }],
+  iban: 'TR00 0000 0000 0000 0000 0000 00'
+});
+```
+
+- A 10-digit `taxId` is a VKN (company), an 11-digit one a TCKN (person, with `firstName` and
+  `familyName`). KDV only, in Turkish lira. 0 % lines need `exemption: { code, reason }`: `351` keeps
+  the invoice a `SATIS`, a code of GİB's exemption list (`301`, `213` …) makes it `ISTISNA`.
+- The XML is **unsigned**: it carries an empty `ext:UBLExtensions` slot where the integrator's
+  mali mühür / e-imza (XAdES) goes, and is schema-valid once signed.
+- Checked against GİB's own rules — the UBL-TR 1.2.1 XSD and the e-Fatura Paketi şematron
+  (2026-07-01 update, 499 assertions) plus the totals arithmetic, with a placeholder where the
+  signature goes: TEMELFATURA, TICARIFATURA, EARSIVFATURA, a 351 SATIS and a 301 ISTISNA invoice
+  pass with no errors and no warnings.
+- Not modelled yet: tevkifat (withholding), ÖTV and other taxes, IADE / IHRACKAYITLI / OZELMATRAH
+  invoice types, foreign currency, line discounts. Invalid input throws a `RangeError` naming the
+  field.
+
 ## A ledger with a running balance and totals carried over
 
 Rows: `date`, `doc`, `debit`, `credit`.

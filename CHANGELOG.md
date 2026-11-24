@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Turkish e-invoices**: `weReportUblTrInvoice` writes a GİB e-Fatura / e-Arşiv Fatura as UBL-TR
+  1.2 XML (TEMELFATURA, TICARIFATURA, EARSIVFATURA) — VKN or TCKN parties, KDV per rate with the
+  same kuruş rounding as the Factur-X invoice, 0 % lines with an exemption code (`351` → SATIS, an
+  exemption-list code → ISTISNA), payment due date and IBAN. Unsigned, with the slot the integrator's
+  signature goes into. Checked with GİB's UBL-TR XSD and e-Fatura şematron: no errors, no warnings.
+
+### Changed
+
+- The XML escaping and decimal writing shared by the PDF/A metadata, the CII and the UBL-TR writers
+  live in one place (`render/xml.ts`); the output is unchanged.
+
 ## 0.11.0 — 2026-11-24
 
 E-invoices without code, and the rest of EN 16931's everyday VAT cases. A minor release: the
