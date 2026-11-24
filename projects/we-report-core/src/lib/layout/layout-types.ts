@@ -13,6 +13,8 @@ export interface LayoutDocument {
   imageUrls?: string[];
   /** The document map: one entry per printed section with a `bookmark`, in print order. */
   bookmarks?: LayoutBookmark[];
+  /** The report's e-invoice as CII XML, when it maps one and the data fills it; `renderPdf` embeds it. */
+  eInvoice?: string;
 }
 
 export interface LayoutBookmark {

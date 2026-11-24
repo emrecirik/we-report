@@ -25,8 +25,9 @@ export interface PdfOptions {
   /**
    * A Factur-X / ZUGFeRD e-invoice: the invoice's Cross Industry Invoice XML, attached as
    * `factur-x.xml` (or `fileName`, e.g. `zugferd-invoice.xml`) to a PDF/A-3b whose XMP names the profile.
+   * A report that maps one (`eInvoice`) carries it when this is left out; `false` leaves it out.
    */
-  facturX?: { xml: string | Uint8Array; profile: FacturXProfile; fileName?: string };
+  facturX?: { xml: string | Uint8Array; profile: FacturXProfile; fileName?: string } | false;
 }
 
 // pdf-lib is loaded on first export only, keeping it out of the initial bundle of apps that just preview.
@@ -42,7 +43,10 @@ function color(value: string | undefined): { color: RGB | undefined; opacity: nu
 export async function renderPdf(doc: LayoutDocument, fonts: FontRegistry, options: PdfOptions = {}): Promise<Uint8Array> {
   lib ??= await import('pdf-lib');
   const fontkit = await import('@pdf-lib/fontkit');
-  const pdfa = options.pdfa || !!options.facturX;
+  // A report that maps an e-invoice carries it unless the host hands its own
+  // `false` leaves a mapped e-invoice out
+  const facturX: Exclude<PdfOptions['facturX'], false> = options.facturX === false ? undefined : (options.facturX ?? (doc.eInvoice ? { xml: doc.eInvoice, profile: 'EN 16931' } : undefined));
+  const pdfa = options.pdfa || !!facturX;
   // PDF/A wants the information dates to match the XMP ones, so pdf-lib must not touch them on save
   const pdf = await lib.PDFDocument.create({ updateMetadata: !pdfa });
   pdf.registerFontkit(((fontkit as unknown as { default?: unknown }).default ?? fontkit) as Parameters<typeof pdf.registerFontkit>[0]);
@@ -93,8 +97,8 @@ export async function renderPdf(doc: LayoutDocument, fonts: FontRegistry, option
   if (doc.bookmarks?.length) addOutline(pdf, pages, doc);
 
   const attachments = [...(options.attachments ?? [])];
-  if (options.facturX) {
-    const fx = options.facturX;
+  if (facturX) {
+    const fx = facturX;
     // Factur-X: the XML is the invoice's alternative form for the profiles that carry the whole
     // invoice, and data the PDF only summarises for MINIMUM and BASIC WL
     const relationship = fx.profile === 'MINIMUM' || fx.profile === 'BASIC WL' ? 'Data' : 'Alternative';
@@ -121,7 +125,7 @@ export async function renderPdf(doc: LayoutDocument, fonts: FontRegistry, option
       creator: 'we-report',
       date,
       lang: options.lang,
-      facturX: options.facturX ? { profile: options.facturX.profile, fileName: options.facturX.fileName ?? 'factur-x.xml' } : undefined
+      facturX: facturX ? { profile: facturX.profile, fileName: facturX.fileName ?? 'factur-x.xml' } : undefined
     });
     const ctx = pdf.context;
     // The metadata stream stays unfiltered, as PDF/A asks

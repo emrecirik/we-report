@@ -17,6 +17,8 @@ import {
 import { evaluate, EvaluationContext, RunningTotals } from '../expression/evaluate';
 import { FontRegistry } from '../fonts/font-registry';
 import { formatValue } from '../format';
+import { weReportCiiInvoice } from '../render/cii';
+import { weReportEInvoice } from '../render/einvoice';
 import { barcodeItem } from './barcode';
 import { aggregate, ChartPoint, chartItems } from './chart';
 import { sortOrder } from './sort-order';
@@ -208,12 +210,25 @@ class LayoutRun {
     }
 
     const pages = this.paginate(entries, byKind('pageHeader'), byKind('pageFooter'), first);
+    const eInvoice = this.def.eInvoice && !this.nesting ? this.eInvoice() : undefined;
     return {
       pages,
       problems: this.problems,
       ...(this.imageUrls.size ? { imageUrls: [...this.imageUrls] } : {}),
       ...(this.bookmarks.length ? { bookmarks: this.bookmarks } : {}),
+      ...(eInvoice ? { eInvoice } : {}),
     };
+  }
+
+  /** The mapped e-invoice as XML; a mapping the data cannot fill is a problem, and the PDF a plain one. */
+  private eInvoice(): string | undefined {
+    try {
+      const { data, sources, params, parent, now } = this.options;
+      return weReportCiiInvoice(weReportEInvoice(this.def, { data, sources, params, parent, now, locale: this.locale, currency: this.def.currency || this.options.currency }));
+    } catch (e) {
+      this.problems.push({ code: 'data', message: `E-invoice: ${(e as Error).message}` });
+      return undefined;
+    }
   }
 
   // ── Grouping ────────────────────────────────────────────────────────────────

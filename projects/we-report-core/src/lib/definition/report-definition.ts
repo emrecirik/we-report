@@ -461,6 +461,50 @@ export interface Watermark {
   angle?: number;
 }
 
+/** A party on the e-invoice; every value is a formula, e.g. `[^.seller.name]` or `'DE'`. */
+export interface EInvoicePartyMapping {
+  name: string;
+  address?: string;
+  postcode?: string;
+  city?: string;
+  /** ISO 3166-1 alpha-2 country code. */
+  country: string;
+  vatId?: string;
+}
+
+/**
+ * Where the invoice fields come from, so the PDF carries a Factur-X / ZUGFeRD (EN 16931) e-invoice
+ * without code. Every value is a formula: invoice fields read the object around the rows
+ * (`[^.number]`), line fields read each detail row (`[qty]`).
+ */
+export interface EInvoiceMapping {
+  number: string;
+  issueDate: string;
+  dueDate?: string;
+  /** ISO 4217 code; the report's currency when omitted. */
+  currency?: string;
+  note?: string;
+  /** BT-10, the Leitweg-ID for XRechnung. */
+  buyerReference?: string;
+  /** Account for a SEPA credit transfer. */
+  iban?: string;
+  bic?: string;
+  seller: EInvoicePartyMapping;
+  buyer: EInvoicePartyMapping;
+  line: {
+    id?: string;
+    name: string;
+    quantity: string;
+    unitPrice: string;
+    /** Percent, e.g. `[vat]` holding 20. */
+    vatRate: string;
+    /** `S`, `Z`, `E` or `AE`; from the rate when omitted. */
+    vatCategory?: string;
+    /** UN/ECE Rec 20 code, `C62` (one) when omitted. */
+    unitCode?: string;
+  };
+}
+
 export interface ReportDefinition {
   $schema?: string;
   version: number;
@@ -478,5 +522,7 @@ export interface ReportDefinition {
   locale?: string;
   /** ISO 4217 code for money formats (`TRY`, `EUR`); the host's when omitted. */
   currency?: string;
+  /** Makes the PDF a Factur-X e-invoice (see `EInvoiceMapping`). */
+  eInvoice?: EInvoiceMapping;
   bands: Band[];
 }

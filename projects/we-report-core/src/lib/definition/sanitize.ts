@@ -145,6 +145,14 @@ export function sanitizeDefinition(input: Obj): Obj {
     keepIf(watermark, 'color', (v) => typeof v === 'string');
     d['watermark'] = watermark;
   }
+  // An e-invoice mapping is formulas only: anything else in it is dropped.
+  keepIf(d, 'eInvoice', isObj);
+  if (isObj(d['eInvoice'])) {
+    const strings = (o: Obj): Obj => Object.fromEntries(Object.entries(o).filter(([, v]) => typeof v === 'string'));
+    const mapping = strings(d['eInvoice']);
+    for (const part of ['seller', 'buyer', 'line']) mapping[part] = isObj(d['eInvoice'][part]) ? strings(d['eInvoice'][part]) : {};
+    d['eInvoice'] = mapping;
+  }
   // Paper and margins are needed to lay anything out: damaged ones fall back to A4.
   const blank = createBlankReport().page;
   if (!isObj(d['page'])) d['page'] = blank;
