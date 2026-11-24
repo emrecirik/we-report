@@ -98,6 +98,8 @@ the paper, margins and label size for common A4 and Letter sheets (`LABEL_SHEETS
   nested by group (`LayoutDocument.bookmarks` in code).
 - **Watermark** — large faint text behind every page (`watermark`), fixed or from data, e.g. `PAID`
   only on paid invoices.
+- **E-invoice (Factur-X)** *(advanced)* — a formula per invoice field (`eInvoice`); every PDF of the
+  report then carries the invoice as EN 16931 XML. See the [cookbook](cookbook.md#an-e-invoice-factur-x--zugferd)
 - **Language and region** — a report can carry its own `locale` and `currency`, so it writes
   numbers, dates, money and amounts in words the same way wherever it is printed. See
   [Languages and regions](localization.md).

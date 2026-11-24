@@ -42,7 +42,7 @@ backend required**.
 | Formats | Numbers, money, percent, dates — with the locale (`1.234,50 ₺`, `5 Ocak 2026`) |
 | Data | JSON, CSV/Excel paste (Turkish numbers and dates recognised), web services (direct or via backend, paged APIs), SQL Server, PostgreSQL, SQLite, DuckDB (via a backend) — big tables summarized in the database, report parameters with drop-down lists, pictures from web addresses |
 | Designer | Drag from toolbox and field list, move/resize with grid and alignment-guide snapping, multi-select, undo/redo, in-place editing, format painter, *Tidy up*, report wizard, problems list with one-click fixes, properties panel, preview tab, light/dark |
-| Output | Paged preview, print, PDF (embedded subset fonts, bookmarks; **PDF/A-3b**; **Factur-X / ZUGFeRD e-invoices** with the EN 16931 XML inside, validated), Excel (typed cells), CSV, PNG, label printers (ZPL) and receipt printers (ESC/POS) |
+| Output | Paged preview, print, PDF (embedded subset fonts, bookmarks; **PDF/A-3b**; **Factur-X / ZUGFeRD e-invoices** with the EN 16931 XML inside, mapped in the designer without code, validated), Excel (typed cells), CSV, PNG, label printers (ZPL) and receipt printers (ESC/POS) |
 
 ## A billion rows, summarized by the database
 

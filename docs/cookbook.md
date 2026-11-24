@@ -8,7 +8,36 @@ what the designer writes, for people who generate reports.
 *(0.10.0)* A Factur-X invoice is a PDF/A-3 that people read and an XML (UN/CEFACT Cross Industry
 Invoice) that accounting software reads — the e-invoice format of Germany (ZUGFeRD, XRechnung via
 CII) and France. Describe the invoice once; `weReportCiiInvoice` writes the EN 16931 XML and
-`renderPdf` puts it inside the report's PDF/A-3b:
+`renderPdf` puts it inside the report's PDF/A-3b.
+
+**Without code** *(0.11.0)*: in the designer (advanced mode, nothing selected) open
+**E-invoice (Factur-X)** → **Map an e-invoice** and give each field a formula. Invoice fields read
+the object around the rows, line fields read each detail row. The report file then carries:
+
+```json
+"eInvoice": {
+  "number": "[^.number]",
+  "issueDate": "[^.date]",
+  "dueDate": "AddDays([^.date], [^.paymentDays])",
+  "currency": "'EUR'",
+  "iban": "[^.iban]",
+  "seller": { "name": "[^.seller.name]", "city": "[^.seller.city]", "country": "'DE'", "vatId": "[^.seller.vatId]" },
+  "buyer": { "name": "[^.customer.name]", "city": "[^.customer.city]", "country": "[^.customer.country]" },
+  "line": { "id": "[code]", "name": "[product]", "quantity": "[qty]", "unitPrice": "[price]", "vatRate": "[vat]" }
+}
+```
+
+Every PDF of that report is then a Factur-X invoice — from the viewer's download, the designer's
+preview or `renderPdf` on a server — because `layoutReport` puts the XML on the document
+(`doc.eInvoice`) and `renderPdf` embeds it. A field the data leaves empty, or a value that is not a
+number or a date, shows up in the preview's problems ("E-invoice: line 3 quantity is not a number.")
+and the PDF comes out without the invoice. `weReportEInvoice(report, { data })` returns the mapped
+invoice for printing its totals with `weReportInvoiceTotals`. Allowances, charges and exemption
+reasons are not mapped yet; pass `facturX` yourself for those (it wins over the mapping), or
+`facturX: false` for a PDF without it. The invoice lines follow the data's order — the detail band's
+sorting and grouping are for the page.
+
+With code:
 
 ```ts
 import { renderPdf, weReportCiiInvoice, weReportInvoiceTotals } from 'we-report-core';

@@ -9,6 +9,19 @@
   VAT basis of their category; SEPA `payment` details (IBAN, BIC, account name); and the
   `buyerReference` XRechnung needs. `weReportInvoiceTotals` reports allowances, charges and the tax
   basis, and each VAT group's category. Every variant passes the Mustang validator.
+- **E-invoices without code**: a report's `eInvoice` maps each invoice field to a formula (invoice
+  fields from the object around the rows, line fields from each row), set in the designer's new
+  *E-invoice (Factur-X)* section. `layoutReport` then writes the XML onto the document
+  (`LayoutDocument.eInvoice`) and `renderPdf` embeds it, so the viewer, the designer's preview and a
+  server all produce a Factur-X PDF. A field the data cannot fill is listed in the preview's
+  problems and the PDF is written without the invoice. `weReportEInvoice` returns the mapped
+  invoice. Locale keys `eInvoice*` and `ei*` (all five languages).
+
+### Changed
+
+- `renderPdf` embeds a report's mapped e-invoice (and so writes PDF/A-3b) unless `facturX` is given;
+  `facturX: false` leaves it out. Reports without `eInvoice` are written as before.
+- The Studio's Invoice template maps its e-invoice in the report file instead of in Studio code.
 
 ## 0.10.0 — 2026-11-24
 
